@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { orderService } from '../services/orderService';
 import { Order } from '../types/api';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface OrderConfirmationPageProps {
   orderNumber?: string;
@@ -20,6 +21,7 @@ interface OrderConfirmationPageProps {
 export function OrderConfirmationPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { formatAmount, convertPrice } = useCurrency();
   const [showContent, setShowContent] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
@@ -55,7 +57,7 @@ export function OrderConfirmationPage() {
   // Use order data from API if available, otherwise fallback to state
   const orderData = order ? {
     orderNumber: order.order_number || orderNumber,
-    email: order.shipping_info?.email || state?.email || 'customer@example.com',
+    email: order.shipping_info?.email || state?.email || '',
     paymentMethod: order.payment_method || state?.paymentMethod || 'UPI',
     shippingInfo: order.shipping_info ? {
       firstName: order.shipping_info.first_name,
@@ -67,14 +69,14 @@ export function OrderConfirmationPage() {
       phone: order.shipping_info.phone,
       country: order.shipping_info.country,
     } : state?.shippingInfo || {
-      firstName: 'John',
-      lastName: 'Doe',
-      address: '123 Fashion Street, Apartment 4B',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      zipCode: '400001',
-      phone: '+91 98765 43210',
-      country: 'India'
+      firstName: '',
+      lastName: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      phone: '',
+      country: ''
     },
     orderItems: order.items || state?.orderItems || [],
     subtotal: order.subtotal || state?.subtotal || 0,
@@ -84,29 +86,26 @@ export function OrderConfirmationPage() {
     trackingNumber: order.tracking_number,
     status: order.status,
   } : {
-    orderNumber: orderNumber || 'RLCRY9M4MWNG',
-    email: state?.email || 'customer@example.com',
-    paymentMethod: state?.paymentMethod || 'UPI',
+    orderNumber: orderNumber || '',
+    email: state?.email || '',
+    paymentMethod: state?.paymentMethod || '',
     shippingInfo: state?.shippingInfo || {
-      firstName: 'John',
-      lastName: 'Doe',
-      address: '123 Fashion Street, Apartment 4B',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      zipCode: '400001',
-      phone: '+91 98765 43210',
-      country: 'India'
+      firstName: '',
+      lastName: '',
+      address: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      phone: '',
+      country: ''
     },
-    orderItems: state?.orderItems || [
-      { id: 1, name: 'Silk Evening Dress', price: 12999, quantity: 1, size: 'M', color: 'Navy Blue', image: 'figma:asset/product1.jpg' },
-      { id: 2, name: 'Leather Handbag', price: 8499, quantity: 1, color: 'Black', image: 'figma:asset/product2.jpg' }
-    ],
+    orderItems: state?.orderItems || [],
     subtotal: state?.subtotal || 0,
     shippingCost: state?.shippingCost || 0,
     tax: state?.tax || 0,
     total: state?.subtotal || 0,
     trackingNumber: undefined,
-    status: 'pending',
+    status: 'pending' as const,
   };
 
   const fullName = `${orderData.shippingInfo.firstName} ${orderData.shippingInfo.lastName}`;
@@ -172,7 +171,7 @@ export function OrderConfirmationPage() {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wider text-foreground/50 mb-2">Total Amount</p>
-                <p className="text-lg font-medium">₹{orderData.total.toLocaleString()}</p>
+                <p className="text-lg font-medium">{formatAmount(orderData.total)}</p>
               </div>
             </div>
           </motion.div>
@@ -215,8 +214,12 @@ export function OrderConfirmationPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">₹{((item.price || 0) * 75 * item.quantity).toLocaleString()}</p>
-                        <p className="text-sm text-foreground/60">₹{((item.price || 0) * 75).toLocaleString()} each</p>
+                        <p className="font-medium">
+                          {formatAmount(convertPrice(item.price || 0, (item as any).priceINR) * item.quantity)}
+                        </p>
+                        <p className="text-sm text-foreground/60">
+                          {formatAmount(convertPrice(item.price || 0, (item as any).priceINR))} each
+                        </p>
                       </div>
                     </motion.div>
                   ))}
@@ -236,20 +239,20 @@ export function OrderConfirmationPage() {
                 <div className="border border-foreground/10 p-6 space-y-3">
                   <div className="flex justify-between">
                     <span className="text-foreground/60">Subtotal</span>
-                    <span>₹{orderData.subtotal.toLocaleString()}</span>
+                    <span>{formatAmount(orderData.subtotal)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-foreground/60">Shipping</span>
-                    <span className="text-green-600">{orderData.shippingCost === 0 ? 'FREE' : `₹${orderData.shippingCost.toLocaleString()}`}</span>
+                    <span className="text-green-600">{orderData.shippingCost === 0 ? 'FREE' : formatAmount(orderData.shippingCost)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-foreground/60">Tax (18% GST)</span>
-                    <span>₹{orderData.tax.toLocaleString()}</span>
+                    <span>{formatAmount(orderData.tax)}</span>
                   </div>
                   <div className="border-t border-foreground/10 pt-3">
                     <div className="flex justify-between items-center">
                       <span className="font-medium text-lg">Total</span>
-                      <span className="font-medium text-lg">₹{orderData.total.toLocaleString()}</span>
+                      <span className="font-medium text-lg">{formatAmount(orderData.total)}</span>
                     </div>
                   </div>
                   <div className="pt-3 border-t border-foreground/10">

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCurrency } from '../context/CurrencyContext';
 
 interface Product {
-  id: number;
+  id: string | number;
   name: string;
   price: number;
   originalPrice?: number;
@@ -71,9 +71,9 @@ export function ProductRecommendationSection({
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-6 px-4 md:px-6">
-            {products.map((item, index) => (
+            {(products || []).map((item, index) => (
               <motion.div
-                key={item.id}
+                key={`${item.id}-${index}`}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -166,9 +166,9 @@ export function ProductRecommendationSection({
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-8 px-4 md:px-6">
-            {products.map((item, index) => (
+            {(products || []).map((item, index) => (
               <motion.div
-                key={item.id}
+                key={`${item.id}-${index}`}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
@@ -225,9 +225,9 @@ export function ProductRecommendationSection({
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 md:gap-10 px-4 md:px-6">
-            {products.map((item, index) => (
+            {(products || []).map((item, index) => (
               <motion.div
-                key={item.id}
+                key={`${item.id}-${index}`}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -296,9 +296,9 @@ export function ProductRecommendationSection({
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6 px-2 md:px-4">
-          {products.map((item, index) => (
+          {(products || []).map((item, index) => (
             <motion.div
-              key={item.id}
+              key={`${item.id}-${index}`}
               initial={{ opacity: 0, x: -20 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}

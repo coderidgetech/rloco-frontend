@@ -1,6 +1,8 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, CreditCard, Truck, ArrowLeft, ShieldCheck, Smartphone, Wallet, Banknote, AlertCircle } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useCurrency } from '../context/CurrencyContext';
+import { useUser } from '../context/UserContext';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -41,7 +43,9 @@ const STEPS = ['Shipping', 'Payment', 'Review'];
 
 export function CheckoutPage() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useUser();
   const { items, total, clearCart } = useCart();
+  const { formatAmount, formatPrice, convertPrice, currency } = useCurrency();
   const [currentStep, setCurrentStep] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
@@ -152,8 +156,8 @@ export function CheckoutPage() {
             country: shippingInfo.country,
             state: shippingInfo.state,
             city: shippingInfo.city,
-            zip_code: shippingInfo.zipCode,
-            amount: subtotal,
+            postal_code: shippingInfo.zipCode,
+            subtotal,
           });
           setTaxAmount(taxResult.tax);
         } catch (error) {
@@ -276,6 +280,12 @@ export function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to place your order. You’ll return to checkout after signing in.');
+      navigate('/login?redirect=/checkout');
+      return;
+    }
+
     if (!validateShipping() || !validatePayment()) {
       toast.error('Please fix the errors before placing your order');
       return;
@@ -548,7 +558,7 @@ export function CheckoutPage() {
                               type="text"
                               value={shippingInfo.firstName}
                               onChange={(e) => setShippingInfo({ ...shippingInfo, firstName: e.target.value })}
-                              placeholder="John"
+                              placeholder="Enter first name"
                               error={shippingErrors.firstName}
                             />
                             <LuxuryInput
@@ -556,7 +566,7 @@ export function CheckoutPage() {
                               type="text"
                               value={shippingInfo.lastName}
                               onChange={(e) => setShippingInfo({ ...shippingInfo, lastName: e.target.value })}
-                              placeholder="Doe"
+                              placeholder="Enter last name"
                               error={shippingErrors.lastName}
                             />
                           </div>
@@ -566,7 +576,7 @@ export function CheckoutPage() {
                             type="email"
                             value={shippingInfo.email}
                             onChange={(e) => setShippingInfo({ ...shippingInfo, email: e.target.value })}
-                            placeholder="john@example.com"
+                            placeholder="Enter your email address"
                             error={shippingErrors.email}
                           />
                           
@@ -575,7 +585,7 @@ export function CheckoutPage() {
                             type="tel"
                             value={shippingInfo.phone}
                             onChange={(e) => setShippingInfo({ ...shippingInfo, phone: e.target.value })}
-                            placeholder="+91 98765 43210"
+                            placeholder="Enter your phone number"
                             error={shippingErrors.phone}
                           />
                           
@@ -584,7 +594,7 @@ export function CheckoutPage() {
                             type="text"
                             value={shippingInfo.address}
                             onChange={(e) => setShippingInfo({ ...shippingInfo, address: e.target.value })}
-                            placeholder="123 Main Street"
+                            placeholder="Enter your street address"
                             error={shippingErrors.address}
                           />
                           
@@ -749,7 +759,7 @@ export function CheckoutPage() {
                                   value={paymentInfo.cardName}
                                   onChange={(e) => setPaymentInfo({ ...paymentInfo, cardName: e.target.value })}
                                   className="w-full h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors"
-                                  placeholder="JOHN DOE"
+                                  placeholder="Enter cardholder name"
                                 />
                                 {paymentErrors.cardName && <p className="text-xs text-red-500">{paymentErrors.cardName}</p>}
                               </div>
@@ -973,14 +983,21 @@ export function CheckoutPage() {
                                   <p className="text-sm truncate">{item.name}</p>
                                   <p className="text-xs text-foreground/50">Size: {item.size} × {item.quantity}</p>
                                 </div>
-                                <div className="text-sm whitespace-nowrap">₹{(item.price * item.quantity * 75).toFixed(0)}</div>
+                                <div className="text-sm whitespace-nowrap">
+                                  {formatAmount(convertPrice(item.price, (item as any).priceINR) * item.quantity)}
+                                </div>
                               </div>
                             ))}
                           </div>
                         </div>
                       </div>
 
-                      <div className="pt-4 mt-4 border-t border-foreground/10">
+                      <div className="pt-4 mt-4 border-t border-foreground/10 space-y-3">
+                        {!isAuthenticated && (
+                          <p className="text-xs text-foreground/60 text-center">
+                            Sign in required to place your order. You’ll return here after logging in.
+                          </p>
+                        )}
                         <button
                           onClick={handlePlaceOrder}
                           disabled={isProcessing}
@@ -996,7 +1013,7 @@ export function CheckoutPage() {
                               Processing...
                             </>
                           ) : (
-                            `Place Order • ₹${finalTotal.toFixed(0)}`
+                            `Place Order • ${formatAmount(finalTotal)}`
                           )}
                         </button>
                       </div>
@@ -1019,7 +1036,9 @@ export function CheckoutPage() {
                         <p className="text-sm truncate">{item.name}</p>
                         <p className="text-xs text-foreground/50">Size: {item.size} × {item.quantity}</p>
                       </div>
-                      <div className="text-sm whitespace-nowrap">₹{(item.price * item.quantity * 75).toFixed(0)}</div>
+                      <div className="text-sm whitespace-nowrap">
+                        {formatAmount(convertPrice(item.price, (item as any).priceINR) * item.quantity)}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1028,25 +1047,25 @@ export function CheckoutPage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between text-foreground/60">
                       <span>Subtotal</span>
-                      <span>₹{(subtotal * 75).toFixed(0)}</span>
+                      <span>{formatAmount(subtotal)}</span>
                     </div>
                     <div className="flex justify-between text-foreground/60">
                       <span>Tax</span>
-                      <span>₹{(taxAmount * 75).toFixed(0)}</span>
+                      <span>{formatAmount(taxAmount)}</span>
                     </div>
                     {discount > 0 && (
                       <div className="flex justify-between text-foreground/60">
                         <span>Discount</span>
-                        <span className="text-green-600">-₹{(discount * 75).toFixed(0)}</span>
+                        <span className="text-green-600">-{formatAmount(discount)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-foreground/60">
                       <span>Shipping</span>
-                      <span>{shippingCost > 0 ? `₹${(shippingCost * 75).toFixed(0)}` : <span className="text-green-600">FREE</span>}</span>
+                      <span>{shippingCost > 0 ? formatAmount(shippingCost) : <span className="text-green-600">FREE</span>}</span>
                     </div>
                     <div className="flex justify-between pt-2 border-t border-foreground/10">
                       <span className="uppercase tracking-wider">Total</span>
-                      <span className="text-lg">₹{(finalTotal * 75).toFixed(0)}</span>
+                      <span className="text-lg">{formatAmount(finalTotal)}</span>
                     </div>
                   </div>
                 </div>

@@ -215,7 +215,7 @@ export const AddUserPage = () => {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="John Doe"
+                  placeholder="Enter full name"
                   className={errors.name ? 'border-red-500' : ''}
                 />
                 {errors.name && (
@@ -233,7 +233,7 @@ export const AddUserPage = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="user@example.com"
+                    placeholder="Enter email address"
                     className={`pl-10 ${errors.email ? 'border-red-500' : ''}`}
                   />
                 </div>

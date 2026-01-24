@@ -7,27 +7,47 @@ import { toast } from 'sonner';
 import { useFeaturedProducts } from '../hooks/useProducts';
 import { useNavigate } from 'react-router-dom';
 import { Footer } from '../components/Footer';
-
-const COUPON_CODES = {
-  'RLOCO10': 10,
-  'SAVE20': 20,
-  'WELCOME15': 15,
-  'FREESHIP': 0, // Free shipping
-};
+import { promotionService } from '../services/promotionService';
+import { Promotion } from '../types/api';
 
 export function CartPage() {
   const navigate = useNavigate();
   const { items, removeFromCart, updateQuantity, clearCart } = useCart();
   const { formatPrice, formatAmount, convertPrice, currency } = useCurrency();
   const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; promotion?: Promotion } | null>(null);
+  const [availablePromotions, setAvailablePromotions] = useState<Promotion[]>([]);
+  const [loadingPromotions, setLoadingPromotions] = useState(false);
   
   // Fetch featured products for recommendations
   const { products: featuredProducts } = useFeaturedProducts(8);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    fetchAvailablePromotions();
   }, []);
+
+  const fetchAvailablePromotions = async () => {
+    try {
+      setLoadingPromotions(true);
+      const promotions = await promotionService.list();
+      // Filter active promotions (guard against null/undefined)
+      const list = Array.isArray(promotions) ? promotions : [];
+      const now = new Date();
+      const activePromotions = list.filter(p => {
+        if (!p?.start_date || !p?.end_date) return false;
+        const startDate = new Date(p.start_date);
+        const endDate = new Date(p.end_date);
+        return p.is_active && now >= startDate && now <= endDate;
+      });
+      setAvailablePromotions(activePromotions);
+    } catch (error) {
+      console.error('Failed to fetch promotions:', error);
+      setAvailablePromotions([]);
+    } finally {
+      setLoadingPromotions(false);
+    }
+  };
 
   // Calculate cart total in the current currency
   const subtotal = items.reduce((sum, item) => {
@@ -35,10 +55,24 @@ export function CartPage() {
     return sum + (itemPrice * item.quantity);
   }, 0);
   
-  const discount = appliedCoupon ? (subtotal * appliedCoupon.discount) / 100 : 0;
+  // Calculate discount based on promotion type
+  const discount = appliedCoupon && appliedCoupon.promotion
+    ? appliedCoupon.promotion.type === 'percentage'
+      ? Math.min((subtotal * appliedCoupon.promotion.value / 100), appliedCoupon.promotion.max_discount || Infinity)
+      : appliedCoupon.promotion.type === 'fixed'
+        ? appliedCoupon.promotion.value
+        : 0
+    : appliedCoupon
+      ? (subtotal * appliedCoupon.discount) / 100 // Fallback for old format
+      : 0;
+  
   const shippingThreshold = currency === 'USD' ? 200 : 15000; // $200 or ₹15000
   const shippingCost = currency === 'USD' ? 15 : 1125; // $15 or ₹1125
-  const shipping = appliedCoupon?.code === 'FREESHIP' ? 0 : subtotal > shippingThreshold ? 0 : shippingCost;
+  const shipping = (appliedCoupon?.promotion?.type === 'free_shipping' || appliedCoupon?.code === 'FREESHIP') 
+    ? 0 
+    : subtotal > shippingThreshold 
+      ? 0 
+      : shippingCost;
   const tax = (subtotal - discount) * 0.08; // 8% tax
   const finalTotal = subtotal - discount + shipping + tax;
 
@@ -47,17 +81,45 @@ export function CartPage() {
     .filter((p) => !items.some((item) => String(item.id) === String(p.id)))
     .slice(0, 4);
 
-  const handleApplyCoupon = () => {
-    const upperCode = couponCode.toUpperCase();
-    if (COUPON_CODES[upperCode as keyof typeof COUPON_CODES] !== undefined) {
-      setAppliedCoupon({
-        code: upperCode,
-        discount: COUPON_CODES[upperCode as keyof typeof COUPON_CODES],
-      });
-      toast.success(`Coupon "${upperCode}" applied successfully!`);
-      setCouponCode('');
-    } else {
-      toast.error('Invalid coupon code');
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error('Please enter a coupon code');
+      return;
+    }
+
+    try {
+      const result = await promotionService.validate(couponCode.trim().toUpperCase(), subtotal);
+      
+      if (result.valid && result.promotion) {
+        // Calculate discount based on promotion type
+        let discountAmount = 0;
+        if (result.promotion.type === 'percentage') {
+          discountAmount = (subtotal * (result.promotion.value / 100));
+          // Apply max discount if specified
+          if (result.promotion.max_discount) {
+            discountAmount = Math.min(discountAmount, result.promotion.max_discount);
+          }
+        } else if (result.promotion.type === 'fixed') {
+          discountAmount = result.promotion.value;
+        } else if (result.promotion.type === 'free_shipping') {
+          discountAmount = 0; // Will be handled in shipping calculation
+        }
+
+        setAppliedCoupon({
+          code: result.promotion.code,
+          discount: result.promotion.type === 'percentage' ? result.promotion.value : 
+                   result.promotion.type === 'free_shipping' ? 0 : 
+                   (discountAmount / subtotal) * 100, // Convert fixed to percentage for display
+          promotion: result.promotion,
+        });
+        toast.success(`Promotion "${result.promotion.code}" applied successfully!`);
+        setCouponCode('');
+      } else {
+        toast.error('Invalid or expired promotion code');
+      }
+    } catch (error: any) {
+      console.error('Failed to validate promotion:', error);
+      toast.error(error?.response?.data?.error || 'Failed to validate promotion code');
     }
   };
 
@@ -303,20 +365,28 @@ export function CartPage() {
                       </button>
                     </motion.div>
                   )}
-                  <div className="mt-3 text-xs text-muted-foreground">
-                    <p className="mb-1">Try these codes:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.keys(COUPON_CODES).map((code) => (
-                        <button
-                          key={code}
-                          onClick={() => setCouponCode(code)}
-                          className="px-2 py-1 bg-background border border-border rounded hover:border-primary transition-colors"
-                        >
-                          {code}
-                        </button>
-                      ))}
+                  {availablePromotions.length > 0 && (
+                    <div className="mt-3 text-xs text-muted-foreground">
+                      <p className="mb-1">Available promotions:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {availablePromotions.slice(0, 4).map((promo) => (
+                          <button
+                            key={promo.id}
+                            onClick={() => setCouponCode(promo.code)}
+                            className="px-2 py-1 bg-background border border-border rounded hover:border-primary transition-colors"
+                            title={promo.name}
+                          >
+                            {promo.code}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
+                  {loadingPromotions && (
+                    <div className="mt-3 text-xs text-muted-foreground">
+                      <p>Loading promotions...</p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Order Summary */}

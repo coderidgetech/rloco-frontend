@@ -152,7 +152,7 @@ export function ContactPage() {
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="John Doe"
+                placeholder="Enter your full name"
               />
 
               <LuxuryInput
@@ -161,7 +161,7 @@ export function ContactPage() {
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="john@example.com"
+                placeholder="Enter your email address"
               />
 
               <LuxuryInput

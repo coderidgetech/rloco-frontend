@@ -33,7 +33,7 @@ export function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) 
       const fetchProducts = async () => {
         try {
           const response = await productService.list({ limit: 200 });
-          setAllProducts(response.data || []);
+          setAllProducts(response.products || []);
         } catch (error) {
           console.error('Failed to fetch products:', error);
           setAllProducts([]);

@@ -7,8 +7,16 @@ export const taxService = {
     return response.data;
   },
 
-  async calculate(request: CalculateTaxRequest): Promise<{ tax: number; rate: TaxRate }> {
-    const response = await api.post<{ tax: number; rate: TaxRate }>('/tax/calculate', request);
-    return response.data;
+  async calculate(request: CalculateTaxRequest): Promise<{ tax: number; tax_amount?: number; rate: TaxRate }> {
+    const { amount, subtotal, zip_code, ...rest } = request;
+    const payload = {
+      ...rest,
+      subtotal: subtotal ?? amount ?? 0,
+      postal_code: request.postal_code ?? zip_code,
+    };
+    const response = await api.post<{ tax?: number; tax_amount?: number; rate: TaxRate }>('/tax/calculate', payload);
+    const data = response.data;
+    const tax = data.tax ?? data.tax_amount ?? 0;
+    return { tax, rate: data.rate! };
   },
 };

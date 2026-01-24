@@ -16,4 +16,32 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    // Disable caching in development to prevent stale component issues
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+    },
+    // Force reload on file changes
+    hmr: {
+      overlay: true,
+    },
+    watch: {
+      // Use polling to ensure file changes are detected
+      usePolling: false,
+      interval: 100,
+    },
+  },
+  // Optimize dependency handling
+  optimizeDeps: {
+    // Force dependency re-optimization
+    force: false,
+    // Exclude motion/react from pre-bundling to ensure fresh builds
+    exclude: [],
+  },
+  build: {
+    // Ensure source maps for better debugging
+    sourcemap: true,
+  },
 })

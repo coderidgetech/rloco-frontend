@@ -14,6 +14,7 @@ import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
 import { ProductReview } from '../types/api';
 import { useUser } from '../context/UserContext';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface Review {
   id: number;
@@ -100,13 +101,14 @@ export function ProductDetailPage() {
   
   const { addToCart, items } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { formatPrice, convertPrice, currency } = useCurrency();
 
   // Fetch all products for recommendations
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         const response = await productService.list({ limit: 200 });
-        setAllProducts(response.data || []);
+        setAllProducts(response.products || []);
       } catch (error) {
         console.error('Failed to fetch products for recommendations:', error);
         setAllProducts([]);
@@ -131,7 +133,7 @@ export function ProductDetailPage() {
         try {
           setReviewsLoading(true);
           const data = await productService.getReviews(id);
-          setReviews(data);
+          setReviews(Array.isArray(data) ? data : []);
         } catch (error: any) {
           // Only log if it's not a 400 error (invalid ID format)
           if (error?.response?.status !== 400) {
@@ -218,7 +220,7 @@ export function ProductDetailPage() {
     }
     
     addToCart({
-      id: parseInt(product.id) || product.id,
+      id: product.id, // Use product.id directly (MongoDB ObjectID string)
       name: product.name,
       price: product.price,
       priceINR: product.price_inr,
@@ -250,10 +252,20 @@ export function ProductDetailPage() {
     }
   };
 
-  // Get related products (same category)
+  // Get related products (same category) - map to format expected by components
   const relatedProducts = allProducts
     .filter(p => String(p.id) !== String(product.id) && p.category === product.category)
-    .slice(0, 6);
+    .slice(0, 6)
+    .map(p => ({
+      id: String(p.id),
+      name: p.name,
+      price: p.price,
+      originalPrice: p.original_price,
+      image: p.images && p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/800',
+      priceINR: p.price_inr,
+      originalPriceINR: p.original_price_inr,
+      badge: p.badge,
+    }));
 
   // Get color variants - same product name or very similar products with different colors
   const colorVariants = allProducts
@@ -276,13 +288,33 @@ export function ProductDetailPage() {
   // Get similar products (same gender, different category)
   const similarProducts = allProducts
     .filter(p => String(p.id) !== String(product.id) && p.gender === product.gender && p.category !== product.category)
-    .slice(0, 6);
+    .slice(0, 6)
+    .map(p => ({
+      id: String(p.id),
+      name: p.name,
+      price: p.price,
+      originalPrice: p.original_price,
+      image: p.images && p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/800',
+      priceINR: p.price_inr,
+      originalPriceINR: p.original_price_inr,
+      badge: p.badge,
+    }));
 
   // Get trending products (high rating products)
   const trendingProducts = allProducts
     .filter(p => String(p.id) !== String(product.id) && p.rating >= 4.5)
     .sort((a, b) => b.rating - a.rating)
-    .slice(0, 6);
+    .slice(0, 6)
+    .map(p => ({
+      id: String(p.id),
+      name: p.name,
+      price: p.price,
+      originalPrice: p.original_price,
+      image: p.images && p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/800',
+      priceINR: p.price_inr,
+      originalPriceINR: p.original_price_inr,
+      badge: p.badge,
+    }));
 
   // Get products often bought together (same price range)
   const completeTheLook = allProducts
@@ -291,11 +323,23 @@ export function ProductDetailPage() {
       Math.abs(p.price - product.price) < 50 &&
       p.category !== product.category
     )
-    .slice(0, 6);
+    .slice(0, 6)
+    .map(p => ({
+      id: String(p.id),
+      name: p.name,
+      price: p.price,
+      originalPrice: p.original_price,
+      image: p.images && p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/800',
+      category: p.category,
+      priceINR: p.price_inr,
+      originalPriceINR: p.original_price_inr,
+    }));
 
-  const productImages = product.images && product.images.length > 0 
-    ? product.images 
-    : ['https://via.placeholder.com/800'];
+  // Get product images - ensure we have an array with valid image URLs
+  const productImages = product.images && Array.isArray(product.images) && product.images.length > 0 
+    ? product.images.filter(img => img && typeof img === 'string' && img.trim() !== '') // Filter out empty/invalid strings
+    : ['https://via.placeholder.com/800']; // Fallback placeholder
+  
   const averageRating = product.rating || 0;
   const ratingCount = product.reviews || reviews.length;
 
@@ -343,6 +387,10 @@ export function ProductDetailPage() {
                     alt={product.name}
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     style={{ filter: 'brightness(1.05) contrast(1.05) saturate(1.1)' }}
+                    onError={(e) => {
+                      // Fallback to placeholder if image fails
+                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800';
+                    }}
                   />
                 </motion.div>
               </AnimatePresence>
@@ -417,7 +465,16 @@ export function ProductDetailPage() {
                     selectedImage === idx ? 'border-foreground' : 'border-foreground/10'
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" style={{ filter: 'brightness(1.05) contrast(1.05) saturate(1.1)' }} />
+                  <img 
+                    src={img} 
+                    alt={`${product.name} - Image ${idx + 1}`}
+                    className="w-full h-full object-cover" 
+                    style={{ filter: 'brightness(1.05) contrast(1.05) saturate(1.1)' }}
+                    onError={(e) => {
+                      // If image fails to load, hide the thumbnail
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
                 </motion.button>
               ))}
             </div>
@@ -458,12 +515,16 @@ export function ProductDetailPage() {
               className="py-6 border-t border-b border-foreground/10"
             >
               <div className="flex items-baseline gap-3 mb-2">
-                <span className="text-2xl md:text-3xl">₹{(product as any).priceINR || product.price * 75}</span>
-                {product.originalPrice && (
+                <span className="text-2xl md:text-3xl">
+                  {formatPrice(product.price, product.price_inr)}
+                </span>
+                {product.original_price && (
                   <>
-                    <span className="text-lg text-foreground/30 line-through">₹{(product as any).originalPriceINR || product.originalPrice * 75}</span>
+                    <span className="text-lg text-foreground/30 line-through">
+                      {formatPrice(product.original_price, product.original_price_inr)}
+                    </span>
                     <span className="text-sm text-red-600">
-                      {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                      {Math.round(((product.original_price - product.price) / product.original_price) * 100)}% OFF
                     </span>
                   </>
                 )}
@@ -493,10 +554,13 @@ export function ProductDetailPage() {
                       >
                         <div className="w-14 h-16 border border-foreground/10 overflow-hidden hover:border-foreground transition-all">
                           <img 
-                            src={variant.image} 
+                            src={variant.images && variant.images.length > 0 ? variant.images[0] : 'https://via.placeholder.com/800'} 
                             alt={variant.name} 
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             style={{ filter: 'brightness(1.05) contrast(1.05) saturate(1.1)' }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800';
+                            }}
                           />
                         </div>
                       </motion.button>
@@ -889,10 +953,10 @@ export function ProductDetailPage() {
                             <div className="text-center py-8">
                               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
                             </div>
-                          ) : reviews.length === 0 ? (
+                          ) : !reviews || reviews.length === 0 ? (
                             <p className="text-center text-gray-600 py-8">No reviews yet. Be the first to review!</p>
                           ) : (
-                            reviews.map((review) => {
+                            (reviews || []).map((review) => {
                               const isOwnReview = user && review.user_id === user.id;
                               const isEditing = editingReview === review.id;
                               
@@ -1435,14 +1499,14 @@ export function ProductDetailPage() {
         {completeTheLook.length > 0 && (
           <CompleteTheLookSection
             currentProduct={{
-              id: product.id,
+              id: String(product.id),
               name: product.name,
               price: product.price,
               originalPrice: product.original_price,
-              image: product.images[0] || '',
+              image: product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/800',
               category: product.category,
-              priceINR: (product as any).priceINR,
-              originalPriceINR: (product as any).originalPriceINR,
+              priceINR: product.price_inr,
+              originalPriceINR: product.original_price_inr,
             }}
             products={completeTheLook}
           />

@@ -61,6 +61,17 @@ export const AdminCategoriesPage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Form state for Add/Edit
+  const [formData, setFormData] = useState({
+    name: '',
+    slug: '',
+    description: '',
+    gender: 'women' as 'women' | 'men' | 'unisex',
+    order: 0,
+    is_visible: true,
+    parent_category: '',
+  });
 
   // Fetch categories from API
   useEffect(() => {
@@ -83,92 +94,125 @@ export const AdminCategoriesPage = () => {
     fetchCategories();
   }, []);
 
-  // Mock categories data (fallback - will be removed once API is fully working)
-  const mockCategories: Category[] = [
-    {
-      id: 'CAT-001',
-      name: 'Dresses',
-      slug: 'dresses',
-      description: 'Beautiful dresses for every occasion',
-      gender: 'women',
-      productCount: 45,
-      isVisible: true,
-      order: 1,
-    },
-    {
-      id: 'CAT-002',
-      name: 'Tops & Blouses',
-      slug: 'tops-blouses',
-      description: 'Stylish tops and elegant blouses',
-      gender: 'women',
-      productCount: 38,
-      isVisible: true,
-      order: 2,
-    },
-    {
-      id: 'CAT-003',
-      name: 'Bottoms',
-      slug: 'bottoms',
-      description: 'Pants, skirts, and shorts',
-      gender: 'women',
-      productCount: 32,
-      isVisible: true,
-      order: 3,
-    },
-    {
-      id: 'CAT-004',
-      name: 'Outerwear',
-      slug: 'outerwear',
-      description: 'Jackets, coats, and blazers',
-      gender: 'unisex',
-      productCount: 28,
-      isVisible: true,
-      order: 4,
-    },
-    {
-      id: 'CAT-005',
-      name: 'Accessories',
-      slug: 'accessories',
-      description: 'Bags, jewelry, and fashion accessories',
-      gender: 'unisex',
-      productCount: 52,
-      isVisible: true,
-      order: 5,
-    },
-    {
-      id: 'CAT-006',
-      name: 'Shirts',
-      slug: 'shirts',
-      description: 'Classic and casual shirts for men',
-      gender: 'men',
-      productCount: 24,
-      isVisible: true,
-      order: 6,
-    },
-    {
-      id: 'CAT-007',
-      name: 'Footwear',
-      slug: 'footwear',
-      description: 'Shoes, boots, and sandals',
-      gender: 'unisex',
-      productCount: 36,
-      isVisible: false,
-      order: 7,
-    },
-  ];
 
   const handleEdit = (category: Category) => {
     setSelectedCategory(category);
+    setFormData({
+      name: category.name,
+      slug: category.slug,
+      description: category.description,
+      gender: category.gender,
+      order: category.order || 0,
+      is_visible: (category as any).isVisible !== false && (category as any).is_visible !== false,
+      parent_category: (category as any).parentCategory || (category as any).parent_category || '',
+    });
     setShowEditDialog(true);
   };
 
-  const handleDelete = (category: Category) => {
-    toast.success(`Category "${category.name}" deleted successfully`);
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      slug: '',
+      description: '',
+      gender: 'women',
+      order: 0,
+      is_visible: true,
+      parent_category: '',
+    });
   };
 
-  const handleToggleVisibility = (category: Category) => {
-    const newStatus = category.isVisible ? 'hidden' : 'visible';
-    toast.success(`Category "${category.name}" is now ${newStatus}`);
+  const handleCreateCategory = async () => {
+    if (!formData.name || !formData.slug) {
+      toast.error('Please fill in category name and slug');
+      return;
+    }
+
+    try {
+      await categoryService.create({
+        name: formData.name,
+        slug: formData.slug.toLowerCase().replace(/\s+/g, '-'),
+        description: formData.description,
+        gender: formData.gender,
+        order: formData.order,
+        is_visible: formData.is_visible,
+        parent_category: formData.parent_category || undefined,
+      });
+      toast.success('Category created successfully');
+      setShowAddDialog(false);
+      resetForm();
+      // Refresh categories
+      const data = await categoryService.list();
+      setCategories(data || []);
+    } catch (error: any) {
+      console.error('Failed to create category:', error);
+      toast.error(error.message || 'Failed to create category');
+    }
+  };
+
+  const handleUpdateCategory = async () => {
+    if (!selectedCategory) return;
+    if (!formData.name || !formData.slug) {
+      toast.error('Please fill in category name and slug');
+      return;
+    }
+
+    try {
+      await categoryService.update(selectedCategory.id, {
+        name: formData.name,
+        slug: formData.slug.toLowerCase().replace(/\s+/g, '-'),
+        description: formData.description,
+        gender: formData.gender,
+        order: formData.order,
+        is_visible: formData.is_visible,
+        parent_category: formData.parent_category || undefined,
+      });
+      toast.success('Category updated successfully');
+      setShowEditDialog(false);
+      setSelectedCategory(null);
+      resetForm();
+      // Refresh categories
+      const data = await categoryService.list();
+      setCategories(data || []);
+    } catch (error: any) {
+      console.error('Failed to update category:', error);
+      toast.error(error.message || 'Failed to update category');
+    }
+  };
+
+  const handleDelete = async (category: Category) => {
+    if (!confirm(`Are you sure you want to delete "${category.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await categoryService.delete(category.id);
+      toast.success(`Category "${category.name}" deleted successfully`);
+      // Refresh categories
+      const data = await categoryService.list();
+      setCategories(data || []);
+    } catch (error: any) {
+      console.error('Failed to delete category:', error);
+      toast.error(error.message || 'Failed to delete category');
+    }
+  };
+
+  const handleToggleVisibility = async (category: Category) => {
+    try {
+      const currentVisibility = (category as any).isVisible !== false && (category as any).is_visible !== false;
+      const newVisibility = !currentVisibility;
+      
+      await categoryService.update(category.id, {
+        is_visible: newVisibility,
+      });
+      
+      toast.success(`Category "${category.name}" is now ${newVisibility ? 'visible' : 'hidden'}`);
+      // Refresh categories
+      const data = await categoryService.list();
+      setCategories(data || []);
+    } catch (error: any) {
+      console.error('Failed to toggle category visibility:', error);
+      toast.error(error.message || 'Failed to update category visibility');
+    }
   };
 
   // Use API data
@@ -339,12 +383,20 @@ export const AdminCategoriesPage = () => {
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Category Name</Label>
-                <Input placeholder="e.g., Dresses" />
+                <Label>Category Name *</Label>
+                <Input 
+                  placeholder="e.g., Dresses" 
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
-                <Label>URL Slug</Label>
-                <Input placeholder="e.g., dresses" />
+                <Label>URL Slug *</Label>
+                <Input 
+                  placeholder="e.g., dresses" 
+                  value={formData.slug}
+                  onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                />
               </div>
             </div>
             <div className="space-y-2">
@@ -352,12 +404,17 @@ export const AdminCategoriesPage = () => {
               <Textarea
                 placeholder="Brief description of the category..."
                 rows={3}
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               />
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Gender</Label>
-                <Select defaultValue="women">
+                <Select 
+                  value={formData.gender}
+                  onValueChange={(value: any) => setFormData({ ...formData, gender: value })}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -370,25 +427,37 @@ export const AdminCategoriesPage = () => {
               </div>
               <div className="space-y-2">
                 <Label>Display Order</Label>
-                <Input type="number" placeholder="1" min="1" />
+                <Input 
+                  type="number" 
+                  placeholder="1" 
+                  min="1" 
+                  value={formData.order}
+                  onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Visibility</Label>
                 <div className="flex items-center h-10">
-                  <Switch defaultChecked />
+                  <Switch 
+                    checked={formData.is_visible}
+                    onCheckedChange={(checked) => setFormData({ ...formData, is_visible: checked })}
+                  />
                   <span className="ml-2 text-sm">Visible</span>
                 </div>
               </div>
             </div>
             <div className="space-y-2">
               <Label>Parent Category (Optional)</Label>
-              <Select>
+              <Select 
+                value={formData.parent_category}
+                onValueChange={(value) => setFormData({ ...formData, parent_category: value === 'none' ? '' : value })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="None" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">None</SelectItem>
-                  {displayCategories.map((cat) => (
+                  {displayCategories.filter(cat => cat.id !== selectedCategory?.id).map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
                     </SelectItem>
@@ -398,15 +467,13 @@ export const AdminCategoriesPage = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+            <Button variant="outline" onClick={() => {
+              setShowAddDialog(false);
+              resetForm();
+            }}>
               Cancel
             </Button>
-            <Button
-              onClick={() => {
-                toast.success('Category created successfully');
-                setShowAddDialog(false);
-              }}
-            >
+            <Button onClick={handleCreateCategory}>
               Create Category
             </Button>
           </DialogFooter>
@@ -426,25 +493,35 @@ export const AdminCategoriesPage = () => {
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Category Name</Label>
-                  <Input defaultValue={selectedCategory.name} />
+                  <Label>Category Name *</Label>
+                  <Input 
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>URL Slug</Label>
-                  <Input defaultValue={selectedCategory.slug} />
+                  <Label>URL Slug *</Label>
+                  <Input 
+                    value={formData.slug}
+                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Textarea
-                  defaultValue={selectedCategory.description}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Gender</Label>
-                  <Select defaultValue={selectedCategory.gender}>
+                  <Select 
+                    value={formData.gender}
+                    onValueChange={(value: any) => setFormData({ ...formData, gender: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -459,31 +536,52 @@ export const AdminCategoriesPage = () => {
                   <Label>Display Order</Label>
                   <Input
                     type="number"
-                    defaultValue={selectedCategory.order}
+                    value={formData.order}
+                    onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
                     min="1"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Visibility</Label>
                   <div className="flex items-center h-10">
-                    <Switch defaultChecked={selectedCategory.isVisible} />
+                    <Switch 
+                      checked={formData.is_visible}
+                      onCheckedChange={(checked) => setFormData({ ...formData, is_visible: checked })}
+                    />
                     <span className="ml-2 text-sm">Visible</span>
                   </div>
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label>Parent Category (Optional)</Label>
+                <Select 
+                  value={formData.parent_category}
+                  onValueChange={(value) => setFormData({ ...formData, parent_category: value === 'none' ? '' : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="None" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {displayCategories.filter(cat => cat.id !== selectedCategory.id).map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+            <Button variant="outline" onClick={() => {
+              setShowEditDialog(false);
+              setSelectedCategory(null);
+              resetForm();
+            }}>
               Cancel
             </Button>
-            <Button
-              onClick={() => {
-                toast.success('Category updated successfully');
-                setShowEditDialog(false);
-                setSelectedCategory(null);
-              }}
-            >
+            <Button onClick={handleUpdateCategory}>
               Update Category
             </Button>
           </DialogFooter>

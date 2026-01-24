@@ -1,5 +1,6 @@
 import { Hero } from '../components/Hero';
 import { VideoShowcase } from '../components/VideoShowcase';
+import { InspirationVideos } from '../components/InspirationVideos';
 import { Categories } from '../components/Categories';
 import { ProductsGrid } from '../components/ProductsGrid';
 import { Featured } from '../components/Featured';
@@ -26,6 +27,9 @@ export function HomePage() {
       {config.homepage.sections.editorialFeatures && (
         <VideoShowcase />
       )}
+      <div className="snap-start">
+        <InspirationVideos />
+      </div>
       <div className="relative bg-background snap-start">
         {config.homepage.sections.newArrivals && (
           <ProductsGrid />

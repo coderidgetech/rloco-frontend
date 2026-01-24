@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { VendorTier, VendorRole, VendorPermissions, ROLE_PERMISSIONS, VENDOR_TIERS } from '../../types/vendor-permissions';
+import { adminService } from '../../services/adminService';
 
 export const AddVendorPage = () => {
   const navigate = useNavigate();
@@ -177,41 +178,56 @@ export const AddVendorPage = () => {
 
 
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Validation
     if (!vendorName || !storeName || !email || !phone) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    // Create vendor data
-    const vendorData = {
-      vendorName,
-      storeName,
-      email,
-      phone,
-      website,
-      address,
-      city,
-      state,
-      zipCode,
-      country,
-      description,
-      contactPerson,
-      taxId,
-      bankName,
-      accountNumber,
-      routingNumber,
-      accountHolderName,
-      subscriptionPlan: selectedPlan,
-      subscriptionPlanId: selectedPlanId,
-      role: selectedRole,
-      permissions: customPermissions,
-    };
+    if (!email.includes('@')) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
 
-    console.log('Creating vendor:', vendorData);
-    toast.success('Vendor created successfully!');
-    navigate('/admin/vendors');
+    try {
+      // Create vendor data - map to API format
+      const vendorData = {
+        name: vendorName,
+        email: email,
+        phone: phone,
+        role: 'vendor' as const,
+        // Store additional vendor-specific data in metadata or separate fields
+        // Note: Backend may need to be extended to support all these fields
+        metadata: {
+          storeName,
+          website,
+          address,
+          city,
+          state,
+          zipCode,
+          country,
+          description,
+          contactPerson,
+          taxId,
+          bankName,
+          accountNumber,
+          routingNumber,
+          accountHolderName,
+          subscriptionPlan: selectedPlan,
+          subscriptionPlanId: selectedPlanId,
+          vendorRole: selectedRole,
+          permissions: customPermissions,
+        },
+      };
+
+      await adminService.createVendor(vendorData);
+      toast.success('Vendor created successfully!');
+      navigate('/admin/vendors');
+    } catch (error: any) {
+      console.error('Failed to create vendor:', error);
+      toast.error(error.message || 'Failed to create vendor');
+    }
   };
 
   return (
@@ -340,7 +356,7 @@ export const AddVendorPage = () => {
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
                         id="contactPerson"
-                        placeholder="John Doe"
+                        placeholder="Enter contact person name"
                         className="pl-10"
                         value={contactPerson}
                         onChange={(e) => setContactPerson(e.target.value)}
@@ -376,7 +392,7 @@ export const AddVendorPage = () => {
                   <Label htmlFor="address">Street Address</Label>
                   <Input
                     id="address"
-                    placeholder="123 Main Street"
+                    placeholder="Enter street address"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                   />

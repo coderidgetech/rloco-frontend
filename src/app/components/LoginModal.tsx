@@ -171,7 +171,7 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="John Doe"
+                    placeholder="Enter your full name"
                     error={errors.name}
                     icon={<User size={16} />}
                   />

@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "clear-cache": "rm -rf node_modules/.vite dist node_modules/.cache tsconfig.tsbuildinfo 2>/dev/null || true",
+    "clear-cache:win": "if exist node_modules\\.vite rmdir /s /q node_modules\\.vite && if exist dist rmdir /s /q dist && if exist node_modules\\.cache rmdir /s /q node_modules\\.cache && if exist tsconfig.tsbuildinfo del /f /q tsconfig.tsbuildinfo",
+    "fresh": "npm run clear-cache && npm run dev",
+    "fresh:win": "npm run clear-cache:win && npm run dev"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",

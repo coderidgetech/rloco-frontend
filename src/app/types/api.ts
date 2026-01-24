@@ -311,8 +311,11 @@ export interface CalculateTaxRequest {
   country: string;
   state?: string;
   city?: string;
+  postal_code?: string;
   zip_code?: string;
-  amount: number;
+  subtotal: number;
+  /** @deprecated use subtotal */
+  amount?: number;
 }
 
 export interface ApiError {
@@ -322,7 +325,9 @@ export interface ApiError {
 }
 
 export interface PaginatedResponse<T> {
-  data: T[];
+  products?: T[]; // Products API returns 'products' field
+  orders?: T[]; // Orders API returns 'orders' field
+  data?: T[]; // Some APIs might return 'data' field
   total: number;
   limit: number;
   skip: number;

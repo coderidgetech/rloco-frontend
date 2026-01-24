@@ -8,7 +8,13 @@ export const shippingService = {
   },
 
   async calculate(request: CalculateShippingRequest): Promise<ShippingMethod[]> {
-    const response = await api.post<ShippingMethod[]>('/shipping/calculate', request);
-    return response.data;
+    const response = await api.post<{ methods?: ShippingMethod[] } | ShippingMethod[]>('/shipping/calculate', {
+      country: request.country,
+      subtotal: request.subtotal,
+      weight: (request as any).weight,
+    });
+    const data = response.data;
+    if (Array.isArray(data)) return data;
+    return data?.methods ?? [];
   },
 };

@@ -49,14 +49,15 @@ import {
 import { productService } from '../../services/productService';
 import { Product } from '../../types/api';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 export const AdminProductsPage = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [showEditDialog, setShowEditDialog] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -86,13 +87,12 @@ export const AdminProductsPage = () => {
         }
 
         const response = await productService.list(params);
-        setProducts(response.data);
-        setTotal(response.total);
+        setProducts(response?.products || []);
+        setTotal(response?.total || 0);
       } catch (error) {
         console.error('Failed to fetch products:', error);
         toast.error('Failed to load products');
         setProducts([]);
-        setTotal(0);
         setTotal(0);
       } finally {
         setLoading(false);
@@ -102,14 +102,14 @@ export const AdminProductsPage = () => {
     fetchProducts();
   }, [page, limit, categoryFilter, statusFilter]);
 
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = (products || []).filter((product) => {
     const matchesSearch =
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.category.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
-  const categories = Array.from(new Set(products.map((p) => p.category)));
+  const categories = Array.from(new Set((products || []).map((p) => p.category)));
 
   const handleDelete = async () => {
     if (!selectedProduct) return;
@@ -121,8 +121,8 @@ export const AdminProductsPage = () => {
       setSelectedProduct(null);
       // Refresh products list
       const response = await productService.list({ limit, skip: page * limit });
-      setProducts(response.data);
-      setTotal(response.total);
+      setProducts(response.products || []);
+      setTotal(response.total || 0);
     } catch (error: any) {
       console.error('Failed to delete product:', error);
       toast.error(error.message || 'Failed to delete product');
@@ -130,8 +130,7 @@ export const AdminProductsPage = () => {
   };
 
   const handleEdit = (product: Product) => {
-    setSelectedProduct(product);
-    setShowEditDialog(true);
+    navigate(`/admin/products/edit?id=${product.id}`);
   };
 
   const handleDuplicate = async (product: Product) => {
@@ -150,8 +149,8 @@ export const AdminProductsPage = () => {
       toast.success(`Product "${product.name}" duplicated successfully`);
       // Refresh products list
       const response = await productService.list({ limit, skip: page * limit });
-      setProducts(response.data);
-      setTotal(response.total);
+      setProducts(response.products || []);
+      setTotal(response.total || 0);
     } catch (error: any) {
       console.error('Failed to duplicate product:', error);
       toast.error(error.message || 'Failed to duplicate product');
@@ -182,7 +181,7 @@ export const AdminProductsPage = () => {
               <Upload className="h-4 w-4 mr-2" />
               Import
             </Button>
-            <Button onClick={() => setShowEditDialog(true)}>
+            <Button onClick={() => navigate('/admin/products/add')}>
               <Plus className="h-4 w-4 mr-2" />
               Add Product
             </Button>
@@ -389,44 +388,6 @@ export const AdminProductsPage = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit/Add Product Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedProduct ? 'Edit Product' : 'Add New Product'}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedProduct
-                ? 'Update product information'
-                : 'Create a new product in your catalog'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            {/* Product form would go here */}
-            <p className="text-sm text-gray-500 text-center py-8">
-              Product form editor will be implemented here with all fields including images,
-              pricing, inventory, categories, etc.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                toast.success(
-                  selectedProduct ? 'Product updated successfully' : 'Product created successfully'
-                );
-                setShowEditDialog(false);
-                setSelectedProduct(null);
-              }}
-            >
-              {selectedProduct ? 'Update' : 'Create'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </AdminLayout>
   );
 };

@@ -39,7 +39,7 @@ export function ProductsGrid() {
     
     const size = product.sizes[0] || 'M';
     addToCart({
-      id: parseInt(product.id) || product.id,
+      id: product.id, // Use product.id directly (MongoDB ObjectID string)
       name: product.name,
       price: product.price,
       image: product.images[0] || '',

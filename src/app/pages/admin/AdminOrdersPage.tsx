@@ -68,8 +68,8 @@ export const AdminOrdersPage = () => {
         }
 
         const response = await orderService.list(params);
-        setOrders(response.data);
-        setTotal(response.total);
+        setOrders(response?.data || []);
+        setTotal(response?.total || 0);
       } catch (error) {
         console.error('Failed to fetch orders:', error);
         toast.error('Failed to load orders');
@@ -83,7 +83,7 @@ export const AdminOrdersPage = () => {
   }, [page, limit, statusFilter]);
 
   // Format orders for display
-  const formattedOrders = orders.map((order) => ({
+  const formattedOrders = (orders || []).map((order) => ({
     id: order.order_number || `#${order.id.slice(-4)}`,
     customer: {
       name: order.shipping_info.first_name && order.shipping_info.last_name
@@ -103,79 +103,6 @@ export const AdminOrdersPage = () => {
     orderData: order, // Keep full order data for details
   }));
 
-  // Mock orders data (fallback)
-  const mockOrders: any[] = [
-    {
-      id: '#ORD-1234',
-      customer: {
-        name: 'Emma Johnson',
-        email: 'emma.johnson@example.com',
-        phone: '+1 (555) 123-4567',
-      },
-      items: 3,
-      total: 245.00,
-      status: 'delivered',
-      date: '2026-01-08',
-      paymentMethod: 'Credit Card',
-      shippingAddress: '123 Main St, New York, NY 10001',
-    },
-    {
-      id: '#ORD-1233',
-      customer: {
-        name: 'Michael Chen',
-        email: 'michael.chen@example.com',
-        phone: '+1 (555) 234-5678',
-      },
-      items: 2,
-      total: 189.00,
-      status: 'shipped',
-      date: '2026-01-09',
-      paymentMethod: 'PayPal',
-      shippingAddress: '456 Oak Ave, Los Angeles, CA 90001',
-    },
-    {
-      id: '#ORD-1232',
-      customer: {
-        name: 'Sarah Williams',
-        email: 'sarah.williams@example.com',
-        phone: '+1 (555) 345-6789',
-      },
-      items: 5,
-      total: 412.00,
-      status: 'processing',
-      date: '2026-01-09',
-      paymentMethod: 'Credit Card',
-      shippingAddress: '789 Pine Rd, Chicago, IL 60601',
-    },
-    {
-      id: '#ORD-1231',
-      customer: {
-        name: 'James Brown',
-        email: 'james.brown@example.com',
-        phone: '+1 (555) 456-7890',
-      },
-      items: 1,
-      total: 156.00,
-      status: 'pending',
-      date: '2026-01-10',
-      paymentMethod: 'Credit Card',
-      shippingAddress: '321 Elm St, Houston, TX 77001',
-    },
-    {
-      id: '#ORD-1230',
-      customer: {
-        name: 'Lisa Anderson',
-        email: 'lisa.anderson@example.com',
-        phone: '+1 (555) 567-8901',
-      },
-      items: 4,
-      total: 325.00,
-      status: 'cancelled',
-      date: '2026-01-07',
-      paymentMethod: 'PayPal',
-      shippingAddress: '654 Maple Dr, Miami, FL 33101',
-    },
-  ];
 
   const filteredOrders = formattedOrders.filter((order) => {
     const matchesSearch =

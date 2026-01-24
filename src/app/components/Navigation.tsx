@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { useSiteConfig } from '../context/SiteConfigContext';
+import { useUser } from '../context/UserContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SearchModal } from './SearchModal';
@@ -23,22 +24,12 @@ export function Navigation() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<'women' | 'men' | null>(null);
   const [mobileSubMenu, setMobileSubMenu] = useState<'women' | 'men' | null>(null);
-  // Check login state from localStorage on mount (for regular users, not admin)
-  const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    // Only check localStorage on client side
-    if (typeof window === 'undefined') return false;
-    try {
-      const stored = localStorage.getItem('isLoggedIn');
-      return stored === 'true';
-    } catch {
-      return false;
-    }
-  });
   
   const { itemCount } = useCart();
   const { itemCount: wishlistCount } = useWishlist();
   const { country, setCountry } = useCurrency();
   const { config } = useSiteConfig();
+  const { isAuthenticated } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -61,8 +52,9 @@ export function Navigation() {
       
       setPrevScrollPos(currentScrollPos);
       // Show logo after scrolling 105px - appears when hero logo starts fading
-      // Hero logo starts fading at 75% of 140px = 105px, completely gone by 119px
-      // Navbar logo appears at 105px to ensure smooth handoff
+      // Hero logo starts fading at 85% of 140px = 119px, completely gone by 140px
+      // Navbar logo appears at 105px (75% of 140px) to ensure smooth handoff
+      // This creates overlap period where both logos are visible for seamless transition
       setScrolled(currentScrollPos > 105);
     };
     
@@ -137,41 +129,16 @@ export function Navigation() {
   };
 
   const handleLoginSuccess = (userData: { email: string; name: string }) => {
-    setIsLoggedIn(true);
-    // Store user data in sessionStorage for better security (vs localStorage)
-    try {
-      sessionStorage.setItem('userData', JSON.stringify(userData));
-      sessionStorage.setItem('isLoggedIn', 'true');
-      // Also keep in localStorage for backwards compatibility if needed
-      localStorage.setItem('isLoggedIn', 'true');
-    } catch (error) {
-      console.error('Failed to save login state:', error);
-    }
+    setAccountOpen(false);
+    // Navigate to account page after successful login
+    navigate('/account');
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    try {
-      sessionStorage.removeItem('userData');
-      sessionStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('userData');
-      localStorage.removeItem('isLoggedIn');
-    } catch (error) {
-      console.error('Failed to clear login state:', error);
-    }
+    setAccountOpen(false);
+    // Navigation will be handled by AccountPageStandalone
   };
 
-  // Sync login state from storage changes (for multi-tab support)
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'isLoggedIn') {
-        setIsLoggedIn(e.newValue === 'true');
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
 
   return (
     <>
@@ -372,7 +339,7 @@ export function Navigation() {
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setAccountOpen(true)}
+                  onClick={() => navigate(isAuthenticated ? '/account' : '/login?redirect=/account')}
                   className="hidden md:block text-foreground/70 hover:text-foreground transition-colors"
                 >
                   <User size={20} />
@@ -733,7 +700,7 @@ export function Navigation() {
                   </button>
                   <button
                     onClick={() => {
-                      setAccountOpen(true);
+                      navigate(isAuthenticated ? '/account' : '/login?redirect=/account');
                       setIsOpen(false);
                     }}
                     className="text-foreground/70 hover:text-foreground transition-colors text-left flex items-center gap-2 py-3 px-2 -mx-2 rounded-md active:bg-foreground/5"
@@ -777,14 +744,8 @@ export function Navigation() {
       {/* Cart Drawer */}
       <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
       
-      {/* Show LoginModal if not logged in, AccountPage if logged in */}
-      {isLoggedIn ? (
-        <AccountPage 
-          isOpen={accountOpen} 
-          onClose={() => setAccountOpen(false)} 
-          onLogout={handleLogout}
-        />
-      ) : (
+      {/* Show LoginModal if not logged in (for modal access), AccountPage route handles logged-in state */}
+      {!isAuthenticated && (
         <LoginModal 
           isOpen={accountOpen} 
           onClose={() => setAccountOpen(false)} 

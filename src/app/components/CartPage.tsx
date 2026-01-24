@@ -1,34 +1,76 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Minus, Plus, Trash2, ShoppingBag, Tag, ArrowRight, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { CheckoutPage } from './CheckoutPage';
 import { Button } from './ui/button';
 import { useFeaturedProducts } from '../hooks/useProducts';
+import { promotionService } from '../services/promotionService';
+import { Promotion } from '../types/api';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface CartPageProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const COUPON_CODES = {
-  'RLOCO10': 10,
-  'SAVE20': 20,
-  'WELCOME15': 15,
-  'FREESHIP': 0, // Free shipping
-};
-
 export function CartPage({ isOpen, onClose }: CartPageProps) {
   const { items, removeFromCart, updateQuantity, clearCart, total } = useCart();
+  const { currency } = useCurrency();
   const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; promotion?: Promotion } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [availablePromotions, setAvailablePromotions] = useState<Promotion[]>([]);
+  const [loadingPromotions, setLoadingPromotions] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchAvailablePromotions();
+    }
+  }, [isOpen]);
+
+  const fetchAvailablePromotions = async () => {
+    try {
+      setLoadingPromotions(true);
+      const promotions = await promotionService.list();
+      const now = new Date();
+      const activePromotions = promotions.filter(p => {
+        const startDate = new Date(p.start_date);
+        const endDate = new Date(p.end_date);
+        return p.is_active && now >= startDate && now <= endDate;
+      });
+      setAvailablePromotions(activePromotions);
+    } catch (error) {
+      console.error('Failed to fetch promotions:', error);
+      setAvailablePromotions([]);
+    } finally {
+      setLoadingPromotions(false);
+    }
+  };
 
   const subtotal = total;
-  const discount = appliedCoupon ? (subtotal * appliedCoupon.discount) / 100 : 0;
-  const shipping = appliedCoupon?.code === 'FREESHIP' ? 0 : subtotal > 200 ? 0 : 15;
+  
+  // Calculate discount based on promotion type
+  const discount = appliedCoupon && appliedCoupon.promotion
+    ? appliedCoupon.promotion.type === 'percentage'
+      ? Math.min((subtotal * appliedCoupon.promotion.value / 100), appliedCoupon.promotion.max_discount || Infinity)
+      : appliedCoupon.promotion.type === 'fixed'
+        ? appliedCoupon.promotion.value
+        : 0
+    : appliedCoupon
+      ? (subtotal * appliedCoupon.discount) / 100
+      : 0;
+  
+  const shippingThreshold = currency === 'USD' ? 200 : 15000;
+  const shippingCost = currency === 'USD' ? 15 : 1125;
+  const shipping = (appliedCoupon?.promotion?.type === 'free_shipping' || appliedCoupon?.code === 'FREESHIP')
+    ? 0
+    : subtotal > shippingThreshold
+      ? 0
+      : shippingCost;
+  
   const tax = (subtotal - discount) * 0.08; // 8% tax
   const finalTotal = subtotal - discount + shipping + tax;
 
@@ -37,17 +79,40 @@ export function CartPage({ isOpen, onClose }: CartPageProps) {
     .filter((p) => p.featured && !items.some((item) => item.id === p.id))
     .slice(0, 4);
 
-  const handleApplyCoupon = () => {
-    const upperCode = couponCode.toUpperCase();
-    if (COUPON_CODES[upperCode as keyof typeof COUPON_CODES] !== undefined) {
-      setAppliedCoupon({
-        code: upperCode,
-        discount: COUPON_CODES[upperCode as keyof typeof COUPON_CODES],
-      });
-      toast.success(`Coupon "${upperCode}" applied successfully!`);
-      setCouponCode('');
-    } else {
-      toast.error('Invalid coupon code');
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error('Please enter a promotion code');
+      return;
+    }
+
+    try {
+      const result = await promotionService.validate(couponCode.trim().toUpperCase(), subtotal);
+      
+      if (result.valid && result.promotion) {
+        let discountAmount = 0;
+        if (result.promotion.type === 'percentage') {
+          discountAmount = (subtotal * (result.promotion.value / 100));
+          if (result.promotion.max_discount) {
+            discountAmount = Math.min(discountAmount, result.promotion.max_discount);
+          }
+        } else if (result.promotion.type === 'fixed') {
+          discountAmount = result.promotion.value;
+        }
+
+        setAppliedCoupon({
+          code: result.promotion.code,
+          discount: result.promotion.type === 'percentage' ? result.promotion.value : 
+                   (discountAmount / subtotal) * 100,
+          promotion: result.promotion,
+        });
+        toast.success(`Promotion "${result.promotion.code}" applied successfully!`);
+        setCouponCode('');
+      } else {
+        toast.error('Invalid or expired promotion code');
+      }
+    } catch (error: any) {
+      console.error('Failed to validate promotion:', error);
+      toast.error(error?.response?.data?.error || 'Failed to validate promotion code');
     }
   };
 
@@ -309,20 +374,28 @@ export function CartPage({ isOpen, onClose }: CartPageProps) {
                                 </button>
                               </motion.div>
                             )}
-                            <div className="mt-3 text-xs text-muted-foreground">
-                              <p className="mb-1">Try these codes:</p>
-                              <div className="flex flex-wrap gap-2">
-                                {Object.keys(COUPON_CODES).map((code) => (
-                                  <button
-                                    key={code}
-                                    onClick={() => setCouponCode(code)}
-                                    className="px-2 py-1 bg-background border border-border rounded hover:border-primary transition-colors"
-                                  >
-                                    {code}
-                                  </button>
-                                ))}
+                            {availablePromotions.length > 0 && (
+                              <div className="mt-3 text-xs text-muted-foreground">
+                                <p className="mb-1">Available promotions:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {availablePromotions.slice(0, 4).map((promo) => (
+                                    <button
+                                      key={promo.id}
+                                      onClick={() => setCouponCode(promo.code)}
+                                      className="px-2 py-1 bg-background border border-border rounded hover:border-primary transition-colors"
+                                      title={promo.name}
+                                    >
+                                      {promo.code}
+                                    </button>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
+                            )}
+                            {loadingPromotions && (
+                              <div className="mt-3 text-xs text-muted-foreground">
+                                <p>Loading promotions...</p>
+                              </div>
+                            )}
                           </div>
 
                           {/* Order Summary */}

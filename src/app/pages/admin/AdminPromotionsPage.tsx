@@ -40,6 +40,20 @@ export const AdminPromotionsPage = () => {
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Form state for Add/Edit
+  const [formData, setFormData] = useState({
+    name: '',
+    code: '',
+    type: 'percentage' as 'percentage' | 'fixed' | 'free_shipping',
+    value: '',
+    min_purchase: '',
+    max_discount: '',
+    usage_limit: '',
+    start_date: '',
+    end_date: '',
+    is_active: true,
+  });
 
   // Fetch promotions from API
   useEffect(() => {
@@ -62,15 +76,139 @@ export const AdminPromotionsPage = () => {
 
   const handleEdit = (promotion: Promotion) => {
     setSelectedPromotion(promotion);
+    setFormData({
+      name: promotion.name,
+      code: promotion.code,
+      type: promotion.type,
+      value: promotion.value.toString(),
+      min_purchase: promotion.min_purchase?.toString() || '',
+      max_discount: promotion.max_discount?.toString() || '',
+      usage_limit: promotion.usage_limit?.toString() || '',
+      start_date: promotion.start_date ? new Date(promotion.start_date).toISOString().split('T')[0] : '',
+      end_date: promotion.end_date ? new Date(promotion.end_date).toISOString().split('T')[0] : '',
+      is_active: promotion.is_active,
+    });
     setShowEditDialog(true);
   };
 
-  const handleDelete = (promotion: Promotion) => {
-    toast.success(`Promotion "${promotion.name}" deleted successfully`);
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      code: '',
+      type: 'percentage',
+      value: '',
+      min_purchase: '',
+      max_discount: '',
+      usage_limit: '',
+      start_date: '',
+      end_date: '',
+      is_active: true,
+    });
   };
 
-  const handleDuplicate = (promotion: Promotion) => {
-    toast.success(`Promotion "${promotion.name}" duplicated successfully`);
+  const handleCreatePromotion = async () => {
+    if (!formData.name || !formData.code || !formData.value || !formData.start_date || !formData.end_date) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      await adminService.createPromotion({
+        name: formData.name,
+        code: formData.code.toUpperCase(),
+        type: formData.type,
+        value: parseFloat(formData.value),
+        min_purchase: formData.min_purchase ? parseFloat(formData.min_purchase) : undefined,
+        max_discount: formData.max_discount ? parseFloat(formData.max_discount) : undefined,
+        usage_limit: formData.usage_limit ? parseInt(formData.usage_limit) : undefined,
+        start_date: new Date(formData.start_date).toISOString(),
+        end_date: new Date(formData.end_date).toISOString(),
+        is_active: formData.is_active,
+      });
+      toast.success('Promotion created successfully');
+      setShowAddDialog(false);
+      resetForm();
+      // Refresh promotions
+      const promotionList = await adminService.listPromotions();
+      setPromotions(Array.isArray(promotionList) ? promotionList : []);
+    } catch (error: any) {
+      console.error('Failed to create promotion:', error);
+      toast.error(error.message || 'Failed to create promotion');
+    }
+  };
+
+  const handleUpdatePromotion = async () => {
+    if (!selectedPromotion) return;
+    if (!formData.name || !formData.code || !formData.value || !formData.start_date || !formData.end_date) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    try {
+      await adminService.updatePromotion(selectedPromotion.id, {
+        name: formData.name,
+        code: formData.code.toUpperCase(),
+        type: formData.type,
+        value: parseFloat(formData.value),
+        min_purchase: formData.min_purchase ? parseFloat(formData.min_purchase) : undefined,
+        max_discount: formData.max_discount ? parseFloat(formData.max_discount) : undefined,
+        usage_limit: formData.usage_limit ? parseInt(formData.usage_limit) : undefined,
+        start_date: new Date(formData.start_date).toISOString(),
+        end_date: new Date(formData.end_date).toISOString(),
+        is_active: formData.is_active,
+      });
+      toast.success('Promotion updated successfully');
+      setShowEditDialog(false);
+      setSelectedPromotion(null);
+      resetForm();
+      // Refresh promotions
+      const promotionList = await adminService.listPromotions();
+      setPromotions(Array.isArray(promotionList) ? promotionList : []);
+    } catch (error: any) {
+      console.error('Failed to update promotion:', error);
+      toast.error(error.message || 'Failed to update promotion');
+    }
+  };
+
+  const handleDelete = async (promotion: Promotion) => {
+    if (!confirm(`Are you sure you want to delete "${promotion.name}"?`)) {
+      return;
+    }
+
+    try {
+      await adminService.deletePromotion(promotion.id);
+      toast.success(`Promotion "${promotion.name}" deleted successfully`);
+      // Refresh promotions
+      const promotionList = await adminService.listPromotions();
+      setPromotions(Array.isArray(promotionList) ? promotionList : []);
+    } catch (error: any) {
+      console.error('Failed to delete promotion:', error);
+      toast.error(error.message || 'Failed to delete promotion');
+    }
+  };
+
+  const handleDuplicate = async (promotion: Promotion) => {
+    try {
+      const duplicatedPromotion = await adminService.createPromotion({
+        name: `${promotion.name} (Copy)`,
+        code: `${promotion.code}_COPY`,
+        type: promotion.type,
+        value: promotion.value,
+        min_purchase: promotion.min_purchase,
+        max_discount: promotion.max_discount,
+        start_date: promotion.start_date,
+        end_date: promotion.end_date,
+        usage_limit: promotion.usage_limit,
+        is_active: false, // Start as inactive
+      });
+      toast.success(`Promotion "${promotion.name}" duplicated successfully`);
+      // Refresh promotions
+      const promotionList = await adminService.listPromotions();
+      setPromotions(Array.isArray(promotionList) ? promotionList : []);
+    } catch (error: any) {
+      console.error('Failed to duplicate promotion:', error);
+      toast.error(error.message || 'Failed to duplicate promotion');
+    }
   };
 
   const handleToggleStatus = async (promotion: Promotion) => {
@@ -224,15 +362,15 @@ export const AdminPromotionsPage = () => {
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      <p>{new Date(promotion.startDate).toLocaleDateString()}</p>
-                      <p className="text-gray-500">to {new Date(promotion.endDate).toLocaleDateString()}</p>
+                      <p>{new Date(promotion.start_date).toLocaleDateString()}</p>
+                      <p className="text-gray-500">to {new Date(promotion.end_date).toLocaleDateString()}</p>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div>
-                      <p className="font-semibold">{promotion.usageCount}</p>
-                      {promotion.usageLimit && (
-                        <p className="text-sm text-gray-500">of {promotion.usageLimit}</p>
+                      <p className="font-semibold">{promotion.usage_count || 0}</p>
+                      {promotion.usage_limit && (
+                        <p className="text-sm text-gray-500">of {promotion.usage_limit}</p>
                       )}
                     </div>
                   </TableCell>
@@ -294,22 +432,29 @@ export const AdminPromotionsPage = () => {
           <div className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Promotion Name</Label>
-                <Input placeholder="e.g., Winter Sale" />
+                <Label>Promotion Name *</Label>
+                <Input 
+                  placeholder="e.g., Winter Sale" 
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
-                <Label>Discount Code</Label>
-                <Input placeholder="e.g., WINTER25" />
+                <Label>Discount Code *</Label>
+                <Input 
+                  placeholder="e.g., WINTER25" 
+                  value={formData.code}
+                  onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea placeholder="Internal notes about this promotion..." rows={2} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Discount Type</Label>
-                <Select defaultValue="percentage">
+                <Label>Discount Type *</Label>
+                <Select 
+                  value={formData.type}
+                  onValueChange={(value: any) => setFormData({ ...formData, type: value })}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -321,45 +466,80 @@ export const AdminPromotionsPage = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Discount Value</Label>
-                <Input type="number" placeholder="25" />
+                <Label>Discount Value *</Label>
+                <Input 
+                  type="number" 
+                  placeholder="25" 
+                  value={formData.value}
+                  onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Minimum Purchase</Label>
-                <Input type="number" placeholder="0.00" />
+                <Input 
+                  type="number" 
+                  placeholder="0.00" 
+                  value={formData.min_purchase}
+                  onChange={(e) => setFormData({ ...formData, min_purchase: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
-                <Label>Usage Limit (Optional)</Label>
-                <Input type="number" placeholder="Unlimited" />
+                <Label>Max Discount</Label>
+                <Input 
+                  type="number" 
+                  placeholder="Optional" 
+                  value={formData.max_discount}
+                  onChange={(e) => setFormData({ ...formData, max_discount: e.target.value })}
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Start Date</Label>
-                <Input type="date" />
+                <Label>Usage Limit</Label>
+                <Input 
+                  type="number" 
+                  placeholder="Unlimited" 
+                  value={formData.usage_limit}
+                  onChange={(e) => setFormData({ ...formData, usage_limit: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Date *</Label>
+                <Input 
+                  type="date" 
+                  value={formData.start_date}
+                  onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
-                <Label>End Date</Label>
-                <Input type="date" />
+                <Label>End Date *</Label>
+                <Input 
+                  type="date" 
+                  value={formData.end_date}
+                  onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                />
               </div>
             </div>
             <div className="flex items-center space-x-2">
-              <Switch defaultChecked />
+              <Switch 
+                checked={formData.is_active}
+                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+              />
               <Label>Activate immediately</Label>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+            <Button variant="outline" onClick={() => {
+              setShowAddDialog(false);
+              resetForm();
+            }}>
               Cancel
             </Button>
-            <Button
-              onClick={() => {
-                toast.success('Promotion created successfully');
-                setShowAddDialog(false);
-              }}
-            >
+            <Button onClick={handleCreatePromotion}>
               Create Promotion
             </Button>
           </DialogFooter>
@@ -379,18 +559,27 @@ export const AdminPromotionsPage = () => {
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Promotion Name</Label>
-                  <Input defaultValue={selectedPromotion.name} />
+                  <Label>Promotion Name *</Label>
+                  <Input 
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>Discount Code</Label>
-                  <Input defaultValue={selectedPromotion.code} />
+                  <Label>Discount Code *</Label>
+                  <Input 
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Discount Type</Label>
-                  <Select defaultValue={selectedPromotion.type}>
+                  <Label>Discount Type *</Label>
+                  <Select 
+                    value={formData.type}
+                    onValueChange={(value: any) => setFormData({ ...formData, type: value })}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -402,37 +591,78 @@ export const AdminPromotionsPage = () => {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Discount Value</Label>
-                  <Input type="number" defaultValue={selectedPromotion.value} />
+                  <Label>Discount Value *</Label>
+                  <Input 
+                    type="number" 
+                    value={formData.value}
+                    onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Start Date</Label>
-                  <Input type="date" defaultValue={selectedPromotion.startDate} />
+                  <Label>Minimum Purchase</Label>
+                  <Input 
+                    type="number" 
+                    value={formData.min_purchase}
+                    onChange={(e) => setFormData({ ...formData, min_purchase: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label>End Date</Label>
-                  <Input type="date" defaultValue={selectedPromotion.endDate} />
+                  <Label>Max Discount</Label>
+                  <Input 
+                    type="number" 
+                    value={formData.max_discount}
+                    onChange={(e) => setFormData({ ...formData, max_discount: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Usage Limit</Label>
+                  <Input 
+                    type="number" 
+                    value={formData.usage_limit}
+                    onChange={(e) => setFormData({ ...formData, usage_limit: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Start Date *</Label>
+                  <Input 
+                    type="date" 
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>End Date *</Label>
+                  <Input 
+                    type="date" 
+                    value={formData.end_date}
+                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                  />
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <Switch defaultChecked={selectedPromotion.isActive} />
+                <Switch 
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                />
                 <Label>Active</Label>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+            <Button variant="outline" onClick={() => {
+              setShowEditDialog(false);
+              setSelectedPromotion(null);
+              resetForm();
+            }}>
               Cancel
             </Button>
-            <Button
-              onClick={() => {
-                toast.success('Promotion updated successfully');
-                setShowEditDialog(false);
-                setSelectedPromotion(null);
-              }}
-            >
+            <Button onClick={handleUpdatePromotion}>
               Update Promotion
             </Button>
           </DialogFooter>

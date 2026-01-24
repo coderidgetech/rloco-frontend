@@ -65,9 +65,9 @@ export const AdminCustomersPage = () => {
           skip: page * limit,
         });
         // Filter to only show customers (not admins or vendors)
-        const customerList = response.data.filter((user) => user.role === 'customer');
+        const customerList = (response?.data || []).filter((user) => user.role === 'customer');
         setCustomers(customerList);
-        setTotal(response.total);
+        setTotal(response?.total || 0);
       } catch (error) {
         console.error('Failed to fetch customers:', error);
         toast.error('Failed to load customers');
@@ -80,69 +80,6 @@ export const AdminCustomersPage = () => {
     fetchCustomers();
   }, [page, limit]);
 
-  // Mock customers data (fallback)
-  const mockCustomers: any[] = [
-    {
-      id: 'CUST-001',
-      name: 'Emma Johnson',
-      email: 'emma.johnson@example.com',
-      phone: '+1 (555) 123-4567',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Emma',
-      orders: 24,
-      totalSpent: 3450.00,
-      status: 'active',
-      joinedDate: '2025-03-15',
-      location: 'New York, NY',
-    },
-    {
-      id: 'CUST-002',
-      name: 'Michael Chen',
-      email: 'michael.chen@example.com',
-      phone: '+1 (555) 234-5678',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Michael',
-      orders: 18,
-      totalSpent: 2890.00,
-      status: 'active',
-      joinedDate: '2025-04-20',
-      location: 'Los Angeles, CA',
-    },
-    {
-      id: 'CUST-003',
-      name: 'Sarah Williams',
-      email: 'sarah.williams@example.com',
-      phone: '+1 (555) 345-6789',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah',
-      orders: 31,
-      totalSpent: 5670.00,
-      status: 'active',
-      joinedDate: '2025-02-10',
-      location: 'Chicago, IL',
-    },
-    {
-      id: 'CUST-004',
-      name: 'James Brown',
-      email: 'james.brown@example.com',
-      phone: '+1 (555) 456-7890',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=James',
-      orders: 5,
-      totalSpent: 780.00,
-      status: 'inactive',
-      joinedDate: '2025-11-05',
-      location: 'Houston, TX',
-    },
-    {
-      id: 'CUST-005',
-      name: 'Lisa Anderson',
-      email: 'lisa.anderson@example.com',
-      phone: '+1 (555) 567-8901',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Lisa',
-      orders: 42,
-      totalSpent: 8920.00,
-      status: 'active',
-      joinedDate: '2024-12-01',
-      location: 'Miami, FL',
-    },
-  ];
 
   const filteredCustomers = customers.filter((customer) => {
     const matchesSearch =
@@ -164,9 +101,11 @@ export const AdminCustomersPage = () => {
 
   const handleToggleStatus = async (customer: User) => {
     try {
-      // Note: Backend may need an 'active' field or similar
-      // For now, we'll just show a toast
-      toast.success(`Customer ${customer.name} status updated`);
+      // Note: User model doesn't have an 'active' field in backend
+      // This would require backend support to add an 'active' or 'status' field to User model
+      // For now, we can update other customer fields if needed
+      // TODO: Backend needs to add 'active' or 'status' field to User model for this to work
+      toast.info('Customer status toggle requires backend support. User model needs an "active" or "status" field.');
       // Refresh customers list
       const response = await adminService.listCustomers({ limit, skip: page * limit });
       const customerList = response.data.filter((user) => user.role === 'customer');

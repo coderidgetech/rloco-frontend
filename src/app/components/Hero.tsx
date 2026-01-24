@@ -55,38 +55,41 @@ export function Hero() {
   
   const isMobile = windowSize.width < 768;
   const initialScale = isMobile ? 2.2 : 3.8;
+  const finalScale = 1; // Final scale matches navbar logo size
   
   // Calculate exact vertical distance to navbar logo position
-  // Hero logo: absolute top-[38%] with -translate-y-1/2 means center is at 38% of viewport
+  // Hero logo: fixed top-[38%] with -translate-y-1/2 means center is at 38% of viewport
   // Navbar: fixed top-0, py-2 (8px padding), grid items-center centers logo vertically
   // Logo center in navbar: 8px (padding) + 16px (half logo) = 24px from viewport top
   const viewportHeight = windowSize.height || window.innerHeight || 1000;
-  const heroLogoCenterY = viewportHeight * 0.38; // Hero logo center Y position
+  const heroLogoCenterY = viewportHeight * 0.38; // Hero logo center Y position (38% from top)
   const navbarLogoCenterY = 24; // Exact navbar logo center (8px padding + 16px center)
-  const totalYMovement = heroLogoCenterY - navbarLogoCenterY;
+  const totalYMovement = heroLogoCenterY - navbarLogoCenterY; // Distance to travel upward
   
-  // Logo should stop moving and fade out at 75% of scroll (105px) - well before navbar
-  // This ensures it never visually reaches or passes over the toolbar
-  const fadeOutStart = 0.75; // Start fading at 75% (105px)
-  const movementLimit = 0.75; // Stop movement at 75% to prevent overflow
+  // Smooth easing function for natural motion
+  const easeInOutCubic = (t: number) => t < 0.5 
+    ? 4 * t * t * t 
+    : 1 - Math.pow(-2 * t + 2, 3) / 2;
   
-  // Smooth scale transition - complete before fade out
-  const logoScale = scrollProgress < movementLimit 
-    ? 1 + (initialScale - 1) * (1 - scrollProgress / movementLimit)
-    : 1;
+  // Use eased progress for smoother animation
+  const easedProgress = easeInOutCubic(scrollProgress);
   
-  // Logo fades out starting at 75% - completely invisible by 85%
-  // This ensures it never visually passes over the toolbar
+  // Logo scales down smoothly from initialScale to finalScale (1)
+  // Scale transition completes at 90% scroll for smooth handoff
+  const scaleProgress = Math.min(scrollProgress / 0.9, 1);
+  const logoScale = 1 + (initialScale - 1) * (1 - scaleProgress);
+  
+  // Logo fades out smoothly as it approaches navbar (starts at 90%, invisible by 100%)
+  // This creates seamless handoff with navbar logo which fades in at 105px (75% of 140px)
+  // Navbar logo appears at 75% scroll (105px), hero logo fades out from 90% to 100%
+  const fadeOutStart = 0.90; // Start fading at 90% (126px) - after navbar logo appears
   const logoOpacity = scrollProgress < fadeOutStart 
     ? 1 
-    : scrollProgress < 0.85 
-      ? Math.max(0, 1 - (scrollProgress - fadeOutStart) / 0.1)
-      : 0;
+    : Math.max(0, 1 - (scrollProgress - fadeOutStart) / (1 - fadeOutStart));
   
-  // Move logo up - but stop movement at 75% so it never reaches navbar
-  const logoY = scrollProgress < movementLimit 
-    ? -totalYMovement * (scrollProgress / movementLimit) * 0.8 // Only move 80% of distance
-    : -totalYMovement * 0.8 * (movementLimit / movementLimit); // Lock at max position
+  // Move logo smoothly all the way to navbar position
+  // Complete the full Y movement using eased progress for smooth motion
+  const logoY = -totalYMovement * easedProgress;
   
   // Keep centered horizontally (no X movement needed)
   const logoX = 0;
@@ -115,7 +118,7 @@ export function Hero() {
     <section 
       ref={ref} 
       className="relative h-screen w-full overflow-hidden bg-[#c5c5c5]"
-      style={{ position: 'relative' }}
+      style={{ position: 'relative', isolation: 'isolate' }}
     >
       {/* Background Model Image - Centered */}
       <div className="absolute inset-0 flex items-center justify-center">
@@ -177,27 +180,32 @@ export function Hero() {
       </div>
 
       {/* Large Logo in center that smoothly transitions to navbar position */}
-      <motion.div
-        style={{ 
-          scale: logoScale,
-          y: logoY,
-          x: logoX,
-          opacity: logoOpacity,
-          willChange: 'transform, opacity'
-        }}
-        className="absolute top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-[60] pointer-events-none"
-      >
+      {scrollY < scrollThreshold && (
+        <motion.div
+          style={{ 
+            scale: logoScale,
+            y: logoY,
+            x: logoX,
+            opacity: logoOpacity,
+            willChange: 'transform, opacity'
+          }}
+          className="fixed top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-[45] pointer-events-none"
+        >
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           style={{
-            filter: 'drop-shadow(2px 2px 20px rgba(0,0,0,0.4)) brightness(1.8)',
+            filter: scrollProgress < 0.5 
+              ? 'drop-shadow(2px 2px 20px rgba(0,0,0,0.4)) brightness(1.8)' 
+              : 'drop-shadow(1px 1px 8px rgba(0,0,0,0.2)) brightness(1)',
+            transition: 'filter 0.3s ease-out'
           }}
         >
           <Logo />
         </motion.div>
       </motion.div>
+      )}
 
       {/* Content Container - Bottom Aligned */}
       <div className="absolute bottom-0 left-0 right-0 z-30 px-6 md:px-12 lg:px-20 pb-16 md:pb-20 lg:pb-24">

@@ -23,7 +23,8 @@ export const useProducts = (params?: {
       setLoading(true);
       setError(null);
       const response = await productService.list(params);
-      setProducts(response.data || response.products || []);
+      // API returns { products: [], total: number, limit: number, skip: number }
+      setProducts(response.products || []);
       setTotal(response.total || 0);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch products');
@@ -77,7 +78,7 @@ export const useNewArrivals = (limit: number = 10) => {
         setLoading(true);
         setError(null);
         const data = await productService.getNewArrivals(limit);
-        setProducts(data);
+        setProducts(Array.isArray(data) ? data : []);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch new arrivals');
         setProducts([]);

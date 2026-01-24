@@ -21,7 +21,7 @@ export function CategoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(category ? category.charAt(0).toUpperCase() + category.slice(1) : 'All');
   const [selectedGender, setSelectedGender] = useState<'all' | 'women' | 'men'>(gender as 'all' | 'women' | 'men' || 'all');
-  const [priceRange, setPriceRange] = useState([0, 1000]);
+  const [priceRange, setPriceRange] = useState([0, 10000]); // Increased max to accommodate all products
   const [sortBy, setSortBy] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
   
@@ -49,10 +49,11 @@ export function CategoryPage() {
           params.gender = gender;
         }
         if (category) {
-          params.category = category;
+          // Capitalize category to match database format (e.g., "dresses" -> "Dresses")
+          params.category = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
         }
         const response = await productService.list(params);
-        setProducts(response.data || []);
+        setProducts(response.products || []);
       } catch (error) {
         console.error('Failed to fetch products:', error);
         setProducts([]);
@@ -169,7 +170,7 @@ export function CategoryPage() {
     }
 
     return filtered;
-  }, [gender, category, searchQuery, selectedCategory, selectedGender, priceRange, sortBy, selectedColors, selectedSizes, selectedMaterials, selectedSubcategories, minRating, showOnSale, showNewArrivals, showFeatured]);
+  }, [products, gender, category, searchQuery, selectedCategory, selectedGender, priceRange, sortBy, selectedColors, selectedSizes, selectedMaterials, selectedSubcategories, minRating, showOnSale, showNewArrivals, showFeatured]);
 
   // Check if any filters are active
   const hasActiveFilters = 
@@ -177,7 +178,7 @@ export function CategoryPage() {
     (selectedCategory !== 'All' && (!category || selectedCategory.toLowerCase() !== category.toLowerCase())) || 
     (selectedGender !== 'all' && (!gender || selectedGender.toLowerCase() !== gender.toLowerCase())) || 
     priceRange[0] !== 0 || 
-    priceRange[1] !== 1000 ||
+    priceRange[1] !== 10000 ||
     selectedColors.length > 0 ||
     selectedSizes.length > 0 ||
     selectedMaterials.length > 0 ||
@@ -191,7 +192,7 @@ export function CategoryPage() {
     setSearchQuery('');
     setSelectedCategory(category ? category.charAt(0).toUpperCase() + category.slice(1) : 'All');
     setSelectedGender(gender as 'all' | 'women' | 'men' || 'all');
-    setPriceRange([0, 1000]);
+    setPriceRange([0, 10000]);
     setSortBy('featured');
     setSelectedColors([]);
     setSelectedSizes([]);
@@ -334,10 +335,10 @@ export function CategoryPage() {
                 </span>
               ))}
               
-              {(priceRange[0] !== 0 || priceRange[1] !== 1000) && (
+              {(priceRange[0] !== 0 || priceRange[1] !== 10000) && (
                 <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
                   ₹{(priceRange[0] * 75).toLocaleString()} - ₹{(priceRange[1] * 75).toLocaleString()}
-                  <button onClick={() => setPriceRange([0, 1000])} className="hover:opacity-70">
+                  <button onClick={() => setPriceRange([0, 10000])} className="hover:opacity-70">
                     <X size={12} />
                   </button>
                 </span>

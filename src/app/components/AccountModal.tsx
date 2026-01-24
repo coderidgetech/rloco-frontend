@@ -94,7 +94,7 @@ export function AccountModal({ isOpen, onClose }: AccountModalProps) {
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="John Doe"
+                      placeholder="Enter your full name"
                       required={!isLogin}
                     />
                   </motion.div>

@@ -74,9 +74,9 @@ export const AdminDashboardPage = () => {
         ]);
 
         setDashboardStats(stats);
-        setSalesData(sales.data);
-        setRecentOrders(orders.data);
-        setTopProducts(products.data);
+        setSalesData(sales?.data || []);
+        setRecentOrders(orders?.data || []);
+        setTopProducts(products?.data || []);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
         // Set empty data on error instead of mock data
@@ -109,36 +109,7 @@ export const AdminDashboardPage = () => {
     amount: order.total,
     status: order.status || 'pending',
     date: new Date(order.created_at).toLocaleDateString(),
-  })) : [
-    {
-      id: '#ORD-1234',
-      customer: 'Emma Johnson',
-      amount: 245.00,
-      status: 'completed',
-      date: '2 hours ago',
-    },
-    {
-      id: '#ORD-1233',
-      customer: 'Michael Chen',
-      amount: 189.00,
-      status: 'processing',
-      date: '5 hours ago',
-    },
-    {
-      id: '#ORD-1232',
-      customer: 'Sarah Williams',
-      amount: 412.00,
-      status: 'pending',
-      date: '8 hours ago',
-    },
-    {
-      id: '#ORD-1231',
-      customer: 'James Brown',
-      amount: 156.00,
-      status: 'completed',
-      date: '1 day ago',
-    },
-  ];
+  })) : [];
 
   // Format top products for display
   const formattedTopProducts = topProducts.length > 0 ? topProducts.map((product) => ({
@@ -149,12 +120,12 @@ export const AdminDashboardPage = () => {
     change: 12.5,
   })) : [];
 
-  // Format stats from API or use defaults
+  // Format stats from API - show empty/zero values if no data
   const stats = dashboardStats ? [
     {
       title: 'Total Revenue',
       value: `$${dashboardStats.total_revenue?.toLocaleString() || '0'}`,
-      change: dashboardStats.revenue_change ? `+${dashboardStats.revenue_change}%` : '+0%',
+      change: dashboardStats.revenue_change ? `${dashboardStats.revenue_change >= 0 ? '+' : ''}${dashboardStats.revenue_change}%` : '+0%',
       trend: (dashboardStats.revenue_change || 0) >= 0 ? 'up' as const : 'down' as const,
       icon: DollarSign,
       description: 'vs last month',
@@ -162,7 +133,7 @@ export const AdminDashboardPage = () => {
     {
       title: 'Total Orders',
       value: dashboardStats.total_orders?.toLocaleString() || '0',
-      change: dashboardStats.orders_change ? `+${dashboardStats.orders_change}%` : '+0%',
+      change: dashboardStats.orders_change ? `${dashboardStats.orders_change >= 0 ? '+' : ''}${dashboardStats.orders_change}%` : '+0%',
       trend: (dashboardStats.orders_change || 0) >= 0 ? 'up' as const : 'down' as const,
       icon: ShoppingCart,
       description: 'vs last month',
@@ -170,7 +141,7 @@ export const AdminDashboardPage = () => {
     {
       title: 'Total Customers',
       value: dashboardStats.total_customers?.toLocaleString() || '0',
-      change: dashboardStats.customers_change ? `+${dashboardStats.customers_change}%` : '+0%',
+      change: dashboardStats.customers_change ? `${dashboardStats.customers_change >= 0 ? '+' : ''}${dashboardStats.customers_change}%` : '+0%',
       trend: (dashboardStats.customers_change || 0) >= 0 ? 'up' as const : 'down' as const,
       icon: Users,
       description: 'vs last month',
@@ -178,7 +149,7 @@ export const AdminDashboardPage = () => {
     {
       title: 'Total Products',
       value: dashboardStats.total_products?.toLocaleString() || '0',
-      change: dashboardStats.products_change ? `+${dashboardStats.products_change}%` : '+0%',
+      change: dashboardStats.products_change ? `${dashboardStats.products_change >= 0 ? '+' : ''}${dashboardStats.products_change}%` : '+0%',
       trend: (dashboardStats.products_change || 0) >= 0 ? 'up' as const : 'down' as const,
       icon: Package,
       description: 'active listings',
@@ -186,32 +157,32 @@ export const AdminDashboardPage = () => {
   ] : [
     {
       title: 'Total Revenue',
-      value: '$45,231',
-      change: '+12.5%',
+      value: '$0',
+      change: '+0%',
       trend: 'up' as const,
       icon: DollarSign,
       description: 'vs last month',
     },
     {
       title: 'Total Orders',
-      value: '253',
-      change: '+8.2%',
+      value: '0',
+      change: '+0%',
       trend: 'up' as const,
       icon: ShoppingCart,
       description: 'vs last month',
     },
     {
       title: 'Total Customers',
-      value: '1,428',
-      change: '+18.3%',
+      value: '0',
+      change: '+0%',
       trend: 'up' as const,
       icon: Users,
       description: 'vs last month',
     },
     {
       title: 'Total Products',
-      value: '142',
-      change: '+3.1%',
+      value: '0',
+      change: '+0%',
       trend: 'up' as const,
       icon: Package,
       description: 'active listings',

@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Plus, Minus, ShoppingBag, Trash2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useCurrency } from '../context/CurrencyContext';
 import { useState } from 'react';
 import { Button } from './ui/button';
 
@@ -11,6 +12,7 @@ interface CartDrawerProps {
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const { items, removeFromCart, updateQuantity, total, itemCount } = useCart();
+  const { formatAmount, convertPrice } = useCurrency();
   const [checkingOut, setCheckingOut] = useState(false);
 
   const handleCheckout = () => {
@@ -150,7 +152,9 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                               </motion.button>
                             </div>
 
-                            <div className="text-lg">₹{((item as any).priceINR || item.price * 75) * item.quantity}</div>
+                            <div className="text-lg">
+                              {formatAmount(convertPrice(item.price, (item as any).priceINR) * item.quantity)}
+                            </div>
                           </div>
                         </div>
                       </motion.div>

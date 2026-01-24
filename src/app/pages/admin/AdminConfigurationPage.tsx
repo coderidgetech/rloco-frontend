@@ -442,10 +442,71 @@ export const AdminConfigurationPage = () => {
     reader.readAsText(file);
   };
 
-  const handleResetConfig = () => {
+  const handleResetConfig = async () => {
     if (confirm('Are you sure you want to reset all configuration to defaults? This cannot be undone.')) {
-      resetConfig();
-      toast.success('Configuration reset to defaults');
+      try {
+        setSaving(true);
+        
+        // Reset to defaults in context first (this updates local state and localStorage)
+        resetConfig();
+        
+        // Get the current config from context (which resetConfig just set to defaults)
+        // Since React state updates are async, we'll use the config value after a small delay
+        // or we can read from localStorage which resetConfig updates immediately
+        let defaultConfigToSave;
+        try {
+          // Try to get from localStorage first (resetConfig saves there immediately)
+          const savedConfig = localStorage.getItem('rloco_site_config');
+          if (savedConfig) {
+            defaultConfigToSave = JSON.parse(savedConfig);
+          } else {
+            // Fallback: use current config from context
+            defaultConfigToSave = JSON.parse(JSON.stringify(config));
+          }
+        } catch {
+          // If that fails, use current config
+          defaultConfigToSave = JSON.parse(JSON.stringify(config));
+        }
+        
+        // Save default config to API
+        await adminService.updateConfiguration(defaultConfigToSave);
+        
+        // Wait a moment for the database to update, then refetch
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Refetch the configuration from the API
+        try {
+          const savedData = await adminService.getConfiguration();
+          if (savedData) {
+            setConfiguration(savedData);
+            // Update context with the saved data
+            if (updateConfig) {
+              Object.keys(savedData).forEach((section) => {
+                updateConfig(section as any, savedData[section]);
+              });
+            }
+          }
+        } catch (fetchError) {
+          console.error('Failed to refetch configuration:', fetchError);
+        }
+        
+        // Trigger a refresh in all open tabs/windows
+        localStorage.setItem('rloco_config_updated', Date.now().toString());
+        window.dispatchEvent(new CustomEvent('rloco_config_updated'));
+        window.dispatchEvent(new StorageEvent('storage', {
+          key: 'rloco_config_updated',
+          newValue: Date.now().toString(),
+        }));
+        
+        toast.success('Configuration reset to defaults and saved to API');
+      } catch (error: any) {
+        console.error('Failed to reset configuration:', error);
+        toast.error(error?.response?.data?.error || error?.message || 'Failed to reset configuration');
+        // Still reset local config even if API call fails
+        resetConfig();
+      } finally {
+        setSaving(false);
+      }
     }
   };
 

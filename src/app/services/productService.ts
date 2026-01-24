@@ -72,7 +72,7 @@ export const productService = {
 
   async getReviews(productId: string): Promise<ProductReview[]> {
     const response = await api.get<ProductReview[]>(`/products/${productId}/reviews`);
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   async createReview(productId: string, review: CreateReviewRequest): Promise<ProductReview> {

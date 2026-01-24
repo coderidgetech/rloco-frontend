@@ -13,6 +13,18 @@ interface OrderProduct {
   image: string;
 }
 
+interface ShippingInfo {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country: string;
+}
+
 interface Order {
   id: string;
   date: string;
@@ -26,6 +38,7 @@ interface Order {
   subtotal?: number;
   shipping?: number;
   tax?: number;
+  shipping_info?: ShippingInfo;
 }
 
 interface InvoiceModalProps {
@@ -164,23 +177,35 @@ export function InvoiceModal({ order, isOpen, onClose }: InvoiceModalProps) {
             <div className="grid md:grid-cols-2 gap-8 mb-12">
               <div>
                 <h4 className="font-medium mb-3 text-muted-foreground uppercase text-sm tracking-wider">Bill To</h4>
-                <div className="space-y-1">
-                  <p className="font-medium">John Doe</p>
-                  <p className="text-sm text-muted-foreground">123 Fashion Street, Apt 4B</p>
-                  <p className="text-sm text-muted-foreground">New York, NY 10001</p>
-                  <p className="text-sm text-muted-foreground">United States</p>
-                  <p className="text-sm text-muted-foreground mt-2">john.doe@example.com</p>
-                  <p className="text-sm text-muted-foreground">+1 (555) 123-4567</p>
-                </div>
+                {order.shipping_info ? (
+                  <div className="space-y-1">
+                    <p className="font-medium">{order.shipping_info.first_name} {order.shipping_info.last_name}</p>
+                    <p className="text-sm text-muted-foreground">{order.shipping_info.address}</p>
+                    <p className="text-sm text-muted-foreground">{order.shipping_info.city}, {order.shipping_info.state} {order.shipping_info.zip_code}</p>
+                    <p className="text-sm text-muted-foreground">{order.shipping_info.country}</p>
+                    <p className="text-sm text-muted-foreground mt-2">{order.shipping_info.email}</p>
+                    <p className="text-sm text-muted-foreground">{order.shipping_info.phone}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">No billing information available</p>
+                  </div>
+                )}
               </div>
               <div>
                 <h4 className="font-medium mb-3 text-muted-foreground uppercase text-sm tracking-wider">Ship To</h4>
-                <div className="space-y-1">
-                  <p className="font-medium">John Doe</p>
-                  <p className="text-sm text-muted-foreground">123 Fashion Street, Apt 4B</p>
-                  <p className="text-sm text-muted-foreground">New York, NY 10001</p>
-                  <p className="text-sm text-muted-foreground">United States</p>
-                </div>
+                {order.shipping_info ? (
+                  <div className="space-y-1">
+                    <p className="font-medium">{order.shipping_info.first_name} {order.shipping_info.last_name}</p>
+                    <p className="text-sm text-muted-foreground">{order.shipping_info.address}</p>
+                    <p className="text-sm text-muted-foreground">{order.shipping_info.city}, {order.shipping_info.state} {order.shipping_info.zip_code}</p>
+                    <p className="text-sm text-muted-foreground">{order.shipping_info.country}</p>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">No shipping information available</p>
+                  </div>
+                )}
               </div>
             </div>
 

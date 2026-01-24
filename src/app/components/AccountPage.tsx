@@ -6,6 +6,7 @@ import {
   Download, Bell, Lock, ShoppingCart
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useWishlist } from '../context/WishlistContext';
 import { OrderDetailsModal } from './OrderDetailsModal';
@@ -15,6 +16,7 @@ import { LuxurySelect } from './ui/luxury-select';
 import { LuxuryCheckbox } from './ui/luxury-checkbox';
 import { orderService } from '../services/orderService';
 import { paymentService } from '../services/paymentService';
+import { addressService, Address as APIAddress } from '../services/addressService';
 import { Order as APIOrder, PaymentTransaction } from '../types/api';
 import { useUser } from '../context/UserContext';
 
@@ -70,229 +72,98 @@ interface PaymentMethod {
   isDefault: boolean;
 }
 
-const MOCK_ORDERS: Order[] = [
-  {
-    id: 'RLC8X9YZ2A1',
-    date: '2025-12-20',
-    status: 'delivered',
-    total: 289.99,
-    items: 3,
-    image: 'https://images.unsplash.com/photo-1434389677669-e08b4cac3105?w=400',
-    subtotal: 259.99,
-    shipping: 15.00,
-    tax: 15.00,
-    trackingNumber: '1Z999AA10123456784',
-    estimatedDelivery: '2025-12-22',
-    products: [
-      {
-        id: '1',
-        name: 'Classic Leather Jacket',
-        size: 'M',
-        color: 'Black',
-        quantity: 1,
-        price: 149.99,
-        image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400',
-      },
-      {
-        id: '2',
-        name: 'Designer Handbag',
-        size: 'One Size',
-        color: 'Brown',
-        quantity: 1,
-        price: 89.00,
-        image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400',
-      },
-      {
-        id: '3',
-        name: 'Silk Scarf',
-        size: 'One Size',
-        color: 'Navy',
-        quantity: 1,
-        price: 21.00,
-        image: 'https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=400',
-      },
-    ],
-  },
-  {
-    id: 'RLC7W8XY1Z0',
-    date: '2025-12-15',
-    status: 'shipped',
-    total: 156.50,
-    items: 2,
-    image: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=400',
-    subtotal: 139.98,
-    shipping: 10.00,
-    tax: 6.52,
-    trackingNumber: '1Z999AA10987654321',
-    estimatedDelivery: '2025-12-27',
-    products: [
-      {
-        id: '4',
-        name: 'Running Sneakers',
-        size: '10',
-        color: 'White',
-        quantity: 1,
-        price: 99.99,
-        image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400',
-      },
-      {
-        id: '5',
-        name: 'Sport Socks Pack',
-        size: 'L',
-        color: 'Mixed',
-        quantity: 2,
-        price: 19.99,
-        image: 'https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?w=400',
-      },
-    ],
-  },
-  {
-    id: 'RLC6V7WX0Y9',
-    date: '2025-12-10',
-    status: 'processing',
-    total: 425.00,
-    items: 4,
-    image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400',
-    subtotal: 389.96,
-    shipping: 20.00,
-    tax: 15.04,
-    estimatedDelivery: '2025-12-30',
-    products: [
-      {
-        id: '6',
-        name: 'Wool Overcoat',
-        size: 'L',
-        color: 'Grey',
-        quantity: 1,
-        price: 249.99,
-        image: 'https://images.unsplash.com/photo-1539533018447-63fcce2678e3?w=400',
-      },
-      {
-        id: '7',
-        name: 'Cashmere Sweater',
-        size: 'M',
-        color: 'Beige',
-        quantity: 2,
-        price: 69.99,
-        image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400',
-      },
-    ],
-  },
-  {
-    id: 'RLC5U6VW9X8',
-    date: '2025-11-28',
-    status: 'delivered',
-    total: 199.99,
-    items: 2,
-    image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=400',
-    subtotal: 179.98,
-    shipping: 12.00,
-    tax: 8.01,
-    trackingNumber: '1Z999AA10555666777',
-    estimatedDelivery: '2025-11-30',
-    products: [
-      {
-        id: '8',
-        name: 'Denim Jeans',
-        size: '32',
-        color: 'Blue',
-        quantity: 1,
-        price: 89.99,
-        image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400',
-      },
-      {
-        id: '9',
-        name: 'Cotton T-Shirt',
-        size: 'L',
-        color: 'White',
-        quantity: 1,
-        price: 89.99,
-        image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400',
-      },
-    ],
-  },
-];
-
-const MOCK_ADDRESSES: Address[] = [
-  {
-    id: '1',
-    type: 'home',
-    name: 'John Doe',
-    address: '123 Fashion Street, Apt 4B',
-    city: 'New York',
-    state: 'NY',
-    zip: '10001',
-    country: 'United States',
-    isDefault: true,
-  },
-  {
-    id: '2',
-    type: 'work',
-    name: 'John Doe',
-    address: '456 Business Ave, Suite 200',
-    city: 'New York',
-    state: 'NY',
-    zip: '10002',
-    country: 'United States',
-    isDefault: false,
-  },
-];
-
-const MOCK_PAYMENT_METHODS: PaymentMethod[] = [
-  {
-    id: '1',
-    type: 'visa',
-    last4: '4242',
-    expiry: '12/25',
-    isDefault: true,
-  },
-  {
-    id: '2',
-    type: 'mastercard',
-    last4: '8888',
-    expiry: '08/26',
-    isDefault: false,
-  },
-];
 
 export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
   const { user } = useUser();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
   const [showAddAddress, setShowAddAddress] = useState(false);
   const [showAddPayment, setShowAddPayment] = useState(false);
-  const [addresses, setAddresses] = useState<Address[]>(MOCK_ADDRESSES);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(MOCK_PAYMENT_METHODS);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [addressesLoading, setAddressesLoading] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
   const { items: wishlistItems, removeFromWishlist } = useWishlist();
+  
+  // Check if this is being used as a standalone page (when path is /account)
+  const isStandalone = location.pathname === '/account';
 
   const [profileData, setProfileData] = useState({
-    firstName: user?.name?.split(' ')[0] || 'John',
-    lastName: user?.name?.split(' ').slice(1).join(' ') || 'Doe',
-    email: user?.email || 'john.doe@example.com',
-    phone: '+1 (555) 123-4567',
-    birthday: '1990-01-15',
+    firstName: user?.name?.split(' ')[0] || '',
+    lastName: user?.name?.split(' ').slice(1).join(' ') || '',
+    email: user?.email || '',
+    phone: '', // TODO: Fetch from user profile API when available
+    birthday: '', // TODO: Fetch from user profile API when available
   });
 
-  // Fetch orders and transactions from API
+  // Update profile data when user changes
   useEffect(() => {
-    if (isOpen && user) {
+    if (user) {
+      setProfileData({
+        firstName: user.name?.split(' ')[0] || '',
+        lastName: user.name?.split(' ').slice(1).join(' ') || '',
+        email: user.email || '',
+        phone: '', // TODO: Add phone to User interface and fetch from API
+        birthday: '', // TODO: Add birthday/date_of_birth to User interface and fetch from API
+      });
+    }
+  }, [user]);
+
+  // Fetch addresses, orders and transactions from API
+  useEffect(() => {
+    if ((isOpen || isStandalone) && user) {
+      fetchAddresses();
       fetchOrders();
       fetchTransactions();
     }
-  }, [isOpen, user]);
+  }, [isOpen, isStandalone, user]);
+
+  const fetchAddresses = async () => {
+    if (!user) {
+      setAddresses([]);
+      return;
+    }
+    try {
+      setAddressesLoading(true);
+      const apiAddresses = await addressService.list();
+      // Convert API addresses to local format
+      const convertedAddresses: Address[] = apiAddresses.map((apiAddr: APIAddress) => ({
+        id: apiAddr.id,
+        type: apiAddr.type.toLowerCase() as 'home' | 'work' | 'other',
+        name: apiAddr.name,
+        address: apiAddr.address_line,
+        city: apiAddr.city,
+        state: apiAddr.state,
+        zip: apiAddr.pincode,
+        country: apiAddr.country,
+        isDefault: apiAddr.is_default,
+      }));
+      setAddresses(convertedAddresses);
+    } catch (error: any) {
+      console.error('Failed to fetch addresses:', error);
+      // Don't show error toast for 401 (unauthorized) - user just needs to log in
+      if (error?.response?.status !== 401) {
+        toast.error('Failed to load addresses');
+      }
+      setAddresses([]);
+    } finally {
+      setAddressesLoading(false);
+    }
+  };
 
   const fetchTransactions = async () => {
     try {
       setTransactionsLoading(true);
       // Fetch transactions from orders (since we don't have a direct transactions list endpoint)
       const response = await orderService.list({ limit: 50 });
-      const apiOrders = response.data || [];
+      // OrderService returns { orders: [], total: number }
+      const apiOrders = (response as any).orders || [];
       
       // Extract transaction IDs from orders and fetch transaction details
       // Note: Since we don't have a direct transactions list endpoint, we'll show payment info from orders
@@ -328,7 +199,8 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
     try {
       setOrdersLoading(true);
       const response = await orderService.list({ limit: 50 });
-      const apiOrders = response.data || [];
+      // OrderService returns { orders: [], total: number }
+      const apiOrders = (response as any).orders || [];
       
       // Convert API orders to local format
       const convertedOrders: Order[] = apiOrders.map((apiOrder: APIOrder) => ({
@@ -367,8 +239,8 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
       setOrders(convertedOrders);
     } catch (error: any) {
       console.error('Failed to fetch orders:', error);
-      // Fallback to mock data on error
-      setOrders(MOCK_ORDERS);
+      toast.error('Failed to load orders');
+      setOrders([]);
     } finally {
       setOrdersLoading(false);
     }
@@ -415,35 +287,40 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
     toast.success('Profile updated successfully!');
   };
 
+  // In standalone mode, always render (ignore isOpen)
+  const shouldRender = isStandalone || isOpen;
+
   return (
     <>
     <AnimatePresence>
-      {isOpen && (
+      {shouldRender && (
         <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              backdropFilter: 'blur(60px)',
-              WebkitBackdropFilter: 'blur(60px)',
-            }}
-            className="fixed inset-0 z-50"
-            onClick={onClose}
-          />
+          {/* Backdrop - only show if not standalone */}
+          {!isStandalone && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                backdropFilter: 'blur(60px)',
+                WebkitBackdropFilter: 'blur(60px)',
+              }}
+              className="fixed inset-0 z-50"
+              onClick={onClose}
+            />
+          )}
 
-          {/* Account Modal */}
+          {/* Account Modal/Page */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: isStandalone ? 1 : 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            exit={{ opacity: 0, scale: isStandalone ? 1 : 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-0 z-50 overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+            className={isStandalone ? "relative w-full min-h-screen bg-background" : "fixed inset-0 z-50 overflow-hidden"}
+            onClick={(e) => !isStandalone && e.stopPropagation()}
           >
-            <div className="h-full bg-background flex flex-col relative">{/* Added relative */}
+            <div className={`${isStandalone ? 'pt-20' : 'h-full'} bg-background flex flex-col relative`}>
               {/* Header */}
               <div className="border-b border-border bg-background">
                 <div className="w-full px-2 md:px-4 py-6">
@@ -459,12 +336,14 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                         </p>
                       </div>
                     </div>
-                    <button
-                      onClick={onClose}
-                      className="p-3 hover:bg-muted rounded-full transition-colors"
-                    >
-                      <X size={24} />
-                    </button>
+                    {!isStandalone && (
+                      <button
+                        onClick={onClose}
+                        className="p-3 hover:bg-muted rounded-full transition-colors"
+                      >
+                        <X size={24} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -597,7 +476,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                               <div className="bg-blue-500/10 rounded-xl p-6 border border-blue-500/20">
                                 <div className="flex items-center gap-3 mb-2">
                                   <Package size={24} className="text-blue-600" />
-                                  <span className="text-3xl font-bold">{MOCK_ORDERS.length}</span>
+                                  <span className="text-3xl font-bold">{orders.length}</span>
                                 </div>
                                 <p className="text-sm text-muted-foreground">Total Orders</p>
                               </div>
@@ -644,9 +523,34 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                   <p className="mt-4 text-gray-600">Loading orders...</p>
                                 </div>
                               ) : orders.length === 0 ? (
-                                <div className="text-center py-12">
-                                  <Package size={48} className="mx-auto text-gray-400 mb-4" />
-                                  <p className="text-gray-600">No orders yet</p>
+                                /* Empty State */
+                                <div className="flex flex-col items-center justify-center text-center py-12 md:py-20">
+                                  <motion.div
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ type: 'spring', damping: 15 }}
+                                    className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-muted flex items-center justify-center mb-4 md:mb-6"
+                                  >
+                                    <Package size={48} className="md:hidden text-muted-foreground" />
+                                    <Package size={64} className="hidden md:block text-muted-foreground" />
+                                  </motion.div>
+                                  <h2 className="text-xl md:text-2xl mb-2 md:mb-3">No orders yet</h2>
+                                  <p className="text-sm md:text-base text-muted-foreground mb-6 md:mb-8 max-w-md px-4">
+                                    You haven't placed any orders yet. Start shopping to see your order history here!
+                                  </p>
+                                  <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
+                                      if (onClose) onClose();
+                                      // Navigate to home or products page
+                                      window.location.href = '/';
+                                    }}
+                                    className="px-6 md:px-8 py-3 md:py-4 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 text-sm md:text-base"
+                                  >
+                                    <ShoppingCart size={20} />
+                                    Start Shopping
+                                  </motion.button>
                                 </div>
                               ) : (
                                 orders.map((order) => (
@@ -748,63 +652,109 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                               </motion.button>
                             </div>
 
-                            <div className="grid md:grid-cols-2 gap-4">
-                              {addresses.map((address) => (
+                            {addressesLoading ? (
+                              <div className="flex items-center justify-center py-12">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                              </div>
+                            ) : addresses.length === 0 ? (
+                              /* Empty State */
+                              <div className="flex flex-col items-center justify-center text-center py-12 md:py-20">
                                 <motion.div
-                                  key={address.id}
-                                  whileHover={{ scale: 1.02 }}
-                                  className="bg-muted/30 rounded-xl p-6 relative"
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  transition={{ type: 'spring', damping: 15 }}
+                                  className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-muted flex items-center justify-center mb-4 md:mb-6"
                                 >
-                                  {address.isDefault && (
-                                    <div className="absolute top-4 right-4 px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
-                                      Default
-                                    </div>
-                                  )}
-
-                                  <div className="flex items-center gap-3 mb-4">
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                                      address.type === 'home' ? 'bg-blue-500/10' :
-                                      address.type === 'work' ? 'bg-purple-500/10' :
-                                      'bg-green-500/10'
-                                    }`}>
-                                      <MapPin size={24} className={
-                                        address.type === 'home' ? 'text-blue-600' :
-                                        address.type === 'work' ? 'text-purple-600' :
-                                        'text-green-600'
-                                      } />
-                                    </div>
-                                    <div>
-                                      <h3 className="font-medium capitalize">{address.type}</h3>
-                                      <p className="text-sm text-muted-foreground">{address.name}</p>
-                                    </div>
-                                  </div>
-
-                                  <div className="text-sm text-muted-foreground space-y-1 mb-4">
-                                    <p>{address.address}</p>
-                                    <p>{address.city}, {address.state} {address.zip}</p>
-                                    <p>{address.country}</p>
-                                  </div>
-
-                                  <div className="flex gap-2">
-                                    <motion.button
-                                      whileHover={{ scale: 1.05 }}
-                                      whileTap={{ scale: 0.95 }}
-                                      className="flex-1 px-3 py-2 border border-border rounded-lg flex items-center justify-center gap-2 text-sm"
-                                    >
-                                      <Edit2 size={14} />
-                                      Edit
-                                    </motion.button>
-                                    <motion.button
-                                      whileHover={{ scale: 1.05 }}
-                                      whileTap={{ scale: 0.95 }}
-                                      className="px-3 py-2 border border-red-500/20 rounded-lg flex items-center justify-center gap-2 text-sm text-red-600 hover:bg-red-500/10"
-                                    >
-                                      <Trash2 size={14} />
-                                    </motion.button>
-                                  </div>
+                                  <MapPin size={48} className="md:hidden text-muted-foreground" />
+                                  <MapPin size={64} className="hidden md:block text-muted-foreground" />
                                 </motion.div>
-                              ))}
-                            </div>
+                                <h2 className="text-xl md:text-2xl mb-2 md:mb-3">No saved addresses</h2>
+                                <p className="text-sm md:text-base text-muted-foreground mb-6 md:mb-8 max-w-md px-4">
+                                  You haven't saved any addresses yet. Add your first address to make checkout faster!
+                                </p>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => setShowAddAddress(true)}
+                                  className="px-6 md:px-8 py-3 md:py-4 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 text-sm md:text-base"
+                                >
+                                  <Plus size={20} />
+                                  Add Your First Address
+                                </motion.button>
+                              </div>
+                            ) : (
+                              <div className="grid md:grid-cols-2 gap-4">
+                                {addresses.map((address) => (
+                                  <motion.div
+                                    key={address.id}
+                                    whileHover={{ scale: 1.02 }}
+                                    className="bg-muted/30 rounded-xl p-6 relative"
+                                  >
+                                    {address.isDefault && (
+                                      <div className="absolute top-4 right-4 px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full">
+                                        Default
+                                      </div>
+                                    )}
+
+                                    <div className="flex items-center gap-3 mb-4">
+                                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                                        address.type === 'home' ? 'bg-blue-500/10' :
+                                        address.type === 'work' ? 'bg-purple-500/10' :
+                                        'bg-green-500/10'
+                                      }`}>
+                                        <MapPin size={24} className={
+                                          address.type === 'home' ? 'text-blue-600' :
+                                          address.type === 'work' ? 'text-purple-600' :
+                                          'text-green-600'
+                                        } />
+                                      </div>
+                                      <div>
+                                        <h3 className="font-medium capitalize">{address.type}</h3>
+                                        <p className="text-sm text-muted-foreground">{address.name}</p>
+                                      </div>
+                                    </div>
+
+                                    <div className="text-sm text-muted-foreground space-y-1 mb-4">
+                                      <p>{address.address}</p>
+                                      <p>{address.city}, {address.state} {address.zip}</p>
+                                      <p>{address.country}</p>
+                                    </div>
+
+                                    <div className="flex gap-2">
+                                      <motion.button
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => {
+                                          // TODO: Implement edit address functionality
+                                          toast.info('Edit address functionality coming soon');
+                                        }}
+                                        className="flex-1 px-3 py-2 border border-border rounded-lg flex items-center justify-center gap-2 text-sm"
+                                      >
+                                        <Edit2 size={14} />
+                                        Edit
+                                      </motion.button>
+                                      <motion.button
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={async () => {
+                                          try {
+                                            await addressService.delete(address.id);
+                                            toast.success('Address deleted successfully');
+                                            fetchAddresses();
+                                          } catch (error: any) {
+                                            console.error('Failed to delete address:', error);
+                                            toast.error('Failed to delete address');
+                                          }
+                                        }}
+                                        className="px-3 py-2 border border-red-500/20 rounded-lg flex items-center justify-center gap-2 text-sm text-red-600 hover:bg-red-500/10"
+                                      >
+                                        <Trash2 size={14} />
+                                      </motion.button>
+                                    </div>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            )}
                           </motion.div>
                         )}
 
@@ -830,8 +780,36 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                               </motion.button>
                             </div>
 
-                            <div className="space-y-4">
-                              {paymentMethods.map((card) => (
+                            {paymentMethods.length === 0 ? (
+                              /* Empty State */
+                              <div className="flex flex-col items-center justify-center text-center py-12 md:py-20">
+                                <motion.div
+                                  initial={{ scale: 0 }}
+                                  animate={{ scale: 1 }}
+                                  transition={{ type: 'spring', damping: 15 }}
+                                  className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-muted flex items-center justify-center mb-4 md:mb-6"
+                                >
+                                  <CreditCard size={48} className="md:hidden text-muted-foreground" />
+                                  <CreditCard size={64} className="hidden md:block text-muted-foreground" />
+                                </motion.div>
+                                <h2 className="text-xl md:text-2xl mb-2 md:mb-3">No payment methods</h2>
+                                <p className="text-sm md:text-base text-muted-foreground mb-6 md:mb-8 max-w-md px-4">
+                                  You haven't added any payment methods yet. Add a card to make checkout faster!
+                                </p>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => setShowAddPayment(true)}
+                                  className="px-6 md:px-8 py-3 md:py-4 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 text-sm md:text-base"
+                                >
+                                  <Plus size={20} />
+                                  Add Your First Card
+                                </motion.button>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="space-y-4">
+                                  {paymentMethods.map((card) => (
                                 <motion.div
                                   key={card.id}
                                   whileHover={{ scale: 1.01 }}
@@ -877,19 +855,21 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                       </motion.button>
                                     </div>
                                   </div>
-                                </motion.div>
-                              ))}
-                            </div>
+                                  </motion.div>
+                                  ))}
+                                </div>
 
-                            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-6 flex items-start gap-3">
-                              <ShieldCheck size={24} className="text-blue-600 flex-shrink-0" />
-                              <div className="text-sm">
-                                <p className="font-medium text-blue-600 mb-1">Secure Payment Information</p>
-                                <p className="text-blue-600/80">
-                                  Your payment information is encrypted and securely stored. We never share your card details.
-                                </p>
-                              </div>
-                            </div>
+                                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-6 flex items-start gap-3">
+                                  <ShieldCheck size={24} className="text-blue-600 flex-shrink-0" />
+                                  <div className="text-sm">
+                                    <p className="font-medium text-blue-600 mb-1">Secure Payment Information</p>
+                                    <p className="text-blue-600/80">
+                                      Your payment information is encrypted and securely stored. We never share your card details.
+                                    </p>
+                                  </div>
+                                </div>
+                              </>
+                            )}
                           </motion.div>
                         )}
 
@@ -1117,23 +1097,30 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
               </div>
 
               <form
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  const formData = new FormData(e.currentTarget);
-                  const newAddress: Address = {
-                    id: String(addresses.length + 1),
-                    type: formData.get('type') as 'home' | 'work' | 'other',
-                    name: formData.get('name') as string,
-                    address: formData.get('address') as string,
-                    city: formData.get('city') as string,
-                    state: formData.get('state') as string,
-                    zip: formData.get('zip') as string,
-                    country: formData.get('country') as string,
-                    isDefault: formData.get('isDefault') === 'on',
-                  };
-                  setAddresses([...addresses, newAddress]);
-                  setShowAddAddress(false);
-                  toast.success('Address added successfully!');
+                  try {
+                    const formData = new FormData(e.currentTarget);
+                    const addressType = formData.get('type') as string;
+                    const newAddress = {
+                      type: addressType.toUpperCase() as 'HOME' | 'OFFICE' | 'OTHER',
+                      name: formData.get('name') as string,
+                      address_line: formData.get('address') as string,
+                      city: formData.get('city') as string,
+                      state: formData.get('state') as string,
+                      pincode: formData.get('zip') as string,
+                      country: formData.get('country') as string,
+                      mobile: formData.get('mobile') as string || '',
+                      is_default: formData.get('isDefault') === 'on',
+                    };
+                    await addressService.create(newAddress);
+                    toast.success('Address added successfully!');
+                    setShowAddAddress(false);
+                    fetchAddresses();
+                  } catch (error: any) {
+                    console.error('Failed to add address:', error);
+                    toast.error('Failed to add address');
+                  }
                 }}
                 className="space-y-6"
               >
@@ -1152,7 +1139,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                   type="text"
                   name="name"
                   required
-                  placeholder="John Doe"
+                  placeholder="Enter your full name"
                 />
 
                 <LuxuryInput
@@ -1160,7 +1147,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                   type="text"
                   name="address"
                   required
-                  placeholder="123 Fashion Street, Apt 4B"
+                  placeholder="Enter your street address"
                 />
 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -1330,7 +1317,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                   type="text"
                   name="cardholderName"
                   required
-                  placeholder="JOHN DOE"
+                  placeholder="Enter cardholder name"
                   className="uppercase"
                 />
 

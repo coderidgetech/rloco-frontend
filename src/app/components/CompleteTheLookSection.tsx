@@ -7,7 +7,7 @@ import { useCurrency } from '../context/CurrencyContext';
 import { toast } from 'sonner';
 
 interface Product {
-  id: number;
+  id: string | number;
   name: string;
   price: number;
   originalPrice?: number;
@@ -26,8 +26,8 @@ export function CompleteTheLookSection({ currentProduct, products }: CompleteThe
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { formatPrice, convertPrice, formatAmount } = useCurrency();
-  const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
-  const [hoveredItem, setHoveredItem] = useState<number | null>(null);
+  const [selectedItems, setSelectedItems] = useState<Set<string | number>>(new Set());
+  const [hoveredItem, setHoveredItem] = useState<string | number | null>(null);
 
   // Limit to 4 complementary products
   const displayProducts = products.slice(0, 4);
@@ -35,7 +35,7 @@ export function CompleteTheLookSection({ currentProduct, products }: CompleteThe
   // Always include the current product
   const allProducts = [currentProduct, ...displayProducts];
 
-  const toggleItem = (id: number) => {
+  const toggleItem = (id: string | number) => {
     const newSelected = new Set(selectedItems);
     if (newSelected.has(id)) {
       newSelected.delete(id);
@@ -139,12 +139,12 @@ export function CompleteTheLookSection({ currentProduct, products }: CompleteThe
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6 mb-8 px-2 md:px-4">
             {allProducts.map((product, index) => {
               const isSelected = selectedItems.has(product.id);
-              const isCurrentProduct = product.id === currentProduct.id;
+              const isCurrentProduct = String(product.id) === String(currentProduct.id);
               const isHovered = hoveredItem === product.id;
 
               return (
                 <motion.div
-                  key={product.id}
+                  key={`${product.id}-${index}`}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}

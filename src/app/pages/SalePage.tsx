@@ -43,7 +43,7 @@ export function SalePage() {
       try {
         setLoading(true);
         const response = await productService.list({ on_sale: true, limit: 1000 });
-        setProducts(response.data || []);
+        setProducts(response.products || []);
       } catch (error) {
         console.error('Failed to fetch products:', error);
         setProducts([]);

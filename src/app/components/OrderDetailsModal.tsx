@@ -16,6 +16,18 @@ interface OrderProduct {
   image: string;
 }
 
+interface ShippingInfo {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  zip_code: string;
+  country: string;
+}
+
 interface Order {
   id: string;
   date: string;
@@ -29,6 +41,7 @@ interface Order {
   subtotal?: number;
   shipping?: number;
   tax?: number;
+  shipping_info?: ShippingInfo;
 }
 
 interface OrderDetailsModalProps {
@@ -93,41 +106,68 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
     setView('details');
   };
 
-  // Mock tracking updates
-  const trackingUpdates = [
-    {
-      date: '2026-01-10',
-      time: '10:30 AM',
-      location: 'New York, NY',
-      status: 'Delivered',
-      description: 'Package delivered to recipient',
-      completed: order.status === 'delivered'
-    },
-    {
-      date: '2026-01-09',
-      time: '03:15 PM',
-      location: 'Newark, NJ',
-      status: 'Out for Delivery',
-      description: 'Package is out for delivery',
-      completed: order.status === 'delivered' || order.status === 'shipped'
-    },
-    {
-      date: '2026-01-08',
-      time: '08:20 AM',
-      location: 'Philadelphia, PA',
-      status: 'In Transit',
-      description: 'Package arrived at sorting facility',
-      completed: order.status === 'delivered' || order.status === 'shipped'
-    },
-    {
-      date: '2026-01-07',
-      time: '02:45 PM',
-      location: 'Los Angeles, CA',
+  // Fetch tracking updates from API if tracking number exists
+  // TODO: Backend should provide tracking updates endpoint: GET /orders/:id/tracking
+  // For now, generate tracking updates based on order status
+  const generateTrackingUpdates = () => {
+    const updates: Array<{
+      date: string;
+      time: string;
+      location: string;
+      status: string;
+      description: string;
+      completed: boolean;
+    }> = [];
+
+    const now = new Date();
+    
+    if (order.status === 'delivered') {
+      updates.push({
+        date: now.toISOString().split('T')[0],
+        time: now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        location: order.shipping_info?.city || 'Unknown',
+        status: 'Delivered',
+        description: 'Package delivered to recipient',
+        completed: true
+      });
+    }
+    
+    if (order.status === 'delivered' || order.status === 'shipped') {
+      const shippedDate = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+      updates.push({
+        date: shippedDate.toISOString().split('T')[0],
+        time: shippedDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        location: 'Distribution Center',
+        status: 'Out for Delivery',
+        description: 'Package is out for delivery',
+        completed: order.status === 'delivered'
+      });
+      
+      const transitDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+      updates.push({
+        date: transitDate.toISOString().split('T')[0],
+        time: transitDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        location: 'Sorting Facility',
+        status: 'In Transit',
+        description: 'Package arrived at sorting facility',
+        completed: true
+      });
+    }
+    
+    const pickedUpDate = new Date(order.created_at || now.getTime() - 5 * 24 * 60 * 60 * 1000);
+    updates.push({
+      date: pickedUpDate.toISOString().split('T')[0],
+      time: pickedUpDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+      location: 'Origin Facility',
       status: 'Picked Up',
       description: 'Package picked up by carrier',
       completed: true
-    }
-  ];
+    });
+    
+    return updates.reverse(); // Show oldest first
+  };
+
+  const trackingUpdates = order.trackingNumber ? generateTrackingUpdates() : [];
 
   const handleClose = () => {
     setView('details');
@@ -273,32 +313,36 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
               )}
 
               {/* Shipping Address */}
-              <div className="bg-muted/30 rounded-xl p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                    <MapPin size={24} className="text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Shipping Address</h3>
-                    <p className="text-sm text-muted-foreground">John Doe</p>
-                  </div>
-                </div>
-                <div className="text-sm text-muted-foreground space-y-1 pl-15">
-                  <p>123 Fashion Street, Apt 4B</p>
-                  <p>New York, NY 10001</p>
-                  <p>United States</p>
-                  <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border">
-                    <div className="flex items-center gap-2">
-                      <Phone size={16} />
-                      <span>+1 (555) 123-4567</span>
+              {order.shipping_info && (
+                <div className="bg-muted/30 rounded-xl p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                      <MapPin size={24} className="text-primary" />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Mail size={16} />
-                      <span>john.doe@example.com</span>
+                    <div>
+                      <h3 className="font-medium">Shipping Address</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {order.shipping_info.first_name} {order.shipping_info.last_name}
+                      </p>
                     </div>
                   </div>
+                  <div className="text-sm text-muted-foreground space-y-1 pl-15">
+                    <p>{order.shipping_info.address}</p>
+                    <p>{order.shipping_info.city}, {order.shipping_info.state} {order.shipping_info.zip_code}</p>
+                    <p>{order.shipping_info.country}</p>
+                    <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border">
+                      <div className="flex items-center gap-2">
+                        <Phone size={16} />
+                        <span>{order.shipping_info.phone}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail size={16} />
+                        <span>{order.shipping_info.email}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Order Items */}
               <div className="bg-muted/30 rounded-xl p-6">
@@ -487,8 +531,14 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
               {/* Tracking Timeline */}
               <div className="bg-muted/30 rounded-xl p-6">
                 <h3 className="font-medium mb-6">Tracking Updates</h3>
-                <div className="space-y-6">
-                  {trackingUpdates.map((update, index) => (
+                {trackingUpdates.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p className="text-sm">No tracking information available</p>
+                    <p className="text-xs mt-2">Tracking updates will appear here once your order ships</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {trackingUpdates.map((update, index) => (
                     <div key={index} className="relative">
                       <div className="flex gap-4">
                         {/* Timeline dot */}
@@ -524,7 +574,8 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                       </div>
                     </div>
                   ))}
-                </div>
+                  </div>
+                )}
               </div>
 
               {/* Help Card */}

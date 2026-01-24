@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, ShoppingBag } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
+import { useCurrency } from '../context/CurrencyContext';
 import { toast } from 'sonner';
 
 interface WishlistDrawerProps {
@@ -95,7 +96,9 @@ export function WishlistDrawer({ isOpen, onClose }: WishlistDrawerProps) {
                         <div className="flex-1 min-w-0">
                           <h3 className="font-medium truncate">{item.name}</h3>
                           <p className="text-sm text-muted-foreground">{item.category}</p>
-                          <p className="font-medium mt-1">₹{(item as any).priceINR || item.price * 75}</p>
+                          <p className="font-medium mt-1">
+                            {formatPrice(item.price, (item as any).priceINR)}
+                          </p>
                         </div>
                         <div className="flex flex-col gap-2">
                           <motion.button

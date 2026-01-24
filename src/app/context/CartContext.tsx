@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback, useRef } from 'react';
 import { cartService } from '../services/cartService';
 import { useUser } from './UserContext';
 import { CartItem as APICartItem } from '../types/api';
@@ -89,13 +89,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   
   const [items, setItems] = useState<CartItem[]>(() => loadCartFromStorage());
   const [loading, setLoading] = useState(false);
-
-  // Sync cart with backend when authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      syncCart();
-    }
-  }, [isAuthenticated]);
+  const prevAuthenticatedRef = useRef<boolean>(false);
 
   const syncCart = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -121,6 +115,51 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     }
   }, [isAuthenticated]);
+
+  // Sync cart with backend when authenticated. On login, merge guest cart first.
+  useEffect(() => {
+    if (!isAuthenticated) {
+      prevAuthenticatedRef.current = false;
+      return;
+    }
+
+    const justLoggedIn = !prevAuthenticatedRef.current;
+    prevAuthenticatedRef.current = true;
+
+    const runSync = async () => {
+      if (justLoggedIn) {
+        const guestItems = loadCartFromStorage();
+        if (guestItems.length > 0) {
+          try {
+            setLoading(true);
+            for (const guest of guestItems) {
+              try {
+                await cartService.addItem({
+                  product_id: String(guest.id),
+                  product_name: guest.name,
+                  image: guest.image,
+                  price: guest.price,
+                  price_inr: guest.priceINR,
+                  size: guest.size,
+                  quantity: guest.quantity,
+                });
+              } catch (err) {
+                console.warn('Failed to merge guest cart item:', guest.id, guest.size, err);
+              }
+            }
+            localStorage.removeItem(CART_STORAGE_KEY);
+          } catch (error) {
+            console.error('Failed to merge guest cart:', error);
+          } finally {
+            setLoading(false);
+          }
+        }
+      }
+      await syncCart();
+    };
+
+    runSync();
+  }, [isAuthenticated, syncCart]);
 
   const addToCart = useCallback(async (item: Omit<CartItem, 'quantity'>) => {
     // Optimistic update

@@ -25,8 +25,9 @@ export function VideoShowcase() {
       try {
         setLoading(true);
         const products = await productService.getFeatured(5);
-        setShowcaseProducts(products);
-        if (products.length > 0) {
+        const productList = products || [];
+        setShowcaseProducts(productList);
+        if (productList.length > 0) {
           setCurrentSlide(0);
         }
       } catch (error) {

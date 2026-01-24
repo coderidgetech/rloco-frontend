@@ -19,7 +19,7 @@ export function NewArrivalsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedGender, setSelectedGender] = useState<'all' | 'women' | 'men'>('all');
-  const [priceRange, setPriceRange] = useState([0, 1000]);
+  const [priceRange, setPriceRange] = useState([0, 10000]);
   const [sortBy, setSortBy] = useState('newest');
   const [showFilters, setShowFilters] = useState(false);
   
@@ -42,10 +42,10 @@ export function NewArrivalsPage() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await productService.list({ new_arrival: true, limit: 1000 });
-        setProducts(response.data || []);
+        const newArrivals = await productService.getNewArrivals(1000);
+        setProducts(newArrivals || []);
       } catch (error) {
-        console.error('Failed to fetch products:', error);
+        console.error('Failed to fetch new arrival products:', error);
         setProducts([]);
       } finally {
         setLoading(false);
@@ -74,7 +74,8 @@ export function NewArrivalsPage() {
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
-    let filtered = products.filter(p => p.new_arrival || p.newArrival); // Start with new arrivals
+    // Products are already filtered to new arrivals from API, so we can use all products
+    let filtered = [...products];
 
     // Search filter
     if (searchQuery) {
@@ -129,7 +130,12 @@ export function NewArrivalsPage() {
         filtered.sort((a, b) => b.price - a.price);
         break;
       case 'newest':
-        filtered.sort((a, b) => ((b.new_arrival || b.newArrival) ? 1 : 0) - ((a.new_arrival || a.newArrival) ? 1 : 0));
+        // Sort by created_at descending (newest first)
+        filtered.sort((a, b) => {
+          const dateA = new Date(a.created_at || 0).getTime();
+          const dateB = new Date(b.created_at || 0).getTime();
+          return dateB - dateA;
+        });
         break;
       case 'rating':
         filtered.sort((a, b) => b.rating - a.rating);
@@ -149,7 +155,7 @@ export function NewArrivalsPage() {
     selectedCategory !== 'All' || 
     selectedGender !== 'all' || 
     priceRange[0] !== 0 || 
-    priceRange[1] !== 1000 ||
+    priceRange[1] !== 10000 ||
     selectedColors.length > 0 ||
     selectedSizes.length > 0 ||
     selectedMaterials.length > 0 ||
@@ -162,7 +168,7 @@ export function NewArrivalsPage() {
     setSearchQuery('');
     setSelectedCategory('All');
     setSelectedGender('all');
-    setPriceRange([0, 1000]);
+    setPriceRange([0, 10000]);
     setSortBy('newest');
     setSelectedColors([]);
     setSelectedSizes([]);
@@ -364,10 +370,10 @@ export function NewArrivalsPage() {
                 </span>
               ))}
               
-              {(priceRange[0] !== 0 || priceRange[1] !== 1000) && (
+              {(priceRange[0] !== 0 || priceRange[1] !== 10000) && (
                 <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
                   ₹{(priceRange[0] * 75).toLocaleString()} - ₹{(priceRange[1] * 75).toLocaleString()}
-                  <button onClick={() => setPriceRange([0, 1000])} className="hover:opacity-70">
+                  <button onClick={() => setPriceRange([0, 10000])} className="hover:opacity-70">
                     <X size={12} />
                   </button>
                 </span>
@@ -451,7 +457,11 @@ export function NewArrivalsPage() {
 
           {/* Products Grid */}
           <div className="flex-1">
-            {filteredProducts.length > 0 ? (
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredProducts.map((product, index) => (
                   <motion.div

@@ -68,7 +68,7 @@ export const AdminVendorsPage = () => {
         setLoading(true);
         const vendorList = await adminService.listVendors();
         // Filter to only show vendors
-        const vendorUsers = vendorList.filter((user: User) => user.role === 'vendor');
+        const vendorUsers = (vendorList || []).filter((user: User) => user.role === 'vendor');
         setVendors(vendorUsers);
       } catch (error) {
         console.error('Failed to fetch vendors:', error);
@@ -82,73 +82,6 @@ export const AdminVendorsPage = () => {
     fetchVendors();
   }, []);
 
-  // Mock vendors data (fallback)
-  const mockVendors: any[] = [
-    {
-      id: 'VEND-001',
-      name: 'Fashion Forward Inc',
-      email: 'contact@fashionforward.com',
-      phone: '+1 (555) 111-2222',
-      logo: 'https://api.dicebear.com/7.x/identicon/svg?seed=fashion',
-      storeName: 'Fashion Forward',
-      products: 45,
-      sales: 25600,
-      commission: 15,
-      status: 'active',
-      joinedDate: '2024-06-15',
-      description: 'Premium fashion retailer specializing in contemporary women\'s wear',
-      tier: 'premium',
-      role: 'owner',
-    },
-    {
-      id: 'VEND-002',
-      name: 'Luxury Boutique Co',
-      email: 'info@luxuryboutique.com',
-      phone: '+1 (555) 222-3333',
-      logo: 'https://api.dicebear.com/7.x/identicon/svg?seed=luxury',
-      storeName: 'Luxury Boutique',
-      products: 32,
-      sales: 42300,
-      commission: 18,
-      status: 'active',
-      joinedDate: '2024-08-20',
-      description: 'High-end designer collections and exclusive pieces',
-      tier: 'enterprise',
-      role: 'owner',
-    },
-    {
-      id: 'VEND-003',
-      name: 'Urban Style Ltd',
-      email: 'hello@urbanstyle.com',
-      phone: '+1 (555) 333-4444',
-      logo: 'https://api.dicebear.com/7.x/identicon/svg?seed=urban',
-      storeName: 'Urban Style',
-      products: 28,
-      sales: 18900,
-      commission: 12,
-      status: 'active',
-      joinedDate: '2024-09-10',
-      description: 'Modern streetwear and casual fashion for the urban lifestyle',
-      tier: 'basic',
-      role: 'manager',
-    },
-    {
-      id: 'VEND-004',
-      name: 'Classic Elegance',
-      email: 'support@classicelegance.com',
-      phone: '+1 (555) 444-5555',
-      logo: 'https://api.dicebear.com/7.x/identicon/svg?seed=classic',
-      storeName: 'Classic Elegance',
-      products: 15,
-      sales: 8500,
-      commission: 10,
-      status: 'pending',
-      joinedDate: '2026-01-05',
-      description: 'Timeless fashion pieces with classic sophistication',
-      tier: 'basic',
-      role: 'owner',
-    },
-  ];
 
   const filteredVendors = vendors.filter((vendor) => {
     const matchesSearch =
@@ -165,8 +98,15 @@ export const AdminVendorsPage = () => {
 
   const handleToggleStatus = async (vendor: User) => {
     try {
-      // Note: Backend may need an 'active' field or similar
-      toast.success(`Vendor ${vendor.name} status updated`);
+      // Note: Backend returns Vendor objects with Status field, but frontend uses User objects
+      // We need to use vendor.id (which is the User ID) to update
+      // The backend Vendor model has a separate ID, but we're working with User objects here
+      // For now, we'll update the user and note that vendor status requires Vendor model update
+      
+      // TODO: Backend needs to link User.vendor_id to Vendor.id properly
+      // For now, we'll show a message that vendor status update requires proper Vendor model integration
+      toast.info('Vendor status toggle requires Vendor model integration. Currently vendors are managed as Users. Backend needs to properly link User.vendor_id to Vendor.id for status management.');
+      
       // Refresh vendors list
       const vendorList = await adminService.listVendors();
       const vendorUsers = vendorList.filter((user) => user.role === 'vendor');
@@ -179,9 +119,10 @@ export const AdminVendorsPage = () => {
 
   const handleApproveVendor = async (vendor: User) => {
     try {
-      // Update vendor to active status
-      await adminService.updateVendor(vendor.id, {});
-      toast.success(`Vendor ${vendor.name} approved successfully`);
+      // Note: Similar to handleToggleStatus, this requires Vendor model integration
+      // For now, we can update user role or other fields
+      toast.info('Vendor approval requires Vendor model integration. Backend needs to properly link User.vendor_id to Vendor.id for status management.');
+      
       // Refresh vendors list
       const vendorList = await adminService.listVendors();
       const vendorUsers = vendorList.filter((user) => user.role === 'vendor');
@@ -340,6 +281,7 @@ export const AdminVendorsPage = () => {
                     </TableCell>
                     <TableCell>N/A</TableCell>
                     <TableCell>
+                      {/* Note: Vendor status requires Vendor model - currently showing default */}
                       <Badge className="bg-green-100 text-green-800">
                         Active
                       </Badge>
@@ -365,16 +307,11 @@ export const AdminVendorsPage = () => {
                             <Edit className="h-4 w-4 mr-2" />
                             Edit
                           </DropdownMenuItem>
-                          {/* Status-based actions would go here */}
-                          {false && (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleApproveVendor(vendor)}>
-                                <UserCheck className="h-4 w-4 mr-2" />
-                                Approve
-                              </DropdownMenuItem>
-                            </>
-                          )}
+                          {/* Approve action - shown for pending vendors */}
+                          <DropdownMenuItem onClick={() => handleApproveVendor(vendor)}>
+                            <UserCheck className="h-4 w-4 mr-2" />
+                            Approve Vendor
+                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => handleToggleStatus(vendor)}>
                             <Ban className="h-4 w-4 mr-2" />
@@ -482,9 +419,20 @@ export const AdminVendorsPage = () => {
             tier: privilegeVendor.tier,
             role: privilegeVendor.role,
           }}
-          onSave={(vendorId, tier, role, permissions) => {
-            console.log('Vendor privileges saved:', { vendorId, tier, role, permissions });
-            // Here you would save to backend
+          onSave={async (vendorId, tier, role, permissions) => {
+            try {
+              await adminService.updateVendorPermissions(vendorId, permissions);
+              toast.success('Vendor privileges updated successfully');
+              // Refresh vendors list
+              const vendorList = await adminService.listVendors();
+              const vendorUsers = vendorList.filter((user) => user.role === 'vendor');
+              setVendors(vendorUsers);
+              setShowPrivilegeDialog(false);
+              setPrivilegeVendor(null);
+            } catch (error: any) {
+              console.error('Failed to update vendor privileges:', error);
+              toast.error(error.message || 'Failed to update vendor privileges');
+            }
           }}
         />
       )}

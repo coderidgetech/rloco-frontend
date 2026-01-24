@@ -4,6 +4,7 @@ import { X, Search, Filter } from 'lucide-react';
 import { Product } from '../types/product';
 import { ProductDetail } from './ProductDetail';
 import { productService } from '../services/productService';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface SearchModalProps {
 const BADGE_OPTIONS = ['Best Seller', 'Trending', 'Most Ordered', 'New', 'Limited Edition', 'Exclusive', 'Hot', 'Popular'] as const;
 
 export function SearchModal({ isOpen, onClose }: SearchModalProps) {
+  const { formatPrice } = useCurrency();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -28,7 +30,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
         try {
           setLoading(true);
           const response = await productService.list({ limit: 500 });
-          setAllProducts(response.data || []);
+          setAllProducts(response.products || []);
         } catch (error) {
           console.error('Failed to fetch products:', error);
           setAllProducts([]);
@@ -270,10 +272,15 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                               {product.category} · {product.subcategory}
                             </p>
                             <div className="flex items-center gap-2 mt-1">
-                              <p className="font-medium">₹{product.price_inr || (product as any).priceINR || product.price * 75}</p>
+                              <p className="font-medium">
+                                {formatPrice(product.price, product.price_inr || (product as any).priceINR)}
+                              </p>
                               {(product.original_price || product.originalPrice) && (
                                 <p className="text-sm text-muted-foreground line-through">
-                                  ₹{product.original_price_inr || (product as any).originalPriceINR || (product.original_price || product.originalPrice || 0) * 75}
+                                  {formatPrice(
+                                    product.original_price || product.originalPrice || 0,
+                                    product.original_price_inr || (product as any).originalPriceINR
+                                  )}
                                 </p>
                               )}
                             </div>

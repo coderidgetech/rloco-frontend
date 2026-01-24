@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rloco-frontend
+    ports:
+      - "80:80"
+    networks:
+      - rloco-network
+    restart: unless-stopped
+
+networks:
+  rloco-network:
+    driver: bridge
