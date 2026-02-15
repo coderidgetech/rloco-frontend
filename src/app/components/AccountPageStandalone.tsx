@@ -29,7 +29,7 @@ export function AccountPageStandalone() {
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-white dark:bg-background" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
       {/* Render AccountPage as standalone (Navigation is handled by AppLayout) */}
       <AccountPage 
         isOpen={true} 
@@ -37,6 +37,6 @@ export function AccountPageStandalone() {
         onLogout={handleLogout}
       />
       <Footer />
-    </>
+    </div>
   );
 }

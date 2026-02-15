@@ -47,6 +47,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { productService } from '../../services/productService';
+import { categoryService } from '../../services/categoryService';
 import { Product } from '../../types/api';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -63,8 +64,18 @@ export const AdminProductsPage = () => {
   const [page, setPage] = useState(0);
   const [limit] = useState(20);
   const [total, setTotal] = useState(0);
+  const [allCategories, setAllCategories] = useState<{ name: string }[]>([]);
 
-  // Fetch products from API
+  useEffect(() => {
+    categoryService.list().then((list) => setAllCategories(list || [])).catch(() => setAllCategories([]));
+  }, []);
+
+  // Reset to first page when search changes
+  useEffect(() => {
+    setPage(0);
+  }, [searchQuery]);
+
+  // Fetch products from API (server-side search when searchQuery is set)
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -73,17 +84,18 @@ export const AdminProductsPage = () => {
           limit,
           skip: page * limit,
         };
-        
         if (categoryFilter !== 'all') {
           params.category = categoryFilter;
         }
-        
         if (statusFilter === 'featured') {
           params.featured = true;
         } else if (statusFilter === 'sale') {
           params.on_sale = true;
         } else if (statusFilter === 'new') {
-          // Note: Backend may need a 'new_arrival' filter
+          params.new_arrival = true;
+        }
+        if (searchQuery.trim()) {
+          params.search = searchQuery.trim();
         }
 
         const response = await productService.list(params);
@@ -100,16 +112,13 @@ export const AdminProductsPage = () => {
     };
 
     fetchProducts();
-  }, [page, limit, categoryFilter, statusFilter]);
+  }, [page, limit, categoryFilter, statusFilter, searchQuery]);
 
-  const filteredProducts = (products || []).filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  const filteredProducts = products || [];
 
-  const categories = Array.from(new Set((products || []).map((p) => p.category)));
+  const categoryOptions = allCategories.length > 0
+    ? allCategories
+    : Array.from(new Set((products || []).map((p) => p.category))).map((name) => ({ name }));
 
   const handleDelete = async () => {
     if (!selectedProduct) return;
@@ -135,16 +144,26 @@ export const AdminProductsPage = () => {
 
   const handleDuplicate = async (product: Product) => {
     try {
-      const duplicateData = {
-        ...product,
+      const duplicateData: Partial<Product> = {
         name: `${product.name} (Copy)`,
+        sku: product.sku || undefined,
+        description: product.description,
+        category: product.category,
+        subcategory: product.subcategory,
+        gender: product.gender,
+        price: product.price,
+        original_price: product.original_price,
+        sizes: product.sizes || [],
+        colors: product.colors || [],
+        material: product.material,
+        care: product.care,
+        images: product.images || [],
+        stock: product.stock || {},
+        details: product.details || [],
         featured: false,
+        on_sale: product.on_sale,
         new_arrival: false,
       };
-      delete (duplicateData as any).id;
-      delete (duplicateData as any).created_at;
-      delete (duplicateData as any).updated_at;
-      
       await productService.create(duplicateData);
       toast.success(`Product "${product.name}" duplicated successfully`);
       // Refresh products list
@@ -157,8 +176,54 @@ export const AdminProductsPage = () => {
     }
   };
 
-  const handleExport = () => {
-    toast.success('Products exported successfully');
+  const handleExport = async () => {
+    try {
+      const response = await productService.list({ limit: 10000 });
+      const list = response?.products || [];
+      const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `products-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${list.length} products`);
+    } catch (error: any) {
+      console.error('Export failed:', error);
+      toast.error(error?.message || 'Export failed');
+    }
+  };
+
+  const handleImportClick = () => {
+    const input = document.getElementById('admin-products-import-input') as HTMLInputElement;
+    input?.click();
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const list = Array.isArray(data) ? data : [data];
+      let created = 0;
+      for (const item of list) {
+        const payload = { ...item };
+        delete payload.id;
+        delete payload.created_at;
+        delete payload.updated_at;
+        await productService.create(payload);
+        created++;
+      }
+      toast.success(`Imported ${created} product(s)`);
+      const response = await productService.list({ limit, skip: page * limit });
+      setProducts(response?.products || []);
+      setTotal(response?.total ?? total);
+    } catch (error: any) {
+      console.error('Import failed:', error);
+      toast.error(error?.message || 'Import failed. Use a JSON array of products.');
+    }
   };
 
   return (
@@ -169,7 +234,7 @@ export const AdminProductsPage = () => {
           <div>
             <h1 className="text-3xl font-bold">Products</h1>
             <p className="text-gray-600 mt-1">
-              Manage your product catalog ({filteredProducts.length} items)
+              Manage your product catalog ({total} items)
             </p>
           </div>
           <div className="flex gap-2">
@@ -177,7 +242,14 @@ export const AdminProductsPage = () => {
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-            <Button variant="outline">
+            <input
+              id="admin-products-import-input"
+              type="file"
+              accept=".json,application/json"
+              className="hidden"
+              onChange={handleImportFile}
+            />
+            <Button variant="outline" onClick={handleImportClick}>
               <Upload className="h-4 w-4 mr-2" />
               Import
             </Button>
@@ -205,9 +277,9 @@ export const AdminProductsPage = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat}>
-                  {cat}
+              {categoryOptions.map((cat) => (
+                <SelectItem key={cat.name} value={cat.name}>
+                  {cat.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -232,6 +304,7 @@ export const AdminProductsPage = () => {
               <TableRow>
                 <TableHead className="w-[80px]">Image</TableHead>
                 <TableHead>Product</TableHead>
+                <TableHead>SKU</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Gender</TableHead>
                 <TableHead>Price</TableHead>
@@ -243,13 +316,13 @@ export const AdminProductsPage = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                     Loading products...
                   </TableCell>
                 </TableRow>
               ) : filteredProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                     No products found
                   </TableCell>
                 </TableRow>
@@ -268,6 +341,9 @@ export const AdminProductsPage = () => {
                         <p className="font-medium">{product.name}</p>
                         <p className="text-sm text-gray-500">ID: {product.id.slice(-8)}</p>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm text-gray-600">{product.sku || '—'}</span>
                     </TableCell>
                     <TableCell>{product.category}</TableCell>
                     <TableCell>
@@ -324,7 +400,9 @@ export const AdminProductsPage = () => {
                             <Plus className="h-4 w-4 mr-2" />
                             Duplicate
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => navigate(`/product/${product.id}`)}
+                          >
                             <Eye className="h-4 w-4 mr-2" />
                             View on Store
                           </DropdownMenuItem>
@@ -350,16 +428,26 @@ export const AdminProductsPage = () => {
         </div>
 
         {/* Pagination Info */}
-        {filteredProducts.length > 50 && (
-          <div className="flex items-center justify-between">
+        {total > limit && (
+          <div className="flex items-center justify-between pt-4">
             <p className="text-sm text-gray-600">
-              Showing 1-50 of {filteredProducts.length} products
+              Showing {page * limit + 1}-{Math.min((page + 1) * limit, total)} of {total} products
             </p>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page === 0}
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+              >
                 Previous
               </Button>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={(page + 1) * limit >= total}
+                onClick={() => setPage((p) => p + 1)}
+              >
                 Next
               </Button>
             </div>

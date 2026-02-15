@@ -28,7 +28,7 @@ interface Address {
 
 export function AddressSelectionPage() {
   const navigate = useNavigate();
-  const { items } = useCart();
+  const { items, removeFromCart } = useCart();
   const [productsMap, setProductsMap] = useState<Map<string, Product>>(new Map());
   const { formatPrice, formatAmount, convertPrice, currency } = useCurrency();
   const { isAuthenticated } = useUser();
@@ -93,7 +93,7 @@ export function AddressSelectionPage() {
     }
   }, [items, navigate]);
 
-  // Fetch products for price calculation
+  // Fetch products for price calculation; remove cart items whose product no longer exists (404)
   useEffect(() => {
     const fetchProducts = async () => {
       const productIds = items.map(item => String(item.id));
@@ -107,6 +107,12 @@ export function AddressSelectionPage() {
         productsData.forEach((product, index) => {
           if (product) {
             map.set(productIds[index], product);
+          } else {
+            const item = items[index];
+            if (item) {
+              removeFromCart(item.id, item.size);
+              toast.info('A product in your cart is no longer available and was removed.');
+            }
           }
         });
         setProductsMap(map);
@@ -116,7 +122,7 @@ export function AddressSelectionPage() {
     };
 
     fetchProducts();
-  }, [items]);
+  }, [items, removeFromCart]);
 
   // Calculate original MRP (before any product discounts)
   const originalMRP = items.reduce((sum, item) => {

@@ -1,43 +1,34 @@
 import { motion } from 'motion/react';
-import { ChevronLeft, Sparkles, SlidersHorizontal } from 'lucide-react';
+import { Sparkles, SlidersHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useState, useMemo } from 'react';
-import { useNewArrivals } from '../../hooks/useProducts';
-import { MobileProductGrid } from '../../components/mobile/MobileProductGrid';
-import { BottomNavigation } from '../../components/mobile/BottomNavigation';
+import { useState } from 'react';
+import { useNewArrivals } from '@/app/hooks/useProducts';
+import { MobileProductGrid } from '@/app/components/mobile/MobileProductGrid';
+import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
 
 export function MobileNewArrivalsPage() {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState('newest');
   const [showSort, setShowSort] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const { products: newProducts } = useNewArrivals(200);
+  const { products: apiProducts, loading } = useNewArrivals(200);
+  const newProducts = apiProducts.filter(p => p.new_arrival);
 
   // Apply category filter
-  const filteredProducts = useMemo(() => {
-    if (!newProducts) return [];
-    if (selectedFilter === 'all') return newProducts;
-    return newProducts.filter(p => 
+  let filteredProducts = newProducts;
+  if (selectedFilter !== 'all') {
+    filteredProducts = newProducts.filter(p => 
       p.category.toLowerCase() === selectedFilter.toLowerCase()
     );
-  }, [newProducts, selectedFilter]);
+  }
 
   // Sort products
-  const sortedProducts = useMemo(() => {
-    const sorted = [...filteredProducts];
-    if (sortBy === 'price-low') {
-      sorted.sort((a, b) => a.price - b.price);
-    } else if (sortBy === 'price-high') {
-      sorted.sort((a, b) => b.price - a.price);
-    } else if (sortBy === 'newest') {
-      sorted.sort((a, b) => {
-        const dateA = new Date(a.created_at || 0).getTime();
-        const dateB = new Date(b.created_at || 0).getTime();
-        return dateB - dateA;
-      });
-    }
-    return sorted;
-  }, [filteredProducts, sortBy]);
+  let sortedProducts = [...filteredProducts];
+  if (sortBy === 'price-low') {
+    sortedProducts.sort((a, b) => a.price - b.price);
+  } else if (sortBy === 'price-high') {
+    sortedProducts.sort((a, b) => b.price - a.price);
+  }
 
   const filterOptions = [
     { value: 'all', label: 'All' },
@@ -49,34 +40,15 @@ export function MobileNewArrivalsPage() {
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-border/20">
-        <div className="flex items-center justify-between h-14 px-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-          <div className="flex items-center flex-1">
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => navigate('/')}
-              className="w-9 h-9 rounded-full bg-foreground/5 flex items-center justify-center"
-            >
-              <ChevronLeft size={20} />
-            </motion.button>
-            <div className="flex items-center gap-2 ml-3">
-              <Sparkles size={20} className="text-primary" />
-              <h1 className="text-lg font-medium">New Arrivals</h1>
-            </div>
-          </div>
+      {/* Header */}
+      <MobileSubPageHeader showBackButton={true} showDeliveryAddress={false} />
 
-          <button
-            onClick={() => setShowSort(true)}
-            className="text-sm text-foreground/70 flex items-center gap-1"
-          >
-            <SlidersHorizontal size={14} />
-            Sort
-          </button>
-        </div>
-
-        {/* Filter Tabs */}
-        <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide border-t border-border/10">
+      {/* Filter Tabs */}
+      <div 
+        className="fixed left-0 right-0 z-40 bg-white border-b border-border/10"
+        style={{ top: 'calc(env(safe-area-inset-top) + 56px)' }}
+      >
+        <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
           {filterOptions.map((filter) => (
             <button
               key={filter.value}
@@ -93,14 +65,25 @@ export function MobileNewArrivalsPage() {
         </div>
 
         {/* Stats Bar */}
-        <div className="px-4 py-2 bg-foreground/5 text-sm text-foreground/60">
-          {sortedProducts.length} new items this week
+        <div className="px-4 py-2 bg-foreground/5 flex items-center justify-between">
+          <span className="text-sm text-foreground/60">
+            {sortedProducts.length} new items this week
+          </span>
+          <button
+            onClick={() => setShowSort(true)}
+            className="text-sm text-foreground/70 flex items-center gap-1 px-3 py-1.5 rounded-full border border-border/30"
+          >
+            <SlidersHorizontal size={14} />
+            Sort
+          </button>
         </div>
       </div>
 
       {/* Products */}
-      <div className="pt-[140px]">
-        {sortedProducts.length > 0 ? (
+      <div style={{ paddingTop: 'calc(env(safe-area-inset-top) + 120px)' }}>{/* Header + filters */}
+        {loading ? (
+          <div className="flex justify-center py-12 text-muted-foreground">Loading...</div>
+        ) : sortedProducts.length > 0 ? (
           <MobileProductGrid products={sortedProducts} title="" />
         ) : (
           <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
@@ -155,8 +138,6 @@ export function MobileNewArrivalsPage() {
           </motion.div>
         </>
       )}
-
-      <BottomNavigation />
 
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {

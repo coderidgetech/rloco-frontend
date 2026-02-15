@@ -25,10 +25,12 @@ export const AdminAddEditProductPage = () => {
   const productId = searchParams.get('id');
   const isEdit = !!productId;
   const [loading, setLoading] = useState(isEdit);
+  const [uploadingImages, setUploadingImages] = useState(false);
   
   // Form state
   const [formData, setFormData] = useState({
     name: '',
+    sku: '',
     description: '',
     category: '',
     subcategory: '',
@@ -42,8 +44,10 @@ export const AdminAddEditProductPage = () => {
     featured: false,
     onSale: false,
     newArrival: false,
+    isGift: false,
     images: [] as string[],
     stock: {} as Record<string, number>,
+    details: [] as string[],
   });
 
   // Fetch product data if editing
@@ -56,6 +60,7 @@ export const AdminAddEditProductPage = () => {
         const product = await productService.getById(productId);
         setFormData({
           name: product.name || '',
+          sku: product.sku || '',
           description: product.description || '',
           category: product.category || '',
           subcategory: product.subcategory || '',
@@ -65,12 +70,14 @@ export const AdminAddEditProductPage = () => {
           sizes: product.sizes || [],
           colors: product.colors || [],
           material: product.material || '',
-          care: '',
+          care: product.care || '',
           featured: product.featured || false,
           onSale: product.on_sale || false,
           newArrival: product.new_arrival || false,
+          isGift: product.is_gift || false,
           images: product.images || [],
           stock: product.stock || {},
+          details: product.details || [],
         });
       } catch (error: any) {
         console.error('Failed to fetch product:', error);
@@ -275,6 +282,7 @@ export const AdminAddEditProductPage = () => {
     try {
       const productData: Partial<Product> = {
         name: formData.name,
+        sku: formData.sku || undefined,
         description: formData.description,
         category: formData.category,
         subcategory: formData.subcategory,
@@ -284,11 +292,14 @@ export const AdminAddEditProductPage = () => {
         sizes: formData.sizes,
         colors: formData.colors,
         material: formData.material,
+        care: formData.care || undefined,
         images: formData.images,
         stock: formData.stock,
+        details: formData.details,
         featured: formData.featured,
         on_sale: formData.onSale,
         new_arrival: formData.newArrival,
+        is_gift: formData.isGift,
       };
 
       if (isEdit && productId) {
@@ -308,6 +319,23 @@ export const AdminAddEditProductPage = () => {
 
   const handleCancel = () => {
     navigate('/admin/products');
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length || !isEdit || !productId) return;
+    e.target.value = '';
+    try {
+      setUploadingImages(true);
+      const updated = await productService.uploadImages(productId, Array.from(files));
+      setFormData((prev) => ({ ...prev, images: updated?.images || prev.images }));
+      toast.success('Images uploaded');
+    } catch (error: any) {
+      console.error('Image upload failed:', error);
+      toast.error(error?.message || 'Image upload failed');
+    } finally {
+      setUploadingImages(false);
+    }
   };
 
   if (loading) {
@@ -362,17 +390,46 @@ export const AdminAddEditProductPage = () => {
                 <CardTitle>Product Images</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-primary transition-colors cursor-pointer">
+                {formData.images.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {formData.images.map((url, i) => (
+                      <img
+                        key={i}
+                        src={url}
+                        alt=""
+                        className="w-20 h-20 object-cover rounded border"
+                      />
+                    ))}
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  id="admin-product-images"
+                  onChange={handleImageUpload}
+                  disabled={!isEdit || uploadingImages}
+                />
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-primary transition-colors">
                   <ImageIcon className="h-16 w-16 mx-auto text-gray-400 mb-3" />
                   <p className="text-sm text-gray-600 mb-1 font-medium">
-                    Click to upload or drag and drop
+                    {isEdit ? 'Click to upload or drag and drop' : 'Save product first to upload images'}
                   </p>
                   <p className="text-xs text-gray-500">
                     PNG, JPG up to 10MB (recommended: 800x1000px)
                   </p>
-                  <Button variant="outline" className="mt-4" size="sm">
-                    Upload Images
-                  </Button>
+                  {isEdit && (
+                    <Button
+                      variant="outline"
+                      className="mt-4"
+                      size="sm"
+                      disabled={uploadingImages}
+                      onClick={() => document.getElementById('admin-product-images')?.click()}
+                    >
+                      {uploadingImages ? 'Uploading...' : 'Upload Images'}
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -392,6 +449,16 @@ export const AdminAddEditProductPage = () => {
                     placeholder="e.g., Premium Cotton T-Shirt"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="sku">SKU (optional)</Label>
+                  <Input
+                    id="sku"
+                    placeholder="e.g., DRESS-BLK-M"
+                    value={formData.sku}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                   />
                 </div>
 
@@ -451,6 +518,16 @@ export const AdminAddEditProductPage = () => {
                         <SelectItem value="unisex">Unisex</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="subcategory">Subcategory (optional)</Label>
+                    <Input
+                      id="subcategory"
+                      placeholder="e.g., Casual Dresses"
+                      value={formData.subcategory}
+                      onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -523,6 +600,36 @@ export const AdminAddEditProductPage = () => {
                     ))}
                   </div>
                 </div>
+
+                {/* Stock per size */}
+                {formData.sizes.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Stock quantity per size</Label>
+                    <div className="flex flex-wrap gap-3">
+                      {formData.sizes.map((size) => (
+                        <div key={size} className="flex items-center gap-2">
+                          <Label className="text-sm font-normal w-8">{size}</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            className="w-20"
+                            value={formData.stock[size] ?? ''}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setFormData({
+                                ...formData,
+                                stock: {
+                                  ...formData.stock,
+                                  [size]: v === '' ? 0 : Math.max(0, parseInt(v, 10) || 0),
+                                },
+                              });
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Colors */}
                 <div className="space-y-3">
@@ -642,7 +749,7 @@ export const AdminAddEditProductPage = () => {
               <CardHeader>
                 <CardTitle>Additional Details</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="material">Material</Label>
@@ -663,6 +770,21 @@ export const AdminAddEditProductPage = () => {
                       onChange={(e) => setFormData({ ...formData, care: e.target.value })}
                     />
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="details">Details (one per line)</Label>
+                  <Textarea
+                    id="details"
+                    placeholder="100% Cotton&#10;Imported&#10;Machine wash"
+                    rows={4}
+                    value={formData.details.join('\n')}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        details: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean),
+                      })
+                    }
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -714,6 +836,21 @@ export const AdminAddEditProductPage = () => {
                   <div>
                     <p className="font-medium">New Arrival</p>
                     <p className="text-xs text-gray-500">Mark as new</p>
+                  </div>
+                </label>
+
+                <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={formData.isGift}
+                    onChange={(e) =>
+                      setFormData({ ...formData, isGift: e.target.checked })
+                    }
+                    className="w-5 h-5 rounded border-gray-300"
+                  />
+                  <div>
+                    <p className="font-medium">Gift Worthy</p>
+                    <p className="text-xs text-gray-500">Show in Gift For Her / Gift For Him; allow gift wrap</p>
                   </div>
                 </label>
               </CardContent>

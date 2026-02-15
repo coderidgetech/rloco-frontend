@@ -11,17 +11,24 @@ interface CartItem {
   image: string;
   size: string;
   quantity: number;
+  isGift?: boolean;
+  giftWrapColor?: string;
+  giftMessage?: string;
 }
+
+const GIFT_PACKING_PER_ITEM = 50; // ₹50 per gift item (display in cart)
 
 interface CartContextType {
   items: CartItem[];
   loading: boolean;
-  addToCart: (item: Omit<CartItem, 'quantity'>) => Promise<void>;
+  addToCart: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => Promise<void>;
   removeFromCart: (id: number | string, size: string) => Promise<void>;
   updateQuantity: (id: number | string, size: string, quantity: number) => Promise<void>;
+  updateGiftOptions: (id: number | string, size: string, giftWrapColor: string, giftMessage: string) => Promise<void>;
   clearCart: () => Promise<void>;
   itemCount: number;
   total: number;
+  giftPackingCharge: number;
   syncCart: () => Promise<void>;
 }
 
@@ -106,6 +113,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         image: item.image,
         size: item.size,
         quantity: item.quantity,
+        isGift: item.is_gift,
+        giftWrapColor: item.gift_wrap_color,
+        giftMessage: item.gift_message,
       }));
       setItems(convertedItems);
     } catch (error) {
@@ -142,6 +152,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
                   price_inr: guest.priceINR,
                   size: guest.size,
                   quantity: guest.quantity,
+                  is_gift: guest.isGift,
+                  gift_wrap_color: guest.giftWrapColor,
+                  gift_message: guest.giftMessage,
                 });
               } catch (err) {
                 console.warn('Failed to merge guest cart item:', guest.id, guest.size, err);
@@ -161,21 +174,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
     runSync();
   }, [isAuthenticated, syncCart]);
 
-  const addToCart = useCallback(async (item: Omit<CartItem, 'quantity'>) => {
-    // Optimistic update
+  const addToCart = useCallback(async (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
+    const qty = item.quantity ?? 1;
+    const newItem: CartItem = {
+      ...item,
+      quantity: qty,
+      isGift: item.isGift,
+      giftWrapColor: item.giftWrapColor ?? (item.isGift ? 'Gold' : undefined),
+      giftMessage: item.giftMessage ?? (item.isGift ? '' : undefined),
+    };
     setItems((prev) => {
       const existing = prev.find((i) => String(i.id) === String(item.id) && i.size === item.size);
-      if (existing) {
-        return prev.map((i) =>
-          String(i.id) === String(item.id) && i.size === item.size
-            ? { ...i, quantity: i.quantity + 1 }
-            : i
-        );
-      }
-      return [...prev, { ...item, quantity: 1 }];
+      return existing
+        ? prev.map((i) =>
+            String(i.id) === String(item.id) && i.size === item.size
+              ? { ...i, quantity: i.quantity + qty }
+              : i
+          )
+        : [...prev, { ...newItem, quantity: qty }];
     });
 
-    // Sync with backend if authenticated
     if (isAuthenticated) {
       try {
         await cartService.addItem({
@@ -185,18 +203,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
           price: item.price,
           price_inr: item.priceINR,
           size: item.size,
-          quantity: 1,
+          quantity: qty,
+          is_gift: newItem.isGift,
+          gift_wrap_color: newItem.giftWrapColor,
+          gift_message: newItem.giftMessage,
         });
       } catch (error) {
         console.error('Failed to add item to cart:', error);
-        // Revert optimistic update on error
         setItems((prev) => prev.filter((i) => !(String(i.id) === String(item.id) && i.size === item.size)));
       }
     } else {
-      // Save to localStorage for unauthenticated users
-      saveCartToStorage([...items, { ...item, quantity: 1 }]);
+      setItems((prev) => {
+        const existing = prev.find((i) => String(i.id) === String(item.id) && i.size === item.size);
+        const next = existing
+          ? prev.map((i) =>
+              String(i.id) === String(item.id) && i.size === item.size
+                ? { ...i, quantity: i.quantity + qty }
+                : i
+            )
+          : [...prev, { ...newItem, quantity: qty }];
+        queueMicrotask(() => saveCartToStorage(next));
+        return next;
+      });
     }
-  }, [isAuthenticated, items]);
+  }, [isAuthenticated]);
 
   const removeFromCart = useCallback(async (id: number | string, size: string) => {
     // Optimistic update
@@ -242,6 +272,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, items, removeFromCart, syncCart]);
 
+  const updateGiftOptions = useCallback(async (id: number | string, size: string, giftWrapColor: string, giftMessage: string) => {
+    setItems((prev) =>
+      prev.map((i) =>
+        String(i.id) === String(id) && i.size === size
+          ? { ...i, isGift: true, giftWrapColor, giftMessage }
+          : i
+      )
+    );
+    if (isAuthenticated) {
+      try {
+        await cartService.updateGiftOptions(String(id), size, giftWrapColor, giftMessage);
+      } catch (error) {
+        console.error('Failed to update gift options:', error);
+        await syncCart();
+      }
+    }
+  }, [isAuthenticated, syncCart]);
+
   const clearCart = useCallback(async () => {
     setItems([]);
     
@@ -267,6 +315,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [items]
   );
 
+  const giftPackingCharge = useMemo(
+    () => items.reduce((sum, item) => sum + (item.isGift ? item.quantity * GIFT_PACKING_PER_ITEM : 0), 0),
+    [items]
+  );
+
   // Persist to localStorage for unauthenticated users
   useEffect(() => {
     if (!isAuthenticated) {
@@ -282,12 +335,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       addToCart,
       removeFromCart,
       updateQuantity,
+      updateGiftOptions,
       clearCart,
       itemCount,
       total,
+      giftPackingCharge,
       syncCart,
     }),
-    [items, loading, addToCart, removeFromCart, updateQuantity, clearCart, itemCount, total, syncCart]
+    [items, loading, addToCart, removeFromCart, updateQuantity, updateGiftOptions, clearCart, itemCount, total, giftPackingCharge, syncCart]
   );
 
   return (

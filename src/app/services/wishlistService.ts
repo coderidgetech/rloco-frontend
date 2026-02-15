@@ -15,4 +15,30 @@ export const wishlistService = {
   async removeFromWishlist(productId: string): Promise<void> {
     await api.delete(`/wishlist/items/${productId}`);
   },
+
+  async getProductAnalytics(productId: string): Promise<WishlistProductAnalytics> {
+    const response = await api.get<WishlistProductAnalytics>('/admin/wishlist/analytics', {
+      params: { product_id: productId },
+    });
+    return response.data;
+  },
+
+  async getUserAnalytics(): Promise<WishlistUserAnalytics> {
+    const response = await api.get<WishlistUserAnalytics>('/admin/wishlist/analytics/users');
+    return response.data;
+  },
 };
+
+export interface WishlistProductAnalytics {
+  product_id?: string;
+  wishlist_count: number;
+  unique_users: number;
+  purchase_conversion: number;
+  trend?: string;
+  trend_percent?: number;
+}
+
+export interface WishlistUserAnalytics {
+  total_wishlists: number;
+  active_users?: number;
+}

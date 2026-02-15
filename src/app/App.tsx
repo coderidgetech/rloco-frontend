@@ -1,80 +1,6 @@
-import { HelpGuideButton } from './components/HelpGuideButton';
-import { HomePage } from './pages/HomePage';
-import { MobileHomePage } from './pages/MobileHomePage';
-import { ResponsiveHomePage } from './components/ResponsiveHomePage';
-import { ResponsiveProductDetailPage } from './components/ResponsiveProductDetailPage';
-import { ResponsiveCartPage } from './components/ResponsiveCartPage';
-import { ResponsiveCategoryPage } from './components/ResponsiveCategoryPage';
-import { ResponsiveWishlistPage } from './components/ResponsiveWishlistPage';
-import { ResponsiveSalePage } from './components/ResponsiveSalePage';
-import { ResponsiveNewArrivalsPage } from './components/ResponsiveNewArrivalsPage';
-import { ResponsiveAllProductsPage } from './components/ResponsiveAllProductsPage';
-import { ResponsiveOrderConfirmationPage } from './components/ResponsiveOrderConfirmationPage';
-import { ResponsiveNotFoundPage } from './components/ResponsiveNotFoundPage';
-import { ResponsiveAccountPage } from './components/ResponsiveAccountPage';
-import { MobileSearchPage } from './pages/mobile/MobileSearchPage';
-import { MobileCategoriesPage } from './pages/mobile/MobileCategoriesPage';
-import { MobileAccountPage } from './pages/mobile/MobileAccountPage';
-import { ProductDetailPage } from './pages/ProductDetailPage';
-import { CartPage } from './pages/CartPage';
-import { CheckoutPage } from './pages/CheckoutPage';
-import { AddressSelectionPage } from './pages/AddressSelectionPage';
-import { PaymentPage } from './pages/PaymentPage';
-import { OrderConfirmationPage } from './pages/OrderConfirmationPage';
-import { WishlistPage } from './pages/WishlistPage';
-import { CategoryPage } from './pages/CategoryPage';
-import { NotFoundPage } from './pages/NotFoundPage';
-import { SalePage } from './pages/SalePage';
-import { NewArrivalsPage } from './pages/NewArrivalsPage';
-import { FeaturedCollectionPage } from './pages/FeaturedCollectionPage';
-import { AboutPage } from './pages/AboutPage';
-import { ContactPage } from './pages/ContactPage';
-import { TermsPage } from './pages/TermsPage';
-import { PrivacyPage } from './pages/PrivacyPage';
-import { SizeGuidePage } from './pages/SizeGuidePage';
-import { ShippingPage } from './pages/ShippingPage';
-import { ReturnsPage } from './pages/ReturnsPage';
-import { SupportPage } from './pages/SupportPage';
-import { FAQPage } from './pages/FAQPage';
-import { CareersPage } from './pages/CareersPage';
-import { SustainabilityPage } from './pages/SustainabilityPage';
-import { PressPage } from './pages/PressPage';
-import { CookiesPage } from './pages/CookiesPage';
-import { AllProductsPage } from './pages/AllProductsPage';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { ProtectedRoute } from './components/admin/ProtectedRoute';
-import { LoginPage } from './pages/LoginPage';
-import { AdminLoginPage } from './pages/admin/AdminLoginPage';
-import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
-import { AdminProductsPage } from './pages/admin/AdminProductsPage';
-import { AdminAddEditProductPage } from './pages/admin/AdminAddEditProductPage';
-import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
-import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
-import { AdminVendorsPage } from './pages/admin/AdminVendorsPage';
-import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
-import { AddVendorPage } from './pages/admin/AddVendorPage';
-import { AddUserPage } from './pages/admin/AddUserPage';
-import { AdminContentPage } from './pages/admin/AdminContentPage';
-import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
-import { AdminPromotionsPage } from './pages/admin/AdminPromotionsPage';
-import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
-import { AdminConfigurationPage } from './pages/admin/AdminConfigurationPage';
-import SubscriptionPlanBuilder from './pages/admin/SubscriptionPlanBuilder';
-import { AdminVideosPage } from './pages/admin/AdminVideosPage';
-import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
-import { AdminWishlistPage } from './pages/admin/AdminWishlistPage';
-import { AdminBadgesPage } from './pages/admin/AdminBadgesPage';
-import { UserProvider } from './context/UserContext';
-import { CartProvider } from './context/CartContext';
-import { WishlistProvider } from './context/WishlistContext';
-import { AdminProvider } from './context/AdminContext';
-import { CurrencyProvider } from './context/CurrencyContext';
-import { SiteConfigProvider } from './context/SiteConfigContext';
-import { OrderProvider } from './context/OrderContext';
-import { useState, useEffect } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { Toaster } from 'sonner';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, HashRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { Loader } from './components/Loader';
 import { ScrollProgress } from './components/ScrollProgress';
 import { ScrollToTop } from './components/ScrollToTop';
@@ -83,17 +9,124 @@ import { CustomCursor } from './components/CustomCursor';
 import { ConfigApplier } from './components/ConfigApplier';
 import { ConfigIndicator } from './components/ConfigIndicator';
 import { useIsMobile } from './hooks/useIsMobile';
+import { useState, useEffect } from 'react';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { BottomNavigation } from './components/mobile/BottomNavigation';
+import { HelpGuideButton } from './components/HelpGuideButton';
+import { UserProvider } from './context/UserContext';
+import { CartProvider } from './context/CartContext';
+import { WishlistProvider } from './context/WishlistContext';
+import { AdminProvider } from './context/AdminContext';
+import { CurrencyProvider } from './context/CurrencyContext';
+import { SiteConfigProvider } from './context/SiteConfigContext';
+import { OrderProvider } from './context/OrderContext';
+import { MobileOnboardingRedirect } from './components/MobileOnboardingRedirect';
+import { ResponsiveHomePage } from './components/ResponsiveHomePage';
+import { ResponsiveProductDetailPage } from './components/ResponsiveProductDetailPage';
+import { ResponsiveCartPage } from './components/ResponsiveCartPage';
+import { ResponsiveWishlistPage } from './components/ResponsiveWishlistPage';
+import { ResponsiveCategoryPage } from './components/ResponsiveCategoryPage';
+import { ResponsiveSalePage } from './components/ResponsiveSalePage';
+import { ResponsiveNewArrivalsPage } from './components/ResponsiveNewArrivalsPage';
+import { ResponsiveAllProductsPage } from './components/ResponsiveAllProductsPage';
+import { ResponsiveOrderConfirmationPage } from './components/ResponsiveOrderConfirmationPage';
+import { ResponsiveNotFoundPage } from './components/ResponsiveNotFoundPage';
+import { ResponsiveAddressSelectionPage } from './components/ResponsiveAddressSelectionPage';
+import { ResponsivePaymentPage } from './components/ResponsivePaymentPage';
+import { ResponsiveAboutPage } from './components/ResponsiveAboutPage';
+import { ResponsiveContactPage } from './components/ResponsiveContactPage';
+import { ResponsiveTermsPage } from './components/ResponsiveTermsPage';
+import { ResponsivePrivacyPage } from './components/ResponsivePrivacyPage';
+import { ResponsiveSizeGuidePage } from './components/ResponsiveSizeGuidePage';
+import { ResponsiveShippingPage } from './components/ResponsiveShippingPage';
+import { ResponsiveReturnsPage } from './components/ResponsiveReturnsPage';
+import { ResponsiveLoginPage } from './components/ResponsiveLoginPage';
+import { ResponsiveSignupPage } from './components/ResponsiveSignupPage';
+import { ResponsiveForgotPasswordPage } from './components/ResponsiveForgotPasswordPage';
+import { ResponsiveAccountPage } from './components/ResponsiveAccountPage';
+import { ResponsiveOTPVerificationPage } from './components/ResponsiveOTPVerificationPage';
+import { MobileSplashScreen } from './pages/mobile/MobileSplashScreen';
+import { MobileOnboardingPage } from './pages/mobile/MobileOnboardingPage';
+import { MobileDeliveryLocationPage } from './pages/mobile/MobileDeliveryLocationPage';
+import { MobileOrdersPage } from './pages/mobile/MobileOrdersPage';
+import { MobileOrderDetailPage } from './pages/mobile/MobileOrderDetailPage';
+import { MobileAddressesPage } from './pages/mobile/MobileAddressesPage';
+import { MobileProfileEditPage } from './pages/mobile/MobileProfileEditPage';
+import { MobilePaymentMethodsPage } from './pages/mobile/MobilePaymentMethodsPage';
+import { MobileAddPaymentMethodPage } from './pages/mobile/MobileAddPaymentMethodPage';
+import { MobileHelpPage } from './pages/mobile/MobileHelpPage';
+import { MobileReviewsPage } from './pages/mobile/MobileReviewsPage';
+import { MobileRewardsPage } from './pages/mobile/MobileRewardsPage';
+import { MobileCouponsPage } from './pages/mobile/MobileCouponsPage';
+import { MobileSettingsPage } from './pages/mobile/MobileSettingsPage';
+import { MobileChangePasswordPage } from './pages/mobile/MobileChangePasswordPage';
+import { MobileLanguagePage } from './pages/mobile/MobileLanguagePage';
+import { MobileAccountPage } from './pages/mobile/MobileAccountPage';
+import { MobileCategoriesPage } from './pages/mobile/MobileCategoriesPage';
+import { MobileSearchPage } from './pages/mobile/MobileSearchPage';
+import { MobileNotificationsPage } from './pages/mobile/MobileNotificationsPage';
+import { MobileAddAddressPage } from './pages/mobile/MobileAddAddressPage';
+import { FeaturedCollectionPage } from './pages/FeaturedCollectionPage';
+import { AdminLoginPage } from './pages/admin/AdminLoginPage';
+import { ProtectedRoute } from './components/admin/ProtectedRoute';
+import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
+import { AdminProductsPage } from './pages/admin/AdminProductsPage';
+import { AdminAddEditProductPage } from './pages/admin/AdminAddEditProductPage';
+import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
+import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
+import { AdminVendorsPage } from './pages/admin/AdminVendorsPage';
+import { AddVendorPage } from './pages/admin/AddVendorPage';
+import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
+import { AdminContentPage } from './pages/admin/AdminContentPage';
+import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
+import { AdminPromotionsPage } from './pages/admin/AdminPromotionsPage';
+import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
+import { AdminConfigurationPage } from './pages/admin/AdminConfigurationPage';
+import { AdminVideosPage } from './pages/admin/AdminVideosPage';
+import SubscriptionPlanBuilder from './pages/admin/SubscriptionPlanBuilder';
+import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
+import { AdminWishlistPage } from './pages/admin/AdminWishlistPage';
+import { AdminBadgesPage } from './pages/admin/AdminBadgesPage';
+import { ConfigurationPanel } from './pages/ConfigurationPanel';
 
-// Layout wrapper to conditionally show navigation
+/** In Capacitor native app, use hash routing so the WebView never does a full reload on navigation. */
+function isCapacitorNative(): boolean {
+  if (typeof window === 'undefined') return false;
+  const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+  return !!(cap?.isNativePlatform?.());
+}
+
+const AppRouter = isCapacitorNative() ? HashRouter : BrowserRouter;
+
+const MOBILE_HIDE_NAV_PATHS = ['/splash', '/onboarding', '/login', '/signup', '/forgot-password', '/otp-verification'];
+
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const isMobile = useIsMobile();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const showMobileBottomNav = isMobile && !isAdminRoute && !MOBILE_HIDE_NAV_PATHS.some((p) => location.pathname === p || location.pathname.startsWith(p + '/'));
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (loading) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [loading]);
 
   return (
     <>
       <ConfigApplier />
       <ConfigIndicator />
+      <AnimatePresence mode="wait">
+        {loading && <Loader onComplete={() => setLoading(false)} />}
+      </AnimatePresence>
       {!isMobile && <CustomCursor />}
       <ScrollProgress />
       {/* Only show Navigation and HelpGuide on non-admin routes and desktop */}
@@ -103,94 +136,21 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           <HelpGuideButton />
         </>
       )}
-      <div className="min-h-screen bg-background text-foreground">
-        {children}
-      </div>
+      {!loading && (
+        <div className="min-h-screen bg-background text-foreground">
+          {children}
+          {showMobileBottomNav && <BottomNavigation />}
+        </div>
+      )}
     </>
   );
 }
 
 function App() {
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Only suppress known third-party library errors in development
-    // In production, let all errors bubble up for proper error tracking
-    if (import.meta.env.DEV) {
-      const originalError = console.error;
-      const originalWarn = console.warn;
-      
-      // Only filter specific known third-party library warnings in dev
-      const shouldFilter = (message: string): boolean => {
-        return (
-          message.includes('logPreviewError') ||
-          message.includes('reduxState') ||
-          // Filter only specific React warnings that are known false positives
-          (message.includes('Warning: validateDOMNesting') && message.includes('react-beautiful-dnd'))
-        );
-      };
-
-      console.error = (...args) => {
-        const message = args[0]?.toString() || '';
-        if (shouldFilter(message)) return;
-        originalError.apply(console, args);
-      };
-
-      console.warn = (...args) => {
-        const message = args[0]?.toString() || '';
-        if (shouldFilter(message)) return;
-        originalWarn.apply(console, args);
-      };
-
-      // Log but don't suppress errors for error tracking
-      const handleError = (event: ErrorEvent) => {
-        // Log to error tracking service (e.g., Sentry) in production
-        if (!import.meta.env.DEV) {
-          // TODO: Integrate error tracking service
-          // errorTracker.captureException(event.error);
-        }
-        // Don't prevent default - let error boundary handle it
-      };
-
-      const handleRejection = (event: PromiseRejectionEvent) => {
-        // Log to error tracking service in production
-        if (!import.meta.env.DEV) {
-          // TODO: Integrate error tracking service
-          // errorTracker.captureException(event.reason);
-        }
-        // Don't prevent default - let error boundary handle it
-      };
-
-      window.addEventListener('error', handleError);
-      window.addEventListener('unhandledrejection', handleRejection);
-
-      return () => {
-        console.error = originalError;
-        console.warn = originalWarn;
-        window.removeEventListener('error', handleError);
-        window.removeEventListener('unhandledrejection', handleRejection);
-      };
-    }
-  }, []);
-
-  useEffect(() => {
-    // Simulate initial loading
-    const timer = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    // Prevent scroll during loading
-    if (loading) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-  }, [loading]);
-
   return (
     <ErrorBoundary>
-      <BrowserRouter>
+      <AppRouter>
+        <ScrollToTop />
         <UserProvider>
           <CartProvider>
             <WishlistProvider>
@@ -198,57 +158,64 @@ function App() {
                 <CurrencyProvider>
                   <SiteConfigProvider>
                     <OrderProvider>
-                      <ScrollToTop />
                       <Toaster position="top-right" richColors closeButton duration={1500} />
-                      <AnimatePresence mode="wait">
-                        {loading && <Loader onComplete={() => setLoading(false)} />}
-                      </AnimatePresence>
-
-                      {!loading && (
-                        <AppLayout>
+                      <AppLayout>
+                        <MobileOnboardingRedirect>
                           <Routes>
-                            {/* Responsive routes */}
                             <Route path="/" element={<ResponsiveHomePage />} />
+                            <Route path="/splash" element={<MobileSplashScreen />} />
+                            <Route path="/onboarding" element={<MobileOnboardingPage />} />
+                            <Route path="/login" element={<ResponsiveLoginPage />} />
+                            <Route path="/signup" element={<ResponsiveSignupPage />} />
+                            <Route path="/forgot-password" element={<ResponsiveForgotPasswordPage />} />
+                            <Route path="/otp-verification" element={<ResponsiveOTPVerificationPage />} />
+                            <Route path="/delivery-location" element={<MobileDeliveryLocationPage />} />
+                            <Route path="/orders" element={<MobileOrdersPage />} />
+                            <Route path="/orders/:id" element={<MobileOrderDetailPage />} />
+                            <Route path="/order/:id" element={<MobileOrderDetailPage />} />
+                            <Route path="/addresses" element={<MobileAddressesPage />} />
+                            <Route path="/addresses/add" element={<MobileAddAddressPage />} />
+                            <Route path="/profile/edit" element={<MobileProfileEditPage />} />
+                            <Route path="/payment-methods" element={<MobilePaymentMethodsPage />} />
+                            <Route path="/add-payment-method" element={<MobileAddPaymentMethodPage />} />
+                            <Route path="/help" element={<MobileHelpPage />} />
+                            <Route path="/reviews" element={<MobileReviewsPage />} />
+                            <Route path="/rewards" element={<MobileRewardsPage />} />
+                            <Route path="/coupons" element={<MobileCouponsPage />} />
+                            <Route path="/settings" element={<MobileSettingsPage />} />
+                            <Route path="/change-password" element={<MobileChangePasswordPage />} />
+                            <Route path="/language" element={<MobileLanguagePage />} />
                             <Route path="/product/:id" element={<ResponsiveProductDetailPage />} />
                             <Route path="/cart" element={<ResponsiveCartPage />} />
                             <Route path="/wishlist" element={<ResponsiveWishlistPage />} />
                             <Route path="/account" element={<ResponsiveAccountPage />} />
                             <Route path="/categories" element={<MobileCategoriesPage />} />
+                            <Route path="/gift-for-her" element={<Navigate to="/category/women?gift=true" replace />} />
+                            <Route path="/gift-for-him" element={<Navigate to="/category/men?gift=true" replace />} />
                             <Route path="/search" element={<MobileSearchPage />} />
+                            <Route path="/notifications" element={<MobileNotificationsPage />} />
                             <Route path="/category/:gender" element={<ResponsiveCategoryPage />} />
                             <Route path="/category/:gender/:category" element={<ResponsiveCategoryPage />} />
-                            <Route path="/address-selection" element={<AddressSelectionPage />} />
-                            <Route path="/payment" element={<PaymentPage />} />
+                            <Route path="/address" element={<ResponsiveAddressSelectionPage />} />
+                            <Route path="/address-selection" element={<ResponsiveAddressSelectionPage />} />
+                            <Route path="/add-address" element={<MobileAddAddressPage />} />
+                            <Route path="/payment" element={<ResponsivePaymentPage />} />
                             <Route path="/order-confirmation" element={<ResponsiveOrderConfirmationPage />} />
+                            <Route path="/order-confirmation/:id" element={<ResponsiveOrderConfirmationPage />} />
                             <Route path="/all-products" element={<ResponsiveAllProductsPage />} />
                             <Route path="/not-found" element={<ResponsiveNotFoundPage />} />
                             <Route path="/sale" element={<ResponsiveSalePage />} />
                             <Route path="/new-arrivals" element={<ResponsiveNewArrivalsPage />} />
                             <Route path="/featured-collection" element={<FeaturedCollectionPage />} />
-                            
-                            {/* Auth */}
-                            <Route path="/login" element={<LoginPage />} />
-
-                            {/* Legacy routes (for backward compatibility) */}
-                            <Route path="/checkout" element={<CheckoutPage />} />
-                            
-                            {/* Static pages */}
-                            <Route path="/about" element={<AboutPage />} />
-                            <Route path="/contact" element={<ContactPage />} />
-                            <Route path="/terms" element={<TermsPage />} />
-                            <Route path="/privacy" element={<PrivacyPage />} />
-                            <Route path="/size-guide" element={<SizeGuidePage />} />
-                            <Route path="/shipping" element={<ShippingPage />} />
-                            <Route path="/returns" element={<ReturnsPage />} />
-                            <Route path="/support" element={<SupportPage />} />
-                            <Route path="/faq" element={<FAQPage />} />
-                            <Route path="/careers" element={<CareersPage />} />
-                            <Route path="/sustainability" element={<SustainabilityPage />} />
-                            <Route path="/press" element={<PressPage />} />
-                            <Route path="/cookies" element={<CookiesPage />} />
-                            <Route path="*" element={<NotFoundPage />} />
-                            
-                            {/* Admin routes */}
+                            <Route path="/about" element={<ResponsiveAboutPage />} />
+                            <Route path="/contact" element={<ResponsiveContactPage />} />
+                            <Route path="/terms" element={<ResponsiveTermsPage />} />
+                            <Route path="/privacy" element={<ResponsivePrivacyPage />} />
+                            <Route path="/size-guide" element={<ResponsiveSizeGuidePage />} />
+                            <Route path="/mobile/size-guide" element={<ResponsiveSizeGuidePage />} />
+                            <Route path="/shipping" element={<ResponsiveShippingPage />} />
+                            <Route path="/returns" element={<ResponsiveReturnsPage />} />
+                            <Route path="*" element={<ResponsiveNotFoundPage />} />
                             <Route path="/admin/login" element={<AdminLoginPage />} />
                             <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboardPage /></ProtectedRoute>} />
                             <Route path="/admin/products" element={<ProtectedRoute><AdminProductsPage /></ProtectedRoute>} />
@@ -256,7 +223,6 @@ function App() {
                             <Route path="/admin/products/edit" element={<ProtectedRoute><AdminAddEditProductPage /></ProtectedRoute>} />
                             <Route path="/admin/orders" element={<ProtectedRoute><AdminOrdersPage /></ProtectedRoute>} />
                             <Route path="/admin/customers" element={<ProtectedRoute><AdminCustomersPage /></ProtectedRoute>} />
-                            <Route path="/admin/users/add" element={<ProtectedRoute><AddUserPage /></ProtectedRoute>} />
                             <Route path="/admin/vendors" element={<ProtectedRoute><AdminVendorsPage /></ProtectedRoute>} />
                             <Route path="/admin/vendors/add" element={<ProtectedRoute><AddVendorPage /></ProtectedRoute>} />
                             <Route path="/admin/categories" element={<ProtectedRoute><AdminCategoriesPage /></ProtectedRoute>} />
@@ -270,9 +236,10 @@ function App() {
                             <Route path="/admin/reviews" element={<ProtectedRoute><AdminReviewsPage /></ProtectedRoute>} />
                             <Route path="/admin/wishlist" element={<ProtectedRoute><AdminWishlistPage /></ProtectedRoute>} />
                             <Route path="/admin/badges" element={<ProtectedRoute><AdminBadgesPage /></ProtectedRoute>} />
+                            <Route path="/configuration" element={<ConfigurationPanel />} />
                           </Routes>
-                        </AppLayout>
-                      )}
+                        </MobileOnboardingRedirect>
+                      </AppLayout>
                     </OrderProvider>
                   </SiteConfigProvider>
                 </CurrencyProvider>
@@ -280,7 +247,7 @@ function App() {
             </WishlistProvider>
           </CartProvider>
         </UserProvider>
-      </BrowserRouter>
+      </AppRouter>
     </ErrorBoundary>
   );
 }

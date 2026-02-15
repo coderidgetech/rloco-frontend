@@ -58,13 +58,16 @@ export function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) 
     }
     
     const size = selectedSize || product.sizes[0];
+    const isGift = !!product.is_gift;
     for (let i = 0; i < quantity; i++) {
       addToCart({
         id: product.id,
         name: product.name,
         price: product.price,
+        priceINR: (product as any).price_inr,
         image: product.images?.[0] || product.image || '',
         size,
+        ...(isGift && { isGift: true, giftWrapColor: 'Gold', giftMessage: '' }),
       });
     }
     
@@ -263,7 +266,14 @@ export function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) 
                   <div className="space-y-6">
                     {/* Title & Rating */}
                     <div>
-                      <h1 className="text-4xl mb-3">{product.name}</h1>
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                        <h1 className="text-4xl">{product.name}</h1>
+                        {product.is_gift && (
+                          <span className="px-2 py-0.5 text-xs font-medium uppercase tracking-wider bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/40 rounded">
+                            Gift
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-3">
                         <div className="flex items-center gap-1">
                           {[...Array(5)].map((_, i) => (
@@ -345,19 +355,33 @@ export function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) 
                         <div className="grid grid-cols-5 gap-2">
                           {product.sizes.map((size) => {
                             const isSelected = selectedSize === size;
+                            const available = (product as { stock?: Record<string, number> }).stock?.[size] ?? 0;
+                            const outOfStock = available === 0;
+                            const availabilityText = outOfStock
+                              ? 'Out of stock'
+                              : available <= 5
+                                ? `${available} left`
+                                : 'In stock';
                             return (
                               <motion.button
                                 key={size}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setSelectedSize(size)}
-                                className={`h-12 rounded-lg border-2 transition-all font-semibold ${
-                                  isSelected
-                                    ? 'border-primary bg-primary text-primary-foreground'
-                                    : 'border-border hover:border-primary/50'
+                                type="button"
+                                whileHover={!outOfStock ? { scale: 1.05 } : undefined}
+                                whileTap={!outOfStock ? { scale: 0.95 } : undefined}
+                                onClick={() => !outOfStock && setSelectedSize(size)}
+                                disabled={outOfStock}
+                                className={`min-h-14 py-2 px-1 rounded-lg border-2 transition-all font-semibold flex flex-col items-center justify-center gap-0.5 ${
+                                  outOfStock
+                                    ? 'border-border bg-muted text-muted-foreground cursor-not-allowed opacity-60'
+                                    : isSelected
+                                      ? 'border-primary bg-primary text-primary-foreground'
+                                      : 'border-border hover:border-primary/50'
                                 }`}
                               >
-                                {size}
+                                <span>{size}</span>
+                                <span className="text-[10px] uppercase tracking-wider opacity-90">
+                                  {availabilityText}
+                                </span>
                               </motion.button>
                             );
                           })}
@@ -490,7 +514,7 @@ export function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) 
 
                           {activeTab === 'details' && (
                             <ul className="space-y-3">
-                              {product.details.map((detail, index) => (
+                              {(product.details || []).map((detail, index) => (
                                 <li key={index} className="flex items-start gap-3">
                                   <ChevronRight className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                                   <span className="text-muted-foreground">{detail}</span>

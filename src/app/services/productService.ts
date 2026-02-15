@@ -9,6 +9,9 @@ export const productService = {
     gender?: string;
     on_sale?: boolean;
     featured?: boolean;
+    new_arrival?: boolean;
+    gift?: boolean;
+    search?: string;
     min_price?: number;
     max_price?: number;
     sort?: string;
@@ -18,7 +21,11 @@ export const productService = {
   },
 
   async getById(id: string): Promise<Product> {
-    const response = await api.get<Product>(`/products/${id}`);
+    const trimmed = (id || '').trim();
+    if (!/^[0-9a-fA-F]{24}$/.test(trimmed)) {
+      return Promise.reject(new Error('Invalid product ID'));
+    }
+    const response = await api.get<Product>(`/products/${trimmed}`);
     return response.data;
   },
 

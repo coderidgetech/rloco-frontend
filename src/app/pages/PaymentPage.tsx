@@ -60,7 +60,7 @@ const UPI_APPS = [
 
 export function PaymentPage() {
   const navigate = useNavigate();
-  const { items, clearCart } = useCart();
+  const { items, clearCart, removeFromCart } = useCart();
   const { formatAmount, convertPrice, currency } = useCurrency();
   const { selectedAddress, setSelectedPaymentMethod: setOrderPaymentMethod } = useOrder();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('recommended');
@@ -73,6 +73,7 @@ export function PaymentPage() {
   const [cvv, setCvv] = useState('');
   const [showBankOffers, setShowBankOffers] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [productsMap, setProductsMap] = useState<Map<string, Product>>(new Map());
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -91,7 +92,7 @@ export function PaymentPage() {
 
   const deliveryAddress = selectedAddress;
 
-  // Fetch products for price calculation
+  // Fetch products for price calculation; remove cart items whose product no longer exists (404)
   useEffect(() => {
     const fetchProducts = async () => {
       const productIds = items.map(item => String(item.id));
@@ -105,6 +106,12 @@ export function PaymentPage() {
         productsData.forEach((product, index) => {
           if (product) {
             map.set(productIds[index], product);
+          } else {
+            const item = items[index];
+            if (item) {
+              removeFromCart(item.id, item.size);
+              toast.info('A product in your cart is no longer available and was removed.');
+            }
           }
         });
         setProductsMap(map);
@@ -114,7 +121,7 @@ export function PaymentPage() {
     };
 
     fetchProducts();
-  }, [items]);
+  }, [items, removeFromCart]);
 
   // Calculate original MRP (before any product discounts)
   const originalMRP = items.reduce((sum, item) => {

@@ -1,8 +1,6 @@
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { Home, Search, ArrowLeft } from 'lucide-react';
-import { BottomNavigation } from '@/app/components/mobile/BottomNavigation';
-
 export function MobileNotFoundPage() {
   const navigate = useNavigate();
 
@@ -152,8 +150,6 @@ export function MobileNotFoundPage() {
           </div>
         </motion.div>
       </div>
-
-      <BottomNavigation />
     </div>
   );
 }

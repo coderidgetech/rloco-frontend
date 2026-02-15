@@ -14,10 +14,10 @@ import {
   DollarSign,
   Eye,
   BarChart3,
-  AlertCircle,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { productService } from '@/app/services/productService';
+import { wishlistService } from '@/app/services/wishlistService';
 import { Product } from '@/app/types/api';
 import { toast } from 'sonner';
 
@@ -33,37 +33,76 @@ interface WishlistProduct {
   trendPercent: number;
 }
 
+const BATCH_SIZE = 20;
+const MAX_PRODUCTS_ANALYTICS = 200;
+
 export function AdminWishlistPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<WishlistProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userAnalytics, setUserAnalytics] = useState<{ total_wishlists: number; active_users?: number }>({ total_wishlists: 0, active_users: 0 });
 
   useEffect(() => {
     fetchProducts();
+    fetchUserAnalytics();
   }, []);
+
+  const fetchUserAnalytics = async () => {
+    try {
+      const data = await wishlistService.getUserAnalytics();
+      setUserAnalytics({ total_wishlists: data.total_wishlists ?? 0, active_users: data.active_users ?? 0 });
+    } catch {
+      setUserAnalytics({ total_wishlists: 0, active_users: 0 });
+    }
+  };
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      // Fetch all products - wishlist analytics would need a backend endpoint
-      // For now, we'll show products with placeholder wishlist data
       const response = await productService.list({ limit: 1000 });
       const allProducts = response.products || [];
-      
-      // Transform products - note: wishlist count and conversion require backend analytics endpoint
-      const transformedProducts: WishlistProduct[] = allProducts.map((product: Product) => ({
+      const baseProducts: WishlistProduct[] = allProducts.map((product: Product) => ({
         id: product.id,
         name: product.name,
         image: product.images?.[0] || '',
         price: product.price,
         category: product.category,
-        wishlistCount: 0, // TODO: Requires backend endpoint /admin/wishlist/analytics
-        purchaseConversion: 0, // TODO: Requires backend endpoint
+        wishlistCount: 0,
+        purchaseConversion: 0,
         trend: 'stable' as const,
         trendPercent: 0,
       }));
-      
-      setProducts(transformedProducts);
+      setProducts(baseProducts);
+
+      const toFetch = baseProducts.slice(0, MAX_PRODUCTS_ANALYTICS);
+      for (let i = 0; i < toFetch.length; i += BATCH_SIZE) {
+        const batch = toFetch.slice(i, i + BATCH_SIZE);
+        const results = await Promise.allSettled(
+          batch.map(async (p) => {
+            const analytics = await wishlistService.getProductAnalytics(p.id);
+            return { id: p.id, analytics };
+          })
+        );
+        setProducts((prev) => {
+          const next = [...prev];
+          results.forEach((result, idx) => {
+            if (result.status === 'fulfilled') {
+              const { id, analytics } = result.value;
+              const index = next.findIndex((n) => n.id === id);
+              if (index !== -1) {
+                next[index] = {
+                  ...next[index],
+                  wishlistCount: analytics.wishlist_count ?? 0,
+                  purchaseConversion: analytics.purchase_conversion ?? 0,
+                  trend: (analytics.trend as 'up' | 'down' | 'stable') ?? 'stable',
+                  trendPercent: analytics.trend_percent ?? 0,
+                };
+              }
+            }
+          });
+          return next;
+        });
+      }
     } catch (error: any) {
       console.error('Failed to fetch products:', error);
       toast.error('Failed to load products');
@@ -78,14 +117,12 @@ export function AdminWishlistPage() {
     product.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalWishlists = products.reduce((sum, p) => sum + p.wishlistCount, 0);
-  const avgConversion = products.length > 0 
+  const totalWishlists = products.reduce((sum, p) => sum + p.wishlistCount, 0) || userAnalytics.total_wishlists;
+  const avgConversion = products.length > 0
     ? (products.reduce((sum, p) => sum + p.purchaseConversion, 0) / products.length).toFixed(1)
     : '0.0';
-  // Note: Unique users calculation requires backend analytics
-  const uniqueUsers = 0; // TODO: Backend endpoint needed: GET /admin/wishlist/analytics/users
+  const uniqueUsers = userAnalytics.active_users ?? 0;
 
-  // Calculate category data from actual products
   const categoryCounts = products.reduce((acc, p) => {
     acc[p.category] = (acc[p.category] || 0) + p.wishlistCount;
     return acc;
@@ -97,8 +134,7 @@ export function AdminWishlistPage() {
     color: ['#000000', '#B4770E', '#3b3b3b', '#666666', '#999999'][index % 5],
   }));
 
-  // Trend data would require historical data from backend
-  const trendData: { month: string; items: number }[] = []; // TODO: Backend endpoint needed: GET /admin/wishlist/analytics/trends?start_date={date}&end_date={date}
+  const trendData: { month: string; items: number }[] = [];
 
   return (
     <AdminLayout>
@@ -113,26 +149,6 @@ export function AdminWishlistPage() {
           <p className="text-muted-foreground">Track customer wishlists and product demand</p>
         </motion.div>
 
-        {/* API Endpoint Notice */}
-        {products.length > 0 && products[0].wishlistCount === 0 && (
-          <Card className="mb-6 border-yellow-200 bg-yellow-50">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="text-yellow-600 mt-0.5" size={20} />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-yellow-800 mb-1">
-                    Backend Endpoint Required
-                  </p>
-                  <p className="text-xs text-yellow-700">
-                    Wishlist analytics requires a backend endpoint (e.g., GET /admin/wishlist/analytics) 
-                    to provide wishlist counts, conversion rates, and trend data. Currently showing products only.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card>
@@ -143,10 +159,6 @@ export function AdminWishlistPage() {
                   <p className="text-2xl font-light">{totalWishlists.toLocaleString()}</p>
                 </div>
                 <Heart className="text-red-500" size={24} />
-              </div>
-              <div className="mt-2 flex items-center text-xs text-green-600">
-                <TrendingUp size={14} className="mr-1" />
-                +12.5% from last month
               </div>
             </CardContent>
           </Card>
@@ -160,10 +172,6 @@ export function AdminWishlistPage() {
                 </div>
                 <Users className="text-[#B4770E]" size={24} />
               </div>
-              <div className="mt-2 flex items-center text-xs text-green-600">
-                <TrendingUp size={14} className="mr-1" />
-                +8.3% from last month
-              </div>
             </CardContent>
           </Card>
 
@@ -175,10 +183,6 @@ export function AdminWishlistPage() {
                   <p className="text-2xl font-light">{avgConversion}%</p>
                 </div>
                 <ShoppingCart className="text-green-500" size={24} />
-              </div>
-              <div className="mt-2 flex items-center text-xs text-green-600">
-                <TrendingUp size={14} className="mr-1" />
-                +3.2% from last month
               </div>
             </CardContent>
           </Card>

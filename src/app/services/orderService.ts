@@ -26,4 +26,19 @@ export const orderService = {
     const response = await api.put<Order>(`/orders/${id}/status`, { status });
     return response.data;
   },
+
+  async getTracking(orderId: string): Promise<{ updates: OrderTrackingUpdate[] }> {
+    const response = await api.get<{ updates: OrderTrackingUpdate[] }>(`/orders/${orderId}/tracking`);
+    return response.data;
+  },
 };
+
+export interface OrderTrackingUpdate {
+  id?: string;
+  order_id?: string;
+  status: string;
+  description?: string;
+  location?: string;
+  date?: string;
+  created_at: string;
+}

@@ -28,9 +28,7 @@ export function BottomNavigation() {
 
   return (
     <motion.nav
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      initial={false}
       className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-border/50 md:hidden safe-area-bottom"
       style={{
         paddingBottom: 'env(safe-area-inset-bottom)',

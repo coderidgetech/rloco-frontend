@@ -9,6 +9,7 @@ export const useProducts = (params?: {
   gender?: string;
   on_sale?: boolean;
   featured?: boolean;
+  new_arrival?: boolean;
   min_price?: number;
   max_price?: number;
   sort?: string;
@@ -32,7 +33,7 @@ export const useProducts = (params?: {
     } finally {
       setLoading(false);
     }
-  }, [params?.limit, params?.skip, params?.category, params?.gender, params?.on_sale, params?.featured, params?.min_price, params?.max_price, params?.sort]);
+  }, [params?.limit, params?.skip, params?.category, params?.gender, params?.on_sale, params?.featured, params?.new_arrival, params?.min_price, params?.max_price, params?.sort]);
 
   useEffect(() => {
     fetchProducts();

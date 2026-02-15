@@ -12,12 +12,13 @@ import { Promotion } from '../types/api';
 
 export function CartPage() {
   const navigate = useNavigate();
-  const { items, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { items, removeFromCart, updateQuantity, updateGiftOptions, clearCart, giftPackingCharge } = useCart();
   const { formatPrice, formatAmount, convertPrice, currency } = useCurrency();
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; promotion?: Promotion } | null>(null);
   const [availablePromotions, setAvailablePromotions] = useState<Promotion[]>([]);
   const [loadingPromotions, setLoadingPromotions] = useState(false);
+  const [giftMessageDrafts, setGiftMessageDrafts] = useState<Record<string, string>>({});
   
   // Fetch featured products for recommendations
   const { products: featuredProducts } = useFeaturedProducts(8);
@@ -74,7 +75,8 @@ export function CartPage() {
       ? 0 
       : shippingCost;
   const tax = (subtotal - discount) * 0.08; // 8% tax
-  const finalTotal = subtotal - discount + shipping + tax;
+  const giftPackingDisplay = currency === 'INR' ? giftPackingCharge : giftPackingCharge / 75;
+  const finalTotal = subtotal - discount + shipping + giftPackingDisplay + tax;
 
   // Filter recommended products (exclude items already in cart)
   const recommendedProducts = (featuredProducts || [])
@@ -282,6 +284,49 @@ export function CartPage() {
                           Total: <span className="font-medium text-foreground">{formatAmount(convertPrice(item.price, (item as any).priceINR) * item.quantity)}</span>
                         </span>
                       </div>
+
+                      {/* Gift options for gift items */}
+                      {item.isGift && (
+                        <div className="mt-3 pt-3 border-t border-border space-y-2">
+                          <p className="text-xs font-medium text-muted-foreground">Gift options</p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs text-muted-foreground">Wrap color:</span>
+                            {['Gold', 'Silver', 'Red', 'Navy'].map((color) => (
+                              <button
+                                key={color}
+                                type="button"
+                                onClick={() => updateGiftOptions(item.id, item.size, color, item.giftMessage ?? '')}
+                                className={`px-2 py-1 rounded text-xs border transition-colors ${
+                                  (item.giftWrapColor ?? 'Gold') === color
+                                    ? 'border-primary bg-primary/10 text-primary'
+                                    : 'border-border hover:border-primary/50'
+                                }`}
+                              >
+                                {color}
+                              </button>
+                            ))}
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground block mb-1">Gift message (optional)</label>
+                            <textarea
+                              placeholder="Add a message"
+                              value={giftMessageDrafts[`${item.id}-${item.size}`] ?? item.giftMessage ?? ''}
+                              onChange={(e) => setGiftMessageDrafts((prev) => ({ ...prev, [`${item.id}-${item.size}`]: e.target.value }))}
+                              onBlur={(e) => {
+                                const msg = e.target.value;
+                                updateGiftOptions(item.id, item.size, item.giftWrapColor ?? 'Gold', msg);
+                                setGiftMessageDrafts((prev) => {
+                                  const next = { ...prev };
+                                  delete next[`${item.id}-${item.size}`];
+                                  return next;
+                                });
+                              }}
+                              className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg resize-none"
+                              rows={2}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 ))}
@@ -409,6 +454,12 @@ export function CartPage() {
                         {shipping === 0 ? 'FREE' : formatAmount(shipping)}
                       </span>
                     </div>
+                    {giftPackingCharge > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Gift packing</span>
+                        <span>{formatAmount(giftPackingDisplay)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Tax (8%)</span>
                       <span>{formatAmount(tax)}</span>

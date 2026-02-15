@@ -7,7 +7,7 @@ import { Product } from '../types/api';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { BackgroundDecor } from './BackgroundDecor';
-import { useProducts } from '../hooks/useProducts';
+import { useNewArrivals } from '../hooks/useProducts';
 import { useSiteConfig } from '../context/SiteConfigContext';
 
 export function ProductsGrid() {
@@ -22,12 +22,8 @@ export function ProductsGrid() {
   const { formatPrice } = useCurrency();
   const navigate = useNavigate();
   
-  // Fetch products from API
-  const { products: displayProducts, loading, error } = useProducts({
-    limit: 24,
-    skip: 0,
-    sort: 'newest',
-  });
+  // Fetch new arrival products from API
+  const { products: displayProducts, loading, error } = useNewArrivals(24);
 
   const handleAddToCart = (product: Product) => {
     const isInCart = items.some(item => String(item.id) === String(product.id));
@@ -113,7 +109,7 @@ export function ProductsGrid() {
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl mb-3 tracking-tight">Top Collection</h2>
           <p className="text-foreground/70">
-            Discover our handpicked selection of {displayProducts.length} featured products
+            Discover our latest {displayProducts.length} new arrivals
           </p>
         </motion.div>
 

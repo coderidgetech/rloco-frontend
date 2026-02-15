@@ -14,72 +14,58 @@ import {
   Gift,
   Tag,
   Star,
-  Package
+  Package,
+  RotateCcw,
+  Ruler,
+  Mail,
+  Users,
+  FileText,
+  Shield
 } from 'lucide-react';
-import { BottomNavigation } from '@/app/components/mobile/BottomNavigation';
-import { useUser } from '@/app/context/UserContext';
-import { useEffect, useState } from 'react';
-import { orderService } from '@/app/services/orderService';
-import { wishlistService } from '@/app/services/wishlistService';
+import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 export function MobileAccountPage() {
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout } = useUser();
-  const [ordersCount, setOrdersCount] = useState(0);
-  const [wishlistCount, setWishlistCount] = useState(0);
-  const [points, setPoints] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      fetchUserStats();
-    } else {
-      setLoading(false);
+    // Check if user is authenticated
+    const authenticated = localStorage.getItem('isAuthenticated') === 'true';
+    const userEmail = localStorage.getItem('userEmail');
+    const userName = localStorage.getItem('userName');
+    
+    setIsLoggedIn(authenticated);
+    if (authenticated) {
+      setUser({
+        name: userName || 'User',
+        email: userEmail || 'user@example.com',
+        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&q=80',
+        memberSince: 'January 2024',
+      });
     }
-  }, [isAuthenticated, user]);
+  }, []);
 
-  const fetchUserStats = async () => {
-    try {
-      setLoading(true);
-      // Fetch orders count
-      const orders = await orderService.getOrders();
-      setOrdersCount(orders.length || 0);
-
-      // Fetch wishlist count
-      const wishlist = await wishlistService.getWishlist();
-      setWishlistCount(wishlist.length || 0);
-
-      // Points would come from a rewards/loyalty API if available
-      setPoints(0); // TODO: Implement rewards API
-    } catch (error) {
-      console.error('Failed to fetch user stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogin = () => {
-    // Navigate to login page or open login modal
-    navigate('/login');
-  };
-
-  const handleLogout = async () => {
-    await logout();
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userName');
+    setIsLoggedIn(false);
+    setUser(null);
+    toast.success('Logged out successfully');
     navigate('/');
   };
 
-  if (!isAuthenticated) {
+  if (!isLoggedIn) {
     return (
-      <div className="min-h-screen bg-white pb-20">
+      <div className="min-h-screen bg-white dark:bg-background pb-20" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
         {/* Header */}
-        <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-border/20">
-          <div className="flex items-center justify-center h-14" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-            <h1 className="text-lg font-medium">Account</h1>
-          </div>
-        </div>
+        <MobileSubPageHeader showBackButton={false} showDeliveryAddress={false} />
 
         {/* Not Logged In State */}
-        <div className="flex flex-col items-center justify-center min-h-[80vh] px-4 pt-14">
+        <div className="flex flex-col items-center justify-center min-h-[80vh] px-4" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 56px)' }}>
           <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <User size={40} className="text-primary" />
           </div>
@@ -90,7 +76,7 @@ export function MobileAccountPage() {
           
           <motion.button
             whileTap={{ scale: 0.98 }}
-            onClick={handleLogin}
+            onClick={() => navigate('/login')}
             className="w-full max-w-xs bg-primary text-white px-8 py-3.5 rounded-full font-medium mb-3"
           >
             Sign In
@@ -98,7 +84,7 @@ export function MobileAccountPage() {
           
           <motion.button
             whileTap={{ scale: 0.98 }}
-            onClick={handleLogin}
+            onClick={() => navigate('/signup')}
             className="w-full max-w-xs border-2 border-border px-8 py-3.5 rounded-full font-medium"
           >
             Create Account
@@ -134,28 +120,22 @@ export function MobileAccountPage() {
             </div>
           </div>
         </div>
-
-        <BottomNavigation />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white dark:bg-background pb-20" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-border/20">
-        <div className="flex items-center justify-center h-14" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-          <h1 className="text-lg font-medium">Account</h1>
-        </div>
-      </div>
+      <MobileSubPageHeader showBackButton={false} showDeliveryAddress={false} />
 
       {/* Profile Section */}
-      <div className="pt-14 px-4 py-6">
+      <div className="px-4 py-6" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 56px + 24px)' }}>
         <div className="flex items-center gap-4 mb-6">
           {/* Avatar */}
           <div className="w-20 h-20 rounded-full overflow-hidden bg-muted flex-shrink-0">
-            {user?.avatar ? (
-              <img src={user.avatar} alt={user.name || 'User'} className="w-full h-full object-cover" />
+            {user.avatar ? (
+              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-primary/10">
                 <User size={32} className="text-primary" />
@@ -165,13 +145,9 @@ export function MobileAccountPage() {
 
           {/* User Info */}
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-medium mb-1 truncate">{user?.name || 'User'}</h2>
-            <p className="text-sm text-foreground/60 truncate">{user?.email || ''}</p>
-            {user?.created_at && (
-              <p className="text-xs text-foreground/40 mt-1">
-                Member since {new Date(user.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-              </p>
-            )}
+            <h2 className="text-xl font-medium mb-1 truncate">{user.name}</h2>
+            <p className="text-sm text-foreground/60 truncate">{user.email}</p>
+            <p className="text-xs text-foreground/40 mt-1">Member since {user.memberSince}</p>
           </div>
 
           {/* Edit Button */}
@@ -182,24 +158,30 @@ export function MobileAccountPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-foreground/5 rounded-2xl p-4 text-center">
-            <div className="text-2xl font-semibold text-primary mb-1">
-              {loading ? '...' : ordersCount}
-            </div>
+          <motion.div
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/orders')}
+            className="bg-foreground/5 rounded-2xl p-4 text-center active:bg-foreground/10 transition-colors cursor-pointer"
+          >
+            <div className="text-2xl font-semibold text-primary mb-1">12</div>
             <div className="text-xs text-foreground/60">Orders</div>
-          </div>
-          <div className="bg-foreground/5 rounded-2xl p-4 text-center">
-            <div className="text-2xl font-semibold text-primary mb-1">
-              {loading ? '...' : wishlistCount}
-            </div>
+          </motion.div>
+          <motion.div
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/wishlist')}
+            className="bg-foreground/5 rounded-2xl p-4 text-center active:bg-foreground/10 transition-colors cursor-pointer"
+          >
+            <div className="text-2xl font-semibold text-primary mb-1">8</div>
             <div className="text-xs text-foreground/60">Wishlist</div>
-          </div>
-          <div className="bg-foreground/5 rounded-2xl p-4 text-center">
-            <div className="text-2xl font-semibold text-primary mb-1">
-              {loading ? '...' : points}
-            </div>
+          </motion.div>
+          <motion.div
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/rewards')}
+            className="bg-foreground/5 rounded-2xl p-4 text-center active:bg-foreground/10 transition-colors cursor-pointer"
+          >
+            <div className="text-2xl font-semibold text-primary mb-1">450</div>
             <div className="text-xs text-foreground/60">Points</div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Menu Sections */}
@@ -213,13 +195,13 @@ export function MobileAccountPage() {
             <MenuButton
               icon={<Package size={20} />}
               label="My Orders"
-              badge={ordersCount > 0 ? `${ordersCount}` : undefined}
+              badge="2 Active"
               onClick={() => navigate('/orders')}
             />
             <MenuButton
               icon={<Heart size={20} />}
               label="Wishlist"
-              badge={wishlistCount > 0 ? `${wishlistCount}` : undefined}
+              badge="8"
               onClick={() => navigate('/wishlist')}
             />
             <MenuButton
@@ -269,7 +251,7 @@ export function MobileAccountPage() {
             <MenuButton
               icon={<Gift size={20} />}
               label="Rloco Rewards"
-              badge={points > 0 ? `${points} pts` : undefined}
+              badge="450 pts"
               highlight
               onClick={() => navigate('/rewards')}
             />
@@ -285,13 +267,48 @@ export function MobileAccountPage() {
         {/* Support */}
         <div className="mb-6">
           <h3 className="text-xs font-medium text-foreground/40 uppercase tracking-wider mb-3 px-2">
-            Support
+            Support & Information
           </h3>
           <div className="space-y-1">
             <MenuButton
               icon={<HelpCircle size={20} />}
               label="Help Center"
               onClick={() => navigate('/help')}
+            />
+            <MenuButton
+              icon={<Package size={20} />}
+              label="Shipping Info"
+              onClick={() => navigate('/shipping')}
+            />
+            <MenuButton
+              icon={<RotateCcw size={20} />}
+              label="Returns & Refunds"
+              onClick={() => navigate('/returns')}
+            />
+            <MenuButton
+              icon={<Ruler size={20} />}
+              label="Size Guide"
+              onClick={() => navigate('/size-guide')}
+            />
+            <MenuButton
+              icon={<Mail size={20} />}
+              label="Contact Us"
+              onClick={() => navigate('/contact')}
+            />
+            <MenuButton
+              icon={<Users size={20} />}
+              label="About Rloco"
+              onClick={() => navigate('/about')}
+            />
+            <MenuButton
+              icon={<FileText size={20} />}
+              label="Terms of Service"
+              onClick={() => navigate('/terms')}
+            />
+            <MenuButton
+              icon={<Shield size={20} />}
+              label="Privacy Policy"
+              onClick={() => navigate('/privacy')}
             />
             <MenuButton
               icon={<Settings size={20} />}
@@ -316,8 +333,6 @@ export function MobileAccountPage() {
           Version 1.0.0
         </p>
       </div>
-
-      <BottomNavigation />
     </div>
   );
 }

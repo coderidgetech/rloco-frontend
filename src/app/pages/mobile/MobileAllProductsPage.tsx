@@ -1,72 +1,56 @@
 import { motion } from 'motion/react';
-import { ChevronLeft, SlidersHorizontal, Grid } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useProducts } from '@/app/hooks/useProducts';
 import { MobileProductGrid } from '@/app/components/mobile/MobileProductGrid';
-import { BottomNavigation } from '@/app/components/mobile/BottomNavigation';
+import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
 
 export function MobileAllProductsPage() {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState('featured');
   const [showSort, setShowSort] = useState(false);
-  const { products: allProducts, loading } = useProducts({ limit: 200 });
-
-  // Sort products
-  const sortedProducts = useMemo(() => {
-    if (!allProducts) return [];
-    const sorted = [...allProducts];
-    if (sortBy === 'price-low') {
-      sorted.sort((a, b) => a.price - b.price);
-    } else if (sortBy === 'price-high') {
-      sorted.sort((a, b) => b.price - a.price);
-    } else if (sortBy === 'newest') {
-      sorted.sort((a, b) => {
-        const dateA = new Date(a.created_at || 0).getTime();
-        const dateB = new Date(b.created_at || 0).getTime();
-        return dateB - dateA;
-      });
-    }
-    return sorted;
-  }, [allProducts, sortBy]);
+  const { products: apiProducts, loading } = useProducts({ limit: 200 });
+  let sortedProducts = [...apiProducts];
+  if (sortBy === 'price-low') {
+    sortedProducts.sort((a, b) => a.price - b.price);
+  } else if (sortBy === 'price-high') {
+    sortedProducts.sort((a, b) => b.price - a.price);
+  } else if (sortBy === 'newest') {
+    sortedProducts.sort((a, b) => (b.new_arrival ? 1 : 0) - (a.new_arrival ? 1 : 0));
+  }
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-border/20">
-        <div className="flex items-center justify-between h-14 px-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-          <div className="flex items-center flex-1">
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => navigate('/')}
-              className="w-9 h-9 rounded-full bg-foreground/5 flex items-center justify-center"
-            >
-              <ChevronLeft size={20} />
-            </motion.button>
-            <div className="flex items-center gap-2 ml-3">
-              <Grid size={20} className="text-foreground/60" />
-              <h1 className="text-lg font-medium">All Products</h1>
-            </div>
-          </div>
+      {/* Header */}
+      <MobileSubPageHeader showBackButton={true} showDeliveryAddress={false} />
 
+      {/* Stats Bar */}
+      <div 
+        className="fixed left-0 right-0 z-40 bg-white border-b border-border/10"
+        style={{ top: 'calc(env(safe-area-inset-top) + 56px)' }}
+      >
+        <div className="px-4 py-2 flex items-center justify-between">
+          <span className="text-sm text-foreground/60">
+            Showing {sortedProducts.length} products
+          </span>
           <button
             onClick={() => setShowSort(true)}
-            className="text-sm text-foreground/70 flex items-center gap-1"
+            className="text-sm text-foreground/70 flex items-center gap-1 px-3 py-1.5 rounded-full border border-border/30"
           >
             <SlidersHorizontal size={14} />
             Sort
           </button>
         </div>
-
-        {/* Stats Bar */}
-        <div className="px-4 py-2 bg-foreground/5 text-sm text-foreground/60 border-t border-border/10">
-          Showing {sortedProducts.length} products
-        </div>
       </div>
 
       {/* Products */}
-      <div className="pt-[88px]">
-        <MobileProductGrid products={sortedProducts} title="" />
+      <div style={{ paddingTop: 'calc(env(safe-area-inset-top) + 56px + 44px)' }}>
+        {loading ? (
+          <div className="flex justify-center py-12 text-muted-foreground">Loading...</div>
+        ) : (
+          <MobileProductGrid products={sortedProducts} title="" />
+        )}
       </div>
 
       {/* Sort Bottom Sheet */}
@@ -112,8 +96,6 @@ export function MobileAllProductsPage() {
           </motion.div>
         </>
       )}
-
-      <BottomNavigation />
     </div>
   );
 }

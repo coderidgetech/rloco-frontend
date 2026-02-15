@@ -1,11 +1,11 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { Search, X, TrendingUp, Clock, ChevronRight } from 'lucide-react';
+import { Search, X, TrendingUp, Clock, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { productService } from '@/app/services/productService';
-import { MobileProductGrid } from '@/app/components/mobile/MobileProductGrid';
-import { BottomNavigation } from '@/app/components/mobile/BottomNavigation';
 import { Product } from '@/app/types/api';
+import { MobileProductGrid } from '@/app/components/mobile/MobileProductGrid';
+import { EmptyState } from '@/app/components/mobile/EmptyState';
 
 const TRENDING_SEARCHES = [
   'Dresses',
@@ -31,10 +31,10 @@ export function MobileSearchPage() {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [searchResults, setSearchResults] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load recent searches from localStorage
     const saved = localStorage.getItem('recentSearches');
     if (saved) {
       setRecentSearches(JSON.parse(saved));
@@ -42,34 +42,35 @@ export function MobileSearchPage() {
   }, []);
 
   useEffect(() => {
-    const searchProducts = async () => {
-      if (searchQuery.trim()) {
+    const fetchProducts = async () => {
+      try {
         setLoading(true);
-        try {
-          const response = await productService.list({ 
-            limit: 100,
-            search: searchQuery 
-          });
-          setSearchResults(response.products || []);
-          setShowResults(true);
-        } catch (error) {
-          console.error('Search failed:', error);
-          setSearchResults([]);
-        } finally {
-          setLoading(false);
-        }
-      } else {
-        setShowResults(false);
-        setSearchResults([]);
+        const res = await productService.list({ limit: 200 });
+        setAllProducts(res.products || []);
+      } catch {
+        setAllProducts([]);
+      } finally {
+        setLoading(false);
       }
     };
+    fetchProducts();
+  }, []);
 
-    const debounceTimer = setTimeout(() => {
-      searchProducts();
-    }, 300);
-
-    return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      const filtered = allProducts.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q) ||
+        (p.description || '').toLowerCase().includes(q)
+      );
+      setSearchResults(filtered);
+      setShowResults(true);
+    } else {
+      setShowResults(false);
+      setSearchResults(allProducts);
+    }
+  }, [searchQuery, allProducts]);
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
@@ -209,35 +210,23 @@ export function MobileSearchPage() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              {searchResults.length > 0 ? (
+              {loading ? (
+                <div className="flex justify-center py-12 text-muted-foreground">Loading...</div>
+              ) : searchResults.length > 0 ? (
                 <MobileProductGrid
                   products={searchResults}
                   title={`${searchResults.length} Results for "${searchQuery}"`}
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-                  <div className="w-20 h-20 rounded-full bg-foreground/5 flex items-center justify-center mb-4">
-                    <Search size={32} className="text-foreground/30" />
-                  </div>
-                  <h3 className="text-lg font-medium mb-2">No results found</h3>
-                  <p className="text-sm text-foreground/60 text-center mb-6">
-                    Try searching with different keywords
-                  </p>
-                  <button
-                    onClick={() => setSearchQuery('')}
-                    className="text-sm text-primary font-medium"
-                  >
-                    Clear search
-                  </button>
-                </div>
+                <EmptyState
+                  type="search"
+                  description={`Try searching with different keywords for "${searchQuery}"`}
+                />
               )}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
-
-      {/* Bottom Navigation */}
-      <BottomNavigation />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { Hero } from '../components/Hero';
 import { VideoShowcase } from '../components/VideoShowcase';
 import { InspirationVideos } from '../components/InspirationVideos';
 import { Categories } from '../components/Categories';
+import { GiftSection } from '../components/GiftSection';
 import { ProductsGrid } from '../components/ProductsGrid';
 import { Featured } from '../components/Featured';
 import { Testimonials } from '../components/Testimonials';
@@ -24,6 +25,9 @@ export function HomePage() {
           <Categories />
         </div>
       )}
+      <div className="snap-start">
+        <GiftSection />
+      </div>
       {config.homepage.sections.editorialFeatures && (
         <VideoShowcase />
       )}

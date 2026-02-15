@@ -1,23 +1,25 @@
 import { motion } from 'motion/react';
-import { ChevronLeft, SlidersHorizontal, Flame } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useOnSaleProducts } from '@/app/hooks/useProducts';
 import { MobileProductGrid } from '@/app/components/mobile/MobileProductGrid';
-import { BottomNavigation } from '@/app/components/mobile/BottomNavigation';
+import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
 
 export function MobileSalePage() {
   const navigate = useNavigate();
   const [sortBy, setSortBy] = useState('discount');
   const [showSort, setShowSort] = useState(false);
-  const { products: saleProducts } = useOnSaleProducts(200);
+  const { products: apiProducts } = useOnSaleProducts(200);
+  const saleProducts = apiProducts.filter(p => p.on_sale && (p.original_price ?? p.price));
 
-  // Sort products
-  let sortedProducts = [...(saleProducts || [])];
+  let sortedProducts = [...saleProducts];
   if (sortBy === 'discount') {
     sortedProducts.sort((a, b) => {
-      const discountA = a.original_price ? ((a.original_price - a.price) / a.original_price) * 100 : 0;
-      const discountB = b.original_price ? ((b.original_price - b.price) / b.original_price) * 100 : 0;
+      const origA = a.original_price ?? a.price;
+      const origB = b.original_price ?? b.price;
+      const discountA = origA ? ((origA - a.price) / origA) * 100 : 0;
+      const discountB = origB ? ((origB - b.price) / origB) * 100 : 0;
       return discountB - discountA;
     });
   } else if (sortBy === 'price-low') {
@@ -28,49 +30,37 @@ export function MobileSalePage() {
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-border/20">
-        <div className="flex items-center justify-between h-14 px-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-          <div className="flex items-center flex-1">
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => navigate('/')}
-              className="w-9 h-9 rounded-full bg-foreground/5 flex items-center justify-center"
-            >
-              <ChevronLeft size={20} />
-            </motion.button>
-            <div className="flex items-center gap-2 ml-3">
-              <Flame size={20} className="text-red-500" />
-              <h1 className="text-lg font-medium">Sale</h1>
-            </div>
+      {/* Header */}
+      <MobileSubPageHeader showBackButton={true} showDeliveryAddress={false} />
+
+      {/* Sale Banner */}
+      <div 
+        className="fixed left-0 right-0 z-40 bg-gradient-to-r from-red-50 to-orange-50 border-b border-border/10"
+        style={{ top: 'calc(env(safe-area-inset-top) + 56px)' }}
+      >
+        <div className="px-4 py-3 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium text-red-600 uppercase tracking-wide">Limited Time Offer</p>
+            <p className="text-sm text-foreground/70 mt-0.5">Up to 70% off on selected items</p>
           </div>
-
-          <button
-            onClick={() => setShowSort(true)}
-            className="text-sm text-foreground/70 flex items-center gap-1"
-          >
-            <SlidersHorizontal size={14} />
-            Sort
-          </button>
-        </div>
-
-        {/* Sale Banner */}
-        <div className="px-4 py-3 bg-gradient-to-r from-red-50 to-orange-50 border-t border-border/10">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-red-600 uppercase tracking-wide">Limited Time Offer</p>
-              <p className="text-sm text-foreground/70 mt-0.5">Up to 70% off on selected items</p>
-            </div>
+          <div className="flex items-center gap-3">
             <div className="text-right">
               <p className="text-2xl font-bold text-red-600">{saleProducts.length}</p>
               <p className="text-xs text-foreground/60">Items</p>
             </div>
+            <button
+              onClick={() => setShowSort(true)}
+              className="text-sm text-foreground/70 flex items-center gap-1 px-3 py-1.5 rounded-full border border-border/30 bg-white"
+            >
+              <SlidersHorizontal size={14} />
+              Sort
+            </button>
           </div>
         </div>
       </div>
 
       {/* Products */}
-      <div className="pt-[140px]">
+      <div style={{ paddingTop: 'calc(env(safe-area-inset-top) + 120px)' }}>{/* Header + filters */}
         <MobileProductGrid products={sortedProducts} title="" />
       </div>
 
@@ -116,8 +106,6 @@ export function MobileSalePage() {
           </motion.div>
         </>
       )}
-
-      <BottomNavigation />
     </div>
   );
 }

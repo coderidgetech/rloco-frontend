@@ -64,10 +64,11 @@ export const AdminCustomersPage = () => {
           limit,
           skip: page * limit,
         });
-        // Filter to only show customers (not admins or vendors)
-        const customerList = (response?.data || []).filter((user) => user.role === 'customer');
+        const list = Array.isArray(response) ? response : (response as any)?.data ?? [];
+        const customerList = list.filter((user: User) => user.role === 'customer');
         setCustomers(customerList);
-        setTotal(response?.total || 0);
+        const totalCount = typeof (response as any)?.total === 'number' ? (response as any).total : customerList.length;
+        setTotal(totalCount);
       } catch (error) {
         console.error('Failed to fetch customers:', error);
         toast.error('Failed to load customers');
@@ -101,44 +102,50 @@ export const AdminCustomersPage = () => {
 
   const handleToggleStatus = async (customer: User) => {
     try {
-      // Note: User model doesn't have an 'active' field in backend
-      // This would require backend support to add an 'active' or 'status' field to User model
-      // For now, we can update other customer fields if needed
-      // TODO: Backend needs to add 'active' or 'status' field to User model for this to work
-      toast.info('Customer status toggle requires backend support. User model needs an "active" or "status" field.');
-      // Refresh customers list
-      const response = await adminService.listCustomers({ limit, skip: page * limit });
-      const customerList = response.data.filter((user) => user.role === 'customer');
-      setCustomers(customerList);
-      setTotal(response.total);
+      const newActive = !(customer.active ?? true);
+      await adminService.updateCustomer(customer.id, { active: newActive });
+      toast.success(newActive ? 'Customer activated' : 'Customer deactivated');
+      setCustomers((prev) =>
+        prev.map((c) => (c.id === customer.id ? { ...c, active: newActive } : c))
+      );
+      if (selectedCustomer?.id === customer.id) {
+        setSelectedCustomer({ ...selectedCustomer, active: newActive });
+      }
     } catch (error: any) {
       console.error('Failed to update customer status:', error);
-      toast.error(error.message || 'Failed to update customer status');
+      toast.error(error?.message || 'Failed to update customer status');
     }
   };
 
+  const [dashboardStats, setDashboardStats] = useState<{ orders?: { total?: number }; revenue?: { total?: number } } | null>(null);
+
+  useEffect(() => {
+    adminService.getDashboardStats().then(setDashboardStats).catch(() => setDashboardStats(null));
+  }, []);
+
+  const activeCount = customers.filter((c) => c.active !== false).length;
   const stats = [
     {
       label: 'Total Customers',
-      value: customers.length,
+      value: total > 0 ? total : customers.length,
       icon: UserCheck,
       color: 'bg-blue-100 text-blue-600',
     },
     {
       label: 'Active',
-      value: customers.length, // All customers are active by default
+      value: activeCount,
       icon: UserCheck,
       color: 'bg-green-100 text-green-600',
     },
     {
       label: 'Total Orders',
-      value: 'N/A', // Would need to calculate from orders
+      value: dashboardStats?.orders?.total != null ? dashboardStats.orders.total : '—',
       icon: ShoppingBag,
       color: 'bg-purple-100 text-purple-600',
     },
     {
       label: 'Total Revenue',
-      value: 'N/A', // Would need to calculate from orders
+      value: dashboardStats?.revenue?.total != null ? `$${Number(dashboardStats.revenue.total).toLocaleString()}` : '—',
       icon: DollarSign,
       color: 'bg-yellow-100 text-yellow-600',
     },

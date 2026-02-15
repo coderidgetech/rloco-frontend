@@ -123,7 +123,6 @@ export function ProductDetailPage() {
       // Validate ObjectID format (24 character hex string)
       const isValidObjectID = /^[0-9a-fA-F]{24}$/.test(id);
       if (!isValidObjectID) {
-        console.warn(`Invalid product ID format: ${id}. Expected MongoDB ObjectID (24 hex characters).`);
         setReviews([]);
         setReviewsLoading(false);
         return;
@@ -593,21 +592,37 @@ export function ProductDetailPage() {
                   </button>
                 </div>
                 <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
-                  {product.sizes.map((size) => (
-                    <motion.button
-                      key={size}
-                      onClick={() => setSelectedSize(size)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`h-12 border text-sm transition-all ${
-                        selectedSize === size
-                          ? 'border-foreground bg-foreground text-background'
-                          : 'border-foreground/20 hover:border-foreground'
-                      }`}
-                    >
-                      {size}
-                    </motion.button>
-                  ))}
+                  {product.sizes.map((size) => {
+                    const available = product.stock?.[size] ?? 0;
+                    const outOfStock = available === 0;
+                    const availabilityText = outOfStock
+                      ? 'Out of stock'
+                      : available <= 5
+                        ? `${available} left`
+                        : 'In stock';
+                    return (
+                      <motion.button
+                        key={size}
+                        type="button"
+                        onClick={() => !outOfStock && setSelectedSize(size)}
+                        whileHover={!outOfStock ? { scale: 1.05 } : undefined}
+                        whileTap={!outOfStock ? { scale: 0.95 } : undefined}
+                        disabled={outOfStock}
+                        className={`min-h-14 py-2 px-1 border text-sm transition-all flex flex-col items-center justify-center gap-0.5 ${
+                          outOfStock
+                            ? 'border-foreground/10 bg-foreground/5 text-foreground/40 cursor-not-allowed'
+                            : selectedSize === size
+                              ? 'border-foreground bg-foreground text-background'
+                              : 'border-foreground/20 hover:border-foreground'
+                        }`}
+                      >
+                        <span>{size}</span>
+                        <span className={`text-[10px] uppercase tracking-wider ${outOfStock ? 'text-foreground/50' : 'text-inherit opacity-80'}`}>
+                          {availabilityText}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
                 </div>
               </motion.div>
             )}

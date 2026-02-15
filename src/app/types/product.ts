@@ -1,7 +1,8 @@
-// Product type definition (compatible with both API and legacy format)
+// Product type: mirrors API (types/api) with optional legacy field names for compatibility.
 export interface Product {
   id: string;
   name: string;
+  sku?: string;
   price: number;
   original_price?: number;
   price_inr?: number;
@@ -20,9 +21,11 @@ export interface Product {
   description: string;
   details: string[];
   material: string;
+  care?: string;
   featured: boolean;
   new_arrival: boolean;
   on_sale: boolean;
+  is_gift?: boolean;
   // Legacy support
   newArrival?: boolean;
   onSale?: boolean;

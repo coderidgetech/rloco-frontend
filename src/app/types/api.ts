@@ -7,6 +7,9 @@ export interface User {
   role: 'customer' | 'admin' | 'vendor';
   vendor_id?: string;
   avatar?: string;
+  phone?: string;
+  birthday?: string;
+  active?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -14,6 +17,7 @@ export interface User {
 export interface Product {
   id: string;
   name: string;
+  sku?: string;
   price: number;
   original_price?: number;
   price_inr?: number;
@@ -27,9 +31,11 @@ export interface Product {
   description: string;
   details: string[];
   material: string;
+  care?: string;
   featured: boolean;
   new_arrival: boolean;
   on_sale: boolean;
+  is_gift?: boolean;
   rating: number;
   reviews: number;
   badge?: string;
@@ -60,6 +66,9 @@ export interface CartItem {
   price_inr?: number;
   size: string;
   quantity: number;
+  is_gift?: boolean;
+  gift_wrap_color?: string;
+  gift_message?: string;
 }
 
 export interface Cart {
@@ -76,6 +85,9 @@ export interface OrderItem {
   price: number;
   size: string;
   quantity: number;
+  is_gift?: boolean;
+  gift_wrap_color?: string;
+  gift_message?: string;
 }
 
 export interface ShippingInfo {
@@ -108,6 +120,7 @@ export interface Order {
   subtotal: number;
   discount: number;
   shipping_cost: number;
+  gift_packing_charge?: number;
   tax: number;
   total: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
@@ -270,6 +283,7 @@ export interface CreateOrderRequest {
   payment_info: PaymentInfo;
   payment_method: string;
   promotion_code?: string;
+  gift_packing_charge?: number;
 }
 
 export interface CreatePaymentIntentRequest {

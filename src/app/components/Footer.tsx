@@ -10,7 +10,7 @@ export function Footer() {
   const { config } = useSiteConfig();
 
   return (
-    <footer className="bg-white">
+    <footer className="bg-white dark:bg-background" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
       {/* Top Section with CTA */}
       <div className="border-y border-foreground/10">
         <div className="max-w-[1920px] mx-auto px-8 md:px-12 lg:px-16 xl:px-20 py-12 md:py-16">

@@ -1,47 +1,51 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Heart, Share2, ChevronLeft, Star, Truck, RotateCcw, Shield, Plus, Minus, ShoppingBag } from 'lucide-react';
-import { useProduct } from '@/app/hooks/useProducts';
+import { Heart, Share2, ChevronLeft, Star, Truck, RotateCcw, Shield, Plus, Minus, ShoppingBag, ChevronRight, MapPin, Package, CreditCard, CheckCircle2 } from 'lucide-react';
+import { useProduct, useProducts } from '@/app/hooks/useProducts';
 import { useCart } from '@/app/context/CartContext';
 import { useWishlist } from '@/app/context/WishlistContext';
-import { useCurrency } from '@/app/context/CurrencyContext';
 import { toast } from 'sonner';
-import { MobileHeader } from '@/app/components/mobile/MobileHeader';
-import { BottomNavigation } from '@/app/components/mobile/BottomNavigation';
+import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
+import { MobileProductRecommendations } from '@/app/components/mobile/MobileProductRecommendations';
+import { MobileCompleteTheLook } from '@/app/components/mobile/MobileCompleteTheLook';
 
 export function MobileProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { product, loading: productLoading, error: productError } = useProduct(id || '');
+  const { products: allProducts = [] } = useProducts({ limit: 200 });
   const { addToCart } = useCart();
   const { addItem, removeItem, isInWishlist } = useWishlist();
-  const { formatPrice } = useCurrency();
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [showDescription, setShowDescription] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [showReviews, setShowReviews] = useState(false);
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
+
+  const inWishlist = product ? isInWishlist(String(product.id)) : false;
 
   if (productLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        <p className="text-muted-foreground">Loading...</p>
       </div>
     );
   }
-
   if (productError || !product) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p>Product not found</p>
+        <p className="text-muted-foreground">Product not found</p>
       </div>
     );
   }
 
-  const inWishlist = isInWishlist(String(product.id));
+  const productImages = product.images?.length ? product.images : [''];
+  const recommendedSize = product.sizes?.length ? product.sizes[Math.floor(product.sizes.length / 2)] : (product.sizes?.[0] || '');
 
   // Swipe handlers
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -59,7 +63,7 @@ export function MobileProductDetailPage() {
     const isLeftSwipe = distance > 50;
     const isRightSwipe = distance < -50;
 
-    if (isLeftSwipe && currentImageIndex < product.images.length - 1) {
+    if (isLeftSwipe && currentImageIndex < productImages.length - 1) {
       setCurrentImageIndex(currentImageIndex + 1);
     }
     if (isRightSwipe && currentImageIndex > 0) {
@@ -80,12 +84,30 @@ export function MobileProductDetailPage() {
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.images[0],
+      image: productImages[0],
       quantity,
       size: selectedSize,
     });
 
     toast.success('Added to cart!');
+  };
+
+  const handleBuyNow = () => {
+    if (!selectedSize) {
+      toast.error('Please select a size');
+      return;
+    }
+
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: productImages[0],
+      quantity,
+      size: selectedSize,
+    });
+
+    navigate('/mobile/cart');
   };
 
   const handleWishlistToggle = () => {
@@ -97,52 +119,24 @@ export function MobileProductDetailPage() {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.images[0],
+        image: productImages[0],
       });
       toast.success('Added to wishlist');
     }
   };
 
+  // Calculate delivery date (3-5 business days from now)
+  const deliveryDate = new Date();
+  deliveryDate.setDate(deliveryDate.getDate() + 5);
+  const deliveryDateStr = deliveryDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+
   return (
     <div className="min-h-screen bg-white pb-32">
-      {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-border/20">
-        <div className="flex items-center justify-between h-14 px-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => navigate(-1)}
-            className="w-9 h-9 rounded-full bg-foreground/5 flex items-center justify-center"
-          >
-            <ChevronLeft size={20} />
-          </motion.button>
-
-          <div className="flex items-center gap-2">
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={handleWishlistToggle}
-              className="w-9 h-9 rounded-full bg-foreground/5 flex items-center justify-center"
-            >
-              <Heart
-                size={18}
-                className={inWishlist ? 'text-primary fill-primary' : 'text-foreground/70'}
-              />
-            </motion.button>
-
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => {
-                navigator.share?.({ title: product.name, url: window.location.href });
-              }}
-              className="w-9 h-9 rounded-full bg-foreground/5 flex items-center justify-center"
-            >
-              <Share2 size={18} className="text-foreground/70" />
-            </motion.button>
-          </div>
-        </div>
-      </div>
+      {/* Unified Header */}
+      <MobileSubPageHeader showDeliveryAddress={false} />
 
       {/* Image Gallery - Swipeable */}
-      <div className="relative pt-14">
+      <div className="relative" style={{ paddingTop: 'calc(env(safe-area-inset-top) + 56px)' }}>{/* Header + safe area */}
         <div
           className="relative aspect-[3/4] bg-muted overflow-hidden"
           onTouchStart={handleTouchStart}
@@ -152,7 +146,7 @@ export function MobileProductDetailPage() {
           <AnimatePresence mode="wait">
             <motion.img
               key={currentImageIndex}
-              src={product.images[currentImageIndex]}
+              src={productImages[currentImageIndex]}
               alt={product.name}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -164,7 +158,7 @@ export function MobileProductDetailPage() {
 
           {/* Image Indicators */}
           <div className="absolute bottom-4 left-0 right-0 flex items-center justify-center gap-1.5">
-            {product.images.map((_, index) => (
+            {productImages.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
@@ -175,24 +169,20 @@ export function MobileProductDetailPage() {
             ))}
           </div>
 
-          {/* Badges */}
-          <div className="absolute top-4 left-4 flex flex-col gap-2">
-            {product.isNew && (
-              <div className="bg-foreground text-white text-xs font-bold px-3 py-1 rounded-full">
-                NEW
-              </div>
-            )}
-            {product.sale && (
-              <div className="bg-primary text-white text-xs font-bold px-3 py-1 rounded-full">
-                SALE
-              </div>
-            )}
-          </div>
+          {/* Rating Badge */}
+          {product.rating && (
+            <div className="absolute bottom-4 right-4 bg-white rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1">
+              <span className="text-sm font-medium">{product.rating}</span>
+              <Star size={14} className="text-primary fill-primary" />
+              <span className="text-xs text-foreground/50">|</span>
+              <span className="text-xs text-foreground/60">{product.reviews || '5.6k'}</span>
+            </div>
+          )}
         </div>
 
         {/* Thumbnail Strip */}
-        <div className="flex gap-2 px-4 py-3 overflow-x-auto">
-          {product.images.map((image, index) => (
+        <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide">
+          {productImages.map((image, index) => (
             <button
               key={index}
               onClick={() => setCurrentImageIndex(index)}
@@ -210,99 +200,145 @@ export function MobileProductDetailPage() {
 
       {/* Product Info */}
       <div className="px-4 py-4">
-        {/* Title & Price */}
-        <div className="mb-4">
-          <h1 className="text-2xl font-medium tracking-wide mb-2">{product.name}</h1>
-          
-          {/* Rating */}
-          {product.rating && (
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex items-center gap-1">
-                <Star size={16} className="text-primary fill-primary" />
-                <span className="text-sm font-medium">{product.rating}</span>
-              </div>
-              <span className="text-sm text-foreground/50">
-                ({product.reviews || 0} reviews)
-              </span>
-            </div>
-          )}
+        {/* Title */}
+        <h1 className="text-xl font-medium mb-2">{product.name}</h1>
+        <p className="text-sm text-foreground/60 mb-4">{product.category}</p>
 
-          {/* Price */}
-          <div className="flex items-center gap-3">
-            <span className="text-3xl font-semibold text-primary">
-              {formatPrice(product.price, (product as any).priceINR)}
-            </span>
-            {product.originalPrice && (
-              <>
-                <span className="text-lg text-foreground/40 line-through">
-                  {formatPrice(product.originalPrice, (product as any).originalPriceINR)}
-                </span>
-                <span className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                  {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-                </span>
-              </>
-            )}
-          </div>
+        {/* Price */}
+        <div className="flex items-center gap-3 mb-6">
+          <span className="text-2xl font-bold">
+            ${product.price}
+          </span>
+          {product.originalPrice && (
+            <>
+              <span className="text-base text-foreground/40 line-through">
+                ${product.originalPrice}
+              </span>
+              <span className="text-sm font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
+                {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+              </span>
+            </>
+          )}
         </div>
 
         {/* Size Selection */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
-            <span className="font-medium">Select Size</span>
-            <button className="text-sm text-primary">Size Guide</button>
+            <div>
+              <span className="font-medium text-base">Size: {selectedSize || '—'}</span>
+              {selectedSize && (
+                <p className="text-xs text-foreground/60 mt-0.5">Garment Measurement: Chest 41.0in</p>
+              )}
+            </div>
+            <button 
+              onClick={() => navigate('/mobile/size-guide')}
+              className="text-sm text-primary font-medium flex items-center gap-1"
+            >
+              Size Chart
+              <ChevronRight size={16} />
+            </button>
           </div>
-          <div className="grid grid-cols-4 gap-2">
+
+          {/* Size Recommended Badge */}
+          {!selectedSize && recommendedSize && (
+            <div className="flex items-center justify-between mb-3">
+              <div className="bg-primary/10 text-primary text-xs font-medium px-3 py-1.5 rounded">
+                Size {recommendedSize} Recommended
+              </div>
+            </div>
+          )}
+
+          {/* Size Buttons */}
+          <div className="grid grid-cols-4 gap-3">
             {product.sizes.map((size) => (
-              <button
+              <motion.button
                 key={size}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setSelectedSize(size)}
-                className={`py-3 rounded-lg border-2 font-medium transition-all ${
+                className={`py-3 rounded-xl font-medium text-sm transition-all ${
                   selectedSize === size
-                    ? 'border-primary bg-primary/5 text-primary'
-                    : 'border-border bg-white text-foreground/70'
+                    ? 'bg-foreground text-white border-2 border-foreground'
+                    : 'bg-white text-foreground border-2 border-border'
                 }`}
               >
                 {size}
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>
 
-        {/* Quantity */}
-        <div className="mb-6">
-          <span className="font-medium block mb-3">Quantity</span>
-          <div className="flex items-center gap-4">
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setQuantity(Math.max(1, quantity - 1))}
-              className="w-10 h-10 rounded-full border-2 border-border flex items-center justify-center"
-            >
-              <Minus size={18} />
-            </motion.button>
-            <span className="text-lg font-medium w-8 text-center">{quantity}</span>
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setQuantity(quantity + 1)}
-              className="w-10 h-10 rounded-full border-2 border-border flex items-center justify-center"
-            >
-              <Plus size={18} />
-            </motion.button>
-          </div>
+        {/* Buy Now and Add to Bag Buttons */}
+        <div className="flex gap-3 mb-6">
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={handleBuyNow}
+            className="flex-1 py-3.5 border-2 border-primary text-primary rounded-lg font-medium text-sm flex items-center justify-center gap-2"
+          >
+            <ShoppingBag size={18} />
+            Buy Now
+          </motion.button>
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={handleAddToCart}
+            className="flex-1 py-3.5 bg-primary text-white rounded-lg font-medium text-sm flex items-center justify-center gap-2"
+          >
+            <ShoppingBag size={18} />
+            Add to Bag
+          </motion.button>
         </div>
 
-        {/* Features */}
-        <div className="grid grid-cols-3 gap-3 mb-6 p-4 bg-foreground/5 rounded-2xl">
-          <div className="text-center">
-            <Truck size={20} className="mx-auto mb-1 text-foreground/60" />
-            <p className="text-xs text-foreground/60">Free Shipping</p>
+        {/* Delivery & Services */}
+        <div className="mb-6">
+          <h3 className="font-medium text-base mb-3">Delivery & Services</h3>
+
+          {/* Delivery Address */}
+          <div className="flex items-center justify-between p-4 bg-foreground/5 rounded-xl mb-3">
+            <div className="flex items-center gap-3">
+              <MapPin size={18} className="text-foreground/60" />
+              <div>
+                <p className="text-sm font-medium">Deliver to: New York, 10001</p>
+              </div>
+            </div>
+            <button className="text-sm text-primary font-medium">
+              Change
+            </button>
           </div>
-          <div className="text-center">
-            <RotateCcw size={20} className="mx-auto mb-1 text-foreground/60" />
-            <p className="text-xs text-foreground/60">Easy Returns</p>
-          </div>
-          <div className="text-center">
-            <Shield size={20} className="mx-auto mb-1 text-foreground/60" />
-            <p className="text-xs text-foreground/60">Secure Pay</p>
+
+          {/* Delivery Options */}
+          <div className="space-y-3">
+            {/* Standard Delivery */}
+            <div className="flex items-start gap-3 p-4 border border-border rounded-xl">
+              <Package size={20} className="text-foreground/60 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <div className="flex items-start justify-between mb-1">
+                  <div>
+                    <p className="text-sm font-medium">STANDARD</p>
+                    <p className="text-sm font-medium">Delivery by {deliveryDateStr}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-foreground/40 line-through">₹2099</p>
+                    <p className="text-sm font-bold text-green-600">₹671 (68% OFF)</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Pay on Delivery */}
+            <div className="flex items-start gap-3 p-3 bg-[#F0FDF4] rounded-xl">
+              <CreditCard size={20} className="text-green-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">Pay on Delivery is available</p>
+                <p className="text-xs text-foreground/60 mt-0.5">₹10 additional fee applicable</p>
+              </div>
+            </div>
+
+            {/* Return & Exchange */}
+            <div className="flex items-start gap-3 p-3 bg-[#F0FDF4] rounded-xl">
+              <RotateCcw size={20} className="text-green-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-foreground">Hassle free 7 days Return & Exchange</p>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -337,22 +373,202 @@ export function MobileProductDetailPage() {
             )}
           </AnimatePresence>
         </div>
+
+        {/* Details */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowDetails(!showDetails)}
+            className="w-full flex items-center justify-between py-3 border-t border-b border-border"
+          >
+            <span className="font-medium">Product Details</span>
+            <motion.div
+              animate={{ rotate: showDetails ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Plus size={20} />
+            </motion.div>
+          </button>
+          
+          <AnimatePresence>
+            {showDetails && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <div className="py-4 space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-foreground/60">Material</span>
+                    <span className="font-medium">100% Cotton</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-foreground/60">Care Instructions</span>
+                    <span className="font-medium">Machine Wash</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-foreground/60">Country of Origin</span>
+                    <span className="font-medium">USA</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-foreground/60">SKU</span>
+                    <span className="font-medium">RL-{product.id}</span>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Reviews */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowReviews(!showReviews)}
+            className="w-full flex items-center justify-between py-3 border-t border-b border-border"
+          >
+            <div className="flex items-center gap-2">
+              <span className="font-medium">Customer Reviews</span>
+              <div className="flex items-center gap-1">
+                <Star size={14} className="text-primary fill-primary" />
+                <span className="text-sm font-medium">{product.rating || 4.5}</span>
+              </div>
+            </div>
+            <motion.div
+              animate={{ rotate: showReviews ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Plus size={20} />
+            </motion.div>
+          </button>
+          
+          <AnimatePresence>
+            {showReviews && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <div className="py-4 space-y-4">
+                  {/* Review 1 */}
+                  <div className="pb-4 border-b border-border/50">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-sm">Sarah M.</span>
+                      <div className="flex items-center gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} size={12} className="text-primary fill-primary" />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-sm text-foreground/70 leading-relaxed mb-1">
+                      Absolutely love this piece! The quality is amazing and fits perfectly. Highly recommend!
+                    </p>
+                    <span className="text-xs text-foreground/40">2 days ago</span>
+                  </div>
+
+                  {/* Review 2 */}
+                  <div className="pb-4 border-b border-border/50">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-sm">Emma R.</span>
+                      <div className="flex items-center gap-0.5">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} size={12} className="text-primary fill-primary" />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-sm text-foreground/70 leading-relaxed mb-1">
+                      Great product! True to size and very comfortable. Will definitely buy again.
+                    </p>
+                    <span className="text-xs text-foreground/40">1 week ago</span>
+                  </div>
+
+                  {/* Review 3 */}
+                  <div className="pb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-sm">Jessica L.</span>
+                      <div className="flex items-center gap-0.5">
+                        {[...Array(4)].map((_, i) => (
+                          <Star key={i} size={12} className="text-primary fill-primary" />
+                        ))}
+                        <Star size={12} className="text-foreground/20" />
+                      </div>
+                    </div>
+                    <p className="text-sm text-foreground/70 leading-relaxed mb-1">
+                      Beautiful design and good quality. Runs slightly small, consider sizing up.
+                    </p>
+                    <span className="text-xs text-foreground/40">2 weeks ago</span>
+                  </div>
+
+                  <button className="w-full text-sm text-primary font-medium py-2">
+                    View All Reviews ({product.reviews || 120})
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
-      {/* Sticky Bottom CTA */}
-      <div className="fixed bottom-16 left-0 right-0 z-40 bg-white border-t border-border/20 p-4" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 64px)' }}>
-        <motion.button
-          whileTap={{ scale: 0.98 }}
-          onClick={handleAddToCart}
-          className="w-full bg-primary text-white py-4 rounded-full font-medium text-base flex items-center justify-center gap-2 shadow-lg active:bg-primary/90"
-        >
-          <ShoppingBag size={20} />
-          Add to Cart - ${(product.price * quantity).toFixed(2)}
-        </motion.button>
-      </div>
+      {/* Related Products */}
+      <MobileProductRecommendations
+        title="You May Also Like"
+        subtitle="Handpicked recommendations just for you"
+        products={allProducts.filter(p => String(p.id) !== String(product.id) && p.category === product.category).slice(0, 10)}
+        icon="heart"
+      />
 
-      {/* Bottom Navigation */}
-      <BottomNavigation />
+      {/* Similar Products */}
+      <MobileProductRecommendations
+        title="Similar Products"
+        subtitle="Explore similar styles"
+        products={allProducts.filter(p =>
+          String(p.id) !== String(product.id) &&
+          p.category !== product.category &&
+          Math.abs(p.price - product.price) < 100
+        ).slice(0, 10)}
+        icon="sparkles"
+      />
+
+      {/* Trending Products */}
+      <MobileProductRecommendations
+        title="Trending Now"
+        subtitle="Most loved by our customers"
+        products={allProducts.filter(p => {
+          const relatedIds = allProducts.filter(pr => String(pr.id) !== String(product.id) && pr.category === product.category).slice(0, 10).map(pr => pr.id);
+          return String(p.id) !== String(product.id) && (p.rating ?? 0) >= 4.5 && !relatedIds.includes(p.id);
+        }).slice(0, 10)}
+        icon="trending"
+      />
+
+      {/* Complete the Look */}
+      <MobileCompleteTheLook
+        currentProduct={{
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          originalPrice: product.originalPrice,
+          image: productImages[0],
+          category: product.category,
+        }}
+        products={allProducts.filter(p =>
+          String(p.id) !== String(product.id) &&
+          Math.abs(p.price - product.price) < 50 &&
+          p.category !== product.category
+        ).slice(0, 3)}
+      />
+
+      {/* Custom scrollbar hide */}
+      <style>{`
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronRight, SlidersHorizontal, X } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { ProductCard } from '../components/ProductCard';
@@ -13,6 +13,8 @@ import { Product } from '../types/product';
 
 export function CategoryPage() {
   const { gender, category } = useParams<{ gender: string; category?: string }>();
+  const [searchParams] = useSearchParams();
+  const giftOnly = searchParams.get('gift') === 'true';
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +54,9 @@ export function CategoryPage() {
           // Capitalize category to match database format (e.g., "dresses" -> "Dresses")
           params.category = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
         }
+        if (giftOnly) {
+          params.gift = true;
+        }
         const response = await productService.list(params);
         setProducts(response.products || []);
       } catch (error) {
@@ -62,7 +67,7 @@ export function CategoryPage() {
       }
     };
     fetchProducts();
-  }, [gender, category]);
+  }, [gender, category, giftOnly]);
 
   // Reset filters when URL parameters change
   useEffect(() => {
@@ -204,7 +209,11 @@ export function CategoryPage() {
     setShowFeatured(false);
   };
 
-  const pageTitle = category 
+  const pageTitle = giftOnly && gender === 'women'
+    ? 'Gift For Her'
+    : giftOnly && gender === 'men'
+    ? 'Gift For Him'
+    : category 
     ? `${category.charAt(0).toUpperCase() + category.slice(1)} - ${gender?.charAt(0).toUpperCase() + gender?.slice(1)}`
     : `${gender?.charAt(0).toUpperCase() + gender?.slice(1)}'s Collection`;
 

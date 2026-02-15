@@ -1,7 +1,8 @@
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Package, Truck, Check, Clock, MapPin, Phone, Mail, Star, MessageCircle, Send, AlertCircle, ArrowLeft, CheckCircle } from 'lucide-react';
-import { useState } from 'react';
 import { toast } from 'sonner';
+import { orderService, OrderTrackingUpdate } from '../services/orderService';
 import { LuxuryInput } from './ui/luxury-input';
 import { LuxuryTextarea } from './ui/luxury-textarea';
 import { LuxurySelect } from './ui/luxury-select';
@@ -51,14 +52,26 @@ interface OrderDetailsModalProps {
 }
 
 export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalProps) {
-  if (!isOpen || !order) return null;
-
-  const [view, setView] = useState<'details' | 'track' | 'support'>('details');
+  const [view, setView] = useState('details' as 'details' | 'track' | 'support');
   const [review, setReview] = useState('');
   const [rating, setRating] = useState(0);
   const [hoveredStar, setHoveredStar] = useState(0);
   const [supportMessage, setSupportMessage] = useState('');
   const [supportSubject, setSupportSubject] = useState('');
+  const [trackingUpdates, setTrackingUpdates] = useState([] as OrderTrackingUpdate[]);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || !order?.id) return;
+    setTrackingLoading(true);
+    orderService
+      .getTracking(order.id)
+      .then((res) => setTrackingUpdates(res.updates || []))
+      .catch(() => setTrackingUpdates([]))
+      .finally(() => setTrackingLoading(false));
+  }, [isOpen, order?.id]);
+
+  if (!isOpen || !order) return null;
 
   const getStatusColor = (status: Order['status']) => {
     switch (status) {
@@ -106,68 +119,14 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
     setView('details');
   };
 
-  // Fetch tracking updates from API if tracking number exists
-  // TODO: Backend should provide tracking updates endpoint: GET /orders/:id/tracking
-  // For now, generate tracking updates based on order status
-  const generateTrackingUpdates = () => {
-    const updates: Array<{
-      date: string;
-      time: string;
-      location: string;
-      status: string;
-      description: string;
-      completed: boolean;
-    }> = [];
-
-    const now = new Date();
-    
-    if (order.status === 'delivered') {
-      updates.push({
-        date: now.toISOString().split('T')[0],
-        time: now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-        location: order.shipping_info?.city || 'Unknown',
-        status: 'Delivered',
-        description: 'Package delivered to recipient',
-        completed: true
-      });
-    }
-    
-    if (order.status === 'delivered' || order.status === 'shipped') {
-      const shippedDate = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
-      updates.push({
-        date: shippedDate.toISOString().split('T')[0],
-        time: shippedDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-        location: 'Distribution Center',
-        status: 'Out for Delivery',
-        description: 'Package is out for delivery',
-        completed: order.status === 'delivered'
-      });
-      
-      const transitDate = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
-      updates.push({
-        date: transitDate.toISOString().split('T')[0],
-        time: transitDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-        location: 'Sorting Facility',
-        status: 'In Transit',
-        description: 'Package arrived at sorting facility',
-        completed: true
-      });
-    }
-    
-    const pickedUpDate = new Date(order.created_at || now.getTime() - 5 * 24 * 60 * 60 * 1000);
-    updates.push({
-      date: pickedUpDate.toISOString().split('T')[0],
-      time: pickedUpDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-      location: 'Origin Facility',
-      status: 'Picked Up',
-      description: 'Package picked up by carrier',
-      completed: true
-    });
-    
-    return updates.reverse(); // Show oldest first
-  };
-
-  const trackingUpdates = order.trackingNumber ? generateTrackingUpdates() : [];
+  const trackingDisplay = trackingUpdates.map((u) => ({
+    date: (u.date || u.created_at) ? new Date(u.date || u.created_at).toISOString().split('T')[0] : '',
+    time: (u.date || u.created_at) ? new Date(u.date || u.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '',
+    location: u.location || '',
+    status: u.status,
+    description: u.description || u.status,
+    completed: true,
+  }));
 
   const handleClose = () => {
     setView('details');
@@ -531,14 +490,18 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
               {/* Tracking Timeline */}
               <div className="bg-muted/30 rounded-xl p-6">
                 <h3 className="font-medium mb-6">Tracking Updates</h3>
-                {trackingUpdates.length === 0 ? (
+                {trackingLoading ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p className="text-sm">Loading tracking...</p>
+                  </div>
+                ) : trackingDisplay.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <p className="text-sm">No tracking information available</p>
                     <p className="text-xs mt-2">Tracking updates will appear here once your order ships</p>
                   </div>
                 ) : (
                   <div className="space-y-6">
-                    {trackingUpdates.map((update, index) => (
+                    {trackingDisplay.map((update, index) => (
                     <div key={index} className="relative">
                       <div className="flex gap-4">
                         {/* Timeline dot */}
@@ -550,7 +513,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                           }`}>
                             {update.completed ? <CheckCircle size={20} /> : <Clock size={20} />}
                           </div>
-                          {index < trackingUpdates.length - 1 && (
+                          {index < trackingDisplay.length - 1 && (
                             <div className={`w-0.5 h-12 mt-2 ${
                               update.completed ? 'bg-green-500/30' : 'bg-muted'
                             }`} />

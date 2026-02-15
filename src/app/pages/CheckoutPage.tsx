@@ -44,8 +44,9 @@ const STEPS = ['Shipping', 'Payment', 'Review'];
 export function CheckoutPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useUser();
-  const { items, total, clearCart } = useCart();
+  const { items, total, clearCart, giftPackingCharge } = useCart();
   const { formatAmount, formatPrice, convertPrice, currency } = useCurrency();
+  const giftPackingDisplay = currency === 'INR' ? giftPackingCharge : giftPackingCharge / 75;
   const [currentStep, setCurrentStep] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
@@ -95,7 +96,7 @@ export function CheckoutPage() {
   }, [items, navigate, orderComplete]);
 
   const subtotal = total;
-  const finalTotal = subtotal + shippingCost + taxAmount - discount;
+  const finalTotal = subtotal + shippingCost + taxAmount - discount + giftPackingDisplay;
 
   // Validate promotion code
   const handleValidatePromotion = async () => {
@@ -302,6 +303,11 @@ export function CheckoutPage() {
         price: item.price,
         size: item.size,
         quantity: item.quantity,
+        ...(item.isGift && {
+          is_gift: true,
+          gift_wrap_color: item.giftWrapColor,
+          gift_message: item.giftMessage,
+        }),
       })) as any[];
 
       // Prepare payment info based on method
@@ -335,6 +341,7 @@ export function CheckoutPage() {
                        paymentMethod === 'wallet' ? 'wallet' : 
                        'cod',
         promotion_code: promotionCode || undefined,
+        ...(giftPackingCharge > 0 && { gift_packing_charge: giftPackingCharge }),
       };
 
       // Create order via API first (required for payment intent)
@@ -343,7 +350,7 @@ export function CheckoutPage() {
       // For non-COD methods, create payment intent and process payment
       if (paymentMethod !== 'cod') {
         try {
-          const finalTotalAmount = subtotal + shippingCost + taxAmount - discount;
+          const finalTotalAmount = subtotal + shippingCost + taxAmount - discount + giftPackingDisplay;
           const gateway = paymentMethod === 'card' || paymentMethod === 'wallet' ? 'stripe' : 'paypal';
           
           // Create payment intent with order_id
@@ -1057,6 +1064,12 @@ export function CheckoutPage() {
                       <div className="flex justify-between text-foreground/60">
                         <span>Discount</span>
                         <span className="text-green-600">-{formatAmount(discount)}</span>
+                      </div>
+                    )}
+                    {giftPackingCharge > 0 && (
+                      <div className="flex justify-between text-foreground/60">
+                        <span>Gift packing</span>
+                        <span>{formatAmount(giftPackingDisplay)}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-foreground/60">

@@ -31,4 +31,13 @@ export const cartService = {
   async clearCart(): Promise<void> {
     await api.delete('/cart');
   },
+
+  async updateGiftOptions(productId: string, size: string, giftWrapColor: string, giftMessage: string): Promise<void> {
+    await api.put('/cart/gift-options', {
+      product_id: productId,
+      size,
+      gift_wrap_color: giftWrapColor,
+      gift_message: giftMessage,
+    });
+  },
 };

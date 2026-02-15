@@ -53,11 +53,12 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
 
     // Filter by search query
     if (query.trim() !== '') {
+      const q = query.toLowerCase();
       filtered = filtered.filter(
         (product) =>
-          product.name.toLowerCase().includes(query.toLowerCase()) ||
-          product.category.toLowerCase().includes(query.toLowerCase()) ||
-          product.subcategory.toLowerCase().includes(query.subcategory || '')
+          product.name.toLowerCase().includes(q) ||
+          product.category.toLowerCase().includes(q) ||
+          (product.subcategory || '').toLowerCase().includes(q)
       );
     }
 

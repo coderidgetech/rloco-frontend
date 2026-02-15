@@ -1,101 +1,24 @@
 import { motion } from 'motion/react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Package, MapPin, Calendar, ChevronRight, Download, Home } from 'lucide-react';
-import { BottomNavigation } from '@/app/components/mobile/BottomNavigation';
-import { useEffect, useState } from 'react';
-import { orderService } from '@/app/services/orderService';
-import { Order } from '@/app/types/api';
-
-interface OrderConfirmationPageProps {
-  orderNumber?: string;
-  email?: string;
-  paymentMethod?: string;
-  shippingInfo?: any;
-  orderItems?: any[];
-  subtotal?: number;
-  shippingCost?: number;
-  tax?: number;
-}
+import { useEffect } from 'react';
 
 export function MobileOrderConfirmationPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  // Get order data from route state
-  const state = location.state as OrderConfirmationPageProps;
-  const orderNumber = state?.orderNumber || '';
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    
-    if (orderNumber) {
-      fetchOrderDetails();
-    } else {
-      setLoading(false);
-    }
-  }, [orderNumber]);
-
-  const fetchOrderDetails = async () => {
-    try {
-      setLoading(true);
-      const fetchedOrder = await orderService.getByOrderNumber(orderNumber);
-      setOrder(fetchedOrder);
-    } catch (error) {
-      console.error('Failed to fetch order details:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Use order data from API if available, otherwise fallback to state
-  const orderData = order ? {
-    id: order.order_number || orderNumber,
-    date: new Date(order.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-    estimatedDelivery: order.tracking_number 
-      ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
-      : '',
-    total: order.total,
-    items: order.items?.length || 0,
-    address: order.shipping_info ? {
-      name: `${order.shipping_info.first_name} ${order.shipping_info.last_name}`,
-      street: order.shipping_info.address,
-      city: `${order.shipping_info.city}, ${order.shipping_info.state} ${order.shipping_info.zip_code}`,
-    } : {
-      name: 'Unknown',
-      street: '',
-      city: '',
-    },
-    payment: order.payment_method || 'Unknown',
-  } : state ? {
-    id: orderNumber || '#RL2024-00123',
-    date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-    estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
-    total: state.subtotal || 0,
-    items: state.orderItems?.length || 0,
-    address: state.shippingInfo ? {
-      name: `${state.shippingInfo.firstName} ${state.shippingInfo.lastName}`,
-      street: state.shippingInfo.address,
-      city: `${state.shippingInfo.city}, ${state.shippingInfo.state} ${state.shippingInfo.zipCode}`,
-    } : {
-      name: 'Unknown',
-      street: '',
-      city: '',
-    },
-    payment: state.paymentMethod || 'Unknown',
-  } : {
+  // Mock order data - replace with actual order context
+  const order = {
     id: '#RL2024-00123',
     date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
     estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
-    total: 0,
-    items: 0,
+    total: 299.99,
+    items: 3,
     address: {
-      name: 'Unknown',
-      street: '',
-      city: '',
+      name: 'John Doe',
+      street: '123 Fashion Street',
+      city: 'New York, NY 10001',
     },
-    payment: 'Unknown',
+    payment: 'Visa •••• 4242',
   };
 
   useEffect(() => {
@@ -140,7 +63,7 @@ export function MobileOrderConfirmationPage() {
           transition={{ delay: 0.4 }}
           className="text-sm font-medium text-primary"
         >
-          {loading ? 'Loading...' : `Order ${orderData.id}`}
+          Order {order.id}
         </motion.p>
       </div>
 
@@ -159,7 +82,7 @@ export function MobileOrderConfirmationPage() {
             </div>
             <div className="flex-1">
               <h3 className="text-sm font-medium">Estimated Delivery</h3>
-              <p className="text-xs text-foreground/60 mt-0.5">{orderData.estimatedDelivery || 'TBD'}</p>
+              <p className="text-xs text-foreground/60 mt-0.5">{order.estimatedDelivery}</p>
             </div>
           </div>
           <div className="bg-white rounded-xl p-3 text-xs text-foreground/60">
@@ -181,9 +104,9 @@ export function MobileOrderConfirmationPage() {
             <h3 className="text-sm font-medium">Shipping Address</h3>
           </div>
           <div className="bg-white rounded-xl p-3">
-            <p className="text-sm font-medium">{orderData.address.name}</p>
-            <p className="text-sm text-foreground/60 mt-1">{orderData.address.street}</p>
-            <p className="text-sm text-foreground/60">{orderData.address.city}</p>
+            <p className="text-sm font-medium">{order.address.name}</p>
+            <p className="text-sm text-foreground/60 mt-1">{order.address.street}</p>
+            <p className="text-sm text-foreground/60">{order.address.city}</p>
           </div>
         </motion.div>
 
@@ -202,8 +125,8 @@ export function MobileOrderConfirmationPage() {
           </div>
           <div className="bg-white rounded-xl p-3 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-foreground/60">Items ({orderData.items})</span>
-              <span className="font-medium">${orderData.total.toFixed(2)}</span>
+              <span className="text-foreground/60">Items ({order.items})</span>
+              <span className="font-medium">${order.total.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-foreground/60">Shipping</span>
@@ -211,10 +134,10 @@ export function MobileOrderConfirmationPage() {
             </div>
             <div className="pt-2 border-t border-border/30 flex justify-between">
               <span className="font-medium">Total Paid</span>
-              <span className="font-semibold text-primary">${orderData.total.toFixed(2)}</span>
+              <span className="font-semibold text-primary">${order.total.toFixed(2)}</span>
             </div>
             <div className="pt-2 border-t border-border/30 text-xs text-foreground/60">
-              <span>Payment Method: {orderData.payment}</span>
+              <span>Payment Method: {order.payment}</span>
             </div>
           </div>
         </motion.div>
@@ -276,8 +199,6 @@ export function MobileOrderConfirmationPage() {
           </button>
         </div>
       </motion.div>
-
-      <BottomNavigation />
     </div>
   );
 }

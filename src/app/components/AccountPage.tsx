@@ -94,23 +94,30 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
   // Check if this is being used as a standalone page (when path is /account)
   const isStandalone = location.pathname === '/account';
 
+  const formatBirthdayForInput = (value: string | undefined): string => {
+    if (!value) return '';
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return '';
+    return d.toISOString().slice(0, 10);
+  };
+
   const [profileData, setProfileData] = useState({
     firstName: user?.name?.split(' ')[0] || '',
     lastName: user?.name?.split(' ').slice(1).join(' ') || '',
     email: user?.email || '',
-    phone: '', // TODO: Fetch from user profile API when available
-    birthday: '', // TODO: Fetch from user profile API when available
+    phone: user?.phone || '',
+    birthday: formatBirthdayForInput(user?.birthday),
   });
 
-  // Update profile data when user changes
+  // Update profile data when user changes (from API /auth/me)
   useEffect(() => {
     if (user) {
       setProfileData({
         firstName: user.name?.split(' ')[0] || '',
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
         email: user.email || '',
-        phone: '', // TODO: Add phone to User interface and fetch from API
-        birthday: '', // TODO: Add birthday/date_of_birth to User interface and fetch from API
+        phone: user.phone || '',
+        birthday: formatBirthdayForInput(user.birthday),
       });
     }
   }, [user]);
@@ -317,12 +324,13 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: isStandalone ? 1 : 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className={isStandalone ? "relative w-full min-h-screen bg-background" : "fixed inset-0 z-50 overflow-hidden"}
+            className={isStandalone ? "relative w-full min-h-screen bg-white dark:bg-background" : "fixed inset-0 z-50 overflow-hidden bg-white dark:bg-background"}
+            style={{ backgroundColor: 'var(--background, #ffffff)' }}
             onClick={(e) => !isStandalone && e.stopPropagation()}
           >
-            <div className={`${isStandalone ? 'pt-20' : 'h-full'} bg-background flex flex-col relative`}>
+            <div className={`${isStandalone ? 'pt-20' : 'h-full'} bg-white dark:bg-background flex flex-col relative`} style={{ backgroundColor: 'var(--background, #ffffff)' }}>
               {/* Header */}
-              <div className="border-b border-border bg-background">
+              <div className="border-b border-border bg-white dark:bg-background" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
                 <div className="w-full px-2 md:px-4 py-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -349,7 +357,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
               </div>
 
               {/* Content */}
-              <div className="flex-1 overflow-y-auto">
+              <div className="flex-1 overflow-y-auto bg-white dark:bg-background" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
                 <div className="w-full px-2 md:px-4 py-8">
                   <div className="grid lg:grid-cols-4 gap-8">
                     {/* Sidebar Navigation */}

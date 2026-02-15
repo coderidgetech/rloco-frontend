@@ -43,5 +43,16 @@ export default defineConfig({
   build: {
     // Ensure source maps for better debugging
     sourcemap: true,
+    // Set base path for mobile app
+    base: './',
+    // Optimize for mobile
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+        },
+      },
+    },
   },
 })
