@@ -182,7 +182,7 @@ export function MobileCartPage() {
                   type="text"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  placeholder="Enter code"
+                  placeholder="Promo code"
                   className="flex-1 px-4 py-3 border border-border rounded-xl text-sm"
                 />
                 <motion.button

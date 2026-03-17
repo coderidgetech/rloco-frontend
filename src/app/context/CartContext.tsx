@@ -183,6 +183,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       giftWrapColor: item.giftWrapColor ?? (item.isGift ? 'Gold' : undefined),
       giftMessage: item.giftMessage ?? (item.isGift ? '' : undefined),
     };
+
+    // Single optimistic update for all users
     setItems((prev) => {
       const existing = prev.find((i) => String(i.id) === String(item.id) && i.size === item.size);
       return existing
@@ -194,6 +196,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         : [...prev, { ...newItem, quantity: qty }];
     });
 
+    // Best-effort backend sync for authenticated users — never rollback local state
     if (isAuthenticated) {
       try {
         await cartService.addItem({
@@ -209,22 +212,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
           gift_message: newItem.giftMessage,
         });
       } catch (error) {
-        console.error('Failed to add item to cart:', error);
-        setItems((prev) => prev.filter((i) => !(String(i.id) === String(item.id) && i.size === item.size)));
+        console.error('Failed to sync cart item with server:', error);
+        // Keep local state — item remains in bag even if backend sync fails
       }
-    } else {
-      setItems((prev) => {
-        const existing = prev.find((i) => String(i.id) === String(item.id) && i.size === item.size);
-        const next = existing
-          ? prev.map((i) =>
-              String(i.id) === String(item.id) && i.size === item.size
-                ? { ...i, quantity: i.quantity + qty }
-                : i
-            )
-          : [...prev, { ...newItem, quantity: qty }];
-        queueMicrotask(() => saveCartToStorage(next));
-        return next;
-      });
     }
   }, [isAuthenticated]);
 
@@ -292,7 +282,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(async () => {
     setItems([]);
-    
     if (isAuthenticated) {
       try {
         await cartService.clearCart();

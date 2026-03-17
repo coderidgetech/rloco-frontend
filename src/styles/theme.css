@@ -7,7 +7,7 @@ html, body {
 }
 
 html {
-  scroll-padding-top: 104px; /* Account for fixed header (32px top bar + 72px main nav) */
+  scroll-padding-top: 80px; /* Account for fixed header toolbar (64px) */
 }
 
 /* Smooth animations for all transitions */

@@ -39,7 +39,7 @@ export const videoService = {
     const response = await api.get<InspirationVideo[]>('/videos/featured', {
       params: { limit },
     });
-    return response.data;
+    return response.data ?? [];
   },
 
   async create(video: Partial<InspirationVideo>): Promise<InspirationVideo> {

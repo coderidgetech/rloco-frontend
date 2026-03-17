@@ -6,7 +6,7 @@ import { ProductCard } from '../components/ProductCard';
 import { Footer } from '../components/Footer';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { MobileFilterPanel } from '../components/MobileFilterPanel';
-import { sortOptions } from '../utils/filterConfig';
+import { sortOptions, extractFilterOptions, getSubcategoriesForCategory } from '../utils/filterConfig';
 import { PromotionalOffers } from '../components/PromotionalOffers';
 import { productService } from '../services/productService';
 import { Product } from '../types/product';
@@ -16,6 +16,10 @@ export function CategoryPage() {
   const [searchParams] = useSearchParams();
   const giftOnly = searchParams.get('gift') === 'true';
   const navigate = useNavigate();
+  const validGenders = new Set(['women', 'men', 'all']);
+  const normalizedGender = gender?.toLowerCase();
+  const hasValidGender = normalizedGender ? validGenders.has(normalizedGender) : false;
+  const looksLikeObjectId = !!gender && /^[a-f0-9]{24}$/i.test(gender);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -43,6 +47,15 @@ export function CategoryPage() {
 
   // Fetch products
   useEffect(() => {
+    if (gender && !hasValidGender) {
+      if (looksLikeObjectId) {
+        navigate('/all-products', { replace: true });
+      } else {
+        navigate(`/all-products?category=${encodeURIComponent(gender)}`, { replace: true });
+      }
+      return;
+    }
+
     const fetchProducts = async () => {
       try {
         setLoading(true);
@@ -67,13 +80,14 @@ export function CategoryPage() {
       }
     };
     fetchProducts();
-  }, [gender, category, giftOnly]);
+  }, [gender, category, giftOnly, hasValidGender, looksLikeObjectId, navigate]);
 
   // Reset filters when URL parameters change
   useEffect(() => {
+    if (!hasValidGender) return;
     setSelectedCategory(category ? category.charAt(0).toUpperCase() + category.slice(1) : 'All');
     setSelectedGender(gender as 'all' | 'women' | 'men' || 'all');
-  }, [gender, category]);
+  }, [gender, category, hasValidGender]);
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -92,6 +106,16 @@ export function CategoryPage() {
       setter([...array, value]);
     }
   };
+
+  // Compute available filter options dynamically from fetched products
+  const { colors: availableColors, sizes: availableSizes, materials: availableMaterials } = useMemo(
+    () => extractFilterOptions(products),
+    [products]
+  );
+  const availableSubcategories = useMemo(
+    () => getSubcategoriesForCategory(products, selectedCategory, selectedGender),
+    [products, selectedCategory, selectedGender]
+  );
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
@@ -209,7 +233,9 @@ export function CategoryPage() {
     setShowFeatured(false);
   };
 
-  const pageTitle = giftOnly && gender === 'women'
+  const pageTitle = !hasValidGender
+    ? 'Collection'
+    : giftOnly && gender === 'women'
     ? 'Gift For Her'
     : giftOnly && gender === 'men'
     ? 'Gift For Him'
@@ -218,7 +244,7 @@ export function CategoryPage() {
     : `${gender?.charAt(0).toUpperCase() + gender?.slice(1)}'s Collection`;
 
   return (
-    <div className="min-h-screen bg-background pt-[72px]">
+    <div className="min-h-screen bg-background pt-24">
       {/* Breadcrumb */}
       <div className="border-b border-foreground/5 bg-background">
         <div className="max-w-[1920px] mx-auto px-4 md:px-8 py-3">
@@ -236,7 +262,7 @@ export function CategoryPage() {
             {category && (
               <>
                 <ChevronRight size={12} />
-                <span className="text-foreground uppercase capitalize">{category}</span>
+                <span className="text-xs text-foreground uppercase capitalize">{category}</span>
               </>
             )}
           </div>
@@ -400,6 +426,10 @@ export function CategoryPage() {
             toggleArrayFilter={toggleArrayFilter}
             clearAllFilters={clearAllFilters}
             hasActiveFilters={hasActiveFilters}
+            availableColors={availableColors}
+            availableSizes={availableSizes}
+            availableMaterials={availableMaterials}
+            availableSubcategories={availableSubcategories}
           />
 
           {/* Mobile Filter Panel */}
@@ -429,6 +459,8 @@ export function CategoryPage() {
             setSelectedBadges={setSelectedBadges}
             clearAllFilters={clearAllFilters}
             hasActiveFilters={hasActiveFilters}
+            availableColors={availableColors}
+            availableSizes={availableSizes}
           />
 
           {/* Products Grid */}

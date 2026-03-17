@@ -26,7 +26,7 @@ export function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-[72px]">
+    <div className="min-h-screen bg-background pt-24">
       {/* Hero Section */}
       <div className="border-b border-foreground/5">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-16 md:py-24 text-center">
@@ -152,7 +152,7 @@ export function ContactPage() {
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter your full name"
+                placeholder="Full name"
               />
 
               <LuxuryInput
@@ -161,7 +161,7 @@ export function ContactPage() {
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="Enter your email address"
+                placeholder="Email address"
               />
 
               <LuxuryInput
@@ -169,7 +169,7 @@ export function ContactPage() {
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="+91 98765 43210"
+                placeholder="Phone number"
               />
 
               <LuxurySelect
@@ -193,7 +193,7 @@ export function ContactPage() {
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                 rows={6}
-                placeholder="Tell us how we can help you..."
+                placeholder="Your message"
               />
 
               {/* Submit Button */}

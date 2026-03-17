@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, SlidersHorizontal, X, ChevronDown, ChevronUp, Star, Sparkles, Tag, TrendingUp, Award } from 'lucide-react';
-import { categories, categoriesByGender, colorMap, allColors, allSizes, allMaterials, allSubcategories, getSubcategoriesForCategory } from '../utils/filterConfig';
+import { categoriesByGender, colorMap } from '../utils/filterConfig';
 
 const BADGE_OPTIONS = ['Best Seller', 'Trending', 'Most Ordered', 'New', 'Limited Edition', 'Exclusive', 'Hot', 'Popular'] as const;
 
@@ -36,6 +36,12 @@ interface FilterSidebarProps {
   setShowFeatured: (value: boolean) => void;
   setSelectedBadges: (value: string[]) => void;
   
+  // Dynamic filter options derived from products
+  availableColors?: string[];
+  availableSizes?: string[];
+  availableMaterials?: string[];
+  availableSubcategories?: string[];
+
   // Functions
   toggleSection: (section: string) => void;
   toggleArrayFilter: (array: string[], setter: (arr: string[]) => void, value: string) => void;
@@ -131,6 +137,10 @@ export function FilterSidebar({
   toggleArrayFilter,
   clearAllFilters,
   hasActiveFilters,
+  availableColors = [],
+  availableSizes = [],
+  availableMaterials = [],
+  availableSubcategories = [],
 }: FilterSidebarProps) {
   return (
     <motion.aside
@@ -294,7 +304,7 @@ export function FilterSidebar({
         count={selectedColors.length}
       >
         <div className="space-y-2">
-          {allColors.map(color => {
+          {availableColors.map(color => {
             const hexColor = colorMap[color] || '#999';
             const isSelected = selectedColors.includes(color);
             return (
@@ -334,7 +344,7 @@ export function FilterSidebar({
         count={selectedSizes.length}
       >
         <div className="space-y-2">
-          {allSizes.map(size => (
+          {availableSizes.map(size => (
             <label
               key={size}
               className="flex items-center gap-3 cursor-pointer group"
@@ -363,7 +373,7 @@ export function FilterSidebar({
         count={selectedMaterials.length}
       >
         <div className="space-y-1">
-          {allMaterials.map(material => (
+          {availableMaterials.map(material => (
             <label
               key={material}
               className="flex items-center gap-3 px-3 py-2 hover:bg-foreground/5 cursor-pointer group"
@@ -390,7 +400,7 @@ export function FilterSidebar({
         count={selectedSubcategories.length}
       >
         <div className="space-y-1 max-h-48 overflow-y-auto pr-2">
-          {getSubcategoriesForCategory(selectedCategory, selectedGender).map((subcategory: string) => (
+          {availableSubcategories.map((subcategory: string) => (
             <label
               key={subcategory}
               className="flex items-center gap-3 px-3 py-2 hover:bg-foreground/5 cursor-pointer group"

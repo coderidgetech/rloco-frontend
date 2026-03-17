@@ -1,34 +1,79 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Bell, Lock, Globe, Moon, Sun, ChevronRight, Trash2, Download, MapPin } from 'lucide-react';
+import { Bell, Lock, Globe, ChevronRight, Trash2, Download, MapPin } from 'lucide-react';
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
+import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { toast } from 'sonner';
 import { useCurrency } from '@/app/context/CurrencyContext';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '@/app/services/authService';
+import { orderService } from '@/app/services/orderService';
+import { addressService } from '@/app/services/addressService';
+
+const NOTIFICATIONS_STORAGE_KEY = 'rloco_notifications';
+
+function loadNotifications(): { orders: boolean; offers: boolean; updates: boolean } {
+  try {
+    const raw = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return { orders: !!parsed.orders, offers: !!parsed.offers, updates: !!parsed.updates };
+    }
+  } catch (_) {}
+  return { orders: true, offers: true, updates: false };
+}
 
 export function MobileSettingsPage() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { country, setCountry } = useCurrency();
-  const [notifications, setNotifications] = useState({
-    orders: true,
-    offers: true,
-    updates: false,
-  });
-  const [darkMode, setDarkMode] = useState(false);
+  const [notifications, setNotifications] = useState(loadNotifications);
   const [language, setLanguage] = useState('English');
   const [showCountryModal, setShowCountryModal] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
+  }, [notifications]);
 
   const handleNotificationToggle = (key: keyof typeof notifications) => {
-    setNotifications({ ...notifications, [key]: !notifications[key] });
-    toast.success(`${key.charAt(0).toUpperCase() + key.slice(1)} notifications ${!notifications[key] ? 'enabled' : 'disabled'}`);
+    setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const handleClearCache = () => {
-    toast.success('Cache cleared successfully');
+  const handleClearCache = async () => {
+    sessionStorage.clear();
+    if (typeof caches !== 'undefined' && caches.keys) {
+      const names = await caches.keys();
+      await Promise.all(names.map((name) => caches.delete(name)));
+    }
+    toast.success('Cache cleared');
   };
 
-  const handleDownloadData = () => {
-    toast.success('Your data download has started');
+  const handleDownloadData = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const [user, ordersRes, addressesRes] = await Promise.all([
+        authService.getMe().catch(() => null),
+        orderService.list().catch(() => ({ orders: [], total: 0 })),
+        addressService.list().catch(() => []),
+      ]);
+      const orders = ordersRes?.orders ?? [];
+      const addresses = addressesRes ?? [];
+      const payload = { exportedAt: new Date().toISOString(), user, orders, addresses };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rloco-data-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Download started');
+    } catch {
+      toast.error('Export failed');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const handleCountryChange = (newCountry: 'India' | 'United States') => {
@@ -38,10 +83,10 @@ export function MobileSettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background pb-20" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-      <MobileSubPageHeader onBack={() => navigate('/account')} />
+    <div className="min-h-screen bg-white dark:bg-background pb-20 md:pb-12" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
+      {isMobile && <MobileSubPageHeader onBack={() => navigate('/account')} />}
 
-      <div className="pt-[100px]">{/* Header + safe area */}
+      <div className={isMobile ? 'pt-[100px]' : 'pt-6 max-w-3xl mx-auto px-4'}>{/* Header + safe area */}
         {/* Header */}
         <div className="bg-white p-4 border-b border-border/20">
           <h1 className="text-2xl font-medium mb-1">Settings</h1>
@@ -121,37 +166,6 @@ export function MobileSettingsPage() {
                   />
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Appearance */}
-        <div className="px-4 pb-4">
-          <h2 className="text-sm font-medium text-foreground/60 mb-3">APPEARANCE</h2>
-          <div className="bg-white rounded-2xl border border-border/30 shadow-sm overflow-hidden">
-            <div className="w-full p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {darkMode ? (
-                  <Moon size={20} className="text-foreground/70" />
-                ) : (
-                  <Sun size={20} className="text-foreground/70" />
-                )}
-                <div className="text-left">
-                  <p className="font-medium text-sm">Dark Mode</p>
-                  <p className="text-xs text-foreground/50">Switch theme</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className={`relative w-12 h-7 rounded-full transition-colors ${
-                  darkMode ? 'bg-[#B4770E]' : 'bg-foreground/20'
-                }`}
-              >
-                <motion.div
-                  animate={{ x: darkMode ? 20 : 2 }}
-                  className="absolute top-1 w-5 h-5 bg-white rounded-full shadow-sm"
-                />
-              </button>
             </div>
           </div>
         </div>

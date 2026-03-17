@@ -3,7 +3,7 @@ import { ApiError } from '../types/api';
 
 // Create axios instance with base configuration
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8081/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
   timeout: 30000, // 30 seconds
   withCredentials: true, // Important for HttpOnly cookies
   headers: {
@@ -48,7 +48,7 @@ api.interceptors.response.use(
       // Try to refresh token if refresh endpoint exists
       try {
         const refreshResponse = await axios.post(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:8081/api'}/auth/refresh`,
+          `${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/refresh`,
           {},
           { withCredentials: true }
         );

@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { User, Mail, Phone, Calendar, MapPin, Camera, Save } from 'lucide-react';
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
+import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { toast } from 'sonner';
 
 export function MobileProfileEditPage() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [formData, setFormData] = useState({
     name: 'Praneeth Kumar',
     email: 'praneeth@example.com',
@@ -26,10 +28,10 @@ export function MobileProfileEditPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background pb-20" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-      <MobileSubPageHeader onBack={() => navigate('/account')} />
+    <div className="min-h-screen bg-white dark:bg-background pb-20 md:pb-12" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
+      {isMobile && <MobileSubPageHeader onBack={() => navigate('/account')} />}
 
-      <div className="pt-[100px] p-4">{/* Header + safe area */}
+      <div className={isMobile ? 'pt-[100px] p-4' : 'pt-6 p-4 max-w-2xl mx-auto'}>{/* Header + safe area */}
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-medium">Edit Profile</h1>
@@ -65,7 +67,7 @@ export function MobileProfileEditPage() {
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
                 className="w-full pl-12 pr-4 py-3.5 bg-white border border-border/30 rounded-xl shadow-sm focus:outline-none focus:border-primary transition-colors"
-                placeholder="Enter your name"
+                placeholder="Full name"
               />
             </div>
           </div>
@@ -82,7 +84,7 @@ export function MobileProfileEditPage() {
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 className="w-full pl-12 pr-4 py-3.5 bg-white border border-border/30 rounded-xl shadow-sm focus:outline-none focus:border-primary transition-colors"
-                placeholder="Enter your email"
+                placeholder="Email address"
               />
             </div>
           </div>
@@ -99,7 +101,7 @@ export function MobileProfileEditPage() {
                 value={formData.phone}
                 onChange={(e) => handleChange('phone', e.target.value)}
                 className="w-full pl-12 pr-4 py-3.5 bg-white border border-border/30 rounded-xl shadow-sm focus:outline-none focus:border-primary transition-colors"
-                placeholder="Enter your phone"
+                placeholder="Phone number"
               />
             </div>
           </div>
@@ -154,7 +156,7 @@ export function MobileProfileEditPage() {
                 value={formData.city}
                 onChange={(e) => handleChange('city', e.target.value)}
                 className="w-full pl-12 pr-4 py-3.5 bg-white border border-border/30 rounded-xl shadow-sm focus:outline-none focus:border-primary transition-colors"
-                placeholder="Enter your city"
+                placeholder="City"
               />
             </div>
           </div>

@@ -248,7 +248,7 @@ export function MobilePaymentPage() {
                     type="text"
                     value={cardNumber}
                     onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                    placeholder="Enter your card number"
+                    placeholder="Card number"
                     className="w-full px-4 py-3.5 rounded-xl border-2 border-foreground/20 bg-white text-foreground placeholder:text-foreground/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                   <CreditCard className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/30" size={20} />
@@ -265,7 +265,7 @@ export function MobilePaymentPage() {
                   type="text"
                   value={cardName}
                   onChange={(e) => setCardName(e.target.value)}
-                  placeholder="Enter name on card"
+                  placeholder="Name on card"
                   className="w-full px-4 py-3.5 rounded-xl border-2 border-foreground/20 bg-white text-foreground placeholder:text-foreground/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                 />
                 <p className="text-xs text-foreground/50 mt-1.5">Name as shown on card</p>
@@ -295,7 +295,7 @@ export function MobilePaymentPage() {
                     type="text"
                     value={cvv}
                     onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    placeholder="123"
+                    placeholder="CVV"
                     maxLength={4}
                     className="w-full px-4 py-3.5 rounded-xl border-2 border-foreground/20 bg-white text-foreground placeholder:text-foreground/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                   />

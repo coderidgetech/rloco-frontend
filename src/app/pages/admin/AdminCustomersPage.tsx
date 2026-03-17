@@ -117,7 +117,7 @@ export const AdminCustomersPage = () => {
     }
   };
 
-  const [dashboardStats, setDashboardStats] = useState<{ orders?: { total?: number }; revenue?: { total?: number } } | null>(null);
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
 
   useEffect(() => {
     adminService.getDashboardStats().then(setDashboardStats).catch(() => setDashboardStats(null));
@@ -139,13 +139,13 @@ export const AdminCustomersPage = () => {
     },
     {
       label: 'Total Orders',
-      value: dashboardStats?.orders?.total != null ? dashboardStats.orders.total : '—',
+      value: dashboardStats?.total_orders != null ? dashboardStats.total_orders : '—',
       icon: ShoppingBag,
       color: 'bg-purple-100 text-purple-600',
     },
     {
       label: 'Total Revenue',
-      value: dashboardStats?.revenue?.total != null ? `$${Number(dashboardStats.revenue.total).toLocaleString()}` : '—',
+      value: dashboardStats?.total_revenue != null ? `$${Number(dashboardStats.total_revenue).toLocaleString()}` : '—',
       icon: DollarSign,
       color: 'bg-yellow-100 text-yellow-600',
     },
@@ -254,19 +254,19 @@ export const AdminCustomersPage = () => {
                     <TableCell>
                       <div>
                         <p className="text-sm">{customer.email}</p>
-                        <p className="text-sm text-gray-500">N/A</p>
+                        <p className="text-sm text-gray-500">{customer.phone || '—'}</p>
                       </div>
                     </TableCell>
-                    <TableCell>N/A</TableCell>
+                    <TableCell>—</TableCell>
                     <TableCell>
-                      <span className="font-semibold">N/A</span>
+                      <span className="font-semibold">—</span>
                     </TableCell>
                     <TableCell>
-                      <span className="font-semibold">N/A</span>
+                      <span className="font-semibold">—</span>
                     </TableCell>
                     <TableCell>
-                      <Badge className="bg-green-100 text-green-800">
-                        Active
+                      <Badge className={customer.active !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                        {customer.active !== false ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
                     <TableCell>

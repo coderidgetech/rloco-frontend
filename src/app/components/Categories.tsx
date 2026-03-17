@@ -18,15 +18,19 @@ function CategoryCard({ category, index }: { category: CategoryDisplay; index: n
   const navigate = useNavigate();
   
   const handleClick = () => {
-    // Navigate to category page
-    if (category.id) {
-      navigate(`/category/${category.id}`);
+    // Navigate using route params the category pages actually support.
+    const normalizedCategory = category.category?.toLowerCase();
+    const isTopLevelGenderCard =
+      !!category.gender && normalizedCategory === category.gender;
+
+    if (isTopLevelGenderCard && category.gender) {
+      navigate(`/category/${category.gender}`);
+    } else if (category.gender && category.category) {
+      navigate(`/category/${category.gender}/${category.category.toLowerCase()}`);
     } else if (category.gender) {
-      // For gender-based categories (Women's/Men's Clothing)
       navigate(`/category/${category.gender}`);
     } else if (category.category) {
-      // For specific categories (Shoes, Accessories, etc.)
-      navigate(`/all-products?category=${category.category}`);
+      navigate(`/all-products?category=${encodeURIComponent(category.category)}`);
     }
   };
 
@@ -90,12 +94,9 @@ export function Categories() {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        // Fetch categories from API - ONLY API data, no fallbacks
         const apiCategories = await categoryService.list();
-        
         const displayCategories: CategoryDisplay[] = [];
-        
-        // Only use API categories - must have name and image
+
         if (apiCategories && apiCategories.length > 0) {
           apiCategories.forEach((cat) => {
             if (cat.name && cat.image) {
@@ -109,11 +110,9 @@ export function Categories() {
             }
           });
         }
-        
         setCategories(displayCategories);
       } catch (error) {
         console.error('Failed to fetch categories from API:', error);
-        // No fallback - just set empty array
         setCategories([]);
       } finally {
         setLoading(false);
@@ -164,7 +163,7 @@ export function Categories() {
               className="h-0.5 bg-foreground mx-auto mb-6"
             />
             <h2 className="text-3xl md:text-4xl lg:text-5xl tracking-tight mb-3">
-              Collections
+              Shop by Category
             </h2>
             <p className="text-foreground/60 text-sm md:text-base max-w-2xl mx-auto">
               Explore our diverse collection of premium fashion categories

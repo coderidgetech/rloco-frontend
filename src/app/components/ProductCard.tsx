@@ -157,28 +157,26 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
           )}
         </div>
 
-        {/* Quantity Controls - Show only when NOT in cart */}
-        {!isInCart && (
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={(e) => handleQuantityChange(e, -1)}
-              className="w-8 h-8 bg-muted hover:bg-muted/80 rounded-full flex items-center justify-center transition-colors"
-            >
-              <Minus size={16} />
-            </motion.button>
-            <span className="text-sm font-semibold w-8 text-center">{quantity}</span>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={(e) => handleQuantityChange(e, 1)}
-              className="w-8 h-8 bg-muted hover:bg-muted/80 rounded-full flex items-center justify-center transition-colors"
-            >
-              <Plus size={16} />
-            </motion.button>
-          </div>
-        )}
+        {/* Quantity Controls - always reserve space to keep button alignment consistent */}
+        <div className={`flex items-center justify-center gap-3 mb-3 ${isInCart ? 'invisible' : ''}`}>
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={(e) => handleQuantityChange(e, -1)}
+            className="w-8 h-8 bg-muted hover:bg-muted/80 rounded-full flex items-center justify-center transition-colors"
+          >
+            <Minus size={16} />
+          </motion.button>
+          <span className="text-sm font-semibold w-8 text-center">{quantity}</span>
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={(e) => handleQuantityChange(e, 1)}
+            className="w-8 h-8 bg-muted hover:bg-muted/80 rounded-full flex items-center justify-center transition-colors"
+          >
+            <Plus size={16} />
+          </motion.button>
+        </div>
 
         {/* Add to Bag / Go to Cart Button */}
         <motion.button

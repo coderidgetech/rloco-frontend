@@ -26,10 +26,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminService } from '../../services/adminService';
+import api from '../../lib/api';
 
 export const AdminSettingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' });
+  const [changingPassword, setChangingPassword] = useState(false);
   const [settings, setSettings] = useState<any>({
     general: {
       storeName: 'Rloco',
@@ -110,6 +113,34 @@ export const AdminSettingsPage = () => {
       toast.error('Failed to save settings');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwordForm.current || !passwordForm.newPass || !passwordForm.confirm) {
+      toast.error('Please fill in all password fields');
+      return;
+    }
+    if (passwordForm.newPass !== passwordForm.confirm) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    if (passwordForm.newPass.length < 8) {
+      toast.error('New password must be at least 8 characters');
+      return;
+    }
+    try {
+      setChangingPassword(true);
+      await api.put('/auth/password', {
+        current_password: passwordForm.current,
+        new_password: passwordForm.newPass,
+      });
+      toast.success('Password updated successfully');
+      setPasswordForm({ current: '', newPass: '', confirm: '' });
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'Failed to update password');
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -457,7 +488,10 @@ export const AdminSettingsPage = () => {
                       <p className="text-sm text-gray-500">Visa, Mastercard, Amex</p>
                     </div>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={settings?.payment?.creditCards ?? true}
+                    onCheckedChange={(v) => updateSetting(['payment', 'creditCards'], v)}
+                  />
                 </div>
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-3">
@@ -469,7 +503,10 @@ export const AdminSettingsPage = () => {
                       <p className="text-sm text-gray-500">PayPal checkout</p>
                     </div>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={settings?.payment?.paypal ?? true}
+                    onCheckedChange={(v) => updateSetting(['payment', 'paypal'], v)}
+                  />
                 </div>
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-3">
@@ -481,8 +518,15 @@ export const AdminSettingsPage = () => {
                       <p className="text-sm text-gray-500">Stripe payment processing</p>
                     </div>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={settings?.payment?.stripe ?? true}
+                    onCheckedChange={(v) => updateSetting(['payment', 'stripe'], v)}
+                  />
                 </div>
+                <Button onClick={() => handleSave('Payment Methods')} disabled={saving}>
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </Button>
               </CardContent>
             </Card>
 
@@ -490,25 +534,40 @@ export const AdminSettingsPage = () => {
               <CardHeader>
                 <CardTitle>Payment Gateway Configuration</CardTitle>
                 <CardDescription>
-                  API keys and credentials (encrypted)
+                  API keys and credentials (encrypted and stored server-side)
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Stripe Publishable Key</Label>
-                  <Input type="password" placeholder="pk_live_..." />
+                  <Input
+                    type="password"
+                    placeholder="pk_live_..."
+                    value={settings?.payment?.stripePublishableKey || ''}
+                    onChange={(e) => updateSetting(['payment', 'stripePublishableKey'], e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Stripe Secret Key</Label>
-                  <Input type="password" placeholder="sk_live_..." />
+                  <Input
+                    type="password"
+                    placeholder="sk_live_..."
+                    value={settings?.payment?.stripeSecretKey || ''}
+                    onChange={(e) => updateSetting(['payment', 'stripeSecretKey'], e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>PayPal Client ID</Label>
-                  <Input type="password" placeholder="..." />
+                  <Input
+                    type="password"
+                    placeholder="..."
+                    value={settings?.payment?.paypalClientId || ''}
+                    onChange={(e) => updateSetting(['payment', 'paypalClientId'], e.target.value)}
+                  />
                 </div>
-                <Button onClick={() => handleSave('Payment Gateway')}>
+                <Button onClick={() => handleSave('Payment Gateway')} disabled={saving}>
                   <Save className="h-4 w-4 mr-2" />
-                  Save Changes
+                  {saving ? 'Saving...' : 'Save Changes'}
                 </Button>
               </CardContent>
             </Card>
@@ -586,22 +645,35 @@ export const AdminSettingsPage = () => {
                     <p className="font-medium">USPS</p>
                     <p className="text-sm text-gray-500">United States Postal Service</p>
                   </div>
-                  <Switch />
+                  <Switch
+                    checked={settings?.shipping?.usps ?? false}
+                    onCheckedChange={(v) => updateSetting(['shipping', 'usps'], v)}
+                  />
                 </div>
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <p className="font-medium">FedEx</p>
                     <p className="text-sm text-gray-500">FedEx shipping services</p>
                   </div>
-                  <Switch />
+                  <Switch
+                    checked={settings?.shipping?.fedex ?? false}
+                    onCheckedChange={(v) => updateSetting(['shipping', 'fedex'], v)}
+                  />
                 </div>
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div>
                     <p className="font-medium">UPS</p>
                     <p className="text-sm text-gray-500">United Parcel Service</p>
                   </div>
-                  <Switch />
+                  <Switch
+                    checked={settings?.shipping?.ups ?? false}
+                    onCheckedChange={(v) => updateSetting(['shipping', 'ups'], v)}
+                  />
                 </div>
+                <Button onClick={() => handleSave('Shipping Carriers')} disabled={saving} className="mt-2">
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -621,39 +693,54 @@ export const AdminSettingsPage = () => {
                     <Label>Order Confirmation</Label>
                     <p className="text-sm text-gray-500">Send when order is placed</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={settings?.notifications?.orderConfirmation ?? true}
+                    onCheckedChange={(v) => updateSetting(['notifications', 'orderConfirmation'], v)}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Order Shipped</Label>
                     <p className="text-sm text-gray-500">Send when order ships</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={settings?.notifications?.orderShipped ?? true}
+                    onCheckedChange={(v) => updateSetting(['notifications', 'orderShipped'], v)}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Order Delivered</Label>
                     <p className="text-sm text-gray-500">Send when order is delivered</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={settings?.notifications?.orderDelivered ?? true}
+                    onCheckedChange={(v) => updateSetting(['notifications', 'orderDelivered'], v)}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Low Stock Alerts</Label>
                     <p className="text-sm text-gray-500">Notify when inventory is low</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={settings?.notifications?.lowStockAlerts ?? true}
+                    onCheckedChange={(v) => updateSetting(['notifications', 'lowStockAlerts'], v)}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>New Customer Welcome</Label>
                     <p className="text-sm text-gray-500">Send welcome email to new customers</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={settings?.notifications?.newCustomerWelcome ?? true}
+                    onCheckedChange={(v) => updateSetting(['notifications', 'newCustomerWelcome'], v)}
+                  />
                 </div>
-                <Button onClick={() => handleSave('Notifications')}>
+                <Button onClick={() => handleSave('Notifications')} disabled={saving}>
                   <Save className="h-4 w-4 mr-2" />
-                  Save Changes
+                  {saving ? 'Saving...' : 'Save Changes'}
                 </Button>
               </CardContent>
             </Card>
@@ -673,15 +760,31 @@ export const AdminSettingsPage = () => {
                   <div className="space-y-2">
                     <Label>Primary Color</Label>
                     <div className="flex gap-2">
-                      <Input type="color" defaultValue="#000000" className="w-16" />
-                      <Input defaultValue="#000000" />
+                      <Input
+                        type="color"
+                        value={settings?.appearance?.primaryColor || '#000000'}
+                        onChange={(e) => updateSetting(['appearance', 'primaryColor'], e.target.value)}
+                        className="w-16"
+                      />
+                      <Input
+                        value={settings?.appearance?.primaryColor || '#000000'}
+                        onChange={(e) => updateSetting(['appearance', 'primaryColor'], e.target.value)}
+                      />
                     </div>
                   </div>
                   <div className="space-y-2">
                     <Label>Accent Color</Label>
                     <div className="flex gap-2">
-                      <Input type="color" defaultValue="#666666" className="w-16" />
-                      <Input defaultValue="#666666" />
+                      <Input
+                        type="color"
+                        value={settings?.appearance?.accentColor || '#666666'}
+                        onChange={(e) => updateSetting(['appearance', 'accentColor'], e.target.value)}
+                        className="w-16"
+                      />
+                      <Input
+                        value={settings?.appearance?.accentColor || '#666666'}
+                        onChange={(e) => updateSetting(['appearance', 'accentColor'], e.target.value)}
+                      />
                     </div>
                   </div>
                 </div>
@@ -716,29 +819,42 @@ export const AdminSettingsPage = () => {
                     <Label>Two-Factor Authentication</Label>
                     <p className="text-sm text-gray-500">Require 2FA for admin login</p>
                   </div>
-                  <Switch />
+                  <Switch
+                    checked={settings?.security?.twoFactorAuth ?? false}
+                    onCheckedChange={(v) => updateSetting(['security', 'twoFactorAuth'], v)}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>SSL/HTTPS Only</Label>
                     <p className="text-sm text-gray-500">Force secure connections</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={settings?.security?.sslOnly ?? true}
+                    onCheckedChange={(v) => updateSetting(['security', 'sslOnly'], v)}
+                  />
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Cookie Consent Banner</Label>
                     <p className="text-sm text-gray-500">Show cookie consent notice</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={settings?.security?.cookieConsent ?? true}
+                    onCheckedChange={(v) => updateSetting(['security', 'cookieConsent'], v)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Session Timeout (minutes)</Label>
-                  <Input type="number" defaultValue="30" />
+                  <Input
+                    type="number"
+                    value={settings?.security?.sessionTimeout ?? 30}
+                    onChange={(e) => updateSetting(['security', 'sessionTimeout'], parseInt(e.target.value) || 30)}
+                  />
                 </div>
-                <Button onClick={() => handleSave('Security')}>
+                <Button onClick={() => handleSave('Security')} disabled={saving}>
                   <Save className="h-4 w-4 mr-2" />
-                  Save Changes
+                  {saving ? 'Saving...' : 'Save Changes'}
                 </Button>
               </CardContent>
             </Card>
@@ -753,18 +869,30 @@ export const AdminSettingsPage = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Current Password</Label>
-                  <Input type="password" />
+                  <Input
+                    type="password"
+                    value={passwordForm.current}
+                    onChange={(e) => setPasswordForm((p) => ({ ...p, current: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>New Password</Label>
-                  <Input type="password" />
+                  <Input
+                    type="password"
+                    value={passwordForm.newPass}
+                    onChange={(e) => setPasswordForm((p) => ({ ...p, newPass: e.target.value }))}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Confirm New Password</Label>
-                  <Input type="password" />
+                  <Input
+                    type="password"
+                    value={passwordForm.confirm}
+                    onChange={(e) => setPasswordForm((p) => ({ ...p, confirm: e.target.value }))}
+                  />
                 </div>
-                <Button onClick={() => handleSave('Password')}>
-                  Update Password
+                <Button onClick={handleChangePassword} disabled={changingPassword}>
+                  {changingPassword ? 'Updating...' : 'Update Password'}
                 </Button>
               </CardContent>
             </Card>

@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { CreditCard, Smartphone, ChevronRight, Lock, Check } from 'lucide-react';
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
+import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { toast } from 'sonner';
 
 type PaymentType = 'card' | 'upi';
 
 export function MobileAddPaymentMethodPage() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [selectedType, setSelectedType] = useState<PaymentType>('card');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -101,10 +103,10 @@ export function MobileAddPaymentMethodPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background pb-28" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-      <MobileSubPageHeader />
+    <div className="min-h-screen bg-white dark:bg-background pb-28 md:pb-12" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
+      {isMobile && <MobileSubPageHeader />}
 
-      <div className="pt-20 px-4 pb-6">
+      <div className={isMobile ? 'pt-20 px-4 pb-6' : 'pt-6 px-4 pb-6 max-w-2xl mx-auto'}>
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -190,7 +192,7 @@ export function MobileAddPaymentMethodPage() {
                     type="text"
                     value={cardNumber}
                     onChange={handleCardNumberChange}
-                    placeholder="1234 5678 9012 3456"
+                    placeholder="Card number"
                     className="w-full px-4 py-3 bg-white border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                     inputMode="numeric"
                   />
@@ -205,7 +207,7 @@ export function MobileAddPaymentMethodPage() {
                     type="text"
                     value={cardName}
                     onChange={(e) => setCardName(e.target.value.toUpperCase())}
-                    placeholder="PRANEETH KUMAR"
+                    placeholder="Name on card"
                     className="w-full px-4 py-3 bg-white border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all uppercase text-sm"
                   />
                 </div>
@@ -234,7 +236,7 @@ export function MobileAddPaymentMethodPage() {
                       type="password"
                       value={cvv}
                       onChange={handleCvvChange}
-                      placeholder="123"
+                      placeholder="CVV"
                       maxLength={3}
                       className="w-full px-4 py-3 bg-white border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                       inputMode="numeric"
@@ -294,7 +296,7 @@ export function MobileAddPaymentMethodPage() {
                     type="text"
                     value={upiId}
                     onChange={(e) => setUpiId(e.target.value.toLowerCase())}
-                    placeholder="yourname@paytm"
+                    placeholder="UPI ID"
                     className="w-full px-4 py-3 bg-white border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                   />
                 </div>

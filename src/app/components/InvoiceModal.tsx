@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { X, Download, Printer, Mail } from 'lucide-react';
-import { Logo } from './Logo';
+import { RlocoLogo } from './RlocoLogo';
 import { toast } from 'sonner';
 
 interface OrderProduct {
@@ -51,7 +51,8 @@ export function InvoiceModal({ order, isOpen, onClose }: InvoiceModalProps) {
   if (!isOpen || !order) return null;
 
   const handleDownload = () => {
-    toast.success('Invoice downloaded successfully!');
+    window.print();
+    toast.success('Use "Save as PDF" in the print dialog to download the invoice.');
   };
 
   const handlePrint = () => {
@@ -139,7 +140,7 @@ export function InvoiceModal({ order, isOpen, onClose }: InvoiceModalProps) {
             {/* Invoice Header */}
             <div className="flex flex-col md:flex-row justify-between items-start mb-12 pb-8 border-b border-border">
               <div>
-                <Logo className="mb-6" />
+                <RlocoLogo className="mb-6" size="lg" />
                 <div className="text-sm text-muted-foreground space-y-1">
                   <p>123 Fashion Avenue</p>
                   <p>New York, NY 10001</p>

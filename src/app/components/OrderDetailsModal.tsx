@@ -430,7 +430,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                       value={review}
                       onChange={(e) => setReview(e.target.value)}
                       className="h-32"
-                      placeholder="Tell us about your experience with this product..."
+                      placeholder="Your review"
                     />
 
                     {/* Submit Button */}
@@ -622,7 +622,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                     value={supportMessage}
                     onChange={(e) => setSupportMessage(e.target.value)}
                     className="h-40"
-                    placeholder="Please describe your issue in detail..."
+                    placeholder="Description"
                   />
 
                   {/* Submit Button */}

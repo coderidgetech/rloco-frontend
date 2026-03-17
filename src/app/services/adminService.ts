@@ -173,7 +173,7 @@ export const adminService = {
   },
 
   async processRefund(returnId: string, refundMethod: string): Promise<Return> {
-    const response = await api.post<Return>(`/admin/returns/${returnId}/refund`, { refund_method: refundMethod });
+    const response = await api.put<Return>(`/admin/returns/${returnId}/process-refund`, { refund_method: refundMethod });
     return response.data;
   },
 

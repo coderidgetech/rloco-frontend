@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { CreditCard, Plus, Trash2, Check } from 'lucide-react';
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
+import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { toast } from 'sonner';
 
 interface PaymentMethod {
@@ -15,35 +16,22 @@ interface PaymentMethod {
   isDefault: boolean;
 }
 
-const MOCK_PAYMENT_METHODS: PaymentMethod[] = [
-  {
-    id: '1',
-    type: 'card',
-    cardNumber: '**** **** **** 4532',
-    cardHolder: 'PRANEETH KUMAR',
-    expiryDate: '12/26',
-    isDefault: true,
-  },
-  {
-    id: '2',
-    type: 'upi',
-    upiId: 'praneeth@paytm',
-    isDefault: false,
-  },
-];
+// No backend API for saved payment methods yet; show empty state. Users can add at checkout.
+const INITIAL_PAYMENT_METHODS: PaymentMethod[] = [];
 
 export function MobilePaymentMethodsPage() {
   const navigate = useNavigate();
-  const [paymentMethods, setPaymentMethods] = useState(MOCK_PAYMENT_METHODS);
+  const isMobile = useIsMobile();
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>(INITIAL_PAYMENT_METHODS);
 
   const handleDelete = (id: string) => {
-    setPaymentMethods(paymentMethods.filter((pm) => pm.id !== id));
+    setPaymentMethods((prev) => prev.filter((pm) => pm.id !== id));
     toast.success('Payment method removed');
   };
 
   const handleSetDefault = (id: string) => {
-    setPaymentMethods(
-      paymentMethods.map((pm) => ({
+    setPaymentMethods((prev) =>
+      prev.map((pm) => ({
         ...pm,
         isDefault: pm.id === id,
       }))
@@ -52,10 +40,10 @@ export function MobilePaymentMethodsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background pb-20" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-      <MobileSubPageHeader onBack={() => navigate('/account')} />
+    <div className="min-h-screen bg-white dark:bg-background pb-20 md:pb-12" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
+      {isMobile && <MobileSubPageHeader onBack={() => navigate('/account')} />}
 
-      <div className="pt-[100px] p-4">{/* Header + safe area */}
+      <div className={isMobile ? 'pt-[100px] p-4' : 'pt-6 p-4 max-w-2xl mx-auto'}>{/* Header + safe area */}
         {/* Header */}
         <div className="mb-4">
           <h1 className="text-2xl font-medium">Payment Methods</h1>

@@ -20,9 +20,9 @@ const CATEGORIES = [
   { name: 'Women', link: '/category/women' },
   { name: 'Men', link: '/category/men' },
   { name: 'Dresses', link: '/category/women/dresses' },
-  { name: 'Shoes', link: '/category/shoes' },
-  { name: 'Bags', link: '/category/accessories' },
-  { name: 'Jewelry', link: '/category/jewelry' },
+  { name: 'Shoes', link: '/all-products?category=Shoes' },
+  { name: 'Bags', link: '/all-products?category=Accessories' },
+  { name: 'Jewelry', link: '/all-products?category=Jewelry' },
 ];
 
 export function MobileSearchPage() {

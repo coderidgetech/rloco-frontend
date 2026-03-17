@@ -1,9 +1,10 @@
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, ArrowLeft, X } from 'lucide-react';
+import { Mail, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { Logo } from '@/app/components/Logo';
+import { RlocoLogo } from '@/app/components/RlocoLogo';
+import { authService } from '@/app/services/authService';
 
 export function MobileForgotPasswordPage() {
   const navigate = useNavigate();
@@ -13,20 +14,20 @@ export function MobileForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!email) {
+    if (!email?.trim()) {
       toast.error('Please enter your email');
       return;
     }
-
     setLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await authService.forgotPassword(email.trim());
       setEmailSent(true);
-      toast.success('Reset link sent to your email!');
+      toast.success('If an account exists, a reset link has been sent to your email.');
+    } catch (err: any) {
+      toast.error(err?.message || 'Request failed. Please try again.');
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -56,7 +57,7 @@ export function MobileForgotPasswordPage() {
               className="text-center mb-8 mt-12"
             >
               <div className="mb-6">
-                <Logo />
+                <RlocoLogo size="md" />
               </div>
               <h1 className="text-3xl mb-2">Forgot Password?</h1>
               <p className="text-foreground/60 px-4">
@@ -83,7 +84,7 @@ export function MobileForgotPasswordPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
+                    placeholder="Email address"
                     className="w-full pl-11 pr-4 py-3.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>

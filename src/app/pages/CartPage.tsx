@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Minus, Plus, Trash2, ShoppingBag, Tag, ArrowRight, ShieldCheck, Truck, RefreshCw, ArrowLeft } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
+import { useUser } from '../context/UserContext';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useFeaturedProducts } from '../hooks/useProducts';
@@ -12,13 +13,14 @@ import { Promotion } from '../types/api';
 
 export function CartPage() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useUser();
   const { items, removeFromCart, updateQuantity, updateGiftOptions, clearCart, giftPackingCharge } = useCart();
   const { formatPrice, formatAmount, convertPrice, currency } = useCurrency();
+  const [giftMessageDrafts, setGiftMessageDrafts] = useState<Record<string, string>>({});
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; promotion?: Promotion } | null>(null);
   const [availablePromotions, setAvailablePromotions] = useState<Promotion[]>([]);
   const [loadingPromotions, setLoadingPromotions] = useState(false);
-  const [giftMessageDrafts, setGiftMessageDrafts] = useState<Record<string, string>>({});
   
   // Fetch featured products for recommendations
   const { products: featuredProducts } = useFeaturedProducts(8);
@@ -32,10 +34,9 @@ export function CartPage() {
     try {
       setLoadingPromotions(true);
       const promotions = await promotionService.list();
-      // Filter active promotions (guard against null/undefined)
       const list = Array.isArray(promotions) ? promotions : [];
       const now = new Date();
-      const activePromotions = list.filter(p => {
+      const activePromotions = list.filter((p) => {
         if (!p?.start_date || !p?.end_date) return false;
         const startDate = new Date(p.start_date);
         const endDate = new Date(p.end_date);
@@ -50,84 +51,89 @@ export function CartPage() {
     }
   };
 
-  // Calculate cart total in the current currency
   const subtotal = items.reduce((sum, item) => {
     const itemPrice = convertPrice(item.price, (item as any).priceINR);
     return sum + (itemPrice * item.quantity);
   }, 0);
-  
-  // Calculate discount based on promotion type
-  const discount = appliedCoupon && appliedCoupon.promotion
-    ? appliedCoupon.promotion.type === 'percentage'
-      ? Math.min((subtotal * appliedCoupon.promotion.value / 100), appliedCoupon.promotion.max_discount || Infinity)
-      : appliedCoupon.promotion.type === 'fixed'
-        ? appliedCoupon.promotion.value
-        : 0
-    : appliedCoupon
-      ? (subtotal * appliedCoupon.discount) / 100 // Fallback for old format
-      : 0;
-  
-  const shippingThreshold = currency === 'USD' ? 200 : 15000; // $200 or ₹15000
-  const shippingCost = currency === 'USD' ? 15 : 1125; // $15 or ₹1125
-  const shipping = (appliedCoupon?.promotion?.type === 'free_shipping' || appliedCoupon?.code === 'FREESHIP') 
-    ? 0 
-    : subtotal > shippingThreshold 
-      ? 0 
-      : shippingCost;
-  const tax = (subtotal - discount) * 0.08; // 8% tax
-  const giftPackingDisplay = currency === 'INR' ? giftPackingCharge : giftPackingCharge / 75;
-  const finalTotal = subtotal - discount + shipping + giftPackingDisplay + tax;
 
-  // Filter recommended products (exclude items already in cart)
-  const recommendedProducts = (featuredProducts || [])
-    .filter((p) => !items.some((item) => String(item.id) === String(p.id)))
-    .slice(0, 4);
+  const discount = Math.min(
+    appliedCoupon && appliedCoupon.promotion
+      ? appliedCoupon.promotion.type === 'percentage'
+        ? Math.min((subtotal * appliedCoupon.promotion.value) / 100, appliedCoupon.promotion.max_discount ?? Infinity)
+        : appliedCoupon.promotion.type === 'fixed'
+          ? appliedCoupon.promotion.value
+          : 0
+      : appliedCoupon
+        ? (subtotal * appliedCoupon.discount) / 100
+        : 0,
+    subtotal
+  );
+
+  const shippingThreshold = currency === 'USD' ? 200 : 15000;
+  const shippingCost = currency === 'USD' ? 15 : 1125;
+  const shipping = (appliedCoupon?.promotion?.type === 'free_shipping' || appliedCoupon?.code === 'FREESHIP')
+    ? 0
+    : subtotal > shippingThreshold
+      ? 0
+      : shippingCost;
+  const tax = (subtotal - discount) * 0.08;
+  const giftPackingDisplay = currency === 'INR' ? giftPackingCharge : giftPackingCharge / 75;
+  const finalTotal = Math.max(0, subtotal - discount + shipping + giftPackingDisplay + tax);
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
-      toast.error('Please enter a coupon code');
+      toast.error('Please enter a promotion code');
       return;
     }
-
     try {
       const result = await promotionService.validate(couponCode.trim().toUpperCase(), subtotal);
-      
-      if (result.valid && result.promotion) {
-        // Calculate discount based on promotion type
+      if (result.promotion) {
         let discountAmount = 0;
         if (result.promotion.type === 'percentage') {
-          discountAmount = (subtotal * (result.promotion.value / 100));
-          // Apply max discount if specified
+          discountAmount = (subtotal * result.promotion.value) / 100;
           if (result.promotion.max_discount) {
             discountAmount = Math.min(discountAmount, result.promotion.max_discount);
           }
         } else if (result.promotion.type === 'fixed') {
           discountAmount = result.promotion.value;
         } else if (result.promotion.type === 'free_shipping') {
-          discountAmount = 0; // Will be handled in shipping calculation
+          discountAmount = 0;
         }
-
         setAppliedCoupon({
           code: result.promotion.code,
-          discount: result.promotion.type === 'percentage' ? result.promotion.value : 
-                   result.promotion.type === 'free_shipping' ? 0 : 
-                   (discountAmount / subtotal) * 100, // Convert fixed to percentage for display
+          discount: result.promotion.type === 'percentage' ? result.promotion.value : (discountAmount / subtotal) * 100,
           promotion: result.promotion,
         });
         toast.success(`Promotion "${result.promotion.code}" applied successfully!`);
         setCouponCode('');
       } else {
         toast.error('Invalid or expired promotion code');
+        setAppliedCoupon(null);
       }
     } catch (error: any) {
       console.error('Failed to validate promotion:', error);
       toast.error(error?.response?.data?.error || 'Failed to validate promotion code');
+      setAppliedCoupon(null);
     }
   };
+
+  const handleRemovePromotion = () => {
+    setAppliedCoupon(null);
+    toast.info('Coupon removed');
+  };
+
+  // Filter recommended products (exclude items already in cart)
+  const recommendedProducts = (featuredProducts || [])
+    .filter((p) => !items.some((item) => String(item.id) === String(p.id)))
+    .slice(0, 4);
 
   const handleCheckout = () => {
     if (items.length === 0) {
       toast.error('Your cart is empty');
+      return;
+    }
+    if (!isAuthenticated) {
+      navigate('/login?redirect=/checkout');
       return;
     }
     navigate('/checkout');
@@ -309,7 +315,7 @@ export function CartPage() {
                           <div>
                             <label className="text-xs text-muted-foreground block mb-1">Gift message (optional)</label>
                             <textarea
-                              placeholder="Add a message"
+                              placeholder="Gift message (optional)"
                               value={giftMessageDrafts[`${item.id}-${item.size}`] ?? item.giftMessage ?? ''}
                               onChange={(e) => setGiftMessageDrafts((prev) => ({ ...prev, [`${item.id}-${item.size}`]: e.target.value }))}
                               onBlur={(e) => {
@@ -364,33 +370,45 @@ export function CartPage() {
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-6">
-                {/* Coupon Code */}
+                {/* Promotion Code - only on cart */}
                 <div className="bg-muted/30 rounded-xl p-6">
                   <h3 className="font-medium mb-4 flex items-center gap-2">
                     <Tag size={18} />
-                    Apply Coupon
+                    Promotion Code
                   </h3>
                   <div className="flex gap-2 mb-3">
                     <input
                       type="text"
                       value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                      placeholder="Enter code"
-                      className="flex-1 px-4 py-2 bg-background border border-border rounded-lg outline-none focus:border-primary transition-colors"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleApplyCoupon();
-                        }
+                      onChange={(e) => {
+                        setCouponCode(e.target.value.toUpperCase());
+                        setPromotionError('');
                       }}
+                      placeholder="Promo code"
+                      className="flex-1 px-4 py-2 bg-background border border-border rounded-lg outline-none focus:border-primary transition-colors uppercase"
+                      onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
                     />
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleApplyCoupon}
-                      className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
-                    >
-                      Apply
-                    </motion.button>
+                    {appliedCoupon ? (
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleRemovePromotion}
+                        className="px-4 py-2 border border-border rounded-lg hover:bg-muted transition-colors"
+                      >
+                        Remove
+                      </motion.button>
+                    ) : (
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={handleApplyCoupon}
+                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+                      >
+                        Apply
+                      </motion.button>
+                    )}
                   </div>
                   {appliedCoupon && (
                     <motion.div
@@ -399,15 +417,6 @@ export function CartPage() {
                       className="flex items-center justify-between text-sm bg-green-500/10 text-green-600 px-3 py-2 rounded-lg"
                     >
                       <span>✓ {appliedCoupon.code} applied</span>
-                      <button
-                        onClick={() => {
-                          setAppliedCoupon(null);
-                          toast.info('Coupon removed');
-                        }}
-                        className="hover:underline"
-                      >
-                        Remove
-                      </button>
                     </motion.div>
                   )}
                   {availablePromotions.length > 0 && (
@@ -417,6 +426,7 @@ export function CartPage() {
                         {availablePromotions.slice(0, 4).map((promo) => (
                           <button
                             key={promo.id}
+                            type="button"
                             onClick={() => setCouponCode(promo.code)}
                             className="px-2 py-1 bg-background border border-border rounded hover:border-primary transition-colors"
                             title={promo.name}
@@ -434,7 +444,6 @@ export function CartPage() {
                   )}
                 </div>
 
-                {/* Order Summary */}
                 <div className="bg-muted/30 rounded-xl p-6">
                   <h3 className="font-medium mb-4">Order Summary</h3>
                   <div className="space-y-3 mb-4">
@@ -442,9 +451,15 @@ export function CartPage() {
                       <span className="text-muted-foreground">Subtotal</span>
                       <span>{formatAmount(subtotal)}</span>
                     </div>
-                    {appliedCoupon && appliedCoupon.discount > 0 && (
+                    {appliedCoupon && discount > 0 && (
                       <div className="flex justify-between text-sm text-green-600">
-                        <span>Discount ({appliedCoupon.discount}%)</span>
+                        <span>
+                          {appliedCoupon.promotion?.type === 'percentage'
+                            ? `Coupon (${appliedCoupon.promotion.value}% off)`
+                            : appliedCoupon.promotion?.type === 'fixed'
+                              ? `Coupon (${formatAmount(appliedCoupon.promotion.value)} off)`
+                              : `Coupon (${appliedCoupon.code})`}
+                        </span>
                         <span>-{formatAmount(discount)}</span>
                       </div>
                     )}

@@ -84,6 +84,7 @@ export interface OrderItem {
   image: string;
   price: number;
   size: string;
+  color?: string;
   quantity: number;
   is_gift?: boolean;
   gift_wrap_color?: string;
@@ -108,6 +109,7 @@ export interface PaymentInfo {
   expiry_date?: string;
   cvv?: string;
   upi_id?: string;
+  wallet_name?: string;
 }
 
 export interface Order {
@@ -206,6 +208,7 @@ export interface ShippingMethod {
   carrier: string;
   type: string;
   base_cost: number;
+  currency?: string;
   cost_per_kg?: number;
   free_shipping_threshold?: number;
   estimated_days: number;
@@ -291,6 +294,8 @@ export interface CreatePaymentIntentRequest {
   amount: number;
   currency: string;
   gateway: 'stripe' | 'paypal';
+  /** Preferred method so Stripe shows UPI/card correctly (e.g. "upi" for INR). */
+  payment_method?: 'card' | 'upi' | 'wallet';
 }
 
 export interface ProcessPaymentRequest {
@@ -317,7 +322,15 @@ export interface CreateReturnRequest {
 export interface CalculateShippingRequest {
   country: string;
   state?: string;
+  city?: string;
+  address?: string;
+  postal_code?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
   subtotal: number;
+  weight?: number;
   free_shipping?: boolean;
 }
 

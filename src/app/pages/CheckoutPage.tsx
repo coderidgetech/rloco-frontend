@@ -1,20 +1,24 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Check, CreditCard, Truck, ArrowLeft, ShieldCheck, Smartphone, Wallet, Banknote, AlertCircle } from 'lucide-react';
+import { Check, CreditCard, Truck, ArrowLeft, ShieldCheck, Smartphone, Wallet, Banknote, AlertCircle, MapPin, Plus, Home, Briefcase } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { useUser } from '../context/UserContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
 import { LuxuryInput } from '../components/ui/luxury-input';
 import { LuxurySelect } from '../components/ui/luxury-select';
 import { LuxuryCheckbox } from '../components/ui/luxury-checkbox';
 import { orderService } from '../services/orderService';
 import { shippingService } from '../services/shippingService';
 import { taxService } from '../services/taxService';
-import { promotionService } from '../services/promotionService';
 import { paymentService } from '../services/paymentService';
+import { addressService, Address } from '../services/addressService';
+import { StripePaymentForm } from '../components/StripePaymentForm';
+import { AddressAutocompleteInput, lookupZipCode } from '../components/AddressAutocompleteInput';
 import { CreateOrderRequest } from '../types/api';
+import type { Order } from '../types/api';
 
 interface ShippingInfo {
   firstName: string;
@@ -35,15 +39,12 @@ interface PaymentInfo {
   cvv: string;
 }
 
-interface UPIInfo {
-  upiId: string;
-}
-
 const STEPS = ['Shipping', 'Payment', 'Review'];
 
 export function CheckoutPage() {
   const navigate = useNavigate();
-  const { isAuthenticated } = useUser();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { isAuthenticated, user } = useUser();
   const { items, total, clearCart, giftPackingCharge } = useCart();
   const { formatAmount, formatPrice, convertPrice, currency } = useCurrency();
   const giftPackingDisplay = currency === 'INR' ? giftPackingCharge : giftPackingCharge / 75;
@@ -52,6 +53,45 @@ export function CheckoutPage() {
   const [orderNumber, setOrderNumber] = useState('');
   const [orderComplete, setOrderComplete] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi' | 'cod' | 'wallet'>('card');
+  const [pendingStripePayment, setPendingStripePayment] = useState<{ order: Order; clientSecret: string } | null>(null);
+  const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+
+  const stripeReturnUrl = useMemo(
+    () => `${window.location.origin}${window.location.pathname || '/checkout'}`,
+    []
+  );
+
+  const walletAvailable = currency === 'INR';
+
+  // When Wallet is not available (e.g. USD), switch off wallet if it was selected
+  useEffect(() => {
+    if (!walletAvailable && paymentMethod === 'wallet') {
+      setPaymentMethod('card');
+    }
+  }, [walletAvailable, paymentMethod]);
+
+  // Saved addresses
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+
+  const mapAddressToShipping = (addr: Address): ShippingInfo => {
+    const parts = addr.name.trim().split(/\s+/);
+    // Single-word names: use full name as firstName, '.' as lastName placeholder
+    const firstName = parts[0] || addr.name.trim();
+    const lastName = parts.length > 1 ? parts.slice(1).join(' ') : '.';
+    return {
+      firstName,
+      lastName,
+      email: user?.email || '',
+      phone: addr.mobile,
+      address: addr.address_line + (addr.address_line2 ? ', ' + addr.address_line2 : ''),
+      city: addr.city,
+      state: addr.state,
+      zipCode: addr.pincode,
+      country: addr.country,
+    };
+  };
 
   const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
     firstName: '',
@@ -72,105 +112,173 @@ export function CheckoutPage() {
     cvv: '',
   });
 
-  const [upiInfo, setUpiInfo] = useState<UPIInfo>({
-    upiId: '',
-  });
+  const [selectedWallet, setSelectedWallet] = useState('Paytm');
 
   // Cost calculation states
   const [shippingCost, setShippingCost] = useState(0);
+  const [shippingCostCurrency, setShippingCostCurrency] = useState<'USD' | 'INR'>('USD');
   const [taxAmount, setTaxAmount] = useState(0);
-  const [discount, setDiscount] = useState(0);
-  const [promotionCode, setPromotionCode] = useState('');
-  const [validatingPromotion, setValidatingPromotion] = useState(false);
-  const [promotionError, setPromotionError] = useState('');
-  const [appliedPromotion, setAppliedPromotion] = useState<any>(null);
 
   // Error states
   const [shippingErrors, setShippingErrors] = useState<Partial<Record<keyof ShippingInfo, string>>>({});
-  const [paymentErrors, setPaymentErrors] = useState<Partial<Record<keyof PaymentInfo | 'upiId', string>>>({});
+  const [paymentErrors, setPaymentErrors] = useState<Partial<Record<keyof PaymentInfo, string>>>({});
+
+  const shippingCountryCode =
+    shippingInfo.country === 'United States'
+      ? 'us'
+      : shippingInfo.country === 'India'
+        ? 'in'
+        : undefined;
+
+  // Handle return from Stripe redirect (e.g. UPI, bank redirect)
+  useEffect(() => {
+    const clientSecret = searchParams.get('payment_intent_client_secret');
+    const redirectStatus = searchParams.get('redirect_status');
+    if (!clientSecret || !redirectStatus || !stripePublishableKey) return;
+
+    const handleReturn = async () => {
+      try {
+        const stripe = await loadStripe(stripePublishableKey);
+        if (!stripe) return;
+        const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+        if (!paymentIntent || paymentIntent.status !== 'succeeded') {
+          if (paymentIntent?.status === 'processing') {
+            toast.info('Payment is processing. You will receive confirmation shortly.');
+          } else {
+            toast.error('Payment could not be confirmed.');
+          }
+          setSearchParams((p) => {
+            p.delete('payment_intent_client_secret');
+            p.delete('redirect_status');
+            return p;
+          });
+          return;
+        }
+        const orderId = paymentIntent.metadata?.order_id;
+        if (!orderId) {
+          toast.error('Order not found.');
+          setSearchParams((p) => {
+            p.delete('payment_intent_client_secret');
+            p.delete('redirect_status');
+            return p;
+          });
+          return;
+        }
+        toast.success('Payment confirmed!');
+        clearCart();
+        setSearchParams((p) => {
+          p.delete('payment_intent_client_secret');
+          p.delete('redirect_status');
+          return p;
+        });
+        navigate(`/order-confirmation/${orderId}`, { replace: true });
+      } catch (e) {
+        console.error('Stripe return handling:', e);
+        toast.error('Could not confirm payment.');
+        setSearchParams((p) => {
+          p.delete('payment_intent_client_secret');
+          p.delete('redirect_status');
+          return p;
+        });
+      }
+    };
+
+    handleReturn();
+  }, [searchParams, stripePublishableKey, clearCart, navigate, setSearchParams]);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login?redirect=/checkout', { replace: true });
+      return;
+    }
     if (items.length === 0 && !orderComplete) {
       navigate('/cart');
     }
-  }, [items, navigate, orderComplete]);
+  }, [isAuthenticated, items, navigate, orderComplete]);
 
-  const subtotal = total;
-  const finalTotal = subtotal + shippingCost + taxAmount - discount + giftPackingDisplay;
-
-  // Validate promotion code
-  const handleValidatePromotion = async () => {
-    if (!promotionCode.trim()) {
-      setPromotionError('Please enter a promotion code');
-      return;
-    }
-
-    setValidatingPromotion(true);
-    setPromotionError('');
-    
-    try {
-      const result = await promotionService.validate(promotionCode.trim(), subtotal);
-      if (result.valid && result.discount !== undefined) {
-        setDiscount(result.discount);
-        setAppliedPromotion(result.promotion);
-        toast.success(`Promotion code "${promotionCode}" applied successfully!`);
+  // Fetch saved addresses and pre-select default
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    addressService.list().then((addrs) => {
+      const safeAddrs = addrs ?? [];
+      setSavedAddresses(safeAddrs);
+      if (safeAddrs.length > 0) {
+        const defaultAddr = safeAddrs.find((a) => a.is_default) || safeAddrs[0];
+        setSelectedAddressId(defaultAddr.id);
+        setShippingInfo(mapAddressToShipping(defaultAddr));
+        setShowNewAddressForm(false);
       } else {
-        setPromotionError('Invalid or expired promotion code');
-        setDiscount(0);
-        setAppliedPromotion(null);
+        setShowNewAddressForm(true);
       }
-    } catch (error: any) {
-      setPromotionError(error.message || 'Failed to validate promotion code');
-      setDiscount(0);
-      setAppliedPromotion(null);
-    } finally {
-      setValidatingPromotion(false);
-    }
-  };
+    }).catch(() => {
+      setShowNewAddressForm(true);
+    });
+  }, [isAuthenticated]);
 
-  // Remove promotion
-  const handleRemovePromotion = () => {
-    setPromotionCode('');
-    setDiscount(0);
-    setAppliedPromotion(null);
-    setPromotionError('');
-    toast.success('Promotion code removed');
+  // Subtotal in display currency (INR or USD) so order summary is correct when switching country/currency
+  const subtotal = items.reduce(
+    (sum, item) => sum + convertPrice(item.price, (item as any).priceINR) * item.quantity,
+    0
+  );
+  // Backend returns shipping/tax in USD; convert to display currency for India (INR)
+  const USD_TO_INR = 75;
+  const convertBetweenCurrencies = (amount: number, fromCurrency: string, toCurrency: string) => {
+    const from = fromCurrency.toUpperCase();
+    const to = toCurrency.toUpperCase();
+    if (from === to) return amount;
+    if (from === 'USD' && to === 'INR') return amount * USD_TO_INR;
+    if (from === 'INR' && to === 'USD') return amount / USD_TO_INR;
+    return amount;
   };
+  const shippingDisplay = convertBetweenCurrencies(shippingCost, shippingCostCurrency, currency);
+  const taxDisplay = currency === 'INR' ? taxAmount * USD_TO_INR : taxAmount;
+  const finalTotal = subtotal + shippingDisplay + taxDisplay + giftPackingDisplay;
 
-  // Calculate shipping and tax when shipping info is available
+  // USD subtotal for backend APIs (shipping/tax return USD amounts)
+  const subtotalUSD = total;
+
+  // Calculate shipping and tax when shipping info is available (backend uses USD)
   useEffect(() => {
     if (shippingInfo.country && currentStep >= 1) {
       const calculateCosts = async () => {
         try {
-          // Calculate shipping
           const shippingMethods = await shippingService.calculate({
             country: shippingInfo.country,
             state: shippingInfo.state,
-            subtotal: subtotal,
+            city: shippingInfo.city,
+            address: shippingInfo.address,
+            postal_code: shippingInfo.zipCode,
+            first_name: shippingInfo.firstName,
+            last_name: shippingInfo.lastName,
+            email: shippingInfo.email,
+            phone: shippingInfo.phone,
+            subtotal: subtotalUSD,
           });
           if (shippingMethods.length > 0) {
             setShippingCost(shippingMethods[0].base_cost || 0);
+            setShippingCostCurrency((shippingMethods[0].currency?.toUpperCase() as 'USD' | 'INR') || 'USD');
+          } else {
+            setShippingCostCurrency('USD');
           }
 
-          // Calculate tax
           const taxResult = await taxService.calculate({
             country: shippingInfo.country,
             state: shippingInfo.state,
             city: shippingInfo.city,
             postal_code: shippingInfo.zipCode,
-            subtotal,
+            subtotal: subtotalUSD,
           });
           setTaxAmount(taxResult.tax);
         } catch (error) {
           console.error('Failed to calculate shipping/tax:', error);
-          // Use defaults
           setShippingCost(0);
-          setTaxAmount(subtotal * 0.08);
+          setShippingCostCurrency('USD');
+          setTaxAmount(subtotalUSD * 0.08);
         }
       };
       calculateCosts();
     }
-  }, [shippingInfo.country, shippingInfo.state, shippingInfo.city, shippingInfo.zipCode, subtotal, currentStep]);
+  }, [shippingInfo.country, shippingInfo.state, shippingInfo.city, shippingInfo.zipCode, subtotalUSD, currentStep]);
 
   const formatCardNumber = (value: string) => {
     const cleaned = value.replace(/\s/g, '');
@@ -186,86 +294,107 @@ export function CheckoutPage() {
     return cleaned;
   };
 
+  const handleZipCodeChange = async (value: string) => {
+    const normalized =
+      shippingInfo.country === 'United States' || shippingInfo.country === 'India'
+        ? value.replace(/\D/g, '')
+        : value;
+
+    setShippingInfo((prev) => ({ ...prev, zipCode: normalized }));
+
+    const countryCode =
+      shippingInfo.country === 'United States'
+        ? 'us'
+        : shippingInfo.country === 'India'
+          ? 'in'
+          : undefined;
+
+    if (!countryCode) return;
+
+    const requiredLength = countryCode === 'us' ? 5 : 6;
+    if (normalized.length < requiredLength) return;
+
+    const result = await lookupZipCode(normalized, countryCode);
+    if (!result) return;
+
+    setShippingInfo((prev) => ({
+      ...prev,
+      zipCode: normalized,
+      city: result.city || prev.city,
+      state: result.state || prev.state,
+    }));
+  };
+
   const validateShipping = () => {
     const errors: Partial<Record<keyof ShippingInfo, string>> = {};
-    
+
+    // When a saved address card is selected, only verify email (address data is trusted)
+    if (selectedAddressId && !showNewAddressForm) {
+      if (!shippingInfo.email.trim()) {
+        errors.email = 'Email address is required to continue';
+      } else if (!/\S+@\S+\.\S+/.test(shippingInfo.email)) {
+        errors.email = 'Please enter a valid email address';
+      }
+      setShippingErrors(errors);
+      return Object.keys(errors).length === 0;
+    }
+
+    // Full validation for manually entered address
     if (!shippingInfo.firstName.trim()) {
       errors.firstName = 'First name is required';
     }
-    
     if (!shippingInfo.lastName.trim()) {
       errors.lastName = 'Last name is required';
     }
-    
     if (!shippingInfo.email.trim()) {
       errors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(shippingInfo.email)) {
       errors.email = 'Please enter a valid email address';
     }
-    
     if (!shippingInfo.phone.trim()) {
       errors.phone = 'Phone number is required';
     }
-    
     if (!shippingInfo.address.trim()) {
       errors.address = 'Address is required';
     }
-    
     if (!shippingInfo.city.trim()) {
       errors.city = 'City is required';
     }
-    
     if (!shippingInfo.state.trim()) {
       errors.state = 'State is required';
     }
-    
     if (!shippingInfo.zipCode.trim()) {
       errors.zipCode = 'ZIP code is required';
     }
-    
     if (!shippingInfo.country.trim()) {
       errors.country = 'Country is required';
     }
-    
+
     setShippingErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const validatePayment = () => {
-    const errors: Partial<Record<keyof PaymentInfo | 'upiId', string>> = {};
-    
+    const errors: Partial<Record<keyof PaymentInfo, string>> = {};
+    // Card, UPI, and Wallet all use Stripe Payment Element — no field validation needed on our form
+    const usesStripePayment = (paymentMethod === 'card' || paymentMethod === 'upi' || paymentMethod === 'wallet') && !!stripePublishableKey;
+
+    if (usesStripePayment) {
+      setPaymentErrors(errors);
+      return true;
+    }
+
     if (paymentMethod === 'card') {
       const cardNumberClean = paymentInfo.cardNumber.replace(/\s/g, '');
-      
-      if (!cardNumberClean) {
-        errors.cardNumber = 'Card number is required';
-      } else if (cardNumberClean.length !== 16) {
-        errors.cardNumber = 'Card number must be 16 digits';
-      }
-      
-      if (!paymentInfo.cardName.trim()) {
-        errors.cardName = 'Cardholder name is required';
-      }
-      
-      if (!paymentInfo.expiryDate) {
-        errors.expiryDate = 'Expiry date is required';
-      } else if (!/^\d{2}\/\d{2}$/.test(paymentInfo.expiryDate)) {
-        errors.expiryDate = 'Invalid expiry date (MM/YY)';
-      }
-      
-      if (!paymentInfo.cvv) {
-        errors.cvv = 'CVV is required';
-      } else if (!/^\d{3,4}$/.test(paymentInfo.cvv)) {
-        errors.cvv = 'CVV must be 3-4 digits';
-      }
-    } else if (paymentMethod === 'upi') {
-      if (!upiInfo.upiId.trim()) {
-        errors.upiId = 'UPI ID is required';
-      } else if (!upiInfo.upiId.includes('@')) {
-        errors.upiId = 'Please enter a valid UPI ID';
-      }
+      if (!cardNumberClean) errors.cardNumber = 'Card number is required';
+      else if (cardNumberClean.length !== 16) errors.cardNumber = 'Card number must be 16 digits';
+      if (!paymentInfo.cardName.trim()) errors.cardName = 'Cardholder name is required';
+      if (!paymentInfo.expiryDate) errors.expiryDate = 'Expiry date is required';
+      else if (!/^\d{2}\/\d{2}$/.test(paymentInfo.expiryDate)) errors.expiryDate = 'Invalid expiry date (MM/YY)';
+      if (!paymentInfo.cvv) errors.cvv = 'CVV is required';
+      else if (!/^\d{3,4}$/.test(paymentInfo.cvv)) errors.cvv = 'CVV must be 3-4 digits';
     }
-    
+
     setPaymentErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -292,6 +421,13 @@ export function CheckoutPage() {
       return;
     }
 
+    // Card, UPI, and Wallet go through Stripe; only COD completes without a gateway
+    const usesStripe = paymentMethod === 'card' || paymentMethod === 'upi' || paymentMethod === 'wallet';
+    if (usesStripe && !stripePublishableKey) {
+      toast.error('Online payments (Card, UPI, Wallet) are not configured. Please use Cash on Delivery.');
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -310,15 +446,10 @@ export function CheckoutPage() {
         }),
       })) as any[];
 
-      // Prepare payment info based on method
+      // Never send raw card data to the server — Stripe Elements handles card capture securely
       const paymentInfoData: any = {};
-      if (paymentMethod === 'card') {
-        paymentInfoData.card_number = paymentInfo.cardNumber.replace(/\s/g, '');
-        paymentInfoData.card_name = paymentInfo.cardName;
-        paymentInfoData.expiry_date = paymentInfo.expiryDate;
-        paymentInfoData.cvv = paymentInfo.cvv;
-      } else if (paymentMethod === 'upi') {
-        paymentInfoData.upi_id = upiInfo.upiId;
+      if (paymentMethod === 'wallet') {
+        paymentInfoData.wallet_name = selectedWallet;
       }
 
       // Create order request (order must be created first for payment intent)
@@ -340,70 +471,52 @@ export function CheckoutPage() {
                        paymentMethod === 'upi' ? 'upi' : 
                        paymentMethod === 'wallet' ? 'wallet' : 
                        'cod',
-        promotion_code: promotionCode || undefined,
         ...(giftPackingCharge > 0 && { gift_packing_charge: giftPackingCharge }),
       };
 
-      // Create order via API first (required for payment intent)
+      // Create order (gateway check already passed above — no dangling orders)
       const order = await orderService.create(orderRequest);
-      
-      // For non-COD methods, create payment intent and process payment
-      if (paymentMethod !== 'cod') {
+
+      // Card → Stripe Elements (secure card capture on next screen)
+      if (usesStripe) {
         try {
-          const finalTotalAmount = subtotal + shippingCost + taxAmount - discount + giftPackingDisplay;
-          const gateway = paymentMethod === 'card' || paymentMethod === 'wallet' ? 'stripe' : 'paypal';
-          
-          // Create payment intent with order_id
+          const paymentCurrency = currency === 'INR' ? 'inr' : 'usd';
           const paymentIntent = await paymentService.createPaymentIntent({
             order_id: order.id,
-            amount: finalTotalAmount,
-            currency: 'USD',
-            gateway,
+            amount: finalTotal,
+            currency: paymentCurrency,
+            gateway: 'stripe',
+            payment_method: paymentMethod === 'card' ? 'card' : paymentMethod === 'upi' ? 'upi' : 'wallet',
           });
 
-          // For Stripe/PayPal, redirect to payment URL if provided
-          if (paymentIntent.payment_url) {
-            // Redirect to payment gateway
-            window.location.href = paymentIntent.payment_url;
+          if (paymentIntent.client_secret) {
+            setPendingStripePayment({ order, clientSecret: paymentIntent.client_secret });
+            setIsProcessing(false);
             return;
           }
 
-          // If no redirect URL, process payment directly (for testing/mock scenarios)
-          // In production, this would typically be handled via webhooks after redirect
-          try {
-            await paymentService.processPayment({
-              payment_intent_id: paymentIntent.id,
-              payment_method_id: paymentMethod === 'card' ? paymentInfo.cardNumber.replace(/\s/g, '') : upiInfo.upiId,
-              gateway,
-            });
-          } catch (paymentError: any) {
-            console.error('Payment processing error:', paymentError);
-            // Order is created but payment failed - user can retry payment
-            toast.warning('Order created but payment processing failed. Please contact support.');
-          }
+          toast.error('Payment could not be started. Please try again or use Cash on Delivery.');
+          setIsProcessing(false);
+          return;
         } catch (error: any) {
           console.error('Failed to create payment intent:', error);
-          toast.error('Failed to initialize payment. Please try again.');
+          const msg = error?.response?.data?.error ?? error?.message ?? 'Failed to initialize payment.';
+          toast.error(msg);
           setIsProcessing(false);
           return;
         }
       }
-      
+
+      // COD only — complete immediately (no gateway)
       setOrderNumber(order.order_number);
       setOrderComplete(true);
-      
       toast.success('Order placed successfully!');
-      
-      // Navigate to order confirmation page
       setTimeout(() => {
         navigate(`/order-confirmation/${order.id}`, {
           state: {
             orderNumber: order.order_number,
             email: shippingInfo.email,
-            paymentMethod: paymentMethod === 'card' ? 'Credit/Debit Card' : 
-                          paymentMethod === 'upi' ? 'UPI' : 
-                          paymentMethod === 'wallet' ? 'Wallet' : 
-                          'Cash on Delivery',
+            paymentMethod: 'Cash on Delivery',
             shippingInfo: shippingInfo,
             orderItems: orderItems,
             subtotal: order.subtotal,
@@ -411,10 +524,8 @@ export function CheckoutPage() {
             tax: order.tax,
             discount: order.discount,
             total: order.total,
-          }
+          },
         });
-        
-        // Clear cart after successful order
         clearCart();
       }, 1500);
     } catch (error: any) {
@@ -425,9 +536,73 @@ export function CheckoutPage() {
     }
   };
 
+  const handleStripePaymentSuccess = () => {
+    if (!pendingStripePayment) return;
+    const order = pendingStripePayment.order;
+    setOrderNumber(order.order_number);
+    setOrderComplete(true);
+    setPendingStripePayment(null);
+    toast.success('Order placed successfully!');
+    const methodLabel = paymentMethod === 'upi' ? 'UPI' : paymentMethod === 'wallet' ? 'Wallet' : 'Card';
+    setTimeout(() => {
+      navigate(`/order-confirmation/${order.id}`, {
+        state: {
+          orderNumber: order.order_number,
+          email: shippingInfo.email,
+          paymentMethod: methodLabel,
+          shippingInfo: shippingInfo,
+          orderItems: order.items,
+          subtotal: order.subtotal,
+          shippingCost: order.shipping_cost,
+          tax: order.tax,
+          discount: order.discount,
+          total: order.total,
+        },
+      });
+      clearCart();
+    }, 1500);
+  };
+
+  if (pendingStripePayment) {
+    const stripeSubtitle =
+      paymentMethod === 'upi'
+        ? 'Choose the UPI tab below to pay with your UPI app.'
+        : paymentMethod === 'wallet'
+          ? 'Choose UPI or your wallet in the options below.'
+          : 'Pay securely with card, UPI, or wallet (Stripe).';
+    const isINR = currency === 'INR';
+    return (
+      <div className="min-h-screen bg-background px-4 pt-24 pb-12">
+        <div className="mx-auto max-w-md">
+          <h1 className="text-2xl font-semibold mb-2">Complete payment</h1>
+          <p className="text-muted-foreground mb-6">
+            Order {pendingStripePayment.order.order_number} — {stripeSubtitle}
+          </p>
+          {isINR && (
+            <p className="text-xs text-foreground/60 mb-4 p-3 bg-foreground/5 border border-foreground/10">
+              Paying in INR: Card and UPI should both appear below. If you only see Card, enable UPI in your Stripe Dashboard (Settings → Payment methods → UPI).
+            </p>
+          )}
+          <StripePaymentForm
+            publishableKey={stripePublishableKey!}
+            clientSecret={pendingStripePayment.clientSecret}
+            returnUrl={stripeReturnUrl}
+            preferredPaymentMethod={paymentMethod}
+            onSuccess={handleStripePaymentSuccess}
+            onCancel={() => {
+              setPendingStripePayment(null);
+              setIsProcessing(false);
+              toast.info('Payment cancelled');
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (orderComplete) {
     return (
-      <div className="h-screen bg-background flex items-center justify-center px-4 pt-[72px]">
+      <div className="h-screen bg-background flex items-center justify-center px-4 pt-24">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -469,8 +644,8 @@ export function CheckoutPage() {
   }
 
   return (
-    <div className="h-screen bg-background pt-[72px] overflow-hidden">
-      <div className="h-full flex flex-col">
+    <div className="min-h-screen bg-background pt-24">
+      <div className="flex flex-col">
         {/* Header with Steps */}
         <div className="border-b border-foreground/10 bg-background">
           <div className="w-full px-4 md:px-6 lg:px-12 xl:px-16 py-3">
@@ -536,9 +711,9 @@ export function CheckoutPage() {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-hidden">
-          <div className="h-full w-full px-4 md:px-6 lg:px-12 xl:px-16 py-4 md:py-6">
-            <div className="grid lg:grid-cols-2 gap-4 md:gap-6 h-full">
+        <div className="flex-1">
+          <div className="w-full px-4 md:px-6 lg:px-12 xl:px-16 py-4 md:py-6">
+            <div className="grid lg:grid-cols-2 gap-4 md:gap-6 lg:items-start">
               {/* Left: Step Content */}
               <div className="flex flex-col">
                 <AnimatePresence mode="wait">
@@ -550,106 +725,214 @@ export function CheckoutPage() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.3 }}
-                      className="flex-1 flex flex-col"
+                      className="flex flex-col"
                     >
                       <div className="flex items-center gap-2 mb-4">
                         <Truck size={18} className="text-foreground/60" />
-                        <h2 className="text-sm uppercase tracking-widest">Shipping Details</h2>
+                        <h2 className="text-sm uppercase tracking-widest">Delivery Address</h2>
                       </div>
-                      
-                      <div className="flex-1 overflow-y-auto pr-2" style={{ maxHeight: 'calc(100vh - 340px)' }}>
-                        <div className="space-y-4">
-                          <div className="grid grid-cols-2 gap-3">
-                            <LuxuryInput
-                              label="First name"
-                              type="text"
-                              value={shippingInfo.firstName}
-                              onChange={(e) => setShippingInfo({ ...shippingInfo, firstName: e.target.value })}
-                              placeholder="Enter first name"
-                              error={shippingErrors.firstName}
-                            />
-                            <LuxuryInput
-                              label="Last name"
-                              type="text"
-                              value={shippingInfo.lastName}
-                              onChange={(e) => setShippingInfo({ ...shippingInfo, lastName: e.target.value })}
-                              placeholder="Enter last name"
-                              error={shippingErrors.lastName}
-                            />
-                          </div>
-                          
-                          <LuxuryInput
-                            label="Email"
-                            type="email"
-                            value={shippingInfo.email}
-                            onChange={(e) => setShippingInfo({ ...shippingInfo, email: e.target.value })}
-                            placeholder="Enter your email address"
-                            error={shippingErrors.email}
-                          />
-                          
-                          <LuxuryInput
-                            label="Phone"
-                            type="tel"
-                            value={shippingInfo.phone}
-                            onChange={(e) => setShippingInfo({ ...shippingInfo, phone: e.target.value })}
-                            placeholder="Enter your phone number"
-                            error={shippingErrors.phone}
-                          />
-                          
-                          <LuxuryInput
-                            label="Address"
-                            type="text"
-                            value={shippingInfo.address}
-                            onChange={(e) => setShippingInfo({ ...shippingInfo, address: e.target.value })}
-                            placeholder="Enter your street address"
-                            error={shippingErrors.address}
-                          />
-                          
-                          <div className="grid grid-cols-2 gap-3">
-                            <LuxuryInput
-                              label="City"
-                              type="text"
-                              value={shippingInfo.city}
-                              onChange={(e) => setShippingInfo({ ...shippingInfo, city: e.target.value })}
-                              placeholder="Mumbai"
-                              error={shippingErrors.city}
-                            />
-                            <LuxuryInput
-                              label="State"
-                              type="text"
-                              value={shippingInfo.state}
-                              onChange={(e) => setShippingInfo({ ...shippingInfo, state: e.target.value })}
-                              placeholder="Maharashtra"
-                              error={shippingErrors.state}
-                            />
-                          </div>
 
-                          <div className="grid grid-cols-2 gap-3">
-                            <LuxuryInput
-                              label="ZIP code"
-                              type="text"
-                              value={shippingInfo.zipCode}
-                              onChange={(e) => setShippingInfo({ ...shippingInfo, zipCode: e.target.value })}
-                              placeholder="400001"
-                              error={shippingErrors.zipCode}
-                            />
-                            <div>
-                              <label className="block text-xs mb-2 text-foreground/60 uppercase tracking-wider">Country</label>
-                              <select
-                                value={shippingInfo.country}
-                                onChange={(e) => setShippingInfo({ ...shippingInfo, country: e.target.value })}
-                                className="w-full h-11 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors"
+                      <div className="overflow-y-auto pr-2">
+                        <div className="space-y-3">
+
+                          {/* Saved address cards */}
+                          {savedAddresses.length > 0 && (
+                            <>
+                              {savedAddresses.map((addr) => {
+                                const isSelected = selectedAddressId === addr.id && !showNewAddressForm;
+                                return (
+                                  <button
+                                    key={addr.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedAddressId(addr.id);
+                                      setShippingInfo(mapAddressToShipping(addr));
+                                      setShowNewAddressForm(false);
+                                      setShippingErrors({});
+                                    }}
+                                    className={`w-full text-left p-4 border-2 transition-all ${
+                                      isSelected
+                                        ? 'border-foreground bg-foreground/5'
+                                        : 'border-foreground/20 hover:border-foreground/40'
+                                    }`}
+                                  >
+                                    <div className="flex items-start gap-3">
+                                      <div className={`mt-0.5 w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-colors ${
+                                        isSelected ? 'border-foreground' : 'border-foreground/30'
+                                      }`}>
+                                        {isSelected && <div className="w-2 h-2 rounded-full bg-foreground" />}
+                                      </div>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          {addr.type === 'HOME' ? (
+                                            <Home size={12} className="text-foreground/50" />
+                                          ) : addr.type === 'OFFICE' ? (
+                                            <Briefcase size={12} className="text-foreground/50" />
+                                          ) : (
+                                            <MapPin size={12} className="text-foreground/50" />
+                                          )}
+                                          <span className="text-xs uppercase tracking-wider text-foreground/60">{addr.type}</span>
+                                          {addr.is_default && (
+                                            <span className="text-[10px] uppercase tracking-wider bg-foreground text-background px-1.5 py-0.5">Default</span>
+                                          )}
+                                        </div>
+                                        <p className="text-sm font-medium">{addr.name}</p>
+                                        <p className="text-xs text-foreground/60 mt-0.5 truncate">
+                                          {addr.address_line}{addr.address_line2 ? ', ' + addr.address_line2 : ''}
+                                        </p>
+                                        <p className="text-xs text-foreground/60">
+                                          {addr.city}, {addr.state} – {addr.pincode}
+                                        </p>
+                                        <p className="text-xs text-foreground/50 mt-0.5">{addr.mobile}</p>
+                                      </div>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+
+                              {/* Add new address toggle */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setShowNewAddressForm(true);
+                                  setSelectedAddressId(null);
+                                  setShippingInfo({ firstName: '', lastName: '', email: user?.email || '', phone: '', address: '', city: '', state: '', zipCode: '', country: '' });
+                                  setShippingErrors({});
+                                }}
+                                className={`w-full text-left p-4 border-2 transition-all flex items-center gap-3 ${
+                                  showNewAddressForm
+                                    ? 'border-foreground bg-foreground/5'
+                                    : 'border-foreground/20 hover:border-foreground/40 border-dashed'
+                                }`}
                               >
-                                <option value="">Select Country</option>
-                                <option value="India">India</option>
-                                <option value="United States">United States</option>
-                              </select>
-                              {shippingErrors.country && <p className="text-xs text-red-500 mt-1">{shippingErrors.country}</p>}
-                            </div>
-                          </div>
+                                <Plus size={16} className="text-foreground/50 flex-shrink-0" />
+                                <span className="text-sm text-foreground/70">Use a different address</span>
+                              </button>
 
-                          <div className="bg-foreground/5 p-3 border border-foreground/10 mt-4">
-                            <div className="flex items-center gap-2 text-xs text-foreground/60 mb-2">
+                              {/* Show email error inline when saved address is selected but email is missing */}
+                              {selectedAddressId && !showNewAddressForm && shippingErrors.email && (
+                                <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200">
+                                  <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
+                                  <p className="text-xs text-red-600">{shippingErrors.email}</p>
+                                </div>
+                              )}
+                            </>
+                          )}
+
+                          {/* New address form */}
+                          {showNewAddressForm && (
+                            <div className="space-y-4 pt-2">
+                              <div className="grid grid-cols-2 gap-3">
+                                <LuxuryInput
+                                  label="First name"
+                                  type="text"
+                                  value={shippingInfo.firstName}
+                                  onChange={(e) => setShippingInfo({ ...shippingInfo, firstName: e.target.value })}
+                                  placeholder="First name"
+                                  error={shippingErrors.firstName}
+                                />
+                                <LuxuryInput
+                                  label="Last name"
+                                  type="text"
+                                  value={shippingInfo.lastName}
+                                  onChange={(e) => setShippingInfo({ ...shippingInfo, lastName: e.target.value })}
+                                  placeholder="Last name"
+                                  error={shippingErrors.lastName}
+                                />
+                              </div>
+
+                              <LuxuryInput
+                                label="Email"
+                                type="email"
+                                value={shippingInfo.email}
+                                onChange={(e) => setShippingInfo({ ...shippingInfo, email: e.target.value })}
+                                placeholder="Email address"
+                                error={shippingErrors.email}
+                              />
+
+                              <LuxuryInput
+                                label="Phone"
+                                type="tel"
+                                value={shippingInfo.phone}
+                                onChange={(e) => setShippingInfo({ ...shippingInfo, phone: e.target.value })}
+                                placeholder="Phone number"
+                                error={shippingErrors.phone}
+                              />
+
+                              <div>
+                                <label className="block text-sm text-foreground/90 mb-1.5">Address</label>
+                                <AddressAutocompleteInput
+                                  value={shippingInfo.address}
+                                  onChange={(value) => setShippingInfo({ ...shippingInfo, address: value })}
+                                  onAddressFill={(components) =>
+                                    setShippingInfo((prev) => ({
+                                      ...prev,
+                                      address: components.addressLine || prev.address,
+                                      city: components.city || prev.city,
+                                      state: components.state || prev.state,
+                                      zipCode: components.pincode || prev.zipCode,
+                                      country:
+                                        components.country === 'US'
+                                          ? 'United States'
+                                          : components.country === 'IN'
+                                            ? 'India'
+                                            : components.country || prev.country,
+                                    }))
+                                  }
+                                  placeholder="Street address"
+                                  error={shippingErrors.address}
+                                  countryCode={shippingCountryCode}
+                                  className="rounded-sm px-3 py-2.5 border-foreground/15 bg-background text-foreground text-sm placeholder:text-foreground/40 focus:border-foreground/40 hover:border-foreground/25"
+                                />
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <LuxuryInput
+                                  label="City"
+                                  type="text"
+                                  value={shippingInfo.city}
+                                  onChange={(e) => setShippingInfo({ ...shippingInfo, city: e.target.value })}
+                                  placeholder="City"
+                                  error={shippingErrors.city}
+                                />
+                                <LuxuryInput
+                                  label="State"
+                                  type="text"
+                                  value={shippingInfo.state}
+                                  onChange={(e) => setShippingInfo({ ...shippingInfo, state: e.target.value })}
+                                  placeholder="State"
+                                  error={shippingErrors.state}
+                                />
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-3">
+                                <LuxuryInput
+                                  label="ZIP code"
+                                  type="text"
+                                  value={shippingInfo.zipCode}
+                                  onChange={(e) => void handleZipCodeChange(e.target.value)}
+                                  placeholder="ZIP / Postal code"
+                                  error={shippingErrors.zipCode}
+                                />
+                                <div>
+                                  <label className="block text-xs mb-2 text-foreground/60 uppercase tracking-wider">Country</label>
+                                  <select
+                                    value={shippingInfo.country}
+                                    onChange={(e) => setShippingInfo({ ...shippingInfo, country: e.target.value })}
+                                    className="w-full h-11 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors"
+                                  >
+                                    <option value="">Select Country</option>
+                                    <option value="India">India</option>
+                                    <option value="United States">United States</option>
+                                  </select>
+                                  {shippingErrors.country && <p className="text-xs text-red-500 mt-1">{shippingErrors.country}</p>}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="bg-foreground/5 p-3 border border-foreground/10 mt-2">
+                            <div className="flex items-center gap-2 text-xs text-foreground/60 mb-1">
                               <Truck size={14} />
                               <span className="uppercase tracking-wider">Free Shipping</span>
                             </div>
@@ -660,6 +943,7 @@ export function CheckoutPage() {
 
                       <div className="pt-4 mt-4 border-t border-foreground/10">
                         <button
+                          type="button"
                           onClick={handleNext}
                           className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 transition-all uppercase tracking-widest text-xs"
                         >
@@ -677,14 +961,14 @@ export function CheckoutPage() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.3 }}
-                      className="flex-1 flex flex-col"
+                      className="flex flex-col"
                     >
                       <div className="flex items-center gap-2 mb-4">
                         <CreditCard size={18} className="text-foreground/60" />
                         <h2 className="text-sm uppercase tracking-widest">Payment Method</h2>
                       </div>
 
-                      <div className="flex-1 overflow-y-auto pr-2" style={{ maxHeight: 'calc(100vh - 340px)' }}>
+                      <div className="overflow-y-auto pr-2">
                         <div className="space-y-3">
                           {/* Payment Method Selection */}
                           <div className="grid grid-cols-2 gap-2 mb-4">
@@ -712,17 +996,19 @@ export function CheckoutPage() {
                               <span className="text-xs uppercase tracking-wider">UPI</span>
                             </button>
 
-                            <button
-                              onClick={() => setPaymentMethod('wallet')}
-                              className={`h-16 border-2 transition-all flex flex-col items-center justify-center gap-1 ${
-                                paymentMethod === 'wallet'
-                                  ? 'border-foreground bg-foreground/5'
-                                  : 'border-foreground/20 hover:border-foreground/40'
-                              }`}
-                            >
-                              <Wallet size={18} className={paymentMethod === 'wallet' ? 'text-foreground' : 'text-foreground/40'} />
-                              <span className="text-xs uppercase tracking-wider">Wallet</span>
-                            </button>
+                            {walletAvailable && (
+                              <button
+                                onClick={() => setPaymentMethod('wallet')}
+                                className={`h-16 border-2 transition-all flex flex-col items-center justify-center gap-1 ${
+                                  paymentMethod === 'wallet'
+                                    ? 'border-foreground bg-foreground/5'
+                                    : 'border-foreground/20 hover:border-foreground/40'
+                                }`}
+                              >
+                                <Wallet size={18} className={paymentMethod === 'wallet' ? 'text-foreground' : 'text-foreground/40'} />
+                                <span className="text-xs uppercase tracking-wider">Wallet</span>
+                              </button>
+                            )}
 
                             <button
                               onClick={() => setPaymentMethod('cod')}
@@ -744,65 +1030,76 @@ export function CheckoutPage() {
                               animate={{ opacity: 1, y: 0 }}
                               className="space-y-3"
                             >
-                              <div>
-                                <label className="block text-xs mb-1 text-foreground/60 uppercase tracking-wider">Card Number</label>
-                                <LuxuryInput
-                                  type="text"
-                                  value={paymentInfo.cardNumber}
-                                  onChange={(e) => {
-                                    const formatted = formatCardNumber(e.target.value.replace(/\D/g, '').slice(0, 16));
-                                    setPaymentInfo({ ...paymentInfo, cardNumber: formatted });
-                                  }}
-                                  className="w-full h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors font-mono"
-                                  placeholder="1234 5678 9012 3456"
-                                />
-                                {paymentErrors.cardNumber && <p className="text-xs text-red-500">{paymentErrors.cardNumber}</p>}
-                              </div>
-
-                              <div>
-                                <label className="block text-xs mb-1 text-foreground/60 uppercase tracking-wider">Name on Card</label>
-                                <LuxuryInput
-                                  type="text"
-                                  value={paymentInfo.cardName}
-                                  onChange={(e) => setPaymentInfo({ ...paymentInfo, cardName: e.target.value })}
-                                  className="w-full h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors"
-                                  placeholder="Enter cardholder name"
-                                />
-                                {paymentErrors.cardName && <p className="text-xs text-red-500">{paymentErrors.cardName}</p>}
-                              </div>
-
-                              <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                  <label className="block text-xs mb-1 text-foreground/60 uppercase tracking-wider">Expiry</label>
-                                  <LuxuryInput
-                                    type="text"
-                                    value={paymentInfo.expiryDate}
-                                    onChange={(e) => {
-                                      const formatted = formatExpiryDate(e.target.value);
-                                      setPaymentInfo({ ...paymentInfo, expiryDate: formatted });
-                                    }}
-                                    className="w-full h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors font-mono"
-                                    placeholder="MM/YY"
-                                    maxLength={5}
-                                  />
-                                  {paymentErrors.expiryDate && <p className="text-xs text-red-500">{paymentErrors.expiryDate}</p>}
+                              {stripePublishableKey ? (
+                                <div className="flex items-start gap-3 bg-foreground/5 p-4 border border-foreground/10">
+                                  <ShieldCheck size={16} className="text-foreground/60 mt-0.5 shrink-0" />
+                                  <p className="text-xs text-foreground/60 leading-relaxed">
+                                    Your card details will be securely collected on the next screen via Stripe. No card data is stored on our servers.
+                                  </p>
                                 </div>
-                                <div>
-                                  <label className="block text-xs mb-1 text-foreground/60 uppercase tracking-wider">CVV</label>
-                                  <LuxuryInput
-                                    type="text"
-                                    value={paymentInfo.cvv}
-                                    onChange={(e) => {
-                                      const value = e.target.value.replace(/\D/g, '').slice(0, 4);
-                                      setPaymentInfo({ ...paymentInfo, cvv: value });
-                                    }}
-                                    className="w-full h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors font-mono"
-                                    placeholder="123"
-                                    maxLength={4}
-                                  />
-                                  {paymentErrors.cvv && <p className="text-xs text-red-500">{paymentErrors.cvv}</p>}
-                                </div>
-                              </div>
+                              ) : (
+                                <>
+                                  <div>
+                                    <label className="block text-xs mb-1 text-foreground/60 uppercase tracking-wider">Card Number</label>
+                                    <LuxuryInput
+                                      type="text"
+                                      value={paymentInfo.cardNumber}
+                                      onChange={(e) => {
+                                        const formatted = formatCardNumber(e.target.value.replace(/\D/g, '').slice(0, 16));
+                                        setPaymentInfo({ ...paymentInfo, cardNumber: formatted });
+                                      }}
+                                      className="w-full h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors font-mono"
+                                      placeholder="Card number"
+                                    />
+                                    {paymentErrors.cardNumber && <p className="text-xs text-red-500">{paymentErrors.cardNumber}</p>}
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-xs mb-1 text-foreground/60 uppercase tracking-wider">Name on Card</label>
+                                    <LuxuryInput
+                                      type="text"
+                                      value={paymentInfo.cardName}
+                                      onChange={(e) => setPaymentInfo({ ...paymentInfo, cardName: e.target.value })}
+                                      className="w-full h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors"
+                                      placeholder="Name on card"
+                                    />
+                                    {paymentErrors.cardName && <p className="text-xs text-red-500">{paymentErrors.cardName}</p>}
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="block text-xs mb-1 text-foreground/60 uppercase tracking-wider">Expiry</label>
+                                      <LuxuryInput
+                                        type="text"
+                                        value={paymentInfo.expiryDate}
+                                        onChange={(e) => {
+                                          const formatted = formatExpiryDate(e.target.value);
+                                          setPaymentInfo({ ...paymentInfo, expiryDate: formatted });
+                                        }}
+                                        className="w-full h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors font-mono"
+                                        placeholder="MM/YY"
+                                        maxLength={5}
+                                      />
+                                      {paymentErrors.expiryDate && <p className="text-xs text-red-500">{paymentErrors.expiryDate}</p>}
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs mb-1 text-foreground/60 uppercase tracking-wider">CVV</label>
+                                      <LuxuryInput
+                                        type="text"
+                                        value={paymentInfo.cvv}
+                                        onChange={(e) => {
+                                          const value = e.target.value.replace(/\D/g, '').slice(0, 4);
+                                          setPaymentInfo({ ...paymentInfo, cvv: value });
+                                        }}
+                                        className="w-full h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors font-mono"
+                                        placeholder="CVV"
+                                        maxLength={4}
+                                      />
+                                      {paymentErrors.cvv && <p className="text-xs text-red-500">{paymentErrors.cvv}</p>}
+                                    </div>
+                                  </div>
+                                </>
+                              )}
                             </motion.div>
                           )}
 
@@ -813,19 +1110,8 @@ export function CheckoutPage() {
                               animate={{ opacity: 1, y: 0 }}
                               className="space-y-3"
                             >
-                              <div>
-                                <label className="block text-xs mb-1 text-foreground/60 uppercase tracking-wider">UPI ID</label>
-                                <LuxuryInput
-                                  type="text"
-                                  value={upiInfo.upiId}
-                                  onChange={(e) => setUpiInfo({ upiId: e.target.value })}
-                                  className="w-full h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors"
-                                  placeholder="yourname@upi"
-                                />
-                                {paymentErrors.upiId && <p className="text-xs text-red-500">{paymentErrors.upiId}</p>}
-                              </div>
                               <div className="bg-foreground/5 p-3 border border-foreground/10 text-xs text-foreground/60">
-                                Enter your UPI ID to complete payment instantly
+                                Your UPI details will be collected securely on the next screen via Stripe.
                               </div>
                             </motion.div>
                           )}
@@ -840,10 +1126,17 @@ export function CheckoutPage() {
                               <div className="bg-foreground/5 p-4 border border-foreground/10">
                                 <p className="text-xs text-foreground/60 mb-3 uppercase tracking-wider">Select Wallet</p>
                                 <div className="space-y-2">
-                                  {['Paytm', 'PhonePe', 'Google Pay', 'Amazon Pay'].map((wallet) => (
-                                    <label key={wallet} className="flex items-center gap-3 p-2 border border-foreground/10 hover:bg-foreground/5 cursor-pointer transition-colors">
-                                      <input type="radio" name="wallet" className="w-4 h-4" />
-                                      <span className="text-sm">{wallet}</span>
+                                  {['Paytm', 'PhonePe', 'Google Pay', 'Amazon Pay'].map((w) => (
+                                    <label key={w} className={`flex items-center gap-3 p-2 border cursor-pointer transition-colors ${selectedWallet === w ? 'border-foreground bg-foreground/5' : 'border-foreground/10 hover:bg-foreground/5'}`}>
+                                      <input
+                                        type="radio"
+                                        name="wallet"
+                                        value={w}
+                                        checked={selectedWallet === w}
+                                        onChange={() => setSelectedWallet(w)}
+                                        className="w-4 h-4"
+                                      />
+                                      <span className="text-sm">{w}</span>
                                     </label>
                                   ))}
                                 </div>
@@ -872,62 +1165,9 @@ export function CheckoutPage() {
                         </div>
                       </div>
 
-                      {/* Promotion Code Section in Payment Step */}
                       <div className="pt-4 mt-4 border-t border-foreground/10">
-                        <div className="mb-4">
-                          <label className="block text-xs mb-2 text-foreground/60 uppercase tracking-wider">Promotion Code</label>
-                          <div className="flex gap-2">
-                            <LuxuryInput
-                              type="text"
-                              value={promotionCode}
-                              onChange={(e) => {
-                                setPromotionCode(e.target.value);
-                                setPromotionError('');
-                                if (appliedPromotion) {
-                                  setDiscount(0);
-                                  setAppliedPromotion(null);
-                                }
-                              }}
-                              onKeyPress={(e) => {
-                                if (e.key === 'Enter' && !validatingPromotion) {
-                                  handleValidatePromotion();
-                                }
-                              }}
-                              className="flex-1 h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors uppercase"
-                              placeholder="Enter code"
-                              disabled={validatingPromotion || !!appliedPromotion}
-                            />
-                            {appliedPromotion ? (
-                              <button
-                                onClick={handleRemovePromotion}
-                                className="px-4 h-10 border border-foreground/20 hover:bg-foreground/5 transition-colors text-xs uppercase tracking-wider"
-                              >
-                                Remove
-                              </button>
-                            ) : (
-                              <button
-                                onClick={handleValidatePromotion}
-                                disabled={validatingPromotion || !promotionCode.trim()}
-                                className="px-4 h-10 bg-foreground text-background hover:bg-foreground/90 transition-all text-xs uppercase tracking-wider disabled:opacity-50"
-                              >
-                                {validatingPromotion ? '...' : 'Apply'}
-                              </button>
-                            )}
-                          </div>
-                          {promotionError && (
-                            <p className="text-xs text-red-600 mt-1">{promotionError}</p>
-                          )}
-                          {appliedPromotion && (
-                            <p className="text-xs text-green-600 mt-1">
-                              {appliedPromotion.name} applied - {appliedPromotion.type === 'percentage' 
-                                ? `${appliedPromotion.value}% off` 
-                                : appliedPromotion.type === 'fixed'
-                                ? `$${appliedPromotion.value} off`
-                                : 'Free shipping'}
-                            </p>
-                          )}
-                        </div>
                         <button
+                          type="button"
                           onClick={handleNext}
                           className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 transition-all uppercase tracking-widest text-xs"
                         >
@@ -945,11 +1185,11 @@ export function CheckoutPage() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
                       transition={{ duration: 0.3 }}
-                      className="flex-1 flex flex-col"
+                      className="flex flex-col"
                     >
                       <h2 className="text-sm uppercase tracking-widest mb-4">Review Order</h2>
 
-                      <div className="flex-1 overflow-y-auto pr-2 space-y-3" style={{ maxHeight: 'calc(100vh - 340px)' }}>
+                      <div className="overflow-y-auto pr-2 space-y-3">
                         {/* Shipping Info */}
                         <div className="border border-foreground/10 p-3">
                           <div className="flex items-center justify-between mb-2">
@@ -973,7 +1213,7 @@ export function CheckoutPage() {
                           </div>
                           <div className="text-sm">
                             {paymentMethod === 'card' && <p>Credit/Debit Card ending in {paymentInfo.cardNumber.slice(-4)}</p>}
-                            {paymentMethod === 'upi' && <p>UPI - {upiInfo.upiId}</p>}
+                            {paymentMethod === 'upi' && <p>UPI via Stripe</p>}
                             {paymentMethod === 'wallet' && <p>Digital Wallet</p>}
                             {paymentMethod === 'cod' && <p>Cash on Delivery</p>}
                           </div>
@@ -1029,13 +1269,13 @@ export function CheckoutPage() {
                 </AnimatePresence>
               </div>
 
-              {/* Right: Order Summary - Fixed */}
-              <div className="hidden lg:flex flex-col border border-foreground/10 overflow-hidden">
+              {/* Right: Order Summary */}
+              <div className="hidden lg:flex flex-col border border-foreground/10 lg:sticky lg:top-[104px] self-start">
                 <div className="p-4 border-b border-foreground/10">
                   <h2 className="text-xs uppercase tracking-widest">Order Summary</h2>
                 </div>
                 
-                <div className="flex-1 overflow-y-auto p-4 space-y-3" style={{ maxHeight: 'calc(100vh - 340px)' }}>
+                <div className="overflow-y-auto p-4 space-y-3 max-h-[50vh]">
                   {items.map((item) => (
                     <div key={`${item.id}-${item.size}`} className="flex gap-3">
                       <img src={item.image} alt={item.name} className="w-16 h-16 object-cover" style={{ filter: 'brightness(1.05) contrast(1.05) saturate(1.1)' }} />
@@ -1058,14 +1298,8 @@ export function CheckoutPage() {
                     </div>
                     <div className="flex justify-between text-foreground/60">
                       <span>Tax</span>
-                      <span>{formatAmount(taxAmount)}</span>
+                      <span>{formatAmount(taxDisplay)}</span>
                     </div>
-                    {discount > 0 && (
-                      <div className="flex justify-between text-foreground/60">
-                        <span>Discount</span>
-                        <span className="text-green-600">-{formatAmount(discount)}</span>
-                      </div>
-                    )}
                     {giftPackingCharge > 0 && (
                       <div className="flex justify-between text-foreground/60">
                         <span>Gift packing</span>
@@ -1074,7 +1308,7 @@ export function CheckoutPage() {
                     )}
                     <div className="flex justify-between text-foreground/60">
                       <span>Shipping</span>
-                      <span>{shippingCost > 0 ? formatAmount(shippingCost) : <span className="text-green-600">FREE</span>}</span>
+                      <span>{shippingDisplay > 0 ? formatAmount(shippingDisplay) : <span className="text-green-600">FREE</span>}</span>
                     </div>
                     <div className="flex justify-between pt-2 border-t border-foreground/10">
                       <span className="uppercase tracking-wider">Total</span>

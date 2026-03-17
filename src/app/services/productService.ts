@@ -33,21 +33,21 @@ export const productService = {
     const response = await api.get<Product[]>('/products/featured', {
       params: { limit },
     });
-    return response.data;
+    return response.data ?? [];
   },
 
   async getNewArrivals(limit: number = 10): Promise<Product[]> {
     const response = await api.get<Product[]>('/products/new-arrivals', {
       params: { limit },
     });
-    return response.data;
+    return response.data ?? [];
   },
 
   async getOnSale(limit: number = 10): Promise<Product[]> {
     const response = await api.get<Product[]>('/products/on-sale', {
       params: { limit },
     });
-    return response.data;
+    return response.data ?? [];
   },
 
   async create(product: Partial<Product>): Promise<Product> {

@@ -20,7 +20,7 @@ export interface Address {
 export const addressService = {
   async list(): Promise<Address[]> {
     const response = await api.get<Address[]>('/addresses');
-    return response.data;
+    return response.data ?? [];
   },
 
   async getById(id: string): Promise<Address> {

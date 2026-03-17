@@ -145,7 +145,7 @@ export function LoginPage() {
                 <LuxuryInput
                   label="Name"
                   type="text"
-                  placeholder="Your name"
+                  placeholder="Full name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoComplete="name"
@@ -155,7 +155,7 @@ export function LoginPage() {
               <LuxuryInput
                 label="Email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="Email address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
@@ -164,7 +164,7 @@ export function LoginPage() {
               <LuxuryInput
                 label="Password"
                 type="password"
-                placeholder="••••••••"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}

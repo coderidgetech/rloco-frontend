@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Logo } from '@/app/components/Logo';
+import { RlocoLogo } from '@/app/components/RlocoLogo';
 
 export function MobileSplashScreen() {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ export function MobileSplashScreen() {
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         className="relative z-10"
       >
-        <Logo className="text-5xl" />
+        <RlocoLogo size="2xl" />
       </motion.div>
 
       {/* Tagline */}

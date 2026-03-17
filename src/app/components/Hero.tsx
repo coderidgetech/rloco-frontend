@@ -1,14 +1,23 @@
 import { motion, useScroll, useTransform } from 'motion/react';
 import { useRef, useState, useEffect } from 'react';
-import { Logo } from './Logo';
+import { RlocoLogo } from './RlocoLogo';
 import { Sparkles, TrendingUp } from 'lucide-react';
 import { Button } from './ui/button';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { useNavigate } from 'react-router-dom';
 
+/** Fallback hero background image when config is missing or image fails to load (from ref project). */
+const HERO_FALLBACK_IMAGE =
+  'https://images.unsplash.com/photo-1574288443562-5ccb5bdb46d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b21hbiUyMGJsYWNrJTIwZHJlc3MlMjBlZGl0b3JpYWwlMjBwb3J0cmFpdHxlbnwxfHx8fDE3Njc0NDU5NTN8MA&ixlib=rb-4.1.0&q=80&w=1080';
+
 export function Hero() {
   const { config } = useSiteConfig();
+  const [imgError, setImgError] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setImgError(false);
+  }, [config.homepage.hero.backgroundImage]);
   const ref = useRef<HTMLDivElement>(null);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   
@@ -128,13 +137,16 @@ export function Hero() {
           transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
           className="relative h-full w-full"
         >
-          {config.homepage.hero.backgroundImage && (
-            <img
-              src={config.homepage.hero.backgroundImage}
-              alt={config.homepage.hero.heading || 'Hero image'}
-              className="h-full w-full object-cover object-center"
-            />
-          )}
+          <img
+            src={
+              config.homepage.hero.backgroundImage?.trim() && !imgError
+                ? config.homepage.hero.backgroundImage
+                : HERO_FALLBACK_IMAGE
+            }
+            alt={config.homepage.hero.heading || 'Elegant woman in black dress'}
+            className="h-full w-full object-cover object-center"
+            onError={() => setImgError(true)}
+          />
           {/* Subtle vignette overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/30" />
         </motion.div>
@@ -196,13 +208,10 @@ export function Hero() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           style={{
-            filter: scrollProgress < 0.5 
-              ? 'drop-shadow(2px 2px 20px rgba(0,0,0,0.4)) brightness(1.8)' 
-              : 'drop-shadow(1px 1px 8px rgba(0,0,0,0.2)) brightness(1)',
-            transition: 'filter 0.3s ease-out'
+            filter: 'drop-shadow(0 4px 30px rgba(0,0,0,0.3)) drop-shadow(0 0 40px rgba(241,176,65,0.15))',
           }}
         >
-          <Logo />
+          <RlocoLogo size="lg" />
         </motion.div>
       </motion.div>
       )}

@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { useEffect, useState } from 'react';
-import { Logo } from './Logo';
+import { RlocoLogo } from './RlocoLogo';
 
 interface LuxuryPageLoaderProps {
   isLoading: boolean;
@@ -83,7 +83,7 @@ export function LuxuryPageLoader({ isLoading, onComplete }: LuxuryPageLoaderProp
                   }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  <Logo />
+                  <RlocoLogo size="lg" />
                 </motion.div>
               </motion.div>
 

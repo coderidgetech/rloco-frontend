@@ -1,10 +1,27 @@
 import api from '../lib/api';
 import { ProductReview, CreateReviewRequest } from '../types/api';
 
+export interface MyReviewItem extends ProductReview {
+  product_name?: string;
+  product_image?: string;
+}
+
+export interface MyReviewsResponse {
+  reviews: MyReviewItem[];
+  total: number;
+  limit: number;
+  skip: number;
+}
+
 export const reviewService = {
-  async getByProduct(productId: string): Promise<ProductReview[]> {
-    const response = await api.get<ProductReview[]>(`/products/${productId}/reviews`);
+  async getMyReviews(params?: { limit?: number; skip?: number }): Promise<MyReviewsResponse> {
+    const response = await api.get<MyReviewsResponse>('/reviews/me', { params });
     return response.data;
+  },
+
+  async getByProduct(productId: string): Promise<ProductReview[]> {
+    const response = await api.get<{ reviews: ProductReview[] }>(`/products/${productId}/reviews`);
+    return Array.isArray(response.data.reviews) ? response.data.reviews : (response.data as unknown as ProductReview[]);
   },
 
   async create(productId: string, review: CreateReviewRequest): Promise<ProductReview> {

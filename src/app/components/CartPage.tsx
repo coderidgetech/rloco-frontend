@@ -1,13 +1,11 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Minus, Plus, Trash2, ShoppingBag, Tag, ArrowRight, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
+import { X, Minus, Plus, Trash2, ShoppingBag, ArrowRight, ShieldCheck, Truck, RefreshCw } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { CheckoutPage } from './CheckoutPage';
 import { Button } from './ui/button';
 import { useFeaturedProducts } from '../hooks/useProducts';
-import { promotionService } from '../services/promotionService';
-import { Promotion } from '../types/api';
 import { useCurrency } from '../context/CurrencyContext';
 
 interface CartPageProps {
@@ -18,103 +16,20 @@ interface CartPageProps {
 export function CartPage({ isOpen, onClose }: CartPageProps) {
   const { items, removeFromCart, updateQuantity, clearCart, total } = useCart();
   const { currency } = useCurrency();
-  const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number; promotion?: Promotion } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
-  const [availablePromotions, setAvailablePromotions] = useState<Promotion[]>([]);
-  const [loadingPromotions, setLoadingPromotions] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchAvailablePromotions();
-    }
-  }, [isOpen]);
-
-  const fetchAvailablePromotions = async () => {
-    try {
-      setLoadingPromotions(true);
-      const promotions = await promotionService.list();
-      const now = new Date();
-      const activePromotions = promotions.filter(p => {
-        const startDate = new Date(p.start_date);
-        const endDate = new Date(p.end_date);
-        return p.is_active && now >= startDate && now <= endDate;
-      });
-      setAvailablePromotions(activePromotions);
-    } catch (error) {
-      console.error('Failed to fetch promotions:', error);
-      setAvailablePromotions([]);
-    } finally {
-      setLoadingPromotions(false);
-    }
-  };
 
   const subtotal = total;
-  
-  // Calculate discount based on promotion type
-  const discount = appliedCoupon && appliedCoupon.promotion
-    ? appliedCoupon.promotion.type === 'percentage'
-      ? Math.min((subtotal * appliedCoupon.promotion.value / 100), appliedCoupon.promotion.max_discount || Infinity)
-      : appliedCoupon.promotion.type === 'fixed'
-        ? appliedCoupon.promotion.value
-        : 0
-    : appliedCoupon
-      ? (subtotal * appliedCoupon.discount) / 100
-      : 0;
-  
   const shippingThreshold = currency === 'USD' ? 200 : 15000;
   const shippingCost = currency === 'USD' ? 15 : 1125;
-  const shipping = (appliedCoupon?.promotion?.type === 'free_shipping' || appliedCoupon?.code === 'FREESHIP')
-    ? 0
-    : subtotal > shippingThreshold
-      ? 0
-      : shippingCost;
-  
-  const tax = (subtotal - discount) * 0.08; // 8% tax
-  const finalTotal = subtotal - discount + shipping + tax;
+  const shipping = subtotal > shippingThreshold ? 0 : shippingCost;
+  const tax = subtotal * 0.08; // 8% tax (promotion applied at checkout)
+  const finalTotal = subtotal + shipping + tax;
 
   const { products: featuredProducts } = useFeaturedProducts(8);
   const recommendedProducts = (featuredProducts || [])
     .filter((p) => p.featured && !items.some((item) => item.id === p.id))
     .slice(0, 4);
-
-  const handleApplyCoupon = async () => {
-    if (!couponCode.trim()) {
-      toast.error('Please enter a promotion code');
-      return;
-    }
-
-    try {
-      const result = await promotionService.validate(couponCode.trim().toUpperCase(), subtotal);
-      
-      if (result.valid && result.promotion) {
-        let discountAmount = 0;
-        if (result.promotion.type === 'percentage') {
-          discountAmount = (subtotal * (result.promotion.value / 100));
-          if (result.promotion.max_discount) {
-            discountAmount = Math.min(discountAmount, result.promotion.max_discount);
-          }
-        } else if (result.promotion.type === 'fixed') {
-          discountAmount = result.promotion.value;
-        }
-
-        setAppliedCoupon({
-          code: result.promotion.code,
-          discount: result.promotion.type === 'percentage' ? result.promotion.value : 
-                   (discountAmount / subtotal) * 100,
-          promotion: result.promotion,
-        });
-        toast.success(`Promotion "${result.promotion.code}" applied successfully!`);
-        setCouponCode('');
-      } else {
-        toast.error('Invalid or expired promotion code');
-      }
-    } catch (error: any) {
-      console.error('Failed to validate promotion:', error);
-      toast.error(error?.response?.data?.error || 'Failed to validate promotion code');
-    }
-  };
 
   const handleCheckout = () => {
     if (items.length === 0) {
@@ -333,71 +248,6 @@ export function CartPage({ isOpen, onClose }: CartPageProps) {
                       {/* Order Summary */}
                       <div className="lg:col-span-1">
                         <div className="sticky top-24 space-y-6">
-                          {/* Coupon Code */}
-                          <div className="bg-muted/30 rounded-xl p-6">
-                            <h3 className="font-medium mb-4 flex items-center gap-2">
-                              <Tag size={18} />
-                              Apply Coupon
-                            </h3>
-                            <div className="flex gap-2 mb-3">
-                              <input
-                                type="text"
-                                value={couponCode}
-                                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                                placeholder="Enter code"
-                                className="flex-1 px-4 py-2 bg-background border border-border rounded-lg outline-none focus:border-primary transition-colors"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    handleApplyCoupon();
-                                  }
-                                }}
-                              />
-                              <Button onClick={handleApplyCoupon} size="sm">
-                                Apply
-                              </Button>
-                            </div>
-                            {appliedCoupon && (
-                              <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="flex items-center justify-between text-sm bg-green-500/10 text-green-600 px-3 py-2 rounded-lg"
-                              >
-                                <span>✓ {appliedCoupon.code} applied</span>
-                                <button
-                                  onClick={() => {
-                                    setAppliedCoupon(null);
-                                    toast.info('Coupon removed');
-                                  }}
-                                  className="hover:underline"
-                                >
-                                  Remove
-                                </button>
-                              </motion.div>
-                            )}
-                            {availablePromotions.length > 0 && (
-                              <div className="mt-3 text-xs text-muted-foreground">
-                                <p className="mb-1">Available promotions:</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {availablePromotions.slice(0, 4).map((promo) => (
-                                    <button
-                                      key={promo.id}
-                                      onClick={() => setCouponCode(promo.code)}
-                                      className="px-2 py-1 bg-background border border-border rounded hover:border-primary transition-colors"
-                                      title={promo.name}
-                                    >
-                                      {promo.code}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {loadingPromotions && (
-                              <div className="mt-3 text-xs text-muted-foreground">
-                                <p>Loading promotions...</p>
-                              </div>
-                            )}
-                          </div>
-
                           {/* Order Summary */}
                           <div className="bg-muted/30 rounded-xl p-6">
                             <h3 className="font-medium mb-4">Order Summary</h3>
@@ -406,12 +256,6 @@ export function CartPage({ isOpen, onClose }: CartPageProps) {
                                 <span className="text-muted-foreground">Subtotal</span>
                                 <span>${subtotal.toFixed(2)}</span>
                               </div>
-                              {appliedCoupon && appliedCoupon.discount > 0 && (
-                                <div className="flex justify-between text-sm text-green-600">
-                                  <span>Discount ({appliedCoupon.discount}%)</span>
-                                  <span>-${discount.toFixed(2)}</span>
-                                </div>
-                              )}
                               <div className="flex justify-between text-sm">
                                 <span className="text-muted-foreground">Shipping</span>
                                 <span className={shipping === 0 ? 'text-green-600' : ''}>

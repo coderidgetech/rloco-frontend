@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { motion } from 'motion/react';
-import { Star, Edit2, Trash2, Image as ImageIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Star, Edit2, Trash2, X } from 'lucide-react';
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
+import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { EmptyState } from '@/app/components/mobile/EmptyState';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { reviewService, type MyReviewItem } from '@/app/services/reviewService';
 
 interface Review {
   id: string;
@@ -18,36 +20,83 @@ interface Review {
   images?: string[];
 }
 
-const MOCK_REVIEWS: Review[] = [
-  {
-    id: '1',
-    productId: '1',
-    productName: 'Elegant Silk Dress',
-    productImage: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?w=400&q=80',
-    rating: 5,
-    title: 'Absolutely beautiful!',
-    comment: 'The quality is amazing and the fit is perfect. Highly recommend!',
-    date: '2024-01-15',
-  },
-  {
-    id: '2',
-    productId: '2',
-    productName: 'Classic Leather Handbag',
-    productImage: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&q=80',
-    rating: 4,
-    title: 'Great quality',
-    comment: 'Love the design and leather quality. Slightly smaller than expected but still great.',
-    date: '2024-01-10',
-  },
-];
+function mapApiReview(r: MyReviewItem): Review {
+  return {
+    id: r.id,
+    productId: r.product_id,
+    productName: r.product_name ?? 'Product',
+    productImage: r.product_image ?? '',
+    rating: r.rating,
+    title: r.title ?? '',
+    comment: r.comment ?? '',
+    date: r.created_at ? new Date(r.created_at).toISOString().slice(0, 10) : '',
+    images: r.images,
+  };
+}
 
 export function MobileReviewsPage() {
-  const [reviews, setReviews] = useState(MOCK_REVIEWS);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [editForm, setEditForm] = useState({ rating: 5, title: '', comment: '' });
+  const [editSaving, setEditSaving] = useState(false);
 
-  const handleDelete = (id: string) => {
-    setReviews(reviews.filter((review) => review.id !== id));
-    toast.success('Review deleted');
+  useEffect(() => {
+    let cancelled = false;
+    reviewService
+      .getMyReviews({ limit: 50 })
+      .then((res) => {
+        if (!cancelled) setReviews((res.reviews ?? []).map(mapApiReview));
+      })
+      .catch(() => {
+        if (!cancelled) setReviews([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const handleDelete = async (productId: string, reviewId: string) => {
+    try {
+      await reviewService.delete(productId, reviewId);
+      setReviews((prev) => prev.filter((r) => r.id !== reviewId));
+      toast.success('Review deleted');
+    } catch {
+      toast.error('Failed to delete review');
+    }
+  };
+
+  const handleEditOpen = (review: Review) => {
+    setEditingReview(review);
+    setEditForm({ rating: review.rating, title: review.title, comment: review.comment });
+  };
+
+  const handleEditSave = async () => {
+    if (!editingReview) return;
+    try {
+      setEditSaving(true);
+      await reviewService.update(editingReview.productId, editingReview.id, {
+        rating: editForm.rating,
+        title: editForm.title,
+        comment: editForm.comment,
+      });
+      setReviews((prev) =>
+        prev.map((r) =>
+          r.id === editingReview.id
+            ? { ...r, rating: editForm.rating, title: editForm.title, comment: editForm.comment }
+            : r
+        )
+      );
+      toast.success('Review updated');
+      setEditingReview(null);
+    } catch {
+      toast.error('Failed to update review');
+    } finally {
+      setEditSaving(false);
+    }
   };
 
   const renderStars = (rating: number) => {
@@ -65,20 +114,22 @@ export function MobileReviewsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background pb-20" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-      <MobileSubPageHeader onBack={() => navigate('/account')} />
+    <div className="min-h-screen bg-white dark:bg-background pb-20 md:pb-12" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
+      {isMobile && <MobileSubPageHeader onBack={() => navigate('/account')} />}
 
-      <div className="pt-[100px]">{/* Header + safe area */}
+      <div className={isMobile ? 'pt-[100px]' : 'pt-6 max-w-3xl mx-auto px-4'}>{/* Header + safe area */}
         {/* Header */}
         <div className="bg-white p-4 border-b border-border/20">
           <h1 className="text-2xl font-medium mb-1">My Reviews</h1>
           <p className="text-sm text-foreground/60">
-            {reviews.length} {reviews.length === 1 ? 'review' : 'reviews'} written
+            {loading ? 'Loading...' : `${reviews.length} ${reviews.length === 1 ? 'review' : 'reviews'} written`}
           </p>
         </div>
 
         {/* Reviews List */}
-        {reviews.length === 0 ? (
+        {loading ? (
+          <div className="p-8 text-center text-foreground/60">Loading reviews...</div>
+        ) : reviews.length === 0 ? (
           <div className="pt-20">
             <EmptyState
               type="reviews"
@@ -98,11 +149,17 @@ export function MobileReviewsPage() {
               >
                 {/* Product Info */}
                 <div className="flex items-center gap-3 p-4 border-b border-border/10">
-                  <img
-                    src={review.productImage}
-                    alt={review.productName}
-                    className="w-12 h-12 rounded-lg object-cover"
-                  />
+                  {review.productImage ? (
+                    <img
+                      src={review.productImage}
+                      alt={review.productName}
+                      className="w-12 h-12 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center">
+                      <Star size={20} className="text-foreground/30" />
+                    </div>
+                  )}
                   <div className="flex-1">
                     <p className="font-medium text-sm">{review.productName}</p>
                     <p className="text-xs text-foreground/50">{review.date}</p>
@@ -139,12 +196,15 @@ export function MobileReviewsPage() {
 
                   {/* Actions */}
                   <div className="flex gap-2 pt-3 border-t border-border/10">
-                    <button className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-border/30 rounded-xl text-sm font-medium active:bg-foreground/5 transition-colors">
+                    <button
+                      onClick={() => handleEditOpen(review)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-border/30 rounded-xl text-sm font-medium active:bg-foreground/5 transition-colors"
+                    >
                       <Edit2 size={16} />
                       <span>Edit</span>
                     </button>
                     <button
-                      onClick={() => handleDelete(review.id)}
+                      onClick={() => handleDelete(review.productId, review.id)}
                       className="flex-1 flex items-center justify-center gap-2 py-2.5 border border-red-200 text-red-600 rounded-xl active:bg-red-50 transition-colors"
                     >
                       <Trash2 size={16} />
@@ -167,6 +227,75 @@ export function MobileReviewsPage() {
           scrollbar-width: none;
         }
       `}</style>
+
+      {/* Edit Review Modal */}
+      <AnimatePresence>
+        {editingReview && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-40"
+              onClick={() => setEditingReview(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 60 }}
+              className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl z-50 p-6 space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Edit Review</h2>
+                <button onClick={() => setEditingReview(null)} className="p-2 rounded-full hover:bg-muted">
+                  <X size={20} />
+                </button>
+              </div>
+              {/* Star rating selector */}
+              <div>
+                <p className="text-sm font-medium mb-2">Rating</p>
+                <div className="flex gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button key={star} onClick={() => setEditForm((f) => ({ ...f, rating: star }))}>
+                      <Star
+                        size={28}
+                        className={star <= editForm.rating ? 'fill-primary text-primary' : 'text-foreground/20'}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-1">Title</p>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+                  className="w-full border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                  placeholder="Title"
+                />
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-1">Comment</p>
+                <textarea
+                  value={editForm.comment}
+                  onChange={(e) => setEditForm((f) => ({ ...f, comment: e.target.value }))}
+                  rows={4}
+                  className="w-full border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                  placeholder="Your review"
+                />
+              </div>
+              <button
+                onClick={handleEditSave}
+                disabled={editSaving}
+                className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-medium disabled:opacity-60"
+              >
+                {editSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

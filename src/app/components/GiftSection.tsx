@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { useNavigate } from 'react-router';
+import { useNavigate } from 'react-router-dom';
 import { Gift, Heart, Sparkles, ArrowRight } from 'lucide-react';
 import { BackgroundDecor } from './BackgroundDecor';
 

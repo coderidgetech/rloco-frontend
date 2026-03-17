@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PLACEHOLDER_IMAGE } from '../../constants';
 import { motion } from 'motion/react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Button } from '../../components/ui/button';
@@ -331,7 +332,7 @@ export const AdminProductsPage = () => {
                   <TableRow key={product.id}>
                     <TableCell>
                       <img
-                        src={product.images?.[0] || '/placeholder-image.jpg'}
+                        src={product.images?.[0] || PLACEHOLDER_IMAGE}
                         alt={product.name}
                         className="w-12 h-12 object-cover rounded"
                       />

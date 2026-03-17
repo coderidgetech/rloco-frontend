@@ -4,7 +4,7 @@ import { Ruler } from 'lucide-react';
 
 export function SizeGuidePage() {
   return (
-    <div className="min-h-screen bg-background pt-[72px]">
+    <div className="min-h-screen bg-background pt-24">
       {/* Hero Section */}
       <div className="border-b border-foreground/5">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-16 md:py-20 text-center">

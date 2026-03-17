@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, User, ArrowRight, Phone } from 'lucide-react';
 import { toast } from 'sonner';
-import { Logo } from '@/app/components/Logo';
+import { RlocoLogo } from '@/app/components/RlocoLogo';
 
 export function DesktopSignupPage() {
   const navigate = useNavigate();
@@ -106,7 +106,7 @@ export function DesktopSignupPage() {
         >
           {/* Logo */}
           <div className="mb-8 flex justify-center">
-            <Logo />
+            <RlocoLogo size="md" />
           </div>
 
           {/* Header */}
@@ -153,7 +153,7 @@ export function DesktopSignupPage() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="John Doe"
+                  placeholder="Full name"
                   required
                   className="w-full pl-12 pr-4 py-4 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
@@ -171,7 +171,7 @@ export function DesktopSignupPage() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="your@email.com"
+                  placeholder="Email address"
                   required
                   className="w-full pl-12 pr-4 py-4 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
@@ -189,7 +189,7 @@ export function DesktopSignupPage() {
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="Phone number"
                   required
                   className="w-full pl-12 pr-4 py-4 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />

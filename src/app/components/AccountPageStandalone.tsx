@@ -29,8 +29,7 @@ export function AccountPageStandalone() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-      {/* Render AccountPage as standalone (Navigation is handled by AppLayout) */}
+    <div className="min-h-screen bg-white dark:bg-background pb-20 md:pb-0" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
       <AccountPage 
         isOpen={true} 
         onClose={handleClose}

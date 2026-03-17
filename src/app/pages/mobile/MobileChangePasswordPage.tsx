@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Eye, EyeOff, Lock, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { toast } from 'sonner';
+import { authService } from '@/app/services/authService';
 
 export function MobileChangePasswordPage() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -34,33 +37,38 @@ export function MobileChangePasswordPage() {
     }
 
     setIsLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await authService.changePassword(currentPassword, newPassword);
       toast.success('Password changed successfully');
-      navigate('/settings');
-    }, 1500);
+      navigate('/account');
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'response' in err && typeof (err as { response?: { data?: { error?: string } } }).response?.data?.error === 'string'
+        ? (err as { response: { data: { error: string } } }).response.data.error
+        : 'Failed to change password';
+      toast.error(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-      {/* Header */}
-      <div className="fixed top-0 left-0 right-0 bg-white border-b border-border/20 z-40">
-        <div className="flex items-center justify-between px-4 py-4" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
-          <button
-            onClick={() => navigate('/settings')}
-            className="p-2 -ml-2 active:bg-foreground/5 rounded-full transition-colors"
-          >
-            <ArrowLeft size={24} className="text-foreground" />
-          </button>
-          <h1 className="text-lg font-medium">Change Password</h1>
-          <div className="w-10" /> {/* Spacer for centering */}
+    <div className="min-h-screen bg-white dark:bg-background pb-20 md:pb-12" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
+      {isMobile && (
+        <div className="fixed top-0 left-0 right-0 bg-white border-b border-border/20 z-40">
+          <div className="flex items-center justify-between px-4 py-4" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
+            <button
+              onClick={() => navigate('/settings')}
+              className="p-2 -ml-2 active:bg-foreground/5 rounded-full transition-colors"
+            >
+              <ArrowLeft size={24} className="text-foreground" />
+            </button>
+            <h1 className="text-lg font-medium">Change Password</h1>
+            <div className="w-10" />
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Content */}
-      <div className="pt-24 pb-8 px-4">
+      <div className={isMobile ? 'pt-24 pb-8 px-4' : 'pt-6 pb-8 px-4 max-w-md mx-auto'}>
         {/* Security Icon */}
         <div className="flex justify-center mb-6">
           <div className="w-20 h-20 rounded-full bg-[#B4770E]/10 flex items-center justify-center">
@@ -87,7 +95,7 @@ export function MobileChangePasswordPage() {
                 type={showCurrentPassword ? 'text' : 'password'}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Enter current password"
+                placeholder="Current password"
                 className="w-full px-4 py-3 pr-12 bg-white border border-border/30 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#B4770E]/20 focus:border-[#B4770E] transition-all"
               />
               <button
@@ -110,7 +118,7 @@ export function MobileChangePasswordPage() {
                 type={showNewPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
+                placeholder="New password"
                 className="w-full px-4 py-3 pr-12 bg-white border border-border/30 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#B4770E]/20 focus:border-[#B4770E] transition-all"
               />
               <button
@@ -136,7 +144,7 @@ export function MobileChangePasswordPage() {
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
+                placeholder="Confirm password"
                 className="w-full px-4 py-3 pr-12 bg-white border border-border/30 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#B4770E]/20 focus:border-[#B4770E] transition-all"
               />
               <button

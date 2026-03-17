@@ -3,6 +3,7 @@ import { Send } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useSiteConfig } from '../context/SiteConfigContext';
+import { newsletterService } from '../services/newsletterService';
 
 export function Newsletter() {
   const { config } = useSiteConfig();
@@ -14,22 +15,24 @@ export function Newsletter() {
     return null;
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
+    if (!email?.trim()) {
       toast.error('Please enter your email address');
       return;
     }
-    
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await newsletterService.subscribe(email.trim());
       toast.success('Thank you for subscribing!', {
         description: `We've sent a confirmation to ${email}`,
       });
       setEmail('');
+    } catch (err: any) {
+      toast.error(err?.message || 'Subscription failed. Please try again.');
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -68,7 +71,7 @@ export function Newsletter() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              placeholder="Email address"
               className="flex-1 px-6 py-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors"
             />
             <motion.button

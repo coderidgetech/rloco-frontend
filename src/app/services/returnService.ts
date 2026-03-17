@@ -13,7 +13,12 @@ export const returnService = {
   },
 
   async create(request: CreateReturnRequest): Promise<Return> {
-    const response = await api.post<Return>('/returns', request);
+    const { order_id, items, reason, description } = request;
+    const response = await api.post<Return>(`/orders/${order_id}/return`, {
+      items,
+      reason,
+      description,
+    });
     return response.data;
   },
 };

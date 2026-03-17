@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { Search, Bell } from 'lucide-react';
-import { Logo } from '../Logo';
+import { RlocoLogo } from '../RlocoLogo';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -39,7 +39,7 @@ export function MobileHeader() {
           onClick={() => navigate('/')}
           className="flex-1"
         >
-          <Logo className="text-xl" />
+          <RlocoLogo size="sm" />
         </motion.div>
 
         {/* Right Actions */}

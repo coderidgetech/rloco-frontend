@@ -6,7 +6,7 @@ import { ProductCard } from '../components/ProductCard';
 import { Footer } from '../components/Footer';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { MobileFilterPanel } from '../components/MobileFilterPanel';
-import { sortOptions } from '../utils/filterConfig';
+import { sortOptions, extractFilterOptions, getSubcategoriesForCategory } from '../utils/filterConfig';
 import { productService } from '../services/productService';
 import { Product } from '../types/product';
 
@@ -71,6 +71,16 @@ export function AllProductsPage() {
       setter([...array, value]);
     }
   };
+
+  // Compute available filter options dynamically from fetched products
+  const { colors: availableColors, sizes: availableSizes, materials: availableMaterials } = useMemo(
+    () => extractFilterOptions(products),
+    [products]
+  );
+  const availableSubcategories = useMemo(
+    () => getSubcategoriesForCategory(products, selectedCategory, selectedGender),
+    [products, selectedCategory, selectedGender]
+  );
 
   // Filter and sort products
   const filteredProducts = useMemo(() => {
@@ -184,7 +194,7 @@ export function AllProductsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-[72px]">
+    <div className="min-h-screen bg-background pt-24">
       {/* Breadcrumb */}
       <div className="border-b border-foreground/5 bg-background">
         <div className="max-w-[1920px] mx-auto px-4 md:px-8 py-3">
@@ -364,6 +374,10 @@ export function AllProductsPage() {
               toggleArrayFilter={toggleArrayFilter}
               hasActiveFilters={hasActiveFilters}
               clearAllFilters={clearAllFilters}
+              availableColors={availableColors}
+              availableSizes={availableSizes}
+              availableMaterials={availableMaterials}
+              availableSubcategories={availableSubcategories}
             />
           </motion.aside>
 
@@ -404,6 +418,8 @@ export function AllProductsPage() {
             toggleArrayFilter={toggleArrayFilter}
             hasActiveFilters={hasActiveFilters}
             clearAllFilters={clearAllFilters}
+            availableColors={availableColors}
+            availableSizes={availableSizes}
           />
 
           {/* Products Grid */}

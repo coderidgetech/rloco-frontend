@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Search, Heart, ShoppingBag, MapPin, ChevronDown } from 'lucide-react';
 import { useWishlist } from '@/app/context/WishlistContext';
 import { useCart } from '@/app/context/CartContext';
-import { Logo } from '../Logo';
+import { RlocoLogo } from '../RlocoLogo';
 
 interface MobileSubPageHeaderProps {
   showBackButton?: boolean;
@@ -56,7 +56,7 @@ export function MobileSubPageHeader({
             className="touch-manipulation"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
-            <Logo className="text-xl" />
+            <RlocoLogo size="sm" />
           </button>
         </div>
 

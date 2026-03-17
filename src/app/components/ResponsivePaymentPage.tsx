@@ -1,9 +1,6 @@
-import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { PaymentPage } from '@/app/pages/PaymentPage';
-import { MobilePaymentPage } from '@/app/pages/mobile/MobilePaymentPage';
 
+/** Single payment flow for desktop and mobile; creates order via API and uses payment service (mock until gateway integrated). */
 export function ResponsivePaymentPage() {
-  const isMobile = useIsMobile();
-
-  return isMobile ? <MobilePaymentPage /> : <PaymentPage />;
+  return <PaymentPage />;
 }

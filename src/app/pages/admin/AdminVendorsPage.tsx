@@ -98,38 +98,34 @@ export const AdminVendorsPage = () => {
 
   const handleToggleStatus = async (vendor: User) => {
     try {
-      // Note: Backend returns Vendor objects with Status field, but frontend uses User objects
-      // We need to use vendor.id (which is the User ID) to update
-      // The backend Vendor model has a separate ID, but we're working with User objects here
-      // For now, we'll update the user and note that vendor status requires Vendor model update
-      
-      // TODO: Backend needs to link User.vendor_id to Vendor.id properly
-      // For now, we'll show a message that vendor status update requires proper Vendor model integration
-      toast.info('Vendor status toggle requires Vendor model integration. Currently vendors are managed as Users. Backend needs to properly link User.vendor_id to Vendor.id for status management.');
-      
-      // Refresh vendors list
-      const vendorList = await adminService.listVendors();
-      const vendorUsers = vendorList.filter((user) => user.role === 'vendor');
-      setVendors(vendorUsers);
+      const newActive = !(vendor.active ?? true);
+      await adminService.updateCustomer(vendor.id, { active: newActive });
+      toast.success(newActive ? 'Vendor activated' : 'Vendor deactivated');
+      setVendors((prev) =>
+        prev.map((v) => (v.id === vendor.id ? { ...v, active: newActive } : v))
+      );
+      if (selectedVendor?.id === vendor.id) {
+        setSelectedVendor({ ...selectedVendor, active: newActive });
+      }
     } catch (error: any) {
       console.error('Failed to update vendor status:', error);
-      toast.error(error.message || 'Failed to update vendor status');
+      toast.error(error?.response?.data?.error || 'Failed to update vendor status');
     }
   };
 
   const handleApproveVendor = async (vendor: User) => {
     try {
-      // Note: Similar to handleToggleStatus, this requires Vendor model integration
-      // For now, we can update user role or other fields
-      toast.info('Vendor approval requires Vendor model integration. Backend needs to properly link User.vendor_id to Vendor.id for status management.');
-      
-      // Refresh vendors list
-      const vendorList = await adminService.listVendors();
-      const vendorUsers = vendorList.filter((user) => user.role === 'vendor');
-      setVendors(vendorUsers);
+      await adminService.updateCustomer(vendor.id, { active: true });
+      toast.success(`${vendor.name} has been approved`);
+      setVendors((prev) =>
+        prev.map((v) => (v.id === vendor.id ? { ...v, active: true } : v))
+      );
+      if (selectedVendor?.id === vendor.id) {
+        setSelectedVendor({ ...selectedVendor, active: true });
+      }
     } catch (error: any) {
       console.error('Failed to approve vendor:', error);
-      toast.error(error.message || 'Failed to approve vendor');
+      toast.error(error?.response?.data?.error || 'Failed to approve vendor');
     }
   };
 
@@ -270,20 +266,19 @@ export const AdminVendorsPage = () => {
                     <TableCell>
                       <div>
                         <p className="text-sm">{vendor.email}</p>
-                        <p className="text-sm text-gray-500">N/A</p>
+                        <p className="text-sm text-gray-500">{vendor.phone || '—'}</p>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="font-semibold">N/A</span>
+                      <span className="font-semibold">—</span>
                     </TableCell>
                     <TableCell>
-                      <span className="font-semibold">N/A</span>
+                      <span className="font-semibold">—</span>
                     </TableCell>
-                    <TableCell>N/A</TableCell>
+                    <TableCell>—</TableCell>
                     <TableCell>
-                      {/* Note: Vendor status requires Vendor model - currently showing default */}
-                      <Badge className="bg-green-100 text-green-800">
-                        Active
+                      <Badge className={vendor.active !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                        {vendor.active !== false ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -303,7 +298,7 @@ export const AdminVendorsPage = () => {
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate('/admin/vendors/add', { state: { vendor } })}>
                             <Edit className="h-4 w-4 mr-2" />
                             Edit
                           </DropdownMenuItem>

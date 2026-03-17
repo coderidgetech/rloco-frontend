@@ -1,67 +1,22 @@
-import svgPaths from "../../imports/svg-cbj800iajt";
+import svgPaths from "@/imports/svg-tzc7i369xp";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <div className={`relative flex items-center ${className}`}>
-      {/* Crescent Symbol with R */}
-      <div className="relative w-8 h-8 mr-1">
-        <svg 
-          viewBox="0 0 318.2 359.591" 
-          className="absolute inset-0 w-full h-full"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          <defs>
-            <linearGradient 
-              id="logo-crescent-gradient" 
-              x1="0" 
-              y1="0" 
-              x2="0" 
-              y2="359.64" 
-              gradientUnits="userSpaceOnUse"
-            >
-              <stop stopColor="#724B09" />
-              <stop offset="1" stopColor="#F1B041" />
-            </linearGradient>
-          </defs>
-          <path 
-            d={svgPaths.p1b643980} 
-            fill="url(#logo-crescent-gradient)" 
-          />
-        </svg>
-        <svg 
-          viewBox="0 0 170.176 173.346" 
-          className="absolute inset-0 w-[53%] h-[48%] left-[27%] top-[26%]"
-          preserveAspectRatio="xMidYMid meet"
-        >
-          <defs>
-            <linearGradient 
-              id="logo-r-gradient" 
-              x1="-5.93637" 
-              y1="-35.448" 
-              x2="-5.93637" 
-              y2="187.406" 
-              gradientUnits="userSpaceOnUse"
-            >
-              <stop stopColor="#724B09" />
-              <stop offset="1" stopColor="#F1B041" />
-            </linearGradient>
-          </defs>
-          <path 
-            d={svgPaths.p4c56680} 
-            fill="url(#logo-r-gradient)" 
-          />
-        </svg>
-      </div>
-      {/* LOCO Text */}
-      <svg 
-        viewBox="0 0 692.826 168.293" 
-        className="h-5"
+      <svg
+        viewBox="0 0 905 146"
+        className={`h-4 md:h-6 w-auto min-w-0 ${className}`}
         preserveAspectRatio="xMidYMid meet"
+        fill="none"
       >
-        <path 
-          d={svgPaths.p2d56c100} 
-          fill="#B4770E" 
-        />
+        <g id="R-LOKO">
+          <path d={svgPaths.p331c0e00} fill="var(--fill-0, #F1B041)" />
+          <path d={svgPaths.p12fca400} fill="var(--fill-0, #F1B041)" />
+          <path d={svgPaths.p77d4380} fill="var(--fill-0, #F1B041)" />
+          <path d={svgPaths.p3ff76180} fill="var(--fill-0, #F1B041)" />
+          <path d={svgPaths.pab8f5c0} fill="var(--fill-0, #F1B041)" />
+          <path d={svgPaths.p1d505e00} fill="var(--fill-0, #F1B041)" />
+        </g>
       </svg>
     </div>
   );

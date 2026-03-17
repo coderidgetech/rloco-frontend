@@ -730,6 +730,14 @@ export const AdminConfigurationPage = () => {
                       onChange={(e) => updateConfig('general', { socialMedia: { ...config.general.socialMedia, pinterest: e.target.value } })}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label>YouTube</Label>
+                    <Input 
+                      placeholder="youtube.com/@rloco" 
+                      value={config.general.socialMedia.youtube ?? ''}
+                      onChange={(e) => updateConfig('general', { socialMedia: { ...config.general.socialMedia, youtube: e.target.value } })}
+                    />
+                  </div>
                 </div>
                 <Button onClick={() => handleSave('Contact Information')}>
                   <Save className="h-4 w-4 mr-2" />

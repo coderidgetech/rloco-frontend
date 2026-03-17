@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { X, MapPin, Search } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { X } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useCurrency } from '../context/CurrencyContext';
+import { AddressAutocompleteInput, lookupZipCode } from './AddressAutocompleteInput';
 
 interface Address {
   id: string;
@@ -18,10 +19,6 @@ interface Address {
   isDefault?: boolean;
 }
 
-// TODO: Integrate Google Places API for address autocomplete
-// For now, address suggestions are disabled - users must enter addresses manually
-// To enable: Add Google Places API key and implement autocomplete
-const US_ADDRESS_SUGGESTIONS: Array<{ street: string; city: string; state: string; zip: string }> = [];
 
 // US States list
 const US_STATES = [
@@ -173,27 +170,20 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
     }
   };
 
-  const addressInputRef = useRef<HTMLInputElement>(null);
-  const [addressSuggestions, setAddressSuggestions] = useState<typeof US_ADDRESS_SUGGESTIONS>([]);
-
-  const handleAddressInputChange = (value: string) => {
-    handleInputChange('addressLine', value);
-    // TODO: Integrate Google Places API for real address autocomplete
-    // For now, address suggestions are disabled
-    // if (isUS && value.length > 2) {
-    //   // Use Google Places API to fetch address suggestions
-    //   // const suggestions = await fetchAddressSuggestions(value);
-    //   // setAddressSuggestions(suggestions);
-    // }
-    setAddressSuggestions([]);
-  };
-
-  const selectAddressSuggestion = (suggestion: typeof US_ADDRESS_SUGGESTIONS[number]) => {
-    handleInputChange('addressLine', suggestion.street);
-    handleInputChange('city', suggestion.city);
-    handleInputChange('state', suggestion.state);
-    handleInputChange('pincode', suggestion.zip);
-    setAddressSuggestions([]);
+  const handleZipChange = async (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    const maxLen = isUS ? 5 : 6;
+    if (digits.length > maxLen) return;
+    handleInputChange('pincode', digits);
+    // Auto-fill city + state when ZIP is complete
+    if (isUS && digits.length === 5) {
+      const result = await lookupZipCode(digits, 'us');
+      if (result) {
+        handleInputChange('city', result.city);
+        handleInputChange('state', result.state);
+        toast.success(`Filled: ${result.city}, ${result.state}`);
+      }
+    }
   };
 
   if (!isOpen) return null;
@@ -249,7 +239,7 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                           type="text"
                           value={formData.name}
                           onChange={(e) => handleInputChange('name', e.target.value)}
-                          placeholder="Enter full name"
+                          placeholder="Full name"
                           className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
                             errors.name ? 'border-destructive' : 'border-border'
                           }`}
@@ -272,7 +262,7 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                               handleInputChange('mobile', value);
                             }
                           }}
-                          placeholder={isUS ? '10-digit phone number' : '10-digit mobile number'}
+                          placeholder="Phone number"
                           className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
                             errors.mobile ? 'border-destructive' : 'border-border'
                           }`}
@@ -294,34 +284,19 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                         <label className="block text-sm font-medium mb-2">
                           {isUS ? 'Street Address' : 'Address (House No, Building, Street, Area)'} <span className="text-destructive">*</span>
                         </label>
-                        <div className="relative">
-                          <input
-                            type="text"
-                            value={formData.addressLine}
-                            onChange={(e) => handleAddressInputChange(e.target.value)}
-                            placeholder={isUS ? 'Enter street address' : 'Enter complete address'}
-                            rows={isUS ? 2 : 3}
-                            className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all resize-none ${
-                              errors.addressLine ? 'border-destructive' : 'border-border'
-                            }`}
-                          />
-                          {addressSuggestions.length > 0 && (
-                            <div className="absolute top-full left-0 right-0 bg-white border border-border shadow-md z-10 max-h-40 overflow-y-auto">
-                              {addressSuggestions.map((suggestion, index) => (
-                                <div
-                                  key={index}
-                                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                                  onClick={() => selectAddressSuggestion(suggestion)}
-                                >
-                                  {suggestion.street}, {suggestion.city}, {suggestion.state} {suggestion.zip}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        {errors.addressLine && (
-                          <p className="text-xs text-destructive mt-1">{errors.addressLine}</p>
-                        )}
+                        <AddressAutocompleteInput
+                          value={formData.addressLine}
+                          onChange={(val) => handleInputChange('addressLine', val)}
+                          onAddressFill={(components) => {
+                            handleInputChange('addressLine', components.addressLine);
+                            if (components.city)    handleInputChange('city', components.city);
+                            if (components.state)   handleInputChange('state', components.state);
+                            if (components.pincode) handleInputChange('pincode', components.pincode);
+                          }}
+                          placeholder="Street address"
+                          error={errors.addressLine}
+                          countryCode={isUS ? 'us' : 'in'}
+                        />
                       </div>
 
                       {isUS && (
@@ -333,7 +308,7 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                             type="text"
                             value={formData.addressLine2}
                             onChange={(e) => handleInputChange('addressLine2', e.target.value)}
-                            placeholder="Apartment, suite, unit, etc."
+                            placeholder="Apt, suite, or building (optional)"
                             className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
                               errors.addressLine2 ? 'border-destructive' : 'border-border'
                             }`}
@@ -348,15 +323,10 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                           </label>
                           <input
                             type="text"
+                            inputMode="numeric"
                             value={formData.pincode}
-                            onChange={(e) => {
-                              const value = e.target.value.replace(/\D/g, '');
-                              const maxLength = isUS ? 5 : 6;
-                              if (value.length <= maxLength) {
-                                handleInputChange('pincode', value);
-                              }
-                            }}
-                            placeholder={isUS ? '5-digit ZIP' : '6-digit pincode'}
+                            onChange={(e) => handleZipChange(e.target.value)}
+                            placeholder="ZIP / Postal code"
                             maxLength={isUS ? 5 : 6}
                             className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
                               errors.pincode ? 'border-destructive' : 'border-border'
@@ -375,7 +345,7 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                             type="text"
                             value={formData.city}
                             onChange={(e) => handleInputChange('city', e.target.value)}
-                            placeholder="Enter city"
+                            placeholder="City"
                             className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
                               errors.city ? 'border-destructive' : 'border-border'
                             }`}

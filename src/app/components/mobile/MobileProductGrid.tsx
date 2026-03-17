@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { Heart, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
+import { PLACEHOLDER_IMAGE } from '../../constants';
 
 /** Supports both API Product (id: string, images, on_sale, new_arrival) and data Product (id: number, sale, isNew) */
 interface ProductLike {
@@ -25,7 +26,7 @@ interface MobileProductGridProps {
   title?: string;
 }
 
-const placeholder = 'https://via.placeholder.com/800';
+const placeholder = PLACEHOLDER_IMAGE;
 
 export function MobileProductGrid({ products = [], title = 'Featured Products' }: MobileProductGridProps) {
   const navigate = useNavigate();

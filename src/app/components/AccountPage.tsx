@@ -6,7 +6,7 @@ import {
   Download, Bell, Lock, ShoppingCart
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useWishlist } from '../context/WishlistContext';
 import { OrderDetailsModal } from './OrderDetailsModal';
@@ -17,8 +17,24 @@ import { LuxuryCheckbox } from './ui/luxury-checkbox';
 import { orderService } from '../services/orderService';
 import { paymentService } from '../services/paymentService';
 import { addressService, Address as APIAddress } from '../services/addressService';
+import { AddressAutocompleteInput } from './AddressAutocompleteInput';
 import { Order as APIOrder, PaymentTransaction } from '../types/api';
 import { useUser } from '../context/UserContext';
+import { useCart } from '../context/CartContext';
+import { authService } from '../services/authService';
+
+const SETTINGS_NOTIFICATIONS_KEY = 'rloco_notifications';
+
+function loadSettingsNotifications(): { orders: boolean; offers: boolean; updates: boolean } {
+  try {
+    const raw = localStorage.getItem(SETTINGS_NOTIFICATIONS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return { orders: !!parsed.orders, offers: !!parsed.offers, updates: !!parsed.updates };
+    }
+  } catch (_) {}
+  return { orders: true, offers: true, updates: false };
+}
 
 interface AccountPageProps {
   isOpen: boolean;
@@ -76,6 +92,7 @@ interface PaymentMethod {
 export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
   const { user } = useUser();
   const location = useLocation();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
@@ -90,7 +107,27 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
   const { items: wishlistItems, removeFromWishlist } = useWishlist();
-  
+  const { addToCart } = useCart();
+  const { logout, refreshUser } = useUser();
+  const [settingsNotifications, setSettingsNotifications] = useState(loadSettingsNotifications);
+  const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [dangerLoading, setDangerLoading] = useState<'deactivate' | 'delete' | null>(null);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [addAddressForm, setAddAddressForm] = useState({ addressLine: '', city: '', state: '', zip: '', country: '' });
+
+  useEffect(() => {
+    if (activeTab === 'settings') {
+      localStorage.setItem(SETTINGS_NOTIFICATIONS_KEY, JSON.stringify(settingsNotifications));
+    }
+  }, [activeTab, settingsNotifications]);
+
+  useEffect(() => {
+    if (showAddAddress) {
+      setAddAddressForm({ addressLine: '', city: '', state: '', zip: '', country: '' });
+    }
+  }, [showAddAddress]);
+
   // Check if this is being used as a standalone page (when path is /account)
   const isStandalone = location.pathname === '/account';
 
@@ -257,7 +294,6 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
     { id: 'profile' as TabType, label: 'Profile', icon: User },
     { id: 'orders' as TabType, label: 'Orders', icon: Package },
     { id: 'addresses' as TabType, label: 'Addresses', icon: MapPin },
-    { id: 'payment' as TabType, label: 'Payment', icon: CreditCard },
     { id: 'wishlist' as TabType, label: 'Wishlist', icon: Heart },
     { id: 'settings' as TabType, label: 'Settings', icon: Settings },
   ];
@@ -290,8 +326,20 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
     }
   };
 
-  const handleSaveProfile = () => {
-    toast.success('Profile updated successfully!');
+  const handleSaveProfile = async () => {
+    try {
+      setProfileSaving(true);
+      const updateData: { phone?: string; birthday?: string } = {};
+      if (profileData.phone) updateData.phone = profileData.phone;
+      if (profileData.birthday) updateData.birthday = profileData.birthday;
+      await authService.updateProfile(updateData);
+      await refreshUser();
+      toast.success('Profile updated successfully!');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'Failed to update profile');
+    } finally {
+      setProfileSaving(false);
+    }
   };
 
   // In standalone mode, always render (ignore isOpen)
@@ -401,7 +449,8 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
 
                         <div className="pt-4 border-t border-border">
                           <button
-                            onClick={() => {
+                            onClick={async () => {
+                              await logout();
                               toast.success('Logged out successfully');
                               onClose();
                               if (onLogout) onLogout();
@@ -432,11 +481,12 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => toast.success('Edit profile modal would open')}
-                                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg"
+                                onClick={handleSaveProfile}
+                                disabled={profileSaving}
+                                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg disabled:opacity-60"
                               >
                                 <Edit2 size={18} />
-                                Edit Profile
+                                {profileSaving ? 'Saving...' : 'Save Profile'}
                               </motion.button>
                             </div>
 
@@ -615,20 +665,18 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                         <Eye size={16} />
                                         View Details
                                       </motion.button>
-                                      {order.status === 'delivered' && (
-                                        <motion.button
-                                          whileHover={{ scale: 1.05 }}
-                                          whileTap={{ scale: 0.95 }}
-                                          onClick={() => {
-                                            setInvoiceOrder(order);
-                                            setShowInvoice(true);
-                                          }}
-                                          className="px-4 py-2 border border-border rounded-lg flex items-center gap-2 justify-center text-sm"
-                                        >
-                                          <Download size={16} />
-                                          Invoice
-                                        </motion.button>
-                                      )}
+                                      <motion.button
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => {
+                                          setInvoiceOrder(order);
+                                          setShowInvoice(true);
+                                        }}
+                                        className="px-4 py-2 border border-border rounded-lg flex items-center gap-2 justify-center text-sm"
+                                      >
+                                        <Download size={16} />
+                                        Invoice
+                                      </motion.button>
                                     </div>
                                   </div>
                                 </motion.div>
@@ -733,8 +781,8 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => {
-                                          // TODO: Implement edit address functionality
-                                          toast.info('Edit address functionality coming soon');
+                                          toast.info('Edit your address in Saved Addresses');
+                                          navigate('/addresses');
                                         }}
                                         className="flex-1 px-3 py-2 border border-border rounded-lg flex items-center justify-center gap-2 text-sm"
                                       >
@@ -938,8 +986,20 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                         <motion.button
                                           whileHover={{ scale: 1.05 }}
                                           whileTap={{ scale: 0.95 }}
-                                          onClick={() => {
-                                            toast.success('Added to cart!');
+                                          onClick={async () => {
+                                            try {
+                                              await addToCart({
+                                                product_id: String(item.id),
+                                                product_name: item.name,
+                                                image: item.image,
+                                                price: item.price,
+                                                size: 'M',
+                                                quantity: 1,
+                                              });
+                                              toast.success('Added to cart!');
+                                            } catch {
+                                              toast.error('Failed to add to cart');
+                                            }
                                           }}
                                           className="flex-1 px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 bg-primary text-primary-foreground"
                                         >
@@ -981,16 +1041,21 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                               </div>
                               <div className="space-y-4">
                                 {[
-                                  { id: 'email', label: 'Email notifications', desc: 'Receive order updates via email' },
-                                  { id: 'promo', label: 'Promotional emails', desc: 'Get exclusive deals and offers' },
-                                  { id: 'sms', label: 'SMS notifications', desc: 'Receive text updates for orders' },
+                                  { key: 'orders' as const, label: 'Order updates', desc: 'Get notified about your orders' },
+                                  { key: 'offers' as const, label: 'Offers & Promotions', desc: 'Get the latest deals' },
+                                  { key: 'updates' as const, label: 'App updates', desc: 'New features & improvements' },
                                 ].map((setting) => (
-                                  <div key={setting.id} className="flex items-center justify-between">
+                                  <div key={setting.key} className="flex items-center justify-between">
                                     <div>
                                       <p className="font-medium">{setting.label}</p>
                                       <p className="text-sm text-muted-foreground">{setting.desc}</p>
                                     </div>
-                                    <LuxuryCheckbox defaultChecked />
+                                    <LuxuryCheckbox
+                                      checked={settingsNotifications[setting.key]}
+                                      onChange={() =>
+                                        setSettingsNotifications((prev) => ({ ...prev, [setting.key]: !prev[setting.key] }))
+                                      }
+                                    />
                                   </div>
                                 ))}
                               </div>
@@ -1004,17 +1069,20 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                               </div>
                               <div className="space-y-3">
                                 <motion.button
+                                  type="button"
                                   whileHover={{ scale: 1.01 }}
                                   whileTap={{ scale: 0.99 }}
-                                  onClick={() => toast.success('Password change modal would open')}
+                                  onClick={() => navigate('/change-password')}
                                   className="w-full flex items-center justify-between p-4 bg-background rounded-lg hover:bg-muted transition-colors"
                                 >
                                   <span className="font-medium">Change Password</span>
                                   <ChevronRight size={20} />
                                 </motion.button>
                                 <motion.button
+                                  type="button"
                                   whileHover={{ scale: 1.01 }}
                                   whileTap={{ scale: 0.99 }}
+                                  onClick={() => navigate('/two-factor')}
                                   className="w-full flex items-center justify-between p-4 bg-background rounded-lg hover:bg-muted transition-colors"
                                 >
                                   <span className="font-medium">Two-Factor Authentication</span>
@@ -1028,16 +1096,22 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                               <h3 className="font-medium text-red-600 mb-4">Danger Zone</h3>
                               <div className="space-y-3">
                                 <motion.button
+                                  type="button"
                                   whileHover={{ scale: 1.01 }}
                                   whileTap={{ scale: 0.99 }}
-                                  className="w-full p-4 border border-red-500/20 rounded-lg text-red-600 hover:bg-red-500/10 transition-colors"
+                                  onClick={() => setShowDeactivateConfirm(true)}
+                                  disabled={!!dangerLoading}
+                                  className="w-full p-4 border border-red-500/20 rounded-lg text-red-600 hover:bg-red-500/10 transition-colors disabled:opacity-50"
                                 >
                                   Deactivate Account
                                 </motion.button>
                                 <motion.button
+                                  type="button"
                                   whileHover={{ scale: 1.01 }}
                                   whileTap={{ scale: 0.99 }}
-                                  className="w-full p-4 border border-red-500/20 rounded-lg text-red-600 hover:bg-red-500/10 transition-colors"
+                                  onClick={() => setShowDeleteConfirm(true)}
+                                  disabled={!!dangerLoading}
+                                  className="w-full p-4 border border-red-500/20 rounded-lg text-red-600 hover:bg-red-500/10 transition-colors disabled:opacity-50"
                                 >
                                   Delete Account
                                 </motion.button>
@@ -1069,6 +1143,86 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
       isOpen={showInvoice}
       onClose={() => setShowInvoice(false)}
     />
+
+    {/* Deactivate Account Confirmation */}
+    <AnimatePresence>
+      {showDeactivateConfirm && (
+        <>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] bg-black/60" onClick={() => setShowDeactivateConfirm(false)} />
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="fixed left-1/2 top-1/2 z-[70] w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-background p-6 shadow-xl">
+            <h3 className="text-lg font-medium mb-2">Deactivate account?</h3>
+            <p className="text-sm text-muted-foreground mb-4">You can contact support to reactivate later.</p>
+            <div className="flex gap-3 justify-end">
+              <button type="button" onClick={() => setShowDeactivateConfirm(false)} className="px-4 py-2 rounded-lg border border-border hover:bg-muted">Cancel</button>
+              <button
+                type="button"
+                disabled={dangerLoading === 'deactivate'}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                onClick={async () => {
+                  setDangerLoading('deactivate');
+                  try {
+                    await authService.deactivateAccount();
+                    await logout();
+                    onClose?.();
+                    navigate('/');
+                  } catch (err: unknown) {
+                    const msg = err && typeof err === 'object' && 'response' in err && typeof (err as { response?: { data?: { error?: string } } }).response?.data?.error === 'string'
+                      ? (err as { response: { data: { error: string } } }).response.data.error
+                      : 'Failed to deactivate';
+                    toast.error(msg);
+                  } finally {
+                    setDangerLoading(null);
+                    setShowDeactivateConfirm(false);
+                  }
+                }}
+              >
+                {dangerLoading === 'deactivate' ? 'Deactivating...' : 'Deactivate'}
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+
+    {/* Delete Account Confirmation */}
+    <AnimatePresence>
+      {showDeleteConfirm && (
+        <>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[60] bg-black/60" onClick={() => setShowDeleteConfirm(false)} />
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="fixed left-1/2 top-1/2 z-[70] w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-xl bg-background p-6 shadow-xl">
+            <h3 className="text-lg font-medium mb-2">Delete account permanently?</h3>
+            <p className="text-sm text-muted-foreground mb-4">All your data will be removed. This cannot be undone.</p>
+            <div className="flex gap-3 justify-end">
+              <button type="button" onClick={() => setShowDeleteConfirm(false)} className="px-4 py-2 rounded-lg border border-border hover:bg-muted">Cancel</button>
+              <button
+                type="button"
+                disabled={dangerLoading === 'delete'}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                onClick={async () => {
+                  setDangerLoading('delete');
+                  try {
+                    await authService.deleteAccount();
+                    await logout();
+                    onClose?.();
+                    navigate('/');
+                  } catch (err: unknown) {
+                    const msg = err && typeof err === 'object' && 'response' in err && typeof (err as { response?: { data?: { error?: string } } }).response?.data?.error === 'string'
+                      ? (err as { response: { data: { error: string } } }).response.data.error
+                      : 'Failed to delete account';
+                    toast.error(msg);
+                  } finally {
+                    setDangerLoading(null);
+                    setShowDeleteConfirm(false);
+                  }
+                }}
+              >
+                {dangerLoading === 'delete' ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
 
     {/* Add Address Modal */}
     <AnimatePresence>
@@ -1107,17 +1261,21 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();
+                  if (!addAddressForm.addressLine.trim()) {
+                    toast.error('Please enter a street address');
+                    return;
+                  }
                   try {
                     const formData = new FormData(e.currentTarget);
                     const addressType = formData.get('type') as string;
                     const newAddress = {
                       type: addressType.toUpperCase() as 'HOME' | 'OFFICE' | 'OTHER',
                       name: formData.get('name') as string,
-                      address_line: formData.get('address') as string,
-                      city: formData.get('city') as string,
-                      state: formData.get('state') as string,
-                      pincode: formData.get('zip') as string,
-                      country: formData.get('country') as string,
+                      address_line: addAddressForm.addressLine.trim(),
+                      city: addAddressForm.city.trim(),
+                      state: addAddressForm.state.trim(),
+                      pincode: addAddressForm.zip.trim(),
+                      country: addAddressForm.country.trim(),
                       mobile: formData.get('mobile') as string || '',
                       is_default: formData.get('isDefault') === 'on',
                     };
@@ -1147,16 +1305,31 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                   type="text"
                   name="name"
                   required
-                  placeholder="Enter your full name"
+                  placeholder="Full name"
                 />
 
-                <LuxuryInput
-                  label="Street address"
-                  type="text"
-                  name="address"
-                  required
-                  placeholder="Enter your street address"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Street address <span className="text-destructive">*</span>
+                  </label>
+                  <AddressAutocompleteInput
+                    value={addAddressForm.addressLine}
+                    onChange={(val) => setAddAddressForm((p) => ({ ...p, addressLine: val }))}
+                    onAddressFill={(components) => {
+                      setAddAddressForm((p) => ({
+                        ...p,
+                        addressLine: components.addressLine,
+                        city: components.city || p.city,
+                        state: components.state || p.state,
+                        zip: components.pincode || p.zip,
+                        country: components.country || p.country,
+                      }));
+                    }}
+                    placeholder="Street address"
+                  />
+                </div>
+
+                <input type="hidden" name="address" value={addAddressForm.addressLine} />
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <LuxuryInput
@@ -1164,7 +1337,9 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                     type="text"
                     name="city"
                     required
-                    placeholder="New York"
+                    placeholder="City"
+                    value={addAddressForm.city}
+                    onChange={(e) => setAddAddressForm((p) => ({ ...p, city: e.target.value }))}
                   />
 
                   <LuxuryInput
@@ -1172,7 +1347,9 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                     type="text"
                     name="state"
                     required
-                    placeholder="NY"
+                    placeholder="State"
+                    value={addAddressForm.state}
+                    onChange={(e) => setAddAddressForm((p) => ({ ...p, state: e.target.value }))}
                   />
                 </div>
 
@@ -1182,7 +1359,9 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                     type="text"
                     name="zip"
                     required
-                    placeholder="10001"
+                    placeholder="ZIP / Postal code"
+                    value={addAddressForm.zip}
+                    onChange={(e) => setAddAddressForm((p) => ({ ...p, zip: e.target.value }))}
                   />
 
                   <LuxuryInput
@@ -1190,7 +1369,9 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                     type="text"
                     name="country"
                     required
-                    placeholder="United States"
+                    placeholder="Country"
+                    value={addAddressForm.country}
+                    onChange={(e) => setAddAddressForm((p) => ({ ...p, country: e.target.value }))}
                   />
                 </div>
 
@@ -1293,7 +1474,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                   type="text"
                   name="cardNumber"
                   required
-                  placeholder="1234 5678 9012 3456"
+                  placeholder="Card number"
                   maxLength={19}
                   className="font-mono"
                 />
@@ -1314,7 +1495,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                     type="text"
                     name="cvv"
                     required
-                    placeholder="123"
+                    placeholder="CVV"
                     maxLength={4}
                     className="font-mono"
                   />
@@ -1325,7 +1506,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                   type="text"
                   name="cardholderName"
                   required
-                  placeholder="Enter cardholder name"
+                  placeholder="Name on card"
                   className="uppercase"
                 />
 

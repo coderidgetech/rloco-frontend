@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronRight, Sparkles, ArrowRight } from 'lucide-react';
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
+import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { useState } from 'react';
 
 const CATEGORIES = [
@@ -154,14 +155,13 @@ const CATEGORIES = [
 
 export function MobileCategoriesPage() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   return (
-    <div className="min-h-screen bg-white pb-20">
-      {/* Unified Header */}
-      <MobileSubPageHeader showBackButton={false} />
+    <div className="min-h-screen bg-white pb-20 md:pb-12">
+      {isMobile && <MobileSubPageHeader showBackButton={false} />}
 
-      {/* Categories List */}
-      <div className="pt-[145px] pb-6">
+      <div className={isMobile ? 'pt-[145px] pb-6' : 'pt-6 pb-6 max-w-5xl mx-auto px-4'}>
         {/* Page Title */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

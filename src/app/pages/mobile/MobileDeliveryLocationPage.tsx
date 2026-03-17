@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { MapPin, Navigation, Search, Clock, ChevronRight, Plus, CheckCircle2 } from 'lucide-react';
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
+import { useIsMobile } from '@/app/hooks/useIsMobile';
 
 interface SavedAddress {
   id: number;
@@ -17,6 +18,7 @@ interface SavedAddress {
 
 export function MobileDeliveryLocationPage() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAddressId, setSelectedAddressId] = useState<number>(1);
 
@@ -81,15 +83,11 @@ export function MobileDeliveryLocationPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-background pb-20" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-      {/* Header */}
-      <MobileSubPageHeader showBackButton={true} showDeliveryAddress={false} />
+      {isMobile && <MobileSubPageHeader showBackButton={true} showDeliveryAddress={false} />}
 
-      {/* Content */}
       <div 
-        className="pb-6"
-        style={{ 
-          paddingTop: 'calc(env(safe-area-inset-top) + 56px)'
-        }}
+        className={isMobile ? 'pb-6' : 'pt-6 pb-6 max-w-2xl mx-auto'}
+        style={{ paddingTop: isMobile ? 'calc(env(safe-area-inset-top) + 56px)' : undefined }}
       >
         {/* Title */}
         <div className="px-4 pt-4 pb-3">
@@ -105,7 +103,7 @@ export function MobileDeliveryLocationPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for area, street name..."
+              placeholder="Area, street, or landmark"
               className="w-full pl-11 pr-4 py-3 bg-foreground/5 border border-border/20 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>

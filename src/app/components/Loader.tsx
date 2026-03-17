@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import svgPaths from '../../imports/svg-cbj800iajt';
+import { RlocoLogo } from './RlocoLogo';
 
 export function Loader({ onComplete }: { onComplete: () => void }) {
   const [progress, setProgress] = useState(0);
@@ -43,69 +43,10 @@ export function Loader({ onComplete }: { onComplete: () => void }) {
               ease: 'easeInOut',
             }
           }}
-          className="mb-12 relative w-40 h-40 mx-auto"
+          className="mb-12 mx-auto flex justify-center"
         >
-          {/* Pulsing ring effect */}
-          <motion.div
-            className="absolute inset-0 rounded-full border-2 border-primary/20"
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.5, 0, 0.5],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-          />
-          
-          {/* Crescent Symbol with R - Larger for loader */}
-          <svg 
-            viewBox="0 0 318.2 359.591" 
-            className="absolute inset-0 w-full h-full"
-            preserveAspectRatio="xMidYMid meet"
-          >
-            <defs>
-              <linearGradient 
-                id="loader-crescent-gradient" 
-                x1="0" 
-                y1="0" 
-                x2="0" 
-                y2="359.64" 
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop stopColor="#724B09" />
-                <stop offset="1" stopColor="#F1B041" />
-              </linearGradient>
-            </defs>
-            <path 
-              d={svgPaths.p1b643980} 
-              fill="url(#loader-crescent-gradient)" 
-            />
-          </svg>
-          <svg 
-            viewBox="0 0 170.176 173.346" 
-            className="absolute inset-0 w-[53%] h-[48%] left-[27%] top-[26%]"
-            preserveAspectRatio="xMidYMid meet"
-          >
-            <defs>
-              <linearGradient 
-                id="loader-r-gradient" 
-                x1="-5.93637" 
-                y1="-35.448" 
-                x2="-5.93637" 
-                y2="187.406" 
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop stopColor="#724B09" />
-                <stop offset="1" stopColor="#F1B041" />
-              </linearGradient>
-            </defs>
-            <path 
-              d={svgPaths.p4c56680} 
-              fill="url(#loader-r-gradient)" 
-            />
-          </svg>
+          {/* Dual-color Rloco logo */}
+          <RlocoLogo size="3xl" />
         </motion.div>
         
         <div className="w-64 h-0.5 bg-border mx-auto overflow-hidden rounded-full">

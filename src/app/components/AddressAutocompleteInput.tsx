@@ -1,0 +1,275 @@
+/**
+ * AddressAutocompleteInput
+ *
+ * Uses Google Places API (VITE_GOOGLE_MAPS_API_KEY).
+ * ZIP → city/state auto-fill uses Zippopotam.us (US only, always free).
+ */
+
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { MapPin, Loader2 } from 'lucide-react';
+
+export interface AddressComponents {
+  addressLine: string;
+  city: string;
+  state: string;
+  pincode: string;
+  country: string;
+}
+
+interface Suggestion {
+  id: string;
+  label: string;          // one-line display
+  sublabel: string;       // city, state, zip, country
+  fill: () => Promise<AddressComponents> | AddressComponents;
+}
+
+const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
+
+// ─── Google Places ─────────────────────────────────────────────────────────────
+let googleScriptLoaded = false;
+let googleScriptLoading = false;
+const googleScriptCallbacks: Array<() => void> = [];
+
+function loadGoogleScript(): Promise<void> {
+  return new Promise((resolve) => {
+    if (googleScriptLoaded) { resolve(); return; }
+    googleScriptCallbacks.push(resolve);
+    if (googleScriptLoading) return;
+    googleScriptLoading = true;
+
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=places`;
+    script.async = true;
+    script.onload = () => {
+      googleScriptLoaded = true;
+      googleScriptCallbacks.forEach((cb) => cb());
+      googleScriptCallbacks.length = 0;
+    };
+    document.head.appendChild(script);
+  });
+}
+
+async function fetchGoogleSuggestions(
+  query: string,
+  countryCode: string | undefined
+): Promise<Suggestion[]> {
+  await loadGoogleScript();
+  const g = (window as any).google;
+  if (!g) return [];
+
+  const options: { input: string; types?: string[]; componentRestrictions?: { country: string } } = {
+    input: query,
+    types: ['geocode'],
+  };
+  if (countryCode && countryCode.trim()) {
+    options.componentRestrictions = { country: countryCode.trim().toLowerCase() };
+  }
+
+  return new Promise((resolve) => {
+    const svc = new g.maps.places.AutocompleteService();
+    svc.getPlacePredictions(
+      options,
+      (predictions: any[], status: string) => {
+        if (status !== g.maps.places.PlacesServiceStatus.OK || !predictions) {
+          resolve([]);
+          return;
+        }
+        resolve(
+          predictions.map((p) => ({
+            id: p.place_id,
+            label: p.structured_formatting?.main_text || p.description,
+            sublabel: p.structured_formatting?.secondary_text || '',
+            fill: () =>
+              new Promise<AddressComponents>((res) => {
+                const dummy = document.createElement('div');
+                const placesSvc = new g.maps.places.PlacesService(dummy);
+                placesSvc.getDetails(
+                  { placeId: p.place_id, fields: ['address_components'] },
+                  (place: any, s: string) => {
+                    if (s !== g.maps.places.PlacesServiceStatus.OK || !place) {
+                      res({ addressLine: p.description, city: '', state: '', pincode: '', country: '' });
+                      return;
+                    }
+                    const get = (type: string) =>
+                      place.address_components?.find((c: any) => c.types.includes(type))?.long_name || '';
+                    const getShort = (type: string) =>
+                      place.address_components?.find((c: any) => c.types.includes(type))?.short_name || '';
+                    const streetNum = get('street_number');
+                    const route     = get('route');
+                    const postalCode = get('postal_code');
+                    const postalCodeSuffix = get('postal_code_suffix');
+                    const countryCode = getShort('country');
+                    const normalizedPostalCode =
+                      countryCode === 'US'
+                        ? postalCode
+                        : [postalCode, postalCodeSuffix].filter(Boolean).join('-');
+                    res({
+                      addressLine: [streetNum, route].filter(Boolean).join(' ') || p.description.split(',')[0],
+                      city:        get('locality') || get('sublocality') || get('administrative_area_level_2'),
+                      state:       get('administrative_area_level_1'),
+                      pincode:     normalizedPostalCode,
+                      country:     get('country') || countryCode,
+                    });
+                  }
+                );
+              }),
+          }))
+        );
+      }
+    );
+  });
+}
+
+// ─── debounce helper ───────────────────────────────────────────────────────────
+function debounce<T extends (...args: any[]) => void>(fn: T, ms: number) {
+  let t: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+// ─── Component ─────────────────────────────────────────────────────────────────
+interface Props {
+  value: string;
+  onChange: (value: string) => void;
+  onAddressFill: (components: AddressComponents) => void;
+  placeholder?: string;
+  error?: string;
+  className?: string;
+  /** ISO-2 country code to restrict to one country (e.g. 'us', 'in'). Omit or leave empty for worldwide suggestions. */
+  countryCode?: string;
+}
+
+export function AddressAutocompleteInput({
+  value,
+  onChange,
+  onAddressFill,
+  placeholder = 'Street address',
+  error,
+  className = '',
+  countryCode,
+}: Props) {
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [loading, setLoading]         = useState(false);
+  const [open, setOpen]               = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetchSuggestions = useCallback(
+    debounce(async (query: string) => {
+      const q = query.trim();
+      if (q.length < 2) { setSuggestions([]); setOpen(false); return; }
+
+      setLoading(true);
+      try {
+        const results = GOOGLE_KEY
+          ? await fetchGoogleSuggestions(query, countryCode)
+          : [];
+        setSuggestions(results);
+        setOpen(results.length > 0);
+      } catch {
+        setSuggestions([]);
+        setOpen(false);
+      } finally {
+        setLoading(false);
+      }
+    }, 250),
+    [countryCode]
+  );
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.value);
+    fetchSuggestions(e.target.value);
+  };
+
+  const handleSelect = async (suggestion: Suggestion) => {
+    setLoading(true);
+    setSuggestions([]);
+    setOpen(false);
+    try {
+      const components = await suggestion.fill();
+      onChange(components.addressLine);
+      onAddressFill(components);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const provider = 'Google';
+
+  return (
+    <div ref={containerRef} className="relative">
+      <div className="relative">
+        <input
+          type="text"
+          value={value}
+          onChange={handleChange}
+          onFocus={() => suggestions.length > 0 && setOpen(true)}
+          placeholder={placeholder}
+          autoComplete="off"
+          className={`w-full px-4 py-3 pr-10 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
+            error ? 'border-destructive' : 'border-border focus:border-primary'
+          } ${className}`}
+        />
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+          {loading
+            ? <Loader2 size={16} className="animate-spin" />
+            : <MapPin size={16} />}
+        </div>
+      </div>
+
+      {open && suggestions.length > 0 && (
+        <ul className="absolute z-[100] top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-xl max-h-64 overflow-y-auto">
+          {suggestions.map((s) => (
+            <li
+              key={s.id}
+              onMouseDown={(e) => { e.preventDefault(); handleSelect(s); }}
+              className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-muted/60 transition-colors border-b border-border/40 last:border-b-0"
+            >
+              <MapPin size={14} className="mt-0.5 shrink-0 text-muted-foreground" />
+              <div className="min-w-0">
+                <p className="text-sm font-medium truncate">{s.label}</p>
+                <p className="text-xs text-muted-foreground truncate">{s.sublabel}</p>
+              </div>
+            </li>
+          ))}
+          <li className="px-4 py-1.5 text-[10px] text-muted-foreground/50 text-right select-none">
+            Powered by {provider}
+          </li>
+        </ul>
+      )}
+
+      {error && <p className="text-xs text-destructive mt-1">{error}</p>}
+    </div>
+  );
+}
+
+// ─── ZIP → city + state lookup ─────────────────────────────────────────────────
+/** Looks up city + state from a ZIP code.
+ *  Uses Zippopotam.us (free, no key) for US; returns null on failure. */
+export async function lookupZipCode(
+  zip: string,
+  countryCode = 'us'
+): Promise<{ city: string; state: string } | null> {
+  if (!zip || zip.length < 4) return null;
+  try {
+    // Try Zippopotam (US, CA, GB, AU + many more)
+    const res = await fetch(`https://api.zippopotam.us/${countryCode}/${zip}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const place = data.places?.[0];
+    if (!place) return null;
+    return { city: place['place name'] || '', state: place['state'] || '' };
+  } catch {
+    return null;
+  }
+}

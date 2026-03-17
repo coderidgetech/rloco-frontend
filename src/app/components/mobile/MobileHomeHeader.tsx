@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, ChevronDown, Search, Bell, Heart, User, Grid } from 'lucide-react';
 import { useWishlist } from '@/app/context/WishlistContext';
-import { Logo } from '../Logo';
+import { RlocoLogo } from '../RlocoLogo';
 
 interface MobileHomeHeaderProps {
   selectedCategory?: string;
@@ -32,7 +32,7 @@ export function MobileHomeHeader({ selectedCategory = 'all', onCategoryChange }:
       {/* Logo and Action Icons Section */}
       <div className="px-4 py-3 flex items-center justify-between border-b border-border/10">
         {/* Logo */}
-        <Logo className="text-xl" />
+        <RlocoLogo size="sm" />
 
         {/* Action Icons */}
         <div className="flex items-center gap-2">

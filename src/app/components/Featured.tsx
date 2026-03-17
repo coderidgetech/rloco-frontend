@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { ShoppingCart, Heart, Eye, ArrowRight } from 'lucide-react';
+import { ShoppingCart, Heart, ArrowRight } from 'lucide-react';
 import { Product } from '../types/api';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -9,9 +9,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFeaturedProducts } from '../hooks/useProducts';
 import { useSiteConfig } from '../context/SiteConfigContext';
+import { AddToBagPopover } from './AddToBagPopover';
 
 export function Featured() {
   const { config } = useSiteConfig();
+  const [addToBagProduct, setAddToBagProduct] = useState<Product | null>(null);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
 
   // Don't render if featured products section is disabled
   if (!config.homepage.sections.featuredProducts) {
@@ -23,25 +27,30 @@ export function Featured() {
   const { formatPrice } = useCurrency();
   const navigate = useNavigate();
 
-  const handleAddToCart = (product: Product) => {
-    // Check if product is already in cart
+  const openAddToBagDialog = (product: Product, e: React.MouseEvent) => {
+    e.stopPropagation();
     const isInCart = items.some(item => String(item.id) === String(product.id));
-    
     if (isInCart) {
-      // Navigate to cart if already added
       navigate('/cart');
       return;
     }
-    
+    setSelectedSize(product.sizes?.[0] || 'M');
+    setSelectedColor(product.colors?.[0] || 'Default');
+    setAddToBagProduct(product);
+  };
+
+  const handleConfirmAddToBag = () => {
+    if (!addToBagProduct) return;
+    const size = selectedSize || addToBagProduct.sizes?.[0] || 'M';
     addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.images[0] || '',
-      size: product.sizes[0] || 'M',
+      id: addToBagProduct.id,
+      name: addToBagProduct.name,
+      price: addToBagProduct.price,
+      image: addToBagProduct.images[0] || '',
+      size,
     });
-    
     toast.success('Added to cart');
+    setAddToBagProduct(null);
   };
 
   const toggleWishlist = (product: Product, e: React.MouseEvent) => {
@@ -175,26 +184,39 @@ export function Featured() {
                 )}
               </div>
 
-              <motion.button
-                onClick={() => handleAddToCart(product)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`w-full py-2.5 md:py-3 text-sm md:text-base transition-all duration-300 relative overflow-hidden group rounded-lg ${
-                  items.some(item => String(item.id) === String(product.id))
-                    ? 'bg-green-600 text-white hover:bg-green-700'
-                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                }`}
-              >
-                <motion.div
-                  className="absolute inset-0 bg-foreground/10"
-                  initial={{ x: '-100%' }}
-                  whileHover={{ x: 0 }}
-                  transition={{ duration: 0.3 }}
+              <div className="relative overflow-visible">
+                <motion.button
+                  onClick={(e) => openAddToBagDialog(product, e)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`w-full py-2.5 md:py-3 text-sm font-medium transition-all duration-300 relative overflow-hidden group rounded-lg flex items-center justify-center gap-2 ${
+                    items.some(item => String(item.id) === String(product.id))
+                      ? 'bg-green-600 text-white hover:bg-green-700'
+                      : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                  }`}
+                >
+                  <motion.div
+                    className="absolute inset-0 bg-foreground/10"
+                    initial={{ x: '-100%' }}
+                    whileHover={{ x: 0 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                  <ShoppingCart size={18} className="relative z-10" />
+                  <span className="relative z-10">
+                    {items.some(item => String(item.id) === String(product.id)) ? 'Go to Cart' : 'Add to Bag'}
+                  </span>
+                </motion.button>
+                <AddToBagPopover
+                  isOpen={addToBagProduct?.id === product.id}
+                  product={product}
+                  selectedSize={selectedSize}
+                  selectedColor={selectedColor}
+                  onSizeChange={setSelectedSize}
+                  onColorChange={setSelectedColor}
+                  onConfirm={handleConfirmAddToBag}
+                  onCancel={() => setAddToBagProduct(null)}
                 />
-                <span className="relative z-10">
-                  {items.some(item => String(item.id) === String(product.id)) ? 'Go to Cart' : 'Add to Bag'}
-                </span>
-              </motion.button>
+              </div>
             </motion.div>
             ))}
           </div>

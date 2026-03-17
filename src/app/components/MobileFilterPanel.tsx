@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, X } from 'lucide-react';
-import { categories, categoriesByGender, colorMap, allColors, allSizes } from '../utils/filterConfig';
+import { categoriesByGender, colorMap } from '../utils/filterConfig';
 import { LuxuryCheckbox } from './ui/luxury-checkbox';
 
 const BADGE_OPTIONS = ['Best Seller', 'Trending', 'Most Ordered', 'New', 'Limited Edition', 'Exclusive', 'Hot', 'Popular'] as const;
@@ -37,6 +37,8 @@ interface MobileFilterPanelProps {
   setShowNewArrivals: (value: boolean) => void;
   setShowFeatured: (value: boolean) => void;
   setSelectedBadges: (value: string[]) => void;
+  availableColors?: string[];
+  availableSizes?: string[];
   expandedSections?: Set<string>;
   toggleSection?: (section: string) => void;
   clearAllFilters: () => void;
@@ -75,6 +77,8 @@ export function MobileFilterPanel({
   setShowNewArrivals,
   setShowFeatured,
   setSelectedBadges,
+  availableColors = [],
+  availableSizes = [],
   expandedSections = new Set(),
   toggleSection = () => {},
   clearAllFilters,
@@ -184,7 +188,7 @@ export function MobileFilterPanel({
               <div>
                 <label className="block text-sm font-medium mb-3">Colors</label>
                 <div className="space-y-2">
-                  {allColors.map(color => {
+                  {availableColors.map(color => {
                     const hexColor = colorMap[color] || '#999';
                     const isSelected = selectedColors.includes(color);
                     return (
@@ -220,7 +224,7 @@ export function MobileFilterPanel({
               <div>
                 <label className="block text-sm font-medium mb-3">Sizes</label>
                 <div className="space-y-2">
-                  {allSizes.map(size => (
+                  {availableSizes.map(size => (
                     <label
                       key={size}
                       className="flex items-center gap-3 cursor-pointer group"

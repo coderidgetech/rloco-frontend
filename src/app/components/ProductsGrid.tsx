@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart } from 'lucide-react';
+import { Heart, ShoppingCart } from 'lucide-react';
+import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useCurrency } from '../context/CurrencyContext';
@@ -7,42 +8,53 @@ import { Product } from '../types/api';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { BackgroundDecor } from './BackgroundDecor';
-import { useNewArrivals } from '../hooks/useProducts';
+import { useFeaturedProducts } from '../hooks/useProducts';
 import { useSiteConfig } from '../context/SiteConfigContext';
+import { AddToBagPopover } from './AddToBagPopover';
+
+const TOP_COLLECTION_LIMIT = 16;
 
 export function ProductsGrid() {
   const { config } = useSiteConfig();
+  const [addToBagProduct, setAddToBagProduct] = useState<Product | null>(null);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
 
-  // Don't render if new arrivals section is disabled
-  if (!config.homepage.sections.newArrivals) {
+  // Don't render if featured products (Top Collection) section is disabled
+  if (!config.homepage.sections.featuredProducts) {
     return null;
   }
   const { addToCart, items } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { formatPrice } = useCurrency();
   const navigate = useNavigate();
-  
-  // Fetch new arrival products from API
-  const { products: displayProducts, loading, error } = useNewArrivals(24);
 
-  const handleAddToCart = (product: Product) => {
+  // Top Collection = featured products (matches reference design)
+  const { products: displayProducts, loading, error } = useFeaturedProducts(TOP_COLLECTION_LIMIT);
+
+  const openAddToBagDialog = (product: Product) => {
     const isInCart = items.some(item => String(item.id) === String(product.id));
-    
     if (isInCart) {
       navigate('/cart');
       return;
     }
-    
-    const size = product.sizes[0] || 'M';
+    setSelectedSize(product.sizes?.[0] || 'M');
+    setSelectedColor(product.colors?.[0] || 'Default');
+    setAddToBagProduct(product);
+  };
+
+  const handleConfirmAddToBag = () => {
+    if (!addToBagProduct) return;
+    const size = selectedSize || addToBagProduct.sizes?.[0] || 'M';
     addToCart({
-      id: product.id, // Use product.id directly (MongoDB ObjectID string)
-      name: product.name,
-      price: product.price,
-      image: product.images[0] || '',
+      id: addToBagProduct.id,
+      name: addToBagProduct.name,
+      price: addToBagProduct.price,
+      image: addToBagProduct.images[0] || '',
       size,
     });
-    
     toast.success('Added to cart');
+    setAddToBagProduct(null);
   };
 
   const toggleWishlist = (product: Product) => {
@@ -99,19 +111,26 @@ export function ProductsGrid() {
         
         {!loading && !error && displayProducts.length > 0 && (
           <>
-            {/* Header */}
+            {/* Header - matches reference: decorative line + Top Collection + handpicked subtitle */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mb-12 text-center"
-        >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl mb-3 tracking-tight">Top Collection</h2>
-          <p className="text-foreground/70">
-            Discover our latest {displayProducts.length} new arrivals
-          </p>
-        </motion.div>
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="mb-12 text-center"
+            >
+              <motion.div
+                initial={{ width: 0 }}
+                whileInView={{ width: '3rem' }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="h-0.5 bg-foreground mx-auto mb-6"
+              />
+              <h2 className="text-3xl md:text-4xl lg:text-5xl mb-3 tracking-tight">Top Collection</h2>
+              <p className="text-foreground/70">
+                Discover our handpicked selection of {displayProducts.length} featured products
+              </p>
+            </motion.div>
 
         {/* Products Grid - 4 columns with smaller cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
@@ -128,7 +147,7 @@ export function ProductsGrid() {
                 className="group"
               >
                 <div 
-                  className="relative aspect-[3/4] overflow-hidden mb-2 bg-accent cursor-pointer rounded border border-transparent group-hover:border-primary transition-all duration-500 shadow-sm hover:shadow-md"
+                  className="relative aspect-[3/4] overflow-hidden mb-2 bg-accent cursor-pointer rounded shadow-sm hover:shadow-lg transition-all duration-500"
                   onClick={() => navigate(`/product/${product.id}`)}
                 >
                   <motion.img
@@ -205,52 +224,67 @@ export function ProductsGrid() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: index * 0.05 + 0.2 }}
+                  className="flex-1 flex flex-col overflow-visible"
                 >
                   <div className="text-[10px] text-foreground/50 mb-1 tracking-wider uppercase">
                     {product.category}
                   </div>
                   <h3
-                    className="text-xs mb-1.5 line-clamp-2 group-hover:text-foreground/70 transition-colors cursor-pointer leading-tight"
+                    className="text-xs mb-1.5 h-4 overflow-hidden text-ellipsis whitespace-nowrap group-hover:text-foreground/70 transition-colors cursor-pointer leading-tight"
+                    title={product.name}
                     onClick={() => navigate(`/product/${product.id}`)}
                   >
                     {product.name}
                   </h3>
                   <div className="flex items-center gap-1.5 mb-2">
                     <span className="text-sm font-medium">{formatPrice(product.price)}</span>
-                    {product.originalPrice && (
+                    {product.original_price && (
                       <span className="text-[10px] text-foreground/40 line-through">
-                        {formatPrice(product.originalPrice)}
+                        {formatPrice(product.original_price)}
                       </span>
                     )}
                   </div>
 
-                  <motion.button
-                    onClick={() => handleAddToCart(product)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className={`w-full py-2 transition-all duration-300 relative overflow-hidden text-xs font-medium ${
-                      items.some(item => item.id === product.id)
-                        ? 'bg-green-600 text-white hover:bg-green-700'
-                        : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                    }`}
-                  >
-                    <motion.div
-                      className="absolute inset-0 bg-foreground/10"
-                      initial={{ x: '-100%' }}
-                      whileHover={{ x: 0 }}
-                      transition={{ duration: 0.3 }}
+                  <div className="relative overflow-visible">
+                    <motion.button
+                      onClick={() => openAddToBagDialog(product)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`w-full py-2.5 md:py-3 transition-all duration-300 relative overflow-hidden text-sm font-medium flex items-center justify-center gap-2 ${
+                        items.some(item => String(item.id) === String(product.id))
+                          ? 'bg-green-600 text-white hover:bg-green-700'
+                          : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                      }`}
+                    >
+                      <motion.div
+                        className="absolute inset-0 bg-foreground/10"
+                        initial={{ x: '-100%' }}
+                        whileHover={{ x: 0 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                      <ShoppingCart size={18} className="relative z-10" />
+                      <span className="relative z-10">
+                        {items.some(item => String(item.id) === String(product.id)) ? 'Go to Cart' : 'Add to Bag'}
+                      </span>
+                    </motion.button>
+                    <AddToBagPopover
+                      isOpen={addToBagProduct?.id === product.id}
+                      product={product}
+                      selectedSize={selectedSize}
+                      selectedColor={selectedColor}
+                      onSizeChange={setSelectedSize}
+                      onColorChange={setSelectedColor}
+                      onConfirm={handleConfirmAddToBag}
+                      onCancel={() => setAddToBagProduct(null)}
                     />
-                    <span className="relative z-10">
-                      {items.some(item => String(item.id) === String(product.id)) ? 'Go to Cart' : 'Add to Bag'}
-                    </span>
-                  </motion.button>
+                  </div>
                 </motion.div>
               </motion.div>
             ))}
           </AnimatePresence>
         </div>
 
-        {/* View All Button */}
+        {/* View All Button - reference: px-12 py-4 text-sm font-medium uppercase tracking-widest */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -263,7 +297,7 @@ export function ProductsGrid() {
             onClick={() => navigate('/all-products')}
             className="px-12 py-4 bg-foreground text-background hover:bg-foreground/90 transition-colors text-sm font-medium uppercase tracking-widest"
           >
-            View All {displayProducts.length} Products
+            View All Products
           </motion.button>
         </motion.div>
           </>

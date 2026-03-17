@@ -230,11 +230,6 @@ export function MobileAccountPage() {
               onClick={() => navigate('/addresses')}
             />
             <MenuButton
-              icon={<CreditCard size={20} />}
-              label="Payment Methods"
-              onClick={() => navigate('/payment-methods')}
-            />
-            <MenuButton
               icon={<Bell size={20} />}
               label="Notifications"
               onClick={() => navigate('/notifications')}

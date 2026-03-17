@@ -171,7 +171,7 @@ export function SupportPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background pt-[72px] flex items-center justify-center">
+      <div className="min-h-screen bg-background pt-24 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Please log in to access support</h2>
           <p className="text-foreground/60">You need to be logged in to view and create support tickets.</p>
@@ -181,7 +181,7 @@ export function SupportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-[72px]">
+    <div className="min-h-screen bg-background pt-24">
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Customer Support</h1>
@@ -304,7 +304,7 @@ export function SupportPage() {
                     <textarea
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type your message..."
+                      placeholder="Your message"
                       rows={3}
                       className="flex-1 px-4 py-2 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none resize-none"
                     />
@@ -354,7 +354,7 @@ export function SupportPage() {
                       type="text"
                       value={newTicket.subject}
                       onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
-                      placeholder="Brief description of your issue"
+                      placeholder="Subject"
                       className="w-full px-4 py-2 bg-background border border-foreground/20 focus:border-foreground focus:outline-none"
                     />
                   </div>
@@ -410,7 +410,7 @@ export function SupportPage() {
                     <textarea
                       value={newTicket.message}
                       onChange={(e) => setNewTicket({ ...newTicket, message: e.target.value })}
-                      placeholder="Describe your issue in detail..."
+                      placeholder="Description"
                       rows={6}
                       className="w-full px-4 py-2 bg-background border border-foreground/20 focus:border-foreground focus:outline-none resize-none"
                     />

@@ -1,4 +1,5 @@
-import { MobileHeader } from '../components/mobile/MobileHeader';
+import { useState } from 'react';
+import { MobileHomeHeader } from '../components/mobile/MobileHomeHeader';
 import { MobileHero } from '../components/mobile/MobileHero';
 import { CategoryGrid } from '../components/mobile/CategoryGrid';
 import { MobileGiftSection } from '../components/mobile/MobileGiftSection';
@@ -11,18 +12,20 @@ import { motion } from 'motion/react';
 import { TrendingUp, Zap, Tag, Truck, RotateCcw, Shield } from 'lucide-react';
 
 export function MobileHomePage() {
-  // Get featured products from API
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const { products: featuredProducts } = useFeaturedProducts(10);
   const { products: newArrivals } = useNewArrivals(10);
   const { products: saleProducts } = useOnSaleProducts(10);
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Mobile Header */}
-      <MobileHeader />
+      <MobileHomeHeader
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+      />
 
-      {/* Main Content - ref: pt-[110px] for header + safe area */}
-      <div className="pt-14">
+      {/* Main Content - pt for header + delivery bar + safe area */}
+      <div className="pt-[110px]">
         {/* Hero Carousel */}
         <MobileHero />
 

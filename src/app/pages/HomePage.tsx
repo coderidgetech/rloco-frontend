@@ -31,16 +31,18 @@ export function HomePage() {
       {config.homepage.sections.editorialFeatures && (
         <VideoShowcase />
       )}
+      <div className="relative bg-background snap-start">
+        {config.homepage.sections.featuredProducts && (
+          <>
+            <ProductsGrid />
+            <Featured />
+          </>
+        )}
+      </div>
       <div className="snap-start">
         <InspirationVideos />
       </div>
       <div className="relative bg-background snap-start">
-        {config.homepage.sections.newArrivals && (
-          <ProductsGrid />
-        )}
-        {config.homepage.sections.featuredProducts && (
-          <Featured />
-        )}
         {config.homepage.sections.testimonials && (
           <Testimonials />
         )}

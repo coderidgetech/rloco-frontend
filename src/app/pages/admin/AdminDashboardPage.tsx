@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { useAdmin } from '../../context/AdminContext';
 import { adminService } from '../../services/adminService';
+import { categoryService } from '../../services/categoryService';
 import { useEffect } from 'react';
 
 export const AdminDashboardPage = () => {
@@ -43,6 +44,7 @@ export const AdminDashboardPage = () => {
   const [salesData, setSalesData] = useState<any[]>([]);
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
+  const [categoryData, setCategoryData] = useState<{ name: string; value: number; color: string }[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch dashboard data
@@ -62,8 +64,8 @@ export const AdminDashboardPage = () => {
           startDate.setDate(endDate.getDate() - 90);
         }
 
-        // Fetch stats and sales data
-        const [stats, sales, orders, products] = await Promise.all([
+        // Fetch stats, sales, orders, products, and categories in parallel
+        const [stats, sales, orders, products, categories] = await Promise.all([
           adminService.getDashboardStats(),
           adminService.getDashboardSales({
             start_date: startDate.toISOString(),
@@ -71,12 +73,24 @@ export const AdminDashboardPage = () => {
           }),
           adminService.getDashboardOrders({ limit: 5 }),
           adminService.getDashboardProducts({ limit: 5 }),
+          categoryService.list().catch(() => []),
         ]);
 
         setDashboardStats(stats);
         setSalesData(sales?.data || []);
         setRecentOrders(orders?.data || []);
         setTopProducts(products?.data || []);
+
+        // Build category chart from real categories
+        const CHART_COLORS = ['#000000', '#3b3b3b', '#666666', '#999999', '#cccccc', '#aaaaaa', '#444444'];
+        if (categories && categories.length > 0) {
+          const chartCategories = categories.slice(0, 6).map((cat: any, i: number) => ({
+            name: cat.name,
+            value: Math.round(100 / Math.min(categories.length, 6)),
+            color: CHART_COLORS[i % CHART_COLORS.length],
+          }));
+          setCategoryData(chartCategories);
+        }
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
         // Set empty data on error instead of mock data
@@ -91,14 +105,6 @@ export const AdminDashboardPage = () => {
     fetchDashboardData();
   }, [timeRange]);
 
-  // Category data will be calculated from actual product data if available
-  const categoryData = [
-    { name: 'Dresses', value: 35, color: '#000000' },
-    { name: 'Tops', value: 25, color: '#3b3b3b' },
-    { name: 'Bottoms', value: 20, color: '#666666' },
-    { name: 'Accessories', value: 12, color: '#999999' },
-    { name: 'Others', value: 8, color: '#cccccc' },
-  ];
 
   // Format recent orders for display
   const formattedRecentOrders = recentOrders.length > 0 ? recentOrders.map((order) => ({

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Phone, ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { Logo } from '@/app/components/Logo';
+import { RlocoLogo } from '@/app/components/RlocoLogo';
 
 export function DesktopForgotPasswordPage() {
   const navigate = useNavigate();
@@ -42,7 +42,7 @@ export function DesktopForgotPasswordPage() {
         >
           {/* Logo */}
           <div className="mb-12 flex justify-center">
-            <Logo />
+            <RlocoLogo size="md" />
           </div>
 
           {/* Header */}
@@ -64,7 +64,7 @@ export function DesktopForgotPasswordPage() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 (555) 000-0000"
+                  placeholder="Phone number"
                   required
                   className="w-full pl-12 pr-4 py-4 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />

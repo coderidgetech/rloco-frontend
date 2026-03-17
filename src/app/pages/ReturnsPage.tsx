@@ -57,7 +57,7 @@ export function ReturnsPage() {
     try {
       setLoading(true);
       const response = await returnService.list({ limit: 50 });
-      setReturns(response.data || []);
+      setReturns((response as { returns?: Return[] }).returns || []);
     } catch (error: any) {
       console.error('Failed to fetch returns:', error);
       toast.error('Failed to load returns');
@@ -561,7 +561,7 @@ export function ReturnsPage() {
                     <textarea
                       value={returnDescription}
                       onChange={(e) => setReturnDescription(e.target.value)}
-                      placeholder="Please provide any additional information about your return..."
+                      placeholder="Additional notes (optional)"
                       rows={4}
                       className="w-full px-4 py-2 bg-background border border-foreground/20 focus:border-foreground focus:outline-none resize-none"
                     />

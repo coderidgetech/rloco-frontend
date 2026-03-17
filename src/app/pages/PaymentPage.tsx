@@ -3,12 +3,18 @@ import { Check, ArrowLeft, Star, Truck, Smartphone, CreditCard, Clock, Wallet, B
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { useOrder } from '../context/OrderContext';
+import { useUser } from '../context/UserContext';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Footer } from '../components/Footer';
 import { productService } from '../services/productService';
+import { orderService } from '../services/orderService';
+import { paymentService } from '../services/paymentService';
+import { StripePaymentForm } from '../components/StripePaymentForm';
+import { CreateOrderRequest } from '../types/api';
 import { Product } from '../types/api';
+import type { Order } from '../types/api';
 
 interface Address {
   id: string;
@@ -60,6 +66,7 @@ const UPI_APPS = [
 
 export function PaymentPage() {
   const navigate = useNavigate();
+  const { user } = useUser();
   const { items, clearCart, removeFromCart } = useCart();
   const { formatAmount, convertPrice, currency } = useCurrency();
   const { selectedAddress, setSelectedPaymentMethod: setOrderPaymentMethod } = useOrder();
@@ -74,6 +81,8 @@ export function PaymentPage() {
   const [showBankOffers, setShowBankOffers] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [productsMap, setProductsMap] = useState<Map<string, Product>>(new Map());
+  const [pendingStripePayment, setPendingStripePayment] = useState<{ order: Order; clientSecret: string } | null>(null);
+  const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -172,15 +181,120 @@ export function PaymentPage() {
       return;
     }
 
+    if (!deliveryAddress) {
+      toast.error('Please select a delivery address');
+      return;
+    }
+
     setIsProcessing(true);
-    
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
+    try {
+      const nameParts = deliveryAddress.name?.trim().split(/\s+/) || [];
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      const orderItems = items.map((item) => ({
+        product_id: String(item.id),
+        product_name: item.name,
+        image: item.image,
+        price: item.price,
+        size: item.size,
+        quantity: item.quantity,
+      }));
+
+      const paymentInfoData: Record<string, string> = {};
+      if (selectedPaymentMethod === 'card') {
+        paymentInfoData.card_number = cardNumber.replace(/\s/g, '');
+        paymentInfoData.card_name = cardName;
+        paymentInfoData.expiry_date = expiryDate;
+        paymentInfoData.cvv = cvv;
+      } else if (selectedPaymentMethod === 'upi') {
+        paymentInfoData.upi_id = upiId || selectedUPI || '';
+      } else if (selectedPaymentMethod === 'wallets') {
+        paymentInfoData.wallet_name = selectedWallet || 'Wallet';
+      }
+
+      const paymentMethodApi = selectedPaymentMethod === 'cod' ? 'cod' : selectedPaymentMethod === 'card' ? 'card' : selectedPaymentMethod === 'upi' ? 'upi' : selectedPaymentMethod === 'wallets' ? 'wallet' : 'cod';
+
+      const orderRequest: CreateOrderRequest = {
+        items: orderItems,
+        shipping_info: {
+          first_name: firstName,
+          last_name: lastName,
+          email: user?.email || '',
+          phone: deliveryAddress.mobile || '',
+          address: deliveryAddress.addressLine || '',
+          city: deliveryAddress.city || '',
+          state: deliveryAddress.state || '',
+          zip_code: deliveryAddress.pincode || '',
+          country: currency === 'INR' ? 'India' : 'United States',
+        },
+        payment_info: paymentInfoData,
+        payment_method: paymentMethodApi,
+      };
+
+      const order = await orderService.create(orderRequest);
+
+      // COD, UPI, and Wallet complete immediately (no payment gateway)
+      const completesOffline = paymentMethodApi === 'cod' || paymentMethodApi === 'upi' || paymentMethodApi === 'wallet';
+      if (completesOffline) {
+        clearCart();
+        toast.success('Order placed successfully!');
+        navigate(`/order-confirmation/${order.id}`, { state: { order } });
+        setIsProcessing(false);
+        return;
+      }
+
+      // Card only: Stripe payment intent
+      if (paymentMethodApi === 'card') {
+        if (!stripePublishableKey) {
+          toast.error('Card payments are not configured. Please use UPI, Wallet, or Cash on Delivery.');
+          setIsProcessing(false);
+          return;
+        }
+        try {
+          const paymentIntent = await paymentService.createPaymentIntent({
+            order_id: order.id,
+            amount: finalTotal,
+            currency: currency === 'INR' ? 'INR' : 'USD',
+            gateway: 'stripe',
+          });
+          if (paymentIntent.payment_url) {
+            window.location.href = paymentIntent.payment_url;
+            return;
+          }
+          if (paymentIntent.client_secret) {
+            setPendingStripePayment({ order, clientSecret: paymentIntent.client_secret });
+            setIsProcessing(false);
+            return;
+          }
+          toast.error('Payment could not be started. Please try again or use another method.');
+        } catch (paymentErr: any) {
+          console.error('Payment processing error:', paymentErr);
+          const msg = paymentErr?.response?.data?.error ?? paymentErr?.message ?? 'Payment could not be completed.';
+          toast.error(msg);
+        }
+        setIsProcessing(false);
+        return;
+      }
+
       clearCart();
-      toast.success('Payment successful!');
-      navigate('/order-confirmation');
-    }, 2000);
+      toast.success('Order placed successfully!');
+      navigate(`/order-confirmation/${order.id}`, { state: { order } });
+    } catch (err: any) {
+      console.error('Place order error:', err);
+      toast.error(err?.message || 'Failed to place order. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleStripePaymentSuccess = () => {
+    if (!pendingStripePayment) return;
+    const order = pendingStripePayment.order;
+    setPendingStripePayment(null);
+    clearCart();
+    toast.success('Order placed successfully!');
+    navigate(`/order-confirmation/${order.id}`, { state: { order } });
   };
 
   const renderPaymentContent = () => {
@@ -307,7 +421,7 @@ export function PaymentPage() {
                   setUpiId(e.target.value);
                   setSelectedUPI('');
                 }}
-                placeholder="example@upi"
+                placeholder="UPI ID"
                 className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
               />
               <p className="text-xs text-muted-foreground mt-2">
@@ -344,7 +458,7 @@ export function PaymentPage() {
                       setCardNumber(formatted);
                     }
                   }}
-                  placeholder="1234 5678 9012 3456"
+                  placeholder="Card number"
                   maxLength={19}
                   className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
                 />
@@ -355,7 +469,7 @@ export function PaymentPage() {
                   type="text"
                   value={cardName}
                   onChange={(e) => setCardName(e.target.value.toUpperCase())}
-                  placeholder="Enter cardholder name"
+                  placeholder="Name on card"
                   className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
                 />
               </div>
@@ -388,7 +502,7 @@ export function PaymentPage() {
                         setCvv(value);
                       }
                     }}
-                    placeholder="123"
+                    placeholder="CVV"
                     maxLength={3}
                     className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
                   />
@@ -508,6 +622,29 @@ export function PaymentPage() {
         );
     }
   };
+
+  if (pendingStripePayment) {
+    return (
+      <div className="min-h-screen bg-muted/20 pt-16 md:pt-20 px-4 pb-12">
+        <div className="mx-auto max-w-md">
+          <h1 className="text-2xl font-semibold mb-2">Complete payment</h1>
+          <p className="text-muted-foreground mb-6">
+            Order {pendingStripePayment.order.order_number} — secure card payment via Stripe
+          </p>
+          <StripePaymentForm
+            publishableKey={stripePublishableKey!}
+            clientSecret={pendingStripePayment.clientSecret}
+            onSuccess={handleStripePaymentSuccess}
+            onCancel={() => {
+              setPendingStripePayment(null);
+              setIsProcessing(false);
+              toast.info('Payment cancelled');
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted/20 pt-16 md:pt-20">

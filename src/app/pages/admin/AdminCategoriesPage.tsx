@@ -40,7 +40,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { categoryService } from '../../services/categoryService';
-import { Category } from '../../types/api';
 
 interface Category {
   id: string;

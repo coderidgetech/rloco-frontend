@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { ArrowLeft, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { toast } from 'sonner';
 
 interface Language {
@@ -28,6 +29,7 @@ const LANGUAGES: Language[] = [
 
 export function MobileLanguagePage() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -48,11 +50,11 @@ export function MobileLanguagePage() {
   );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-      {/* Header */}
-      <div className="fixed top-0 left-0 right-0 bg-white border-b border-border/20 z-40">
-        <div className="flex items-center justify-between px-4 py-4" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
-          <button
+    <div className="min-h-screen bg-white dark:bg-background pb-20 md:pb-12" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
+      {isMobile && (
+        <div className="fixed top-0 left-0 right-0 bg-white border-b border-border/20 z-40">
+          <div className="flex items-center justify-between px-4 py-4" style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}>
+            <button
             onClick={() => navigate('/settings')}
             className="p-2 -ml-2 active:bg-foreground/5 rounded-full transition-colors"
           >
@@ -73,9 +75,9 @@ export function MobileLanguagePage() {
           />
         </div>
       </div>
+      )}
 
-      {/* Content */}
-      <div className="pt-[100px] pb-8">{/* Header + safe area */}
+      <div className={isMobile ? 'pt-[100px] pb-8' : 'pt-6 pb-8 max-w-2xl mx-auto px-4'}>{/* Header + safe area */}
         {/* Info Banner */}
         <div className="px-4 mb-4">
           <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">

@@ -1,300 +1,352 @@
-import { motion } from 'motion/react';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, MapPin, Home, Briefcase, Save } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ChevronLeft, Home, Briefcase, MapPin, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { addressService } from '../../services/addressService';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { AddressAutocompleteInput, lookupZipCode } from '../../components/AddressAutocompleteInput';
 
-interface AddressFormData {
+interface FormData {
   name: string;
-  phone: string;
-  street: string;
+  mobile: string;
+  address_line: string;
+  address_line2: string;
   city: string;
   state: string;
-  zip: string;
+  pincode: string;
   country: string;
-  type: 'home' | 'work';
-  isDefault: boolean;
+  type: 'HOME' | 'OFFICE' | 'OTHER';
+  is_default: boolean;
 }
 
+const EMPTY_FORM: FormData = {
+  name: '',
+  mobile: '',
+  address_line: '',
+  address_line2: '',
+  city: '',
+  state: '',
+  pincode: '',
+  country: 'India',
+  type: 'HOME',
+  is_default: false,
+};
+
+const ADDRESS_TYPES: { value: FormData['type']; label: string; icon: React.ReactNode }[] = [
+  { value: 'HOME',   label: 'Home',   icon: <Home size={16} /> },
+  { value: 'OFFICE', label: 'Office', icon: <Briefcase size={16} /> },
+  { value: 'OTHER',  label: 'Other',  icon: <MapPin size={16} /> },
+];
+
 export function MobileAddAddressPage() {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState<AddressFormData>({
-    name: '',
-    phone: '',
-    street: '',
-    city: '',
-    state: '',
-    zip: '',
-    country: 'USA',
-    type: 'home',
-    isDefault: false,
-  });
+  const navigate   = useNavigate();
+  const isMobile   = useIsMobile();
+  const [params]   = useSearchParams();
+  const editId     = params.get('edit');
+  const isEdit     = !!editId;
 
-  const handleInputChange = (field: keyof AddressFormData, value: string | boolean) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const [form, setForm]       = useState<FormData>(EMPTY_FORM);
+  const [errors, setErrors]   = useState<Partial<Record<keyof FormData, string>>>({});
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(isEdit);
+
+  // Load existing address when editing
+  useEffect(() => {
+    if (!editId) return;
+    setFetching(true);
+    addressService.getById(editId)
+      .then((addr) => {
+        setForm({
+          name:         addr.name,
+          mobile:       addr.mobile,
+          address_line: addr.address_line,
+          address_line2: addr.address_line2 ?? '',
+          city:         addr.city,
+          state:        addr.state,
+          pincode:      addr.pincode,
+          country:      addr.country,
+          type:         addr.type,
+          is_default:   addr.is_default,
+        });
+      })
+      .catch(() => {
+        toast.error('Could not load address. Please try again.');
+        navigate(-1);
+      })
+      .finally(() => setFetching(false));
+  }, [editId, navigate]);
+
+  const set = (field: keyof FormData, value: string | boolean) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors(prev => { const e = { ...prev }; delete e[field]; return e; });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate required fields
-    if (!formData.name || !formData.phone || !formData.street || !formData.city || !formData.state || !formData.zip) {
-      toast.error('Please fill in all required fields');
-      return;
+  const handleZipChange = async (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 10);
+    set('pincode', digits);
+    if (digits.length === 5 && (form.country === 'US' || form.country === 'United States')) {
+      const result = await lookupZipCode(digits, 'us');
+      if (result) {
+        set('city', result.city);
+        set('state', result.state);
+        toast.success(`Filled: ${result.city}, ${result.state}`);
+      }
     }
-
-    // In a real app, this would save to a backend
-    toast.success('Address saved successfully!');
-    navigate(-1);
   };
+
+  const validate = (): boolean => {
+    const e: Partial<Record<keyof FormData, string>> = {};
+    if (!form.name.trim())         e.name         = 'Full name is required';
+    if (!form.mobile.trim())       e.mobile       = 'Mobile number is required';
+    else if (!/^\d{10}$/.test(form.mobile.replace(/\D/g, '')))
+                                   e.mobile       = 'Enter a valid 10-digit number';
+    if (!form.address_line.trim()) e.address_line = 'Street address is required';
+    if (!form.city.trim())         e.city         = 'City is required';
+    if (!form.state.trim())        e.state        = 'State is required';
+    if (!form.pincode.trim())      e.pincode      = 'Pincode / ZIP is required';
+    if (!form.country.trim())      e.country      = 'Country is required';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
+  const handleSave = async () => {
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      if (isEdit && editId) {
+        await addressService.update(editId, {
+          name:          form.name,
+          mobile:        form.mobile,
+          address_line:  form.address_line,
+          address_line2: form.address_line2 || undefined,
+          city:          form.city,
+          state:         form.state,
+          pincode:       form.pincode,
+          country:       form.country,
+          type:          form.type,
+          is_default:    form.is_default,
+        });
+        toast.success('Address updated');
+      } else {
+        await addressService.create({
+          name:          form.name,
+          mobile:        form.mobile,
+          address_line:  form.address_line,
+          address_line2: form.address_line2 || undefined,
+          city:          form.city,
+          state:         form.state,
+          pincode:       form.pincode,
+          country:       form.country,
+          type:          form.type,
+          is_default:    form.is_default,
+        });
+        toast.success('Address saved');
+      }
+      navigate(-1);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.error ?? err?.message ?? 'Failed to save address');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (fetching) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 size={24} className="animate-spin text-foreground/40" />
+      </div>
+    );
+  }
+
+  const Field = ({
+    label, field, type = 'text', placeholder, required = true,
+    maxLength, inputMode,
+  }: {
+    label: string;
+    field: keyof FormData;
+    type?: string;
+    placeholder?: string;
+    required?: boolean;
+    maxLength?: number;
+    inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
+  }) => (
+    <div>
+      <label className="block text-xs uppercase tracking-wider text-foreground/60 mb-1.5">
+        {label}{required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      <input
+        type={type}
+        inputMode={inputMode}
+        value={form[field] as string}
+        onChange={(e) => set(field, e.target.value)}
+        placeholder={placeholder}
+        maxLength={maxLength}
+        className={`w-full h-11 px-3 bg-background border text-sm focus:outline-none transition-colors ${
+          errors[field]
+            ? 'border-red-400 focus:border-red-500'
+            : 'border-foreground/20 focus:border-foreground'
+        }`}
+      />
+      {errors[field] && (
+        <p className="text-xs text-red-500 mt-1">{errors[field]}</p>
+      )}
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background pb-24" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-      {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-border/20">
-        <div className="flex items-center justify-between h-14 px-4" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => navigate(-1)}
-            className="w-9 h-9 rounded-full bg-foreground/5 flex items-center justify-center"
-          >
-            <ChevronLeft size={20} />
-          </motion.button>
-
-          <h1 className="text-base font-medium">Add New Address</h1>
-
-          <div className="w-9" /> {/* Spacer for alignment */}
+    <div className="min-h-screen bg-background">
+      {/* Mobile-only internal header (desktop header is provided by DesktopHeaderWrapper) */}
+      {isMobile && (
+        <div className="fixed top-0 left-0 right-0 z-40 bg-background border-b border-foreground/10">
+          <div className="flex items-center h-12 px-4 gap-3">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="flex items-center justify-center w-8 h-8 hover:bg-foreground/5 transition-colors"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <h1 className="text-sm uppercase tracking-widest flex-1">
+              {isEdit ? 'Edit Address' : 'Add Address'}
+            </h1>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Form Content */}
-      <form onSubmit={handleSubmit} className="pt-14 px-4 pb-6">
-        {/* Header Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="py-4"
-        >
-          <div className="flex items-center gap-2 mb-2">
-            <MapPin size={20} className="text-primary" />
-            <h2 className="text-lg font-medium">Delivery Details</h2>
-          </div>
-          <p className="text-sm text-foreground/60">
-            Add a new delivery address for your orders
-          </p>
-        </motion.div>
+      <div className={isMobile ? 'pt-12' : ''}>
+        <div className="max-w-2xl mx-auto px-4 py-6 space-y-8">
 
-        {/* Address Type Selection */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-6"
-        >
-          <label className="block text-sm font-medium mb-3">Address Type</label>
-          <div className="grid grid-cols-2 gap-3">
-            <motion.button
+          {/* Contact */}
+          <section>
+            <p className="text-xs uppercase tracking-widest text-foreground/50 mb-4">Contact</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Full name"     field="name"   placeholder="Full name" />
+              <Field label="Phone number" field="mobile" placeholder="Phone number"
+                     inputMode="numeric" maxLength={10} />
+            </div>
+          </section>
+
+          {/* Address */}
+          <section>
+            <p className="text-xs uppercase tracking-widest text-foreground/50 mb-4">Address</p>
+            <div className="space-y-4">
+              {/* Street address with autocomplete */}
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-foreground/60 mb-1.5">
+                  Street / Area / Locality<span className="text-red-500 ml-0.5">*</span>
+                </label>
+                <AddressAutocompleteInput
+                  value={form.address_line}
+                  onChange={(val) => set('address_line', val)}
+                  onAddressFill={(components) => {
+                    if (components.addressLine) set('address_line', components.addressLine);
+                    if (components.city)        set('city', components.city);
+                    if (components.state)       set('state', components.state);
+                    if (components.pincode)     set('pincode', components.pincode);
+                    if (components.country)     set('country', components.country);
+                  }}
+                  placeholder="Street address"
+                  error={errors.address_line}
+                  countryCode={
+                    form.country === 'US' || form.country === 'United States' ? 'us' : 'in'
+                  }
+                  className="h-11 rounded-none text-sm border-foreground/20 focus:border-foreground focus:ring-0"
+                />
+              </div>
+
+              <Field
+                label="Apartment / Suite (optional)"
+                field="address_line2"
+                placeholder="Apt, suite, or building (optional)"
+                required={false}
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="City"  field="city"  placeholder="City" />
+                <Field label="State" field="state" placeholder="State" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Pincode with ZIP auto-fill */}
+                <div>
+                  <label className="block text-xs uppercase tracking-wider text-foreground/60 mb-1.5">
+                    Pincode / ZIP<span className="text-red-500 ml-0.5">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={form.pincode}
+                    onChange={(e) => handleZipChange(e.target.value)}
+                    placeholder="ZIP / Postal code"
+                    maxLength={10}
+                    className={`w-full h-11 px-3 bg-background border text-sm focus:outline-none transition-colors ${
+                      errors.pincode
+                        ? 'border-red-400 focus:border-red-500'
+                        : 'border-foreground/20 focus:border-foreground'
+                    }`}
+                  />
+                  {errors.pincode && (
+                    <p className="text-xs text-red-500 mt-1">{errors.pincode}</p>
+                  )}
+                </div>
+                <Field label="Country" field="country" placeholder="Country" />
+              </div>
+            </div>
+          </section>
+
+          {/* Address Type */}
+          <section>
+            <p className="text-xs uppercase tracking-widest text-foreground/50 mb-4">Save as</p>
+            <div className="flex gap-3">
+              {ADDRESS_TYPES.map(({ value, label, icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => set('type', value)}
+                  className={`flex items-center gap-2 px-4 h-10 border text-xs uppercase tracking-wider transition-all ${
+                    form.type === value
+                      ? 'border-foreground bg-foreground text-background'
+                      : 'border-foreground/20 text-foreground/60 hover:border-foreground/50'
+                  }`}
+                >
+                  {icon}
+                  {label}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          {/* Default toggle */}
+          <section>
+            <label className="flex items-center justify-between p-4 border border-foreground/20 cursor-pointer hover:bg-foreground/5 transition-colors">
+              <div>
+                <p className="text-sm">Set as default address</p>
+                <p className="text-xs text-foreground/50 mt-0.5">Used automatically at checkout</p>
+              </div>
+              {/* Toggle */}
+              <div
+                onClick={() => set('is_default', !form.is_default)}
+                className={`relative w-11 h-6 transition-colors shrink-0 ${form.is_default ? 'bg-foreground' : 'bg-foreground/20'}`}
+              >
+                <span
+                  className={`absolute top-0.5 w-5 h-5 bg-background transition-all ${form.is_default ? 'left-[22px]' : 'left-0.5'}`}
+                />
+              </div>
+            </label>
+          </section>
+
+          {/* Save button */}
+          <div className="pt-2 pb-8">
+            <button
               type="button"
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleInputChange('type', 'home')}
-              className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${
-                formData.type === 'home'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border bg-white'
-              }`}
+              onClick={handleSave}
+              disabled={loading}
+              className="w-full h-12 bg-foreground text-background hover:bg-foreground/90 transition-all uppercase tracking-widest text-xs disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              <Home size={24} className={formData.type === 'home' ? 'text-primary' : 'text-foreground/60'} />
-              <span className={`text-sm font-medium ${formData.type === 'home' ? 'text-primary' : 'text-foreground/60'}`}>
-                Home
-              </span>
-            </motion.button>
-
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleInputChange('type', 'work')}
-              className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-2 transition-all ${
-                formData.type === 'work'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border bg-white'
-              }`}
-            >
-              <Briefcase size={24} className={formData.type === 'work' ? 'text-primary' : 'text-foreground/60'} />
-              <span className={`text-sm font-medium ${formData.type === 'work' ? 'text-primary' : 'text-foreground/60'}`}>
-                Work
-              </span>
-            </motion.button>
-          </div>
-        </motion.div>
-
-        {/* Contact Information */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="space-y-4 mb-6"
-        >
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Full Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder="John Doe"
-              className="w-full px-4 py-3 rounded-xl border border-border bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-              required
-            />
+              {loading && <Loader2 size={16} className="animate-spin" />}
+              {loading ? 'Saving…' : isEdit ? 'Update Address' : 'Save Address'}
+            </button>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Phone Number <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder="+1 (555) 123-4567"
-              className="w-full px-4 py-3 rounded-xl border border-border bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-              required
-            />
-          </div>
-        </motion.div>
-
-        {/* Address Information */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="space-y-4 mb-6"
-        >
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Street Address <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={formData.street}
-              onChange={(e) => handleInputChange('street', e.target.value)}
-              placeholder="123 Main Street, Apt 4B"
-              className="w-full px-4 py-3 rounded-xl border border-border bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                City <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.city}
-                onChange={(e) => handleInputChange('city', e.target.value)}
-                placeholder="New York"
-                className="w-full px-4 py-3 rounded-xl border border-border bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                State <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.state}
-                onChange={(e) => handleInputChange('state', e.target.value)}
-                placeholder="NY"
-                className="w-full px-4 py-3 rounded-xl border border-border bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                ZIP Code <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={formData.zip}
-                onChange={(e) => handleInputChange('zip', e.target.value)}
-                placeholder="10001"
-                className="w-full px-4 py-3 rounded-xl border border-border bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Country
-              </label>
-              <input
-                type="text"
-                value={formData.country}
-                onChange={(e) => handleInputChange('country', e.target.value)}
-                placeholder="USA"
-                className="w-full px-4 py-3 rounded-xl border border-border bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
-              />
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Default Address Toggle */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="mb-6"
-        >
-          <label className="flex items-center justify-between p-4 rounded-2xl bg-white border border-border cursor-pointer">
-            <div>
-              <p className="text-sm font-medium">Set as default address</p>
-              <p className="text-xs text-foreground/60 mt-1">
-                Use this address for future orders
-              </p>
-            </div>
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={formData.isDefault}
-                onChange={(e) => handleInputChange('isDefault', e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-foreground/10 rounded-full peer-checked:bg-primary transition-all"></div>
-              <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-all peer-checked:translate-x-5 shadow"></div>
-            </div>
-          </label>
-        </motion.div>
-
-        {/* Info Box */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="p-4 bg-blue-50 rounded-2xl mb-6"
-        >
-          <p className="text-xs text-blue-800">
-            💡 <strong>Tip:</strong> Make sure your address is complete and accurate to avoid delivery delays.
-          </p>
-        </motion.div>
-      </form>
-
-      {/* Sticky Bottom Button */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-border/20 p-4">
-        <motion.button
-          type="submit"
-          whileTap={{ scale: 0.98 }}
-          onClick={handleSubmit}
-          className="w-full bg-primary text-white py-4 rounded-full font-medium text-base flex items-center justify-center gap-2 shadow-lg"
-        >
-          <Save size={20} />
-          Save Address
-        </motion.button>
+        </div>
       </div>
     </div>
   );

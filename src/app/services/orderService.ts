@@ -29,7 +29,8 @@ export const orderService = {
 
   async getTracking(orderId: string): Promise<{ updates: OrderTrackingUpdate[] }> {
     const response = await api.get<{ updates: OrderTrackingUpdate[] }>(`/orders/${orderId}/tracking`);
-    return response.data;
+    const data = response.data ?? {};
+    return { updates: data.updates ?? [] };
   },
 };
 

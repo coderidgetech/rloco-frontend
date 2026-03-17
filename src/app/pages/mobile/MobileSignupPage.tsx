@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, User, Phone, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { Logo } from '@/app/components/Logo';
+import { RlocoLogo } from '@/app/components/RlocoLogo';
 
 export function MobileSignupPage() {
   const navigate = useNavigate();
@@ -128,7 +128,7 @@ export function MobileSignupPage() {
               className="text-center mb-8 mt-4"
             >
               <div className="mb-4">
-                <Logo />
+                <RlocoLogo size="md" />
               </div>
               <h1 className="text-3xl mb-2">Create Account</h1>
               <p className="text-foreground/60">Join Rloco today</p>
@@ -153,7 +153,7 @@ export function MobileSignupPage() {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="John Doe"
+                    placeholder="Full name"
                     className="w-full pl-11 pr-4 py-3.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>
@@ -170,7 +170,7 @@ export function MobileSignupPage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="your@email.com"
+                    placeholder="Email address"
                     className="w-full pl-11 pr-4 py-3.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>
@@ -187,7 +187,7 @@ export function MobileSignupPage() {
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+1 (555) 000-0000"
+                    placeholder="Phone number"
                     className="w-full pl-11 pr-4 py-3.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>

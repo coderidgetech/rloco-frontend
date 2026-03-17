@@ -12,9 +12,11 @@ import { CompleteTheLookSection } from '../components/CompleteTheLookSection';
 import { useProduct } from '../hooks/useProducts';
 import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
+import { shippingService } from '../services/shippingService';
 import { ProductReview } from '../types/api';
 import { useUser } from '../context/UserContext';
 import { useCurrency } from '../context/CurrencyContext';
+import { PLACEHOLDER_IMAGE } from '../constants';
 
 interface Review {
   id: number;
@@ -96,6 +98,8 @@ export function ProductDetailPage() {
   const [expandedSection, setExpandedSection] = useState<string>('details');
   const [showSizeChart, setShowSizeChart] = useState(false);
   const [pincode, setPincode] = useState('');
+  const [pincodeResult, setPincodeResult] = useState<string | null>(null);
+  const [pincodeLoading, setPincodeLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [imageDirection, setImageDirection] = useState(0);
   
@@ -260,7 +264,7 @@ export function ProductDetailPage() {
       name: p.name,
       price: p.price,
       originalPrice: p.original_price,
-      image: p.images && p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/800',
+      image: p.images && p.images.length > 0 ? p.images[0] : PLACEHOLDER_IMAGE,
       priceINR: p.price_inr,
       originalPriceINR: p.original_price_inr,
       badge: p.badge,
@@ -293,7 +297,7 @@ export function ProductDetailPage() {
       name: p.name,
       price: p.price,
       originalPrice: p.original_price,
-      image: p.images && p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/800',
+      image: p.images && p.images.length > 0 ? p.images[0] : PLACEHOLDER_IMAGE,
       priceINR: p.price_inr,
       originalPriceINR: p.original_price_inr,
       badge: p.badge,
@@ -309,7 +313,7 @@ export function ProductDetailPage() {
       name: p.name,
       price: p.price,
       originalPrice: p.original_price,
-      image: p.images && p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/800',
+      image: p.images && p.images.length > 0 ? p.images[0] : PLACEHOLDER_IMAGE,
       priceINR: p.price_inr,
       originalPriceINR: p.original_price_inr,
       badge: p.badge,
@@ -328,7 +332,7 @@ export function ProductDetailPage() {
       name: p.name,
       price: p.price,
       originalPrice: p.original_price,
-      image: p.images && p.images.length > 0 ? p.images[0] : 'https://via.placeholder.com/800',
+      image: p.images && p.images.length > 0 ? p.images[0] : PLACEHOLDER_IMAGE,
       category: p.category,
       priceINR: p.price_inr,
       originalPriceINR: p.original_price_inr,
@@ -337,17 +341,60 @@ export function ProductDetailPage() {
   // Get product images - ensure we have an array with valid image URLs
   const productImages = product.images && Array.isArray(product.images) && product.images.length > 0 
     ? product.images.filter(img => img && typeof img === 'string' && img.trim() !== '') // Filter out empty/invalid strings
-    : ['https://via.placeholder.com/800']; // Fallback placeholder
+    : [PLACEHOLDER_IMAGE]; // Fallback placeholder
   
   const averageRating = product.rating || 0;
   const ratingCount = product.reviews || reviews.length;
+
+  // Calculate estimated delivery date (5-7 business days from today)
+  const getEstimatedDelivery = () => {
+    const today = new Date();
+    let businessDays = 0;
+    let current = new Date(today);
+    while (businessDays < 7) {
+      current.setDate(current.getDate() + 1);
+      const day = current.getDay();
+      if (day !== 0 && day !== 6) businessDays++;
+    }
+    return current.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
+  const handlePincodeCheck = async () => {
+    if (!pincode.trim() || pincode.trim().length < 4) {
+      setPincodeResult('Please enter a valid postal code');
+      return;
+    }
+    setPincodeLoading(true);
+    setPincodeResult(null);
+    try {
+      const methods = await shippingService.calculate({
+        country: 'IN',
+        postal_code: pincode.trim(),
+        subtotal: product?.price || 0,
+      });
+      if (methods && methods.length > 0) {
+        const method = methods[0];
+        const deliveryDate = getEstimatedDelivery();
+        const convertedCost =
+          method.currency?.toUpperCase() === 'USD' ? method.base_cost * 75 : method.base_cost;
+        const cost = convertedCost === 0 ? 'Free' : `₹${convertedCost}`;
+        setPincodeResult(`Delivery by ${deliveryDate} · ${cost}`);
+      } else {
+        setPincodeResult(`Estimated delivery by ${getEstimatedDelivery()}`);
+      }
+    } catch {
+      setPincodeResult(`Estimated delivery by ${getEstimatedDelivery()}`);
+    } finally {
+      setPincodeLoading(false);
+    }
+  };
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? '' : section);
   };
 
   return (
-    <div className="min-h-screen bg-background pt-[72px] w-full">
+    <div className="min-h-screen bg-background pt-24 w-full">
       {/* Breadcrumb */}
       <div className="border-b border-foreground/5 bg-background">
         <div className="w-full px-2 md:px-4 py-3 md:py-4">
@@ -388,7 +435,7 @@ export function ProductDetailPage() {
                     style={{ filter: 'brightness(1.05) contrast(1.05) saturate(1.1)' }}
                     onError={(e) => {
                       // Fallback to placeholder if image fails
-                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800';
+                      (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
                     }}
                   />
                 </motion.div>
@@ -553,12 +600,12 @@ export function ProductDetailPage() {
                       >
                         <div className="w-14 h-16 border border-foreground/10 overflow-hidden hover:border-foreground transition-all">
                           <img 
-                            src={variant.images && variant.images.length > 0 ? variant.images[0] : 'https://via.placeholder.com/800'} 
+                            src={variant.images && variant.images.length > 0 ? variant.images[0] : PLACEHOLDER_IMAGE} 
                             alt={variant.name} 
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             style={{ filter: 'brightness(1.05) contrast(1.05) saturate(1.1)' }}
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800';
+                              (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
                             }}
                           />
                         </div>
@@ -764,24 +811,32 @@ export function ProductDetailPage() {
               <div className="mb-4">
                 <span className="text-xs font-medium uppercase tracking-widest">Check Delivery</span>
               </div>
-              <div className="flex gap-2 mb-5">
+              <div className="flex gap-2 mb-3">
                 <input
                   type="text"
-                  placeholder="Enter Postal Code"
+                  placeholder="Postal code"
                   value={pincode}
-                  onChange={(e) => setPincode(e.target.value)}
+                  onChange={(e) => { setPincode(e.target.value); setPincodeResult(null); }}
+                  onKeyDown={(e) => e.key === 'Enter' && handlePincodeCheck()}
                   className="flex-1 h-11 px-4 border border-foreground/20 text-sm bg-background focus:border-foreground focus:outline-none transition-colors"
-                  maxLength={6}
+                  maxLength={10}
                 />
-                <button className="px-6 h-11 border border-foreground text-foreground font-medium text-xs hover:bg-foreground hover:text-background transition-all uppercase tracking-widest">
-                  Check
+                <button
+                  onClick={handlePincodeCheck}
+                  disabled={pincodeLoading}
+                  className="px-6 h-11 border border-foreground text-foreground font-medium text-xs hover:bg-foreground hover:text-background transition-all uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {pincodeLoading ? '...' : 'Check'}
                 </button>
               </div>
+              {pincodeResult && (
+                <p className="text-xs mb-4 text-foreground/70">{pincodeResult}</p>
+              )}
               <div className="space-y-3 text-sm">
                 <div className="flex gap-3 items-start">
                   <Truck size={16} className="text-foreground/40 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="mb-0.5">Delivery by Thu, Jan 9</p>
+                    <p className="mb-0.5">Estimated delivery by {getEstimatedDelivery()}</p>
                     <p className="text-foreground/50 text-xs">Pay on delivery available</p>
                   </div>
                 </div>
@@ -1004,7 +1059,7 @@ export function ProductDetailPage() {
                                           value={editReviewForm.title}
                                           onChange={(e) => setEditReviewForm({ ...editReviewForm, title: e.target.value })}
                                           className="w-full px-3 py-2 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none"
-                                          placeholder="Summarize your experience"
+                                          placeholder="Review title"
                                         />
                                       </div>
                                       <div>
@@ -1014,7 +1069,7 @@ export function ProductDetailPage() {
                                           onChange={(e) => setEditReviewForm({ ...editReviewForm, comment: e.target.value })}
                                           rows={4}
                                           className="w-full px-3 py-2 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none resize-none"
-                                          placeholder="Share your thoughts about this product..."
+                                          placeholder="Your review"
                                         />
                                       </div>
                                       <div className="flex gap-3">
@@ -1197,7 +1252,7 @@ export function ProductDetailPage() {
                                     value={reviewForm.title}
                                     onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
                                     className="w-full px-3 py-2 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors"
-                                    placeholder="Summarize your experience"
+                                    placeholder="Review title"
                                   />
                                 </div>
 
@@ -1209,7 +1264,7 @@ export function ProductDetailPage() {
                                     onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
                                     rows={4}
                                     className="w-full px-3 py-2 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors resize-none"
-                                    placeholder="Share your thoughts about this product..."
+                                    placeholder="Your review"
                                   />
                                 </div>
 
@@ -1518,7 +1573,7 @@ export function ProductDetailPage() {
               name: product.name,
               price: product.price,
               originalPrice: product.original_price,
-              image: product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/800',
+              image: product.images && product.images.length > 0 ? product.images[0] : PLACEHOLDER_IMAGE,
               category: product.category,
               priceINR: product.price_inr,
               originalPriceINR: product.original_price_inr,

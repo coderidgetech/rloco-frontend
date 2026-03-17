@@ -16,6 +16,7 @@ export interface SiteConfig {
       facebook: string;
       twitter: string;
       pinterest: string;
+      youtube: string;
     };
     currency: string;
     timezone: string;
@@ -203,6 +204,7 @@ const defaultConfig: SiteConfig = {
       facebook: 'facebook.com/rloco',
       twitter: '@rloco',
       pinterest: 'pinterest.com/rloco',
+      youtube: 'youtube.com/@rloco',
     },
     currency: 'usd',
     timezone: 'america/new_york',
@@ -416,7 +418,14 @@ export const SiteConfigProvider = ({ children }: { children: ReactNode }) => {
           ...mergedConfig,
           ...configResponse.data,
           // Ensure nested objects are properly merged
-          general: { ...mergedConfig.general, ...(configResponse.data.general || {}) },
+          general: {
+            ...mergedConfig.general,
+            ...(configResponse.data.general || {}),
+            socialMedia: {
+              ...mergedConfig.general.socialMedia,
+              ...(configResponse.data.general?.socialMedia || {}),
+            },
+          },
           design: { 
             ...mergedConfig.design, 
             ...(configResponse.data.design || {}),

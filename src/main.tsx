@@ -2,16 +2,17 @@ import { createRoot } from "react-dom/client";
 import App from "./app/App.tsx";
 import "./styles/index.css";
 
-// Register Service Worker for PWA
-if ('serviceWorker' in navigator) {
+// Service Worker: only in production (dev server: unregister so no FetchEvent errors)
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
-      .then((registration) => {
-        console.log('Service Worker registered:', registration);
-      })
-      .catch((error) => {
-        console.log('Service Worker registration failed:', error);
-      });
+      .then((reg) => console.log('SW registered', reg))
+      .catch((err) => console.warn('SW registration failed', err));
+  });
+}
+if ('serviceWorker' in navigator && !import.meta.env.PROD) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.getRegistrations().then((regs) => regs.forEach((r) => r.unregister()));
   });
 }
 

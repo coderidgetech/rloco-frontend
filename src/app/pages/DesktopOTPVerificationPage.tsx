@@ -3,11 +3,13 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { Logo } from '@/app/components/Logo';
+import { RlocoLogo } from '@/app/components/RlocoLogo';
+import { useUser } from '@/app/context/UserContext';
 
 export function DesktopOTPVerificationPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { syncFromStorage } = useUser();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
@@ -75,12 +77,13 @@ export function DesktopOTPVerificationPage() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1500));
 
-    // Store auth data
+    // Store auth data (demo/OTP flow)
     localStorage.setItem('isAuthenticated', 'true');
     localStorage.setItem('userPhone', phone);
     if (name) localStorage.setItem('userName', name);
     if (email) localStorage.setItem('userEmail', email);
 
+    syncFromStorage(); // so Account page sees isAuthenticated before navigate
     toast.success(isSignup ? 'Account created successfully!' : 'Phone verified successfully!');
     setLoading(false);
     navigate(returnTo, { replace: true });
@@ -111,7 +114,7 @@ export function DesktopOTPVerificationPage() {
         >
           {/* Logo */}
           <div className="mb-12 flex justify-center">
-            <Logo />
+            <RlocoLogo size="md" />
           </div>
 
           {/* Header */}

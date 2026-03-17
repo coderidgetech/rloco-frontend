@@ -36,7 +36,7 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
           }));
           setVideos(transformedVideos);
         } catch (err: any) {
-          console.error('Failed to fetch videos:', err);
+          console.error('Failed to fetch inspiration videos:', err);
           setError('Failed to load videos');
           setVideos([]);
         } finally {
@@ -53,8 +53,34 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const totalVideos = videos.length;
-  const itemsToShow = 5; // Show 5 videos at a time - all visible
-  const MAX_VIDEO_DURATION = 10; // Maximum 10 seconds per video
+  const itemsToShow = 5;
+  const MAX_VIDEO_DURATION = 10;
+
+  // Video playback effect - MUST be before any conditional return (Rules of Hooks)
+  useEffect(() => {
+    if (loading || totalVideos === 0) return;
+    setIsPlaying(false);
+    if (autoAdvanceTimerRef.current) {
+      clearTimeout(autoAdvanceTimerRef.current);
+      autoAdvanceTimerRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      videoRef.current.play().then(() => {
+        setIsPlaying(true);
+        autoAdvanceTimerRef.current = setTimeout(() => {
+          setCurrentIndex((prev) => (prev + 1) % totalVideos);
+        }, MAX_VIDEO_DURATION * 1000);
+      }).catch(() => setIsPlaying(false));
+    }
+    return () => {
+      if (autoAdvanceTimerRef.current) {
+        clearTimeout(autoAdvanceTimerRef.current);
+        autoAdvanceTimerRef.current = null;
+      }
+    };
+  }, [loading, currentIndex, totalVideos]);
 
   // Show loading state
   if (loading) {
@@ -65,16 +91,7 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
     );
   }
 
-  // Show error state
-  if (error) {
-    return (
-      <div className="w-full py-12 flex items-center justify-center">
-        <div className="text-red-600">{error}</div>
-      </div>
-    );
-  }
-
-  // Show empty state
+  // Don't render section when no videos (API data only)
   if (videos.length === 0) {
     return null;
   }
@@ -118,43 +135,6 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
       setIsMuted(!isMuted);
     }
   };
-
-  useEffect(() => {
-    // Reset playing state when index changes
-    setIsPlaying(false);
-    
-    // Clear any existing timer
-    if (autoAdvanceTimerRef.current) {
-      clearTimeout(autoAdvanceTimerRef.current);
-      autoAdvanceTimerRef.current = null;
-    }
-    
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-      // Auto-play the new center video
-      videoRef.current.play().then(() => {
-        setIsPlaying(true);
-        
-        // Set a timer to auto-advance after MAX_VIDEO_DURATION seconds
-        autoAdvanceTimerRef.current = setTimeout(() => {
-          const nextIndex = (currentIndex + 1) % totalVideos;
-          setCurrentIndex(nextIndex);
-        }, MAX_VIDEO_DURATION * 1000);
-      }).catch(() => {
-        // Auto-play prevented, user needs to interact
-        setIsPlaying(false);
-      });
-    }
-    
-    // Cleanup timer on unmount or index change
-    return () => {
-      if (autoAdvanceTimerRef.current) {
-        clearTimeout(autoAdvanceTimerRef.current);
-        autoAdvanceTimerRef.current = null;
-      }
-    };
-  }, [currentIndex, totalVideos]);
 
   // Calculate which videos to show - 5 items (-2, -1, 0, +1, +2)
   const getVisibleVideos = () => {

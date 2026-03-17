@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PLACEHOLDER_IMAGE } from '../../constants';
 import { motion } from 'motion/react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Button } from '../../components/ui/button';
@@ -67,9 +68,9 @@ export const AdminOrdersPage = () => {
           params.status = statusFilter;
         }
 
-        const response = await orderService.list(params);
-        setOrders(response?.data || []);
-        setTotal(response?.total || 0);
+        const response = await orderService.list(params) as { orders?: Order[]; total?: number };
+        setOrders(response?.orders || []);
+        setTotal(response?.total ?? 0);
       } catch (error) {
         console.error('Failed to fetch orders:', error);
         toast.error('Failed to load orders');
@@ -160,11 +161,12 @@ export const AdminOrdersPage = () => {
         await orderService.updateStatus(selectedOrder.id, newStatus);
         toast.success(`Order ${selectedOrder.order_number || selectedOrder.id} status updated to ${newStatus}`);
         // Refresh orders
-        const response = await orderService.list({ limit, skip: page * limit, status: statusFilter !== 'all' ? statusFilter : undefined });
-        setOrders(response.data);
-        setTotal(response.total);
+        const response = await orderService.list({ limit, skip: page * limit, status: statusFilter !== 'all' ? statusFilter : undefined }) as { orders?: Order[]; total?: number };
+        const orderList = response?.orders || [];
+        setOrders(orderList);
+        setTotal(response?.total ?? 0);
         // Update selected order
-        const updatedOrder = response.data?.find(o => o.id === selectedOrder.id);
+        const updatedOrder = orderList.find(o => o.id === selectedOrder.id);
         if (updatedOrder) {
           setSelectedOrder(updatedOrder);
         }
@@ -419,7 +421,7 @@ export const AdminOrdersPage = () => {
                     selectedOrder.items.map((item: any, index: number) => (
                       <div key={index} className="flex items-center gap-4 p-3 bg-gray-50 rounded">
                         <img
-                          src={item.image || '/placeholder-image.jpg'}
+                          src={item.image || PLACEHOLDER_IMAGE}
                           alt={item.product_name}
                           className="w-16 h-16 object-cover rounded"
                         />

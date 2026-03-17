@@ -1,11 +1,15 @@
 import { motion } from 'motion/react';
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { useUser } from '@/app/context/UserContext';
 
 export function MobileOTPVerificationPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = (location.state as { returnTo?: string })?.returnTo || '/account';
+  const { syncFromStorage } = useUser();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
@@ -65,9 +69,11 @@ export function MobileOTPVerificationPage() {
 
     // Simulate API call
     setTimeout(() => {
-      // For demo, accept any 6-digit code
+      localStorage.setItem('isAuthenticated', 'true');
+      syncFromStorage();
       toast.success('Phone verified successfully!');
-      navigate('/', { replace: true });
+      setLoading(false);
+      navigate(returnTo, { replace: true });
     }, 1500);
   };
 

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import { wishlistService } from '../services/wishlistService';
+import { productService } from '../services/productService';
 import { useUser } from './UserContext';
 import { Product } from '../types/api';
 
@@ -46,11 +47,34 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
     try {
       setLoading(true);
-      const wishlist = await wishlistService.getWishlist();
-      // Convert API wishlist items to local format
-      // Note: Backend returns Wishlist[] with product_id, we'd need to fetch product details
-      // For now, we'll keep a simple mapping
-      setItems([]); // Will be populated when we fetch product details
+      const wishlistEntries = await wishlistService.getWishlist();
+      if (!wishlistEntries || wishlistEntries.length === 0) {
+        setItems([]);
+        return;
+      }
+
+      // Fetch product details for each wishlist entry
+      const productPromises = wishlistEntries.map((entry) =>
+        productService.getById(entry.product_id).catch(() => null)
+      );
+      const products = await Promise.all(productPromises);
+
+      const mappedItems: WishlistItem[] = products
+        .filter((p): p is Product => p !== null)
+        .map((p) => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          image: p.images?.[0] || '',
+          category: p.category,
+          gender: p.gender,
+          colors: p.colors,
+          onSale: p.on_sale,
+          newArrival: p.new_arrival,
+          featured: p.featured,
+        }));
+
+      setItems(mappedItems);
     } catch (error) {
       console.error('Failed to sync wishlist:', error);
     } finally {

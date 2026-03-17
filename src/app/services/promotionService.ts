@@ -7,8 +7,8 @@ export const promotionService = {
     return response.data;
   },
 
-  async validate(code: string, subtotal: number): Promise<{ valid: boolean; discount?: number; promotion?: Promotion }> {
-    const response = await api.post<{ valid: boolean; discount?: number; promotion?: Promotion }>('/promotions/validate', {
+  async validate(code: string, subtotal: number): Promise<{ valid?: boolean; discount?: number; promotion?: Promotion }> {
+    const response = await api.post<{ valid?: boolean; discount?: number; promotion?: Promotion }>('/promotions/validate', {
       code,
       subtotal,
     });

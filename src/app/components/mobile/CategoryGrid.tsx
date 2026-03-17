@@ -36,21 +36,21 @@ const categories: Category[] = [
     name: 'Shoes',
     image: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=400&q=80',
     count: 124,
-    link: '/category/shoes',
+    link: '/all-products?category=Shoes',
   },
   {
     id: 'bags',
     name: 'Bags',
     image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=400&q=80',
     count: 67,
-    link: '/category/accessories',
+    link: '/all-products?category=Accessories',
   },
   {
     id: 'jewelry',
     name: 'Jewelry',
     image: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&q=80',
     count: 98,
-    link: '/category/jewelry',
+    link: '/all-products?category=Jewelry',
   },
 ];
 

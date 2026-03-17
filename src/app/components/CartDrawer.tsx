@@ -1,8 +1,8 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Plus, Minus, ShoppingBag, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
-import { useState } from 'react';
 import { Button } from './ui/button';
 
 interface CartDrawerProps {
@@ -11,17 +11,13 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
+  const navigate = useNavigate();
   const { items, removeFromCart, updateQuantity, total, itemCount } = useCart();
   const { formatAmount, convertPrice } = useCurrency();
-  const [checkingOut, setCheckingOut] = useState(false);
 
   const handleCheckout = () => {
-    setCheckingOut(true);
-    // Simulate checkout process
-    setTimeout(() => {
-      alert('Checkout functionality would be implemented here!');
-      setCheckingOut(false);
-    }, 1500);
+    onClose();
+    navigate('/checkout');
   };
 
   return (
@@ -185,10 +181,9 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
                 <Button
                   onClick={handleCheckout}
-                  disabled={checkingOut}
                   className="w-full"
                 >
-                  {checkingOut ? 'Processing...' : 'Proceed to Checkout'}
+                  Proceed to Checkout
                 </Button>
 
                 <Button

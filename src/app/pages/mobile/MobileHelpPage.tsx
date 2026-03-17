@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Search, ChevronDown, ChevronUp, MessageCircle, Phone, Mail, HelpCircle } from 'lucide-react';
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
+import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { useNavigate } from 'react-router-dom';
 
 interface FAQ {
@@ -63,6 +64,8 @@ const FAQS: FAQ[] = [
 ];
 
 export function MobileHelpPage() {
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -77,13 +80,11 @@ export function MobileHelpPage() {
     return matchesSearch && matchesCategory;
   });
 
-  const navigate = useNavigate();
-
   return (
-    <div className="min-h-screen bg-white dark:bg-background pb-20" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-      <MobileSubPageHeader onBack={() => navigate('/account')} />
+    <div className="min-h-screen bg-white dark:bg-background pb-20 md:pb-12" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
+      {isMobile && <MobileSubPageHeader onBack={() => navigate('/account')} />}
 
-      <div className="pt-[100px]">{/* Header + safe area */}
+      <div className={isMobile ? 'pt-[100px]' : 'pt-6 max-w-3xl mx-auto px-4'}>{/* Header + safe area */}
         {/* Header */}
         <div className="bg-white p-4 border-b border-border/20">
           <h1 className="text-2xl font-medium mb-1">Help Center</h1>

@@ -61,7 +61,7 @@ export function StoryCircles() {
     if (story.id === 'new') {
       navigate('/new-arrivals');
     } else if (story.category) {
-      navigate(`/category/${story.category.toLowerCase()}`);
+      navigate(`/all-products?category=${encodeURIComponent(story.category)}`);
     } else if (story.id === 'sale') {
       navigate('/sale');
     }

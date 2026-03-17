@@ -4,7 +4,7 @@ import { Wishlist, Product } from '../types/api';
 export const wishlistService = {
   async getWishlist(): Promise<Wishlist[]> {
     const response = await api.get<Wishlist[]>('/wishlist');
-    return response.data;
+    return response.data ?? [];
   },
 
   async addToWishlist(productId: string): Promise<Wishlist> {
