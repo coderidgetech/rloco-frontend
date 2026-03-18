@@ -18,7 +18,9 @@
     "cap:add:ios": "npx cap add ios",
     "cap:add:android": "npx cap add android",
     "ios:build": "pnpm build:mobile && npx cap open ios",
-    "android:build": "pnpm build:mobile && npx cap open android"
+    "android:build": "pnpm build:mobile && npx cap open android",
+    "deploy": "pnpm run build && wrangler deploy",
+    "preview": "pnpm run build && wrangler dev"
   },
   "dependencies": {
     "@capacitor/app": "^8.0.0",
@@ -96,10 +98,12 @@
     "@capacitor/cli": "^8.0.1",
     "@capacitor/core": "^8.0.1",
     "@capacitor/ios": "^8.0.1",
+    "@cloudflare/vite-plugin": "^1.29.1",
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
     "tailwindcss": "4.1.12",
-    "vite": "6.3.5"
+    "vite": "6.3.5",
+    "wrangler": "^4.75.0"
   },
   "peerDependencies": {
     "react": "18.3.1",
