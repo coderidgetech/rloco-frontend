@@ -7,7 +7,12 @@ html, body {
 }
 
 html {
-  scroll-padding-top: 80px; /* Account for fixed header toolbar (64px) */
+  scroll-padding-top: max(5rem, calc(3.75rem + env(safe-area-inset-top, 0px)));
+}
+@media (min-width: 768px) {
+  html {
+    scroll-padding-top: 5rem;
+  }
 }
 
 /* Smooth animations for all transitions */
@@ -367,5 +372,30 @@ html {
     overflow: hidden;
     text-overflow: ellipsis;
     word-break: break-word;
+  }
+
+  /* Below fixed global Navigation + notch safe area */
+  .pt-page-nav {
+    padding-top: max(3.75rem, calc(2.875rem + env(safe-area-inset-top, 0px)));
+  }
+  @media (min-width: 640px) {
+    .pt-page-nav {
+      padding-top: max(5rem, calc(4.25rem + env(safe-area-inset-top, 0px)));
+    }
+  }
+  @media (min-width: 768px) {
+    .pt-page-nav {
+      padding-top: 6rem;
+    }
+  }
+
+  /* Extra bottom space when mobile bottom tab bar is visible */
+  .pb-mobile-nav {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  }
+  @media (min-width: 768px) {
+    .pb-mobile-nav {
+      padding-bottom: 0;
+    }
   }
 }

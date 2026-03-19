@@ -1,28 +1,30 @@
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
-import { Gift, Heart, Sparkles } from 'lucide-react';
+import { Gift, Heart, Sparkles, ArrowRight } from 'lucide-react';
 
 const giftCategories = [
   {
     title: 'Gift For Her',
-    subtitle: 'Thoughtful presents she\'ll treasure',
+    subtitle: "Thoughtful presents she'll treasure",
+    description: 'Curated gifts for every special woman',
     image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80',
     link: '/gift-for-her',
     icon: Heart,
-    gradient: 'from-pink-500/70 via-pink-500/50 to-purple-600/70',
-    accentColor: 'text-pink-600',
-    bgColor: 'bg-pink-50',
+    gradient: 'from-pink-500/25 via-transparent to-transparent',
+    accentColor: 'text-pink-600 dark:text-pink-400',
+    bgColor: 'bg-pink-50/90 dark:bg-pink-950/25',
     items: 127,
   },
   {
     title: 'Gift For Him',
     subtitle: 'Perfect gifts for every gentleman',
+    description: 'Premium gifts he\'ll love',
     image: 'https://images.unsplash.com/photo-1549298240-0d8e60513026?w=600&q=80',
     link: '/gift-for-him',
     icon: Gift,
-    gradient: 'from-blue-500/70 via-blue-500/50 to-cyan-600/70',
+    gradient: 'from-primary/20 via-transparent to-transparent',
     accentColor: 'text-primary',
-    bgColor: 'bg-primary/5',
+    bgColor: 'bg-primary/5 dark:bg-primary/15',
     items: 94,
   },
 ];
@@ -31,180 +33,76 @@ export function MobileGiftSection() {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full bg-gradient-to-br from-background via-background to-background/95 py-6 relative overflow-hidden">
+    <section className="relative w-full overflow-hidden bg-gradient-to-b from-background to-muted/20 py-8">
       <motion.div
-        animate={{
-          y: [0, -10, 0],
-          rotate: [0, 5, -5, 0],
-        }}
-        transition={{
-          duration: 5,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-        className="absolute top-8 right-8 text-primary/10"
+        animate={{ y: [0, -8, 0] }}
+        transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute right-6 top-10 text-primary/15"
       >
-        <Sparkles size={24} />
+        <Sparkles size={22} />
       </motion.div>
 
-      <motion.div
-        animate={{
-          y: [0, 10, 0],
-          rotate: [0, -5, 5, 0],
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 1
-        }}
-        className="absolute bottom-8 left-8 text-pink-500/10"
-      >
-        <Sparkles size={20} />
-      </motion.div>
+      <div className="relative z-10 mx-auto max-w-lg px-4">
+        <div className="mb-6 text-center">
+          <div className="mx-auto mb-3 h-0.5 w-12 bg-primary" />
+          <h2 className="mb-1 text-2xl font-semibold tracking-tight">Perfect Gifts</h2>
+          <p className="text-sm text-foreground/60">Handpicked for every special moment</p>
+        </div>
 
-      <div className="px-4 mb-5 text-center relative z-10">
-        <motion.div
-          initial={{ scaleX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="w-12 h-0.5 bg-primary mx-auto mb-3"
-        />
-        <motion.h2
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-2xl font-bold tracking-tight mb-1"
-        >
-          Perfect Gifts
-        </motion.h2>
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-sm text-foreground/60"
-        >
-          Handpicked for every special moment
-        </motion.p>
-      </div>
-
-      <div className="px-4 grid grid-cols-1 gap-4 relative z-10">
-        {giftCategories.map((gift, index) => {
-          const IconComponent = gift.icon;
-          return (
-            <motion.button
-              key={gift.title}
-              onClick={() => navigate(gift.link)}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{
-                duration: 0.5,
-                delay: index * 0.15,
-                ease: [0.22, 1, 0.36, 1]
-              }}
-              whileTap={{ scale: 0.98 }}
-              className="group relative overflow-hidden rounded-2xl bg-white border border-border/30 shadow-lg active:shadow-xl transition-shadow text-left"
-            >
-              <div className="relative h-[280px] flex flex-col">
-                <div className="relative h-[160px] overflow-hidden">
-                  <motion.img
-                    src={gift.image}
-                    alt={gift.title}
-                    className="w-full h-full object-cover"
-                    whileTap={{ scale: 1.05 }}
-                    transition={{ duration: 0.5 }}
-                  />
-                  <div className={`absolute inset-0 bg-gradient-to-br ${gift.gradient}`} />
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    whileInView={{ scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{
-                      delay: index * 0.15 + 0.2,
-                      type: 'spring',
-                      stiffness: 200
-                    }}
-                    className="absolute top-4 right-4 w-14 h-14 rounded-full bg-white shadow-xl flex items-center justify-center z-10"
-                  >
-                    <IconComponent
-                      className={gift.accentColor}
-                      size={26}
-                      fill={gift.icon === Heart ? 'currentColor' : 'none'}
-                      strokeWidth={gift.icon === Heart ? 0 : 2.5}
+        <ul className="flex flex-col gap-4">
+          {giftCategories.map((gift, index) => {
+            const IconComponent = gift.icon;
+            return (
+              <li key={gift.title} className="list-none">
+                <motion.button
+                  type="button"
+                  onClick={() => navigate(gift.link)}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: '-20px' }}
+                  transition={{ delay: index * 0.1, duration: 0.5 }}
+                  whileTap={{ scale: 0.99 }}
+                  className="w-full overflow-hidden rounded-2xl border border-border/40 bg-card text-left shadow-md ring-1 ring-black/5 dark:ring-white/10"
+                >
+                  <div className="relative aspect-[5/4] w-full overflow-hidden">
+                    <img
+                      src={gift.image}
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-cover object-center"
                     />
-                  </motion.div>
-                  <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-md">
-                    <span className="text-xs font-bold text-foreground">{gift.items} items</span>
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-t ${gift.gradient}`}
+                      aria-hidden
+                    />
+                    <span className="absolute left-3 top-3 z-10 rounded-full bg-white/95 px-2.5 py-1 text-xs font-bold shadow-md">
+                      {gift.items} items
+                    </span>
+                    <div className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-lg">
+                      <IconComponent
+                        className={gift.accentColor}
+                        size={22}
+                        fill={gift.icon === Heart ? 'currentColor' : 'none'}
+                        strokeWidth={gift.icon === Heart ? 0 : 2}
+                      />
+                    </div>
                   </div>
-                  <motion.div
-                    initial={{ x: '-100%' }}
-                    whileTap={{ x: '100%' }}
-                    transition={{ duration: 0.7 }}
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none"
-                  />
-                </div>
-
-                <div className={`relative flex-1 p-5 ${gift.bgColor} flex flex-col justify-center`}>
-                  <div className={`absolute top-0 left-0 w-16 h-16 border-t-2 border-l-2 ${gift.accentColor} opacity-20 rounded-tl-2xl`} />
-                  <motion.h3
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.15 + 0.3 }}
-                    className="text-2xl font-bold tracking-tight mb-1.5"
-                  >
-                    {gift.title}
-                  </motion.h3>
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.15 + 0.4 }}
-                    className={`text-sm font-medium ${gift.accentColor} mb-3`}
-                  >
-                    {gift.subtitle}
-                  </motion.p>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.15 + 0.5 }}
-                    className="flex items-center gap-2 text-foreground text-sm font-medium"
-                  >
-                    <span>Explore Now</span>
-                    <motion.span
-                      animate={{ x: [0, 4, 0] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
-                    >
-                      →
-                    </motion.span>
-                  </motion.div>
-                  <motion.div
-                    initial={{ scaleX: 0 }}
-                    whileInView={{ scaleX: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.15 + 0.6, duration: 0.6 }}
-                    className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary/60 to-transparent origin-left"
-                  />
-                </div>
-              </div>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                whileTap={{ opacity: 1 }}
-                className="absolute inset-0 rounded-2xl pointer-events-none transition-opacity"
-                style={{
-                  boxShadow: `0 0 30px ${gift.icon === Heart ? 'rgba(236, 72, 153, 0.4)' : 'rgba(180, 119, 14, 0.4)'} inset`,
-                }}
-              />
-            </motion.button>
-          );
-        })}
+                  <div className={`px-4 py-4 ${gift.bgColor}`}>
+                    <h3 className="mb-1 text-lg font-bold">{gift.title}</h3>
+                    <p className={`mb-2 text-sm font-semibold ${gift.accentColor}`}>
+                      {gift.subtitle}
+                    </p>
+                    <p className="mb-3 text-sm text-foreground/70">{gift.description}</p>
+                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold">
+                      Explore
+                      <ArrowRight size={16} />
+                    </span>
+                  </div>
+                </motion.button>
+              </li>
+            );
+          })}
+        </ul>
       </div>
-    </div>
+    </section>
   );
 }

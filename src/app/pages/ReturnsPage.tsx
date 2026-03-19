@@ -175,9 +175,9 @@ export function ReturnsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
       {/* Hero Section */}
-      <section className="relative py-20 md:py-32 border-b border-foreground/10">
+      <section className="relative py-12 sm:py-20 md:py-32 border-b border-foreground/10">
         <div className="w-full px-2 md:px-4">
           <button
             onClick={() => navigate(-1)}

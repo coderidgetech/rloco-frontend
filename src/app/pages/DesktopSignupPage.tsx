@@ -69,7 +69,7 @@ export function DesktopSignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen bg-white flex flex-col lg:flex-row">
       {/* Left Side - Image with Overlay */}
       <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 z-10" />
@@ -97,7 +97,7 @@ export function DesktopSignupPage() {
       </div>
 
       {/* Right Side - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:p-8 pt-page-nav pb-mobile-nav lg:pb-8 lg:pt-32">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -110,8 +110,8 @@ export function DesktopSignupPage() {
           </div>
 
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl mb-3">Create Account</h1>
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-4xl mb-2 sm:mb-3">Create Account</h1>
             <p className="text-foreground/60">Join Rloco today</p>
           </div>
 

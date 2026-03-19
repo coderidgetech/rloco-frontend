@@ -124,7 +124,7 @@ export function OrderConfirmationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-24">
+    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav px-4 sm:px-6">
       <div className="max-w-5xl mx-auto px-4 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

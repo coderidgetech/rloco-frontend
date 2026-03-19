@@ -12,8 +12,10 @@ import { AccountPage } from './AccountPage';
 import { RlocoLogo } from './RlocoLogo';
 import { MegaMenu } from './MegaMenu';
 import { LoginModal } from './LoginModal';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export function Navigation() {
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [prevScrollPos, setPrevScrollPos] = useState(0);
@@ -143,21 +145,110 @@ export function Navigation() {
   return (
     <>
       <nav
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+        className="fixed left-0 right-0 top-0 z-50 border-b border-transparent transition-all duration-300 dark:border-border/30 dark:bg-background/95"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
           transform: visible ? 'translateY(0)' : 'translateY(-100%)',
           transition: 'transform 0.3s ease-in-out, background-color 0.3s ease',
-          backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.6)',
-          backdropFilter: scrolled ? 'blur(20px)' : 'blur(12px)',
-          WebkitBackdropFilter: scrolled ? 'blur(20px)' : 'blur(12px)',
-          borderBottom: scrolled ? '1px solid rgba(255, 255, 255, 0.2)' : 'none',
-          boxShadow: scrolled ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : 'none',
+          backgroundColor:
+            isMobile
+              ? scrolled
+                ? 'rgba(255, 255, 255, 0.97)'
+                : 'rgba(255, 255, 255, 0.94)'
+              : scrolled
+                ? 'rgba(255, 255, 255, 0.8)'
+                : 'rgba(255, 255, 255, 0.6)',
+          backdropFilter: isMobile || scrolled ? 'blur(16px) saturate(1.2)' : 'blur(12px)',
+          WebkitBackdropFilter: isMobile || scrolled ? 'blur(16px) saturate(1.2)' : 'blur(12px)',
+          borderBottom:
+            isMobile || scrolled ? '1px solid rgba(0, 0, 0, 0.06)' : 'none',
+          boxShadow:
+            isMobile || scrolled ? '0 1px 0 rgba(0,0,0,0.04), 0 4px 24px -8px rgba(0,0,0,0.08)' : 'none',
         }}
       >
-        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-10 xl:px-16 py-3 sm:py-4">
-          {/* Top row: 3-column grid so logo stays centered when left nav hidden */}
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 min-h-14 sm:min-h-16">
+        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-10 xl:px-16 py-2.5 sm:py-3 lg:py-4">
+          {/* Mobile / tablet: grid prevents logo vs icons overlap */}
+          <div className="grid min-h-[48px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-x-1.5 sm:min-h-[52px] sm:gap-x-2 lg:hidden">
+            <motion.button
+              whileTap={{ scale: 0.94 }}
+              onClick={() => setIsOpen(!isOpen)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/40 bg-background/80 text-foreground shadow-sm active:bg-muted sm:h-11 sm:w-11 dark:bg-card/80 dark:border-border/50"
+              aria-label={isOpen ? 'Close menu' : 'Open menu'}
+              type="button"
+            >
+              {isOpen ? <X size={20} strokeWidth={2} /> : <Menu size={20} strokeWidth={2} />}
+            </motion.button>
+            <div className="flex min-w-0 justify-center overflow-hidden px-0.5">
+              <motion.button
+                type="button"
+                whileTap={{ scale: 0.97 }}
+                onClick={handleLogoClick}
+                className="flex max-w-full shrink items-center justify-center rounded-lg py-0.5 active:opacity-80"
+                aria-label="Rloco home"
+              >
+                <RlocoLogo
+                  size="sm"
+                  className="[&_svg]:!h-[18px] [&_svg]:max-w-[min(7rem,32vw)] sm:[&_svg]:!h-5 sm:[&_svg]:max-w-none"
+                />
+              </motion.button>
+            </div>
+            <div className="flex shrink-0 items-center gap-px rounded-xl border border-border/40 bg-background/90 py-0.5 pl-0.5 pr-0.5 shadow-sm dark:bg-card/90 dark:border-border/50 sm:gap-0.5 sm:rounded-2xl sm:p-1">
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={() => setSearchOpen(true)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground/75 transition-colors hover:bg-muted/80 hover:text-foreground active:bg-muted sm:h-10 sm:w-10 sm:rounded-xl"
+                aria-label="Search"
+                type="button"
+              >
+                <Search size={18} strokeWidth={2} className="sm:h-5 sm:w-5" />
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={() => navigate('/wishlist')}
+                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground/75 transition-colors hover:bg-muted/80 hover:text-foreground active:bg-muted sm:h-10 sm:w-10 sm:rounded-xl"
+                aria-label="Wishlist"
+                type="button"
+              >
+                <Heart size={18} strokeWidth={2} className="sm:h-5 sm:w-5" />
+                <AnimatePresence>
+                  {wishlistCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-semibold text-white sm:right-1 sm:top-1 sm:h-[18px] sm:min-w-[18px] sm:text-[10px]"
+                    >
+                      {wishlistCount > 9 ? '9+' : wishlistCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.94 }}
+                onClick={() => navigate('/cart')}
+                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground/75 transition-colors hover:bg-muted/80 hover:text-foreground active:bg-muted sm:h-10 sm:w-10 sm:rounded-xl"
+                aria-label="Cart"
+                type="button"
+              >
+                <ShoppingBag size={18} strokeWidth={2} className="sm:h-[21px] sm:w-[21px]" />
+                <AnimatePresence>
+                  {itemCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[9px] font-semibold text-primary-foreground sm:right-1 sm:top-1 sm:h-[18px] sm:min-w-[18px] sm:text-[10px]"
+                    >
+                      {itemCount > 9 ? '9+' : itemCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Desktop: 3-column grid */}
+          <div className="hidden min-h-16 grid-cols-[1fr_auto_1fr] items-center gap-4 lg:grid">
           {/* Left: Desktop nav links - show from lg to avoid crowding on tablet */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
@@ -208,7 +299,8 @@ export function Navigation() {
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{
-                opacity: location.pathname === '/' ? (scrolled ? 1 : 0) : 1,
+                opacity:
+                  location.pathname === '/' && !scrolled && !isMobile ? 0 : 1,
                 scale: 1,
               }}
               transition={{
@@ -220,8 +312,10 @@ export function Navigation() {
               className="flex flex-shrink-0 justify-center text-2xl tracking-tighter cursor-pointer relative"
               onClick={handleLogoClick}
               style={{
-                pointerEvents: location.pathname === '/' ? (scrolled ? 'auto' : 'none') : 'auto',
-                willChange: location.pathname === '/' && !scrolled ? 'opacity, transform' : 'auto',
+                pointerEvents:
+                  location.pathname === '/' && !scrolled && !isMobile ? 'none' : 'auto',
+                willChange:
+                  location.pathname === '/' && !scrolled && !isMobile ? 'opacity, transform' : 'auto',
               }}
             >
               <RlocoLogo size="sm" />
@@ -357,7 +451,7 @@ export function Navigation() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => navigate('/cart')}
-                  className="relative p-2.5 min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 sm:p-0 sm:flex justify-center items-center text-foreground/70 hover:text-foreground transition-colors rounded-md active:bg-foreground/5"
+                  className="relative flex justify-center items-center p-2.5 min-w-[44px] min-h-[44px] text-foreground/70 hover:text-foreground transition-colors rounded-md active:bg-foreground/5"
                   aria-label="Cart"
                 >
                   <ShoppingBag size={22} className="sm:w-5 sm:h-5" />
@@ -374,14 +468,6 @@ export function Navigation() {
                     )}
                   </AnimatePresence>
                 </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setIsOpen(!isOpen)}
-                  className="lg:hidden p-2.5 min-w-[44px] min-h-[44px] flex justify-center items-center rounded-md active:bg-foreground/5"
-                  aria-label={isOpen ? 'Close menu' : 'Open menu'}
-                >
-                  {isOpen ? <X size={24} /> : <Menu size={24} />}
-                </motion.button>
               </motion.div>
             </div>
           </div>
@@ -396,7 +482,7 @@ export function Navigation() {
               transition={{ duration: 0.25 }}
               className="lg:hidden overflow-hidden"
             >
-              <div className="pt-4 pb-4 border-t border-border mt-4 max-h-[70vh] overflow-y-auto overscroll-contain">
+              <div className="border-t border-border/60 bg-muted/20 px-1 pt-3 pb-4 dark:bg-muted/10 max-h-[min(72vh,520px)] overflow-y-auto overscroll-contain rounded-b-2xl">
                 <div className="flex flex-col gap-1">
                   <button
                     onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); scrollToSection('products'); }}

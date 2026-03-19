@@ -52,24 +52,8 @@ import { ResponsiveForgotPasswordPage } from './components/ResponsiveForgotPassw
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
 import { ResponsiveAccountPage } from './components/ResponsiveAccountPage';
 import { ResponsiveOTPVerificationPage } from './components/ResponsiveOTPVerificationPage';
-import { MobileSplashScreen } from './pages/mobile/MobileSplashScreen';
-import { MobileOnboardingPage } from './pages/mobile/MobileOnboardingPage';
-import { MobileDeliveryLocationPage } from './pages/mobile/MobileDeliveryLocationPage';
-import { MobileProfileEditPage } from './pages/mobile/MobileProfileEditPage';
-import { MobilePaymentMethodsPage } from './pages/mobile/MobilePaymentMethodsPage';
-import { MobileAddPaymentMethodPage } from './pages/mobile/MobileAddPaymentMethodPage';
-import { MobileHelpPage } from './pages/mobile/MobileHelpPage';
-import { MobileReviewsPage } from './pages/mobile/MobileReviewsPage';
-import { MobileRewardsPage } from './pages/mobile/MobileRewardsPage';
-import { MobileCouponsPage } from './pages/mobile/MobileCouponsPage';
-import { MobileSettingsPage } from './pages/mobile/MobileSettingsPage';
-import { MobileChangePasswordPage } from './pages/mobile/MobileChangePasswordPage';
-import { MobileTwoFactorPage } from './pages/mobile/MobileTwoFactorPage';
-import { MobileLanguagePage } from './pages/mobile/MobileLanguagePage';
-import { MobileCategoriesPage } from './pages/mobile/MobileCategoriesPage';
-import { MobileSearchPage } from './pages/mobile/MobileSearchPage';
-import { MobileNotificationsPage } from './pages/mobile/MobileNotificationsPage';
-import { MobileAddAddressPage } from './pages/mobile/MobileAddAddressPage';
+import { AddAddressPage } from './pages/AddAddressPage';
+import { CategoriesHubPage } from './pages/CategoriesHubPage';
 import { OrdersPage } from './pages/OrdersPage';
 import { OrderDetailPage } from './pages/OrderDetailPage';
 import { AddressesPage } from './pages/AddressesPage';
@@ -138,8 +122,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       </AnimatePresence>
       {!isMobile && <CustomCursor />}
       <ScrollProgress />
-      {/* Only show Navigation and HelpGuide on non-admin routes and desktop */}
-      {!isAdminRoute && !isMobile && (
+      {/* Site nav on all viewports (hamburger + icons on small screens) */}
+      {!isAdminRoute && (
         <>
           <Navigation />
           <HelpGuideButton />
@@ -172,47 +156,47 @@ function App() {
                         <MobileOnboardingRedirect>
                           <Routes>
                             <Route path="/" element={<ResponsiveHomePage />} />
-                            <Route path="/splash" element={<MobileSplashScreen />} />
-                            <Route path="/onboarding" element={<MobileOnboardingPage />} />
+                            <Route path="/splash" element={<Navigate to="/" replace />} />
+                            <Route path="/onboarding" element={<Navigate to="/" replace />} />
                             <Route path="/login" element={<ResponsiveLoginPage />} />
                             <Route path="/signup" element={<ResponsiveSignupPage />} />
                             <Route path="/forgot-password" element={<ResponsiveForgotPasswordPage />} />
                             <Route path="/reset-password" element={<ResetPasswordPage />} />
                             <Route path="/otp-verification" element={<ResponsiveOTPVerificationPage />} />
-                            <Route path="/delivery-location" element={<DesktopHeaderWrapper title="Delivery location" backPath="/account"><MobileDeliveryLocationPage /></DesktopHeaderWrapper>} />
+                            <Route path="/delivery-location" element={<Navigate to="/addresses" replace />} />
                             <Route path="/orders" element={<OrdersPage />} />
                             <Route path="/orders/:id" element={<OrderDetailPage />} />
                             <Route path="/order/:id" element={<OrderDetailPage />} />
                             <Route path="/addresses" element={<AddressesPage />} />
-                            <Route path="/addresses/add" element={<DesktopHeaderWrapper title="Add address" backPath="/addresses"><MobileAddAddressPage /></DesktopHeaderWrapper>} />
-                            <Route path="/profile/edit" element={<DesktopHeaderWrapper title="Edit profile" backPath="/account"><MobileProfileEditPage /></DesktopHeaderWrapper>} />
-                            <Route path="/payment-methods" element={<DesktopHeaderWrapper title="Payment methods" backPath="/account"><MobilePaymentMethodsPage /></DesktopHeaderWrapper>} />
-                            <Route path="/add-payment-method" element={<DesktopHeaderWrapper title="Add payment method" backPath="/payment-methods"><MobileAddPaymentMethodPage /></DesktopHeaderWrapper>} />
-                            <Route path="/help" element={<DesktopHeaderWrapper title="Help" backPath="/account"><MobileHelpPage /></DesktopHeaderWrapper>} />
+                            <Route path="/addresses/add" element={<DesktopHeaderWrapper title="Add address" backPath="/addresses"><AddAddressPage /></DesktopHeaderWrapper>} />
+                            <Route path="/profile/edit" element={<Navigate to="/account" replace />} />
+                            <Route path="/payment-methods" element={<Navigate to="/account" replace />} />
+                            <Route path="/add-payment-method" element={<Navigate to="/account" replace />} />
+                            <Route path="/help" element={<SupportPage />} />
                             <Route path="/support" element={<SupportPage />} />
-                            <Route path="/reviews" element={<DesktopHeaderWrapper title="My reviews" backPath="/account"><MobileReviewsPage /></DesktopHeaderWrapper>} />
-                            <Route path="/rewards" element={<DesktopHeaderWrapper title="Rewards" backPath="/account"><MobileRewardsPage /></DesktopHeaderWrapper>} />
-                            <Route path="/coupons" element={<DesktopHeaderWrapper title="Coupons" backPath="/account"><MobileCouponsPage /></DesktopHeaderWrapper>} />
-                            <Route path="/settings" element={<DesktopHeaderWrapper title="Settings" backPath="/account"><MobileSettingsPage /></DesktopHeaderWrapper>} />
-                            <Route path="/change-password" element={<DesktopHeaderWrapper title="Change password" backPath="/account"><MobileChangePasswordPage /></DesktopHeaderWrapper>} />
-                            <Route path="/two-factor" element={<DesktopHeaderWrapper title="Two-Factor Authentication" backPath="/account"><MobileTwoFactorPage /></DesktopHeaderWrapper>} />
-                            <Route path="/language" element={<DesktopHeaderWrapper title="Language" backPath="/account"><MobileLanguagePage /></DesktopHeaderWrapper>} />
+                            <Route path="/reviews" element={<Navigate to="/account" replace />} />
+                            <Route path="/rewards" element={<Navigate to="/account" replace />} />
+                            <Route path="/coupons" element={<Navigate to="/account" replace />} />
+                            <Route path="/settings" element={<Navigate to="/account" replace />} />
+                            <Route path="/change-password" element={<Navigate to="/account" replace />} />
+                            <Route path="/two-factor" element={<Navigate to="/account" replace />} />
+                            <Route path="/language" element={<Navigate to="/account" replace />} />
                             <Route path="/product/:id" element={<ResponsiveProductDetailPage />} />
                             <Route path="/cart" element={<ResponsiveCartPage />} />
                             <Route path="/checkout" element={<CheckoutPage />} />
                             <Route path="/wishlist" element={<ResponsiveWishlistPage />} />
                             <Route path="/account" element={<ResponsiveAccountPage />} />
-                            <Route path="/categories" element={<DesktopHeaderWrapper title="Categories" backPath="/"><MobileCategoriesPage /></DesktopHeaderWrapper>} />
+                            <Route path="/categories" element={<DesktopHeaderWrapper title="Categories" backPath="/"><CategoriesHubPage /></DesktopHeaderWrapper>} />
                             <Route path="/gift-for-her" element={<Navigate to="/category/women?gift=true" replace />} />
                             <Route path="/gift-for-him" element={<Navigate to="/category/men?gift=true" replace />} />
                             <Route path="/gift-cards" element={<Navigate to="/all-products" replace />} />
-                            <Route path="/search" element={<DesktopHeaderWrapper title="Search" backPath="/"><MobileSearchPage /></DesktopHeaderWrapper>} />
-                            <Route path="/notifications" element={<DesktopHeaderWrapper title="Notifications" backPath="/account"><MobileNotificationsPage /></DesktopHeaderWrapper>} />
+                            <Route path="/search" element={<Navigate to="/all-products" replace />} />
+                            <Route path="/notifications" element={<Navigate to="/account" replace />} />
                             <Route path="/category/:gender" element={<ResponsiveCategoryPage />} />
                             <Route path="/category/:gender/:category" element={<ResponsiveCategoryPage />} />
                             <Route path="/address" element={<ResponsiveAddressSelectionPage />} />
                             <Route path="/address-selection" element={<ResponsiveAddressSelectionPage />} />
-                            <Route path="/add-address" element={<DesktopHeaderWrapper title="Add address" backPath="/addresses"><MobileAddAddressPage /></DesktopHeaderWrapper>} />
+                            <Route path="/add-address" element={<DesktopHeaderWrapper title="Add address" backPath="/addresses"><AddAddressPage /></DesktopHeaderWrapper>} />
                             <Route path="/payment" element={<ResponsivePaymentPage />} />
                             <Route path="/order-confirmation" element={<ResponsiveOrderConfirmationPage />} />
                             <Route path="/order-confirmation/:id" element={<ResponsiveOrderConfirmationPage />} />

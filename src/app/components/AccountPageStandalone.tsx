@@ -29,7 +29,7 @@ export function AccountPageStandalone() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background pb-20 md:pb-0" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
+    <div className="min-h-screen bg-white dark:bg-background pb-mobile-nav md:pb-0" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
       <AccountPage 
         isOpen={true} 
         onClose={handleClose}

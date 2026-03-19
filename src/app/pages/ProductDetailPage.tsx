@@ -185,7 +185,7 @@ export function ProductDetailPage() {
 
   if (productLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background pt-24">
+      <div className="min-h-screen flex items-center justify-center bg-background pt-page-nav px-4">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading product...</p>
@@ -196,7 +196,7 @@ export function ProductDetailPage() {
 
   if (productError || !product) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background pt-24">
+      <div className="min-h-screen flex items-center justify-center bg-background pt-page-nav px-4">
         <div className="text-center">
           <h1 className="text-2xl mb-6">Product Not Found</h1>
           <p className="text-gray-600 mb-4">{productError || 'The product you are looking for does not exist.'}</p>
@@ -394,7 +394,7 @@ export function ProductDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-24 w-full">
+    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav w-full">
       {/* Breadcrumb */}
       <div className="border-b border-foreground/5 bg-background">
         <div className="w-full px-2 md:px-4 py-3 md:py-4">

@@ -572,7 +572,7 @@ export function CheckoutPage() {
           : 'Pay securely with card, UPI, or wallet (Stripe).';
     const isINR = currency === 'INR';
     return (
-      <div className="min-h-screen bg-background px-4 pt-24 pb-12">
+      <div className="min-h-screen bg-background px-4 sm:px-6 pt-page-nav pb-mobile-nav md:pb-12">
         <div className="mx-auto max-w-md">
           <h1 className="text-2xl font-semibold mb-2">Complete payment</h1>
           <p className="text-muted-foreground mb-6">
@@ -602,7 +602,7 @@ export function CheckoutPage() {
 
   if (orderComplete) {
     return (
-      <div className="h-screen bg-background flex items-center justify-center px-4 pt-24">
+      <div className="h-screen bg-background flex items-center justify-center px-4 pt-page-nav">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -644,7 +644,7 @@ export function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-24">
+    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
       <div className="flex flex-col">
         {/* Header with Steps */}
         <div className="border-b border-foreground/10 bg-background">

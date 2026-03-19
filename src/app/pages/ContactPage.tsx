@@ -26,7 +26,7 @@ export function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-24">
+    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
       {/* Hero Section */}
       <div className="border-b border-foreground/5">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-16 md:py-24 text-center">

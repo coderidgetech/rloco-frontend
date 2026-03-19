@@ -625,7 +625,7 @@ export function PaymentPage() {
 
   if (pendingStripePayment) {
     return (
-      <div className="min-h-screen bg-muted/20 pt-16 md:pt-20 px-4 pb-12">
+      <div className="min-h-screen bg-muted/20 pt-page-nav px-4 pb-12 pb-mobile-nav md:pb-12">
         <div className="mx-auto max-w-md">
           <h1 className="text-2xl font-semibold mb-2">Complete payment</h1>
           <p className="text-muted-foreground mb-6">
@@ -647,7 +647,7 @@ export function PaymentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/20 pt-16 md:pt-20">
+    <div className="min-h-screen bg-muted/20 pt-page-nav pb-mobile-nav md:pb-0">
       {/* Header with Progress Steps */}
       <div className="bg-background border-b border-border shadow-sm">
         <div className="w-full px-4 md:px-8 lg:px-16 py-4">

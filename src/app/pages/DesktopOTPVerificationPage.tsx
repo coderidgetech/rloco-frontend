@@ -103,9 +103,9 @@ export function DesktopOTPVerificationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen bg-white flex flex-col lg:flex-row">
       {/* Left Side - OTP Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:p-8 pt-page-nav pb-mobile-nav lg:pb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -119,7 +119,7 @@ export function DesktopOTPVerificationPage() {
 
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl mb-3">Verify Your Number</h1>
+            <h1 className="text-2xl sm:text-4xl mb-2 sm:mb-3">Verify Your Number</h1>
             <p className="text-foreground/60">
               Enter the 6-digit code sent to{' '}
               <span className="font-medium text-foreground">{phone}</span>
@@ -127,7 +127,7 @@ export function DesktopOTPVerificationPage() {
           </div>
 
           {/* OTP Input Grid */}
-          <div className="flex gap-3 justify-center mb-8">
+          <div className="flex gap-2 sm:gap-3 justify-center mb-8 flex-wrap max-w-xs sm:max-w-none mx-auto">
             {otp.map((digit, index) => (
               <motion.input
                 key={index}
@@ -141,7 +141,7 @@ export function DesktopOTPVerificationPage() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.05, duration: 0.3 }}
-                className="w-14 h-14 text-center text-2xl font-medium bg-foreground/5 border-2 border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                className="w-11 h-11 sm:w-14 sm:h-14 text-center text-lg sm:text-2xl font-medium bg-foreground/5 border-2 border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
             ))}
           </div>

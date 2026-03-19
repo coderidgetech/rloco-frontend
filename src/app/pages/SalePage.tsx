@@ -188,7 +188,7 @@ export function SalePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-24">
+    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
       {/* Breadcrumb */}
       <div className="border-b border-foreground/5 bg-background">
         <div className="max-w-[1920px] mx-auto px-4 md:px-8 py-3">

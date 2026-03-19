@@ -48,9 +48,9 @@ export function DesktopLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen bg-white flex flex-col lg:flex-row">
       {/* Left Side - Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-8 pt-28 pb-8 lg:pt-32">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 pt-page-nav pb-10 lg:pb-8 lg:pt-32 min-h-[50vh] lg:min-h-0">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -58,13 +58,13 @@ export function DesktopLoginPage() {
           className="w-full max-w-md"
         >
           {/* Logo */}
-          <div className="mb-12 flex justify-center">
+          <div className="mb-8 sm:mb-12 flex justify-center">
             <RlocoLogo size="md" />
           </div>
 
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl mb-3">Welcome Back</h1>
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-4xl mb-2 sm:mb-3">Welcome Back</h1>
             <p className="text-foreground/60">Sign in to your Rloco account</p>
           </div>
 

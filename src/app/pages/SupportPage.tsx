@@ -171,7 +171,7 @@ export function SupportPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background pt-24 flex items-center justify-center">
+      <div className="min-h-screen bg-background pt-page-nav px-4 flex items-center justify-center pb-mobile-nav">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-4">Please log in to access support</h2>
           <p className="text-foreground/60">You need to be logged in to view and create support tickets.</p>
@@ -181,10 +181,10 @@ export function SupportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-24">
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Customer Support</h1>
+    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-bold mb-2">Customer Support</h1>
           <p className="text-foreground/60">Get help with your orders, returns, and account</p>
         </div>
 
