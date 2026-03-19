@@ -259,9 +259,9 @@ function GettingStartedGuide() {
       
       <div className="space-y-4 mb-6">
         <div className="bg-gradient-to-r from-purple-50 to-white border-l-4 border-purple-500 p-5 rounded-r-lg">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">📱 TikTok-Style Video Section</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">📱 Style Videos</h3>
           <div className="text-sm text-gray-700 space-y-2">
-            <p>Swipe through inspiration videos showcasing our latest collections:</p>
+            <p>Swipe through style and inspiration videos showcasing our latest collections:</p>
             <div className="bg-white rounded-lg p-3 space-y-1 text-xs">
               <div>• <strong>Auto-Scroll:</strong> Videos change every 10 seconds automatically</div>
               <div>• <strong>Manual Navigation:</strong> Click arrows to browse at your pace</div>

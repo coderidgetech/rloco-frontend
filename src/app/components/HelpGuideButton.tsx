@@ -382,7 +382,7 @@ function QuickStartGuide() {
             <Video className="w-5 h-5 text-[#B4770E]" />
             <h3 className="font-medium text-gray-900">Video Management</h3>
           </div>
-          <p className="text-sm text-gray-600">Upload TikTok-style videos to showcase products on homepage</p>
+          <p className="text-sm text-gray-600">Upload short style videos to showcase products on the homepage</p>
         </div>
 
         <div className="border border-gray-200 rounded-lg p-4">
