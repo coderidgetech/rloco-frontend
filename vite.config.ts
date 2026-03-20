@@ -1,14 +1,27 @@
 import { defineConfig } from 'vite'
 import path from 'path'
+import fs from 'fs'
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
+// Copy index.html → 404.html after build so Cloudflare Pages serves SPA for client routes
+function copy404Plugin() {
+  return {
+    name: 'copy-404',
+    closeBundle() {
+      const out = path.resolve(__dirname, 'dist')
+      const index = path.join(out, 'index.html')
+      const notFound = path.join(out, '404.html')
+      if (fs.existsSync(index)) fs.copyFileSync(index, notFound)
+    },
+  }
+}
+
 export default defineConfig({
   plugins: [
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
+    copy404Plugin(),
   ],
   resolve: {
     alias: {
@@ -43,8 +56,9 @@ export default defineConfig({
   build: {
     // Ensure source maps for better debugging
     sourcemap: true,
-    // Set base path for mobile app
-    base: './',
+    // Use '/' for web (Cloudflare Pages) so script/assets load from root and avoid MIME/404 issues on client routes.
+    // For Capacitor/mobile, build uses same output; Capacitor loads from app origin.
+    base: '/',
     // Optimize for mobile
     rollupOptions: {
       output: {
