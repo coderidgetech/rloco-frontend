@@ -4,12 +4,14 @@ import { ChevronLeft, ChevronRight, Pause, Play, Volume2, VolumeX } from 'lucide
 import { ScrollReveal } from './ScrollReveal';
 import { easing } from '../utils/luxuryAnimations';
 import { videoService, InspirationVideo } from '@/app/services/videoService';
+import { useIsMobile } from '@/app/hooks/useIsMobile';
 
 interface InspirationVideosProps {
   videos?: InspirationVideo[];
 }
 
 export function InspirationVideos({ videos: propVideos }: InspirationVideosProps) {
+  const isMobile = useIsMobile(768);
   const [videos, setVideos] = useState<InspirationVideo[]>(propVideos || []);
   const [loading, setLoading] = useState(!propVideos);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
   const autoAdvanceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const totalVideos = videos.length;
-  const itemsToShow = 5;
+  const peekCount = isMobile ? 1 : 2; // mobile: 3 cards (1 each side), desktop: 5 cards
   const MAX_VIDEO_DURATION = 10;
 
   // Video playback effect - MUST be before any conditional return (Rules of Hooks)
@@ -136,23 +138,23 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
     }
   };
 
-  // Calculate which videos to show - 5 items (-2, -1, 0, +1, +2)
   const getVisibleVideos = () => {
     const visible = [];
-    for (let i = -2; i <= 2; i++) {
+    for (let i = -peekCount; i <= peekCount; i++) {
       const index = (currentIndex + i + totalVideos) % totalVideos;
       visible.push({ ...videos[index], position: i, originalIndex: index });
     }
     return visible;
   };
+  const slideOffset = isMobile ? 120 : 300;
 
   const visibleVideos = getVisibleVideos();
 
   return (
-    <section className="relative h-screen flex items-center justify-center bg-background overflow-hidden">
-      <div className="w-full px-3 sm:px-4 md:px-6 flex flex-col items-center justify-center h-full max-h-screen">
+    <section className="relative min-h-screen flex items-center justify-center bg-background overflow-hidden py-6 sm:py-8 md:py-12">
+      <div className="w-full px-3 sm:px-4 md:px-6 flex flex-col items-center justify-center min-h-0 flex-1">
         {/* Header */}
-        <ScrollReveal direction="up" className="text-center mb-4 md:mb-8">
+        <ScrollReveal direction="up" className="text-center mb-3 sm:mb-4 md:mb-6 shrink-0">
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -160,7 +162,7 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
             transition={{ duration: 0.6 }}
             className="text-[10px] md:text-xs tracking-[0.3em] text-muted-foreground mb-1 uppercase"
           >
-            Tik Tok
+            Style
           </motion.p>
           <h2 className="text-xl md:text-2xl lg:text-3xl tracking-wider uppercase font-light">
             INSPIRATION
@@ -168,32 +170,30 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
         </ScrollReveal>
 
         {/* Video Carousel */}
-        <div className="relative w-full max-w-7xl mx-auto flex-1 flex items-center justify-center max-h-[75vh]">
-          {/* Navigation Buttons */}
+        <div className="relative w-full max-w-7xl mx-auto flex-1 flex items-center justify-center min-h-0 max-h-[68vh] sm:max-h-[72vh] md:max-h-[75vh]">
+          {/* Navigation - larger touch targets on mobile */}
           <motion.button
             whileHover={{ scale: 1.1, x: -4 }}
             whileTap={{ scale: 0.95 }}
             onClick={handlePrevious}
-            className="absolute left-2 md:left-0 lg:-left-16 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-200 shadow-lg flex items-center justify-center hover:bg-gray-300 hover:shadow-xl transition-all group"
+            className="absolute left-1 sm:left-2 md:left-0 lg:-left-16 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/95 dark:bg-gray-800/95 shadow-lg border border-gray-200/80 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-all touch-manipulation"
             aria-label="Previous video"
           >
-            <ChevronLeft size={20} className="md:hidden text-gray-600 group-hover:text-gray-800" />
-            <ChevronLeft size={24} className="hidden md:block text-gray-600 group-hover:text-gray-800" />
+            <ChevronLeft size={22} className="text-gray-600 dark:text-gray-300" />
           </motion.button>
 
           <motion.button
             whileHover={{ scale: 1.1, x: 4 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleNext}
-            className="absolute right-2 md:right-0 lg:-right-16 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-200 shadow-lg flex items-center justify-center hover:bg-gray-300 hover:shadow-xl transition-all group"
+            className="absolute right-1 sm:right-2 md:right-0 lg:-right-16 top-1/2 -translate-y-1/2 z-20 w-11 h-11 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full bg-white/95 dark:bg-gray-800/95 shadow-lg border border-gray-200/80 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-all touch-manipulation"
             aria-label="Next video"
           >
-            <ChevronRight size={20} className="md:hidden text-gray-600 group-hover:text-gray-800" />
-            <ChevronRight size={24} className="hidden md:block text-gray-600 group-hover:text-gray-800" />
+            <ChevronRight size={22} className="text-gray-600 dark:text-gray-300" />
           </motion.button>
 
-          {/* Videos Grid */}
-          <div className="flex items-center justify-center gap-2 md:gap-4 lg:gap-6 px-12 md:px-10 lg:px-0 overflow-hidden h-full">
+          {/* Videos Grid - tighter on mobile */}
+          <div className={`flex items-center justify-center overflow-hidden h-full w-full ${isMobile ? 'gap-1.5 px-14 sm:px-16' : 'gap-2 md:gap-4 lg:gap-6 px-12 md:px-10 lg:px-0'}`}>
             <AnimatePresence mode="popLayout" initial={false} custom={direction}>
               {visibleVideos.map((video) => {
                 const isCenterVideo = video.position === 0;
@@ -205,7 +205,7 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
                     key={`${video.id}-${video.position}`}
                     custom={direction}
                     initial={{ 
-                      x: direction > 0 ? 300 : -300,
+                      x: direction > 0 ? slideOffset : -slideOffset,
                       opacity: 0,
                       scale: 0.8 
                     }}
@@ -215,7 +215,7 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
                       scale: isCenterVideo ? 1 : (isAdjacentVideo ? 0.8 : 0.65),
                     }}
                     exit={{ 
-                      x: direction > 0 ? -300 : 300,
+                      x: direction > 0 ? -slideOffset : slideOffset,
                       opacity: 0,
                       scale: 0.8 
                     }}
@@ -224,10 +224,10 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
                       ease: easing.luxury,
                       x: { type: "spring", stiffness: 300, damping: 30 }
                     }}
-                    className={`relative aspect-[9/16] rounded-2xl overflow-hidden bg-muted ${
+                    className={`relative aspect-[9/16] rounded-xl sm:rounded-2xl overflow-hidden bg-muted shrink-0 ${
                       isCenterVideo 
-                        ? 'h-[60vh] md:h-[65vh] shadow-2xl' 
-                        : (isAdjacentVideo ? 'h-[45vh] md:h-[48vh] shadow-lg' : 'h-[35vh] md:h-[38vh] shadow-md')
+                        ? 'h-[50vh] sm:h-[55vh] md:h-[60vh] lg:h-[65vh] shadow-2xl' 
+                        : (isAdjacentVideo ? 'h-[34vh] sm:h-[38vh] md:h-[45vh] lg:h-[48vh] shadow-lg' : 'h-[26vh] sm:h-[30vh] md:h-[35vh] lg:h-[38vh] shadow-md')
                     }`}
                     onClick={() => {
                       if (!isCenterVideo) {
@@ -271,8 +271,8 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
                         {/* Video Title */}
-                        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-white pointer-events-none">
-                          <h3 className="text-base md:text-lg font-medium tracking-wide mb-1">
+                        <div className="absolute bottom-0 left-0 right-0 p-3 sm:p-4 md:p-6 text-white pointer-events-none">
+                          <h3 className="text-sm sm:text-base md:text-lg font-medium tracking-wide mb-0.5 sm:mb-1 line-clamp-2">
                             {video.title}
                           </h3>
                           <p className="text-[10px] md:text-xs text-white/80 uppercase tracking-wider">
@@ -280,7 +280,7 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
                           </p>
                         </div>
 
-                        {/* Play/Pause Button - Top Left */}
+                        {/* Play/Pause - Top Left */}
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.95 }}
@@ -288,7 +288,7 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
                             e.stopPropagation();
                             togglePlay();
                           }}
-                          className="absolute top-3 left-3 md:top-4 md:left-4 w-10 h-10 md:w-11 md:h-11 rounded-xl bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-black/50 transition-all z-10"
+                          className="absolute top-2 left-2 sm:top-3 sm:left-3 md:top-4 md:left-4 w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-black/50 transition-all z-10 touch-manipulation"
                         >
                           {isPlaying ? (
                             <Pause className="text-white" size={18} />
@@ -297,7 +297,7 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
                           )}
                         </motion.button>
 
-                        {/* Mute Button - Bottom Right */}
+                        {/* Mute - Bottom Right */}
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.95 }}
@@ -305,7 +305,7 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
                             e.stopPropagation();
                             toggleMute();
                           }}
-                          className="absolute bottom-[72px] md:bottom-20 right-3 md:right-4 w-10 h-10 md:w-11 md:h-11 rounded-xl bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-black/50 transition-all z-10"
+                          className="absolute bottom-14 sm:bottom-[72px] md:bottom-20 right-2 sm:right-3 md:right-4 w-9 h-9 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-lg sm:rounded-xl bg-black/40 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-black/50 transition-all z-10 touch-manipulation"
                         >
                           {isMuted ? (
                             <VolumeX className="text-white" size={16} />
@@ -332,28 +332,30 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
           </div>
         </div>
 
-        {/* Dots Indicator */}
-        <div className="flex items-center justify-center gap-2 mt-6">
-          {videos.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => {
-                setCurrentIndex(idx);
-                setIsPlaying(false);
-              }}
-              className={`h-2 rounded-full transition-all ${
-                idx === currentIndex 
-                  ? 'w-8 bg-[#B4770E]' 
-                  : 'w-2 bg-border hover:bg-muted-foreground'
-              }`}
-              aria-label={`Go to video ${idx + 1}`}
-            />
-          ))}
+        {/* Dots - scrollable on mobile when many */}
+        <div className="flex justify-center gap-1.5 sm:gap-2 mt-4 sm:mt-6 w-full max-w-2xl overflow-x-auto overflow-y-hidden py-2 px-2 scrollbar-hide">
+          <div className="flex items-center justify-center gap-1.5 sm:gap-2 min-w-max mx-auto">
+            {videos.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  setCurrentIndex(idx);
+                  setIsPlaying(false);
+                }}
+                className={`shrink-0 rounded-full transition-all touch-manipulation ${
+                  idx === currentIndex 
+                    ? 'h-2 w-6 sm:w-8 bg-[#B4770E]' 
+                    : 'h-1.5 w-1.5 sm:h-2 sm:w-2 bg-border hover:bg-muted-foreground'
+                }`}
+                aria-label={`Go to video ${idx + 1}`}
+              />
+            ))}
+          </div>
         </div>
 
         {/* Bottom Text */}
-        <ScrollReveal direction="up" delay={0.2} className="text-center mt-4">
-          <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+        <ScrollReveal direction="up" delay={0.2} className="text-center mt-3 sm:mt-4 px-2">
+          <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl mx-auto">
             Discover the latest trends and styling inspiration from our community. 
             Get inspired by real fashion moments and elevate your style.
           </p>

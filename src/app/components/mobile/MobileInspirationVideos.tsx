@@ -90,15 +90,15 @@ export function MobileInspirationVideos() {
   };
 
   return (
-    <div className="bg-foreground/5 py-5">
+    <div className="bg-foreground/5 py-4 sm:py-5">
       <div className="px-4 mb-3">
-        <h2 className="text-xl font-medium mb-1">Style Inspiration</h2>
-        <p className="text-sm text-foreground/60">Discover trends and styling tips</p>
+        <h2 className="text-lg sm:text-xl font-medium mb-0.5 sm:mb-1">Style Inspiration</h2>
+        <p className="text-xs sm:text-sm text-foreground/60">Discover trends and styling tips</p>
       </div>
 
-      <div className="relative">
+      <div className="relative px-4">
         <div
-          className="relative bg-black rounded-2xl mx-4 overflow-hidden"
+          className="relative bg-black rounded-xl sm:rounded-2xl overflow-hidden mx-auto max-h-[70vh] w-full max-w-[280px] sm:max-w-[320px]"
           style={{ aspectRatio: '9/16' }}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -122,19 +122,20 @@ export function MobileInspirationVideos() {
             </motion.div>
           </AnimatePresence>
 
-          <div className="absolute top-4 left-4 right-4 flex items-start justify-between z-10">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/60 border-2 border-white" />
-              <div>
-                <p className="text-white text-sm font-medium">
+          <div className="absolute top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4 flex items-start justify-between z-10">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-full bg-gradient-to-br from-primary to-primary/60 border-2 border-white" />
+              <div className="min-w-0">
+                <p className="text-white text-xs sm:text-sm font-medium truncate">
                   @{currentVideo.uploaded_by_name || currentVideo.category?.toLowerCase().replace(/\s/g, '_') || 'rloco'}
                 </p>
-                <p className="text-white/80 text-xs">{currentVideo.category}</p>
+                <p className="text-white/80 text-[10px] sm:text-xs truncate">{currentVideo.category}</p>
               </div>
             </div>
             <button
               onClick={() => setMuted(!muted)}
-              className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"
+              className="w-10 h-10 sm:w-9 sm:h-9 shrink-0 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center touch-manipulation"
+              aria-label={muted ? 'Unmute' : 'Mute'}
             >
               {muted ? (
                 <VolumeX size={18} className="text-white" />
@@ -144,24 +145,24 @@ export function MobileInspirationVideos() {
             </button>
           </div>
 
-          <div className="absolute bottom-4 left-4 right-20 z-10">
-            <p className="text-white text-sm mb-3 line-clamp-2">{currentVideo.title}</p>
+          <div className="absolute bottom-3 left-3 right-16 sm:bottom-4 sm:left-4 sm:right-20 z-10">
+            <p className="text-white text-xs sm:text-sm mb-2 sm:mb-3 line-clamp-2">{currentVideo.title}</p>
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleBrowseCategory}
-              className="bg-white text-foreground px-4 py-2 rounded-full text-xs font-medium flex items-center gap-1.5"
+              className="bg-white text-foreground px-3 py-2 sm:px-4 rounded-full text-[11px] sm:text-xs font-medium flex items-center gap-1.5 touch-manipulation min-h-[40px]"
             >
               Shop {currentVideo.category}
             </motion.button>
           </div>
 
-          <div className="absolute bottom-4 right-4 flex flex-col gap-4 z-10">
+          <div className="absolute bottom-3 right-3 sm:bottom-4 sm:right-4 flex flex-col gap-3 sm:gap-4 z-10">
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={handleLike}
-              className="flex flex-col items-center"
+              className="flex flex-col items-center touch-manipulation"
             >
-              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-1">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-0.5 sm:mb-1">
                 <Heart
                   size={22}
                   className={
@@ -176,21 +177,22 @@ export function MobileInspirationVideos() {
               </span>
             </motion.button>
 
-            <button className="flex flex-col items-center">
-              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <Share2 size={22} className="text-white" />
+            <button className="flex flex-col items-center touch-manipulation" aria-label="Share">
+              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                <Share2 size={20} className="sm:w-[22px] sm:h-[22px] text-white" />
               </div>
             </button>
           </div>
 
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 sm:gap-1.5 z-10 flex-wrap justify-center max-w-[90%]">
             {videos.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
-                className={`h-1 rounded-full transition-all ${
-                  index === currentIndex ? 'w-6 bg-white' : 'w-1 bg-white/40'
+                className={`shrink-0 h-1 sm:h-1.5 rounded-full transition-all touch-manipulation ${
+                  index === currentIndex ? 'w-5 sm:w-6 bg-white' : 'w-1 bg-white/40'
                 }`}
+                aria-label={`Video ${index + 1}`}
               />
             ))}
           </div>
