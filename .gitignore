@@ -7,8 +7,9 @@ dist/
 build/
 .vite/
 
-# Environment variables
+# Environment variables (do not commit)
 .env
+.env.example
 .env.local
 .env.*.local
 
