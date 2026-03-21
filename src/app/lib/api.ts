@@ -58,8 +58,8 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch (refreshError) {
-        // Refresh failed, redirect to login
-        if (typeof window !== 'undefined') {
+        // Refresh failed — only send storefront users away from admin; never hijack /login or /otp-verification
+        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
           window.location.href = '/admin/login';
         }
         return Promise.reject(refreshError);

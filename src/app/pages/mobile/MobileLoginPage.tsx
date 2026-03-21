@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { RlocoLogo } from '@/app/components/RlocoLogo';
 import { useUser } from '@/app/context/UserContext';
 import { GoogleSignInButton } from '@/app/components/GoogleSignInButton';
+import { authService } from '@/app/services/authService';
+import { getApiErrorMessage } from '@/app/lib/apiErrors';
 
 const COUNTRIES = [
   { code: 'US', name: 'United States', dialCode: '+1', flag: '🇺🇸' },
@@ -64,7 +66,7 @@ export function MobileLoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/account';
-  const { syncFromStorage, loginWithGoogle } = useUser();
+  const { refreshUser, loginWithGoogle } = useUser();
   const [phone, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -73,6 +75,13 @@ export function MobileLoginPage() {
   const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[1]); // Default to India
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
+  /** Same string sent to POST /auth/login-otp/send and /complete (digits-only country + local is OK). */
+  const [phoneForOtp, setPhoneForOtp] = useState('');
+  const buildPhoneForApi = () => {
+    const localDigits = phone.replace(/\D/g, '');
+    const dialDigits = selectedCountry.dialCode.replace(/\D/g, '');
+    return dialDigits + localDigits;
+  };
 
   useEffect(() => {
     if (countdown > 0) {
@@ -90,14 +99,24 @@ export function MobileLoginPage() {
     }
 
     setLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const raw = buildPhoneForApi();
+      if (raw.length < 10) {
+        toast.error('Please enter a valid phone number');
+        setLoading(false);
+        return;
+      }
+      await authService.sendLoginOtp(raw);
+      setPhoneForOtp(raw);
       setOtpSent(true);
       setCountdown(60);
-      toast.success(`OTP sent to your ${phone}`);
+      setOtp(['', '', '', '', '', '']);
+      toast.success('OTP sent to your phone');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not send verification code'));
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const handleVerifyOTP = async () => {
@@ -107,26 +126,42 @@ export function MobileLoginPage() {
       toast.error('Please enter complete OTP');
       return;
     }
+    if (!phoneForOtp) {
+      toast.error('Session expired. Enter your phone again.');
+      setOtpSent(false);
+      return;
+    }
 
     setLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('userEmail', 'user@gmail.com');
-      localStorage.setItem('userName', 'Google User');
-      if (phone) localStorage.setItem('userPhone', phone);
-      syncFromStorage();
+    try {
+      await authService.completeLoginOtp(phoneForOtp, otpValue);
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('userPhone');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userEmail');
+      await refreshUser();
       toast.success('Welcome back!');
       navigate(redirect, { replace: true });
-    }, 1500);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Verification failed'));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleResendOTP = () => {
+  const handleResendOTP = async () => {
     if (countdown > 0) return;
-    
-    setCountdown(60);
-    toast.success('OTP resent!');
+    setLoading(true);
+    try {
+      await authService.sendLoginOtp(phoneForOtp);
+      setCountdown(60);
+      setOtp(['', '', '', '', '', '']);
+      toast.success('OTP resent');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not resend code'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleSuccess = async (idToken: string) => {
@@ -360,7 +395,10 @@ export function MobileLoginPage() {
             <p className="text-center mt-8 text-sm text-foreground/60">
               Don't have an account?{' '}
               <button
-                onClick={() => navigate('/signup')}
+                type="button"
+                onClick={() =>
+                  navigate(redirect !== '/account' ? `/signup?redirect=${encodeURIComponent(redirect)}` : '/signup')
+                }
                 className="text-primary font-medium"
               >
                 Sign up
@@ -378,7 +416,12 @@ export function MobileLoginPage() {
             >
               {/* Back Button */}
               <button
-                onClick={() => setOtpSent(false)}
+                type="button"
+                onClick={() => {
+                  setOtpSent(false);
+                  setPhoneForOtp('');
+                  setOtp(['', '', '', '', '', '']);
+                }}
                 className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors mb-6"
               >
                 <ArrowLeft size={20} />
@@ -437,7 +480,12 @@ export function MobileLoginPage() {
                 </button>
 
                 <button
-                  onClick={() => setOtpSent(false)}
+                  type="button"
+                  onClick={() => {
+                    setOtpSent(false);
+                    setPhoneForOtp('');
+                    setOtp(['', '', '', '', '', '']);
+                  }}
                   className="text-sm text-foreground/60 hover:text-foreground block mx-auto"
                 >
                   Change phone number

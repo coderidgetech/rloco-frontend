@@ -1,16 +1,26 @@
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Mail, User, Phone, X } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Mail, User, Phone, X, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { RlocoLogo } from '@/app/components/RlocoLogo';
+import { authService } from '@/app/services/authService';
+import { SIGNUP_OTP_DRAFT_KEY } from '@/app/lib/signupOtpDraft';
+import { getApiErrorMessage } from '@/app/lib/apiErrors';
+import { useUser } from '@/app/context/UserContext';
+import { GoogleSignInButton } from '@/app/components/GoogleSignInButton';
 
 export function MobileSignupPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/account';
+  const { refreshUser, loginWithGoogle } = useUser();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: ''
+    phone: '',
+    password: '',
+    confirmPassword: '',
   });
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -31,16 +41,36 @@ export function MobileSignupPage() {
       toast.error('Please fill in all fields');
       return;
     }
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
 
+    const phone = formData.phone.trim();
     setLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await authService.sendRegistrationOtp(phone);
+      sessionStorage.setItem(
+        SIGNUP_OTP_DRAFT_KEY,
+        JSON.stringify({
+          phone,
+          email: formData.email.trim(),
+          name: formData.name.trim(),
+          password: formData.password,
+        })
+      );
       setOtpSent(true);
       setCountdown(60);
       toast.success('OTP sent to your phone');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not send verification code'));
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const handleVerifyOTP = async () => {
@@ -51,32 +81,70 @@ export function MobileSignupPage() {
       return;
     }
 
+    const raw = sessionStorage.getItem(SIGNUP_OTP_DRAFT_KEY);
+    if (!raw) {
+      toast.error('Session expired. Please start again.');
+      setOtpSent(false);
+      return;
+    }
+    let draft: { phone: string; email: string; name: string; password: string };
+    try {
+      draft = JSON.parse(raw) as typeof draft;
+    } catch {
+      toast.error('Session expired. Please start again.');
+      setOtpSent(false);
+      return;
+    }
+
     setLoading(true);
-
-    // Simulate API call
-    setTimeout(() => {
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('userEmail', formData.email);
-      localStorage.setItem('userName', formData.name);
-      localStorage.setItem('userPhone', formData.phone);
+    try {
+      await authService.completeRegistrationOtp({
+        phone: draft.phone,
+        code: otpValue,
+        email: draft.email,
+        password: draft.password,
+        name: draft.name,
+      });
+      sessionStorage.removeItem(SIGNUP_OTP_DRAFT_KEY);
+      await refreshUser();
       toast.success('Account created successfully!');
-      navigate('/account', { replace: true });
-    }, 1500);
+      navigate(redirect, { replace: true });
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Verification failed'));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleResendOTP = () => {
+  const handleResendOTP = async () => {
     if (countdown > 0) return;
-    
-    setCountdown(60);
-    toast.success('OTP resent!');
+    const raw = sessionStorage.getItem(SIGNUP_OTP_DRAFT_KEY);
+    if (!raw) {
+      toast.error('Session expired');
+      setOtpSent(false);
+      return;
+    }
+    try {
+      const draft = JSON.parse(raw) as { phone: string };
+      setLoading(true);
+      await authService.sendRegistrationOtp(draft.phone);
+      setCountdown(60);
+      toast.success('OTP resent!');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not resend'));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGoogleSignup = () => {
-    localStorage.setItem('isAuthenticated', 'true');
-    localStorage.setItem('userEmail', 'user@gmail.com');
-    localStorage.setItem('userName', 'Google User');
-    toast.success('Signed up with Google!');
-    navigate('/account', { replace: true });
+  const handleGoogleSuccess = async (idToken: string) => {
+    const ok = await loginWithGoogle(idToken);
+    if (ok) {
+      toast.success('Signed in with Google!');
+      navigate(redirect, { replace: true });
+    } else {
+      toast.error('Google sign-in failed. Please try again.');
+    }
   };
 
   const handleOtpChange = (index: number, value: string) => {
@@ -187,7 +255,43 @@ export function MobileSignupPage() {
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="Phone number"
+                    placeholder="+91 9876543210 or 10-digit"
+                    className="w-full pl-11 pr-4 py-3.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-foreground/70">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40" />
+                  <input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    placeholder="At least 6 characters"
+                    minLength={6}
+                    autoComplete="new-password"
+                    className="w-full pl-11 pr-4 py-3.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-foreground/70">
+                  Confirm password
+                </label>
+                <div className="relative">
+                  <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40" />
+                  <input
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    placeholder="Confirm password"
+                    minLength={6}
+                    autoComplete="new-password"
                     className="w-full pl-11 pr-4 py-3.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>
@@ -230,29 +334,43 @@ export function MobileSignupPage() {
               <div className="flex-1 h-px bg-border/30" />
             </div>
 
-            {/* Google Sign Up */}
-            <motion.button
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              onClick={handleGoogleSignup}
-              whileTap={{ scale: 0.98 }}
-              className="w-full bg-white border-2 border-border/30 shadow-sm py-4 rounded-full font-medium flex items-center justify-center gap-3"
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M19.8 10.2273C19.8 9.51819 19.7364 8.83637 19.6182 8.18182H10.2V12.05H15.6091C15.3545 13.3 14.6182 14.3591 13.5273 15.0682V17.5773H16.7909C18.7091 15.8364 19.8 13.2727 19.8 10.2273Z" fill="#4285F4"/>
-                <path d="M10.2 20C12.9 20 15.1727 19.1045 16.7909 17.5773L13.5273 15.0682C12.6182 15.6682 11.4909 16.0227 10.2 16.0227C7.59091 16.0227 5.37273 14.2636 4.56364 11.9H1.19091V14.4909C2.80909 17.7591 6.22727 20 10.2 20Z" fill="#34A853"/>
-                <path d="M4.56364 11.9C4.34545 11.3 4.22727 10.6591 4.22727 10C4.22727 9.34091 4.34545 8.7 4.56364 8.1V5.50909H1.19091C0.527273 6.85909 0.136364 8.38636 0.136364 10C0.136364 11.6136 0.527273 13.1409 1.19091 14.4909L4.56364 11.9Z" fill="#FBBC05"/>
-                <path d="M10.2 3.97727C11.6091 3.97727 12.8636 4.48182 13.8545 5.43182L16.7364 2.6C15.1682 1.13636 12.8955 0.136364 10.2 0.136364C6.22727 0.136364 2.80909 2.37727 1.19091 5.50909L4.56364 8.1C5.37273 5.73636 7.59091 3.97727 10.2 3.97727Z" fill="#EA4335"/>
-              </svg>
-              Continue with Google
-            </motion.button>
+              <GoogleSignInButton
+                onSuccess={handleGoogleSuccess}
+                onError={(msg) => toast.error(msg)}
+                shape="pill"
+                theme="outline"
+                size="large"
+                className="rounded-full"
+                customContent={
+                  <motion.div
+                    whileTap={{ scale: 0.98 }}
+                    className="w-full bg-white border-2 border-border/30 shadow-sm py-4 rounded-full font-medium flex items-center justify-center gap-3"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                      <path d="M19.8 10.2273C19.8 9.51819 19.7364 8.83637 19.6182 8.18182H10.2V12.05H15.6091C15.3545 13.3 14.6182 14.3591 13.5273 15.0682V17.5773H16.7909C18.7091 15.8364 19.8 13.2727 19.8 10.2273Z" fill="#4285F4"/>
+                      <path d="M10.2 20C12.9 20 15.1727 19.1045 16.7909 17.5773L13.5273 15.0682C12.6182 15.6682 11.4909 16.0227 10.2 16.0227C7.59091 16.0227 5.37273 14.2636 4.56364 11.9H1.19091V14.4909C2.80909 17.7591 6.22727 20 10.2 20Z" fill="#34A853"/>
+                      <path d="M4.56364 11.9C4.34545 11.3 4.22727 10.6591 4.22727 10C4.22727 9.34091 4.34545 8.7 4.56364 8.1V5.50909H1.19091C0.527273 6.85909 0.136364 8.38636 0.136364 10C0.136364 11.6136 0.527273 13.1409 1.19091 14.4909L4.56364 11.9Z" fill="#FBBC05"/>
+                      <path d="M10.2 3.97727C11.6091 3.97727 12.8636 4.48182 13.8545 5.43182L16.7364 2.6C15.1682 1.13636 12.8955 0.136364 10.2 0.136364C6.22727 0.136364 2.80909 2.37727 1.19091 5.50909L4.56364 8.1C5.37273 5.73636 7.59091 3.97727 10.2 3.97727Z" fill="#EA4335"/>
+                    </svg>
+                    Continue with Google
+                  </motion.div>
+                }
+              />
+            </motion.div>
 
             {/* Sign In Link */}
             <p className="text-center mt-6 text-sm text-foreground/60">
               Already have an account?{' '}
               <button
-                onClick={() => navigate('/login')}
+                type="button"
+                onClick={() =>
+                  navigate(redirect !== '/account' ? `/login?redirect=${encodeURIComponent(redirect)}` : '/login')
+                }
                 className="text-primary font-medium"
               >
                 Sign in
@@ -318,7 +436,10 @@ export function MobileSignupPage() {
                 </button>
 
                 <button
-                  onClick={() => setOtpSent(false)}
+                  onClick={() => {
+                    sessionStorage.removeItem(SIGNUP_OTP_DRAFT_KEY);
+                    setOtpSent(false);
+                  }}
                   className="text-sm text-foreground/60 hover:text-foreground block mx-auto"
                 >
                   Change phone number

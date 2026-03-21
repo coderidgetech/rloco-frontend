@@ -329,8 +329,23 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
   const handleSaveProfile = async () => {
     try {
       setProfileSaving(true);
-      const updateData: { phone?: string; birthday?: string } = {};
-      if (profileData.phone) updateData.phone = profileData.phone;
+      const fullName = [profileData.firstName, profileData.lastName].filter(Boolean).join(' ').trim();
+      const emailTrim = profileData.email?.trim() ?? '';
+      if (!fullName) {
+        toast.error('Please enter your name');
+        setProfileSaving(false);
+        return;
+      }
+      if (!emailTrim) {
+        toast.error('Please enter your email');
+        setProfileSaving(false);
+        return;
+      }
+      const updateData: { name: string; email: string; phone?: string; birthday?: string } = {
+        name: fullName,
+        email: emailTrim,
+      };
+      if (profileData.phone?.trim()) updateData.phone = profileData.phone.trim();
       if (profileData.birthday) updateData.birthday = profileData.birthday;
       await authService.updateProfile(updateData);
       await refreshUser();

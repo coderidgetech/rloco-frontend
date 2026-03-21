@@ -1,5 +1,5 @@
-version: '3.8'
-
+# API calls run in the browser → use host-mapped backend (docker-run.sh exposes 8080).
+# VITE_API_URL is forced below so Railway/cloud values in .env do not apply inside this container.
 services:
   frontend:
     build:
@@ -11,9 +11,13 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+    env_file:
+      - path: .env
+        required: false
     environment:
-      - NODE_ENV=development
-      - VITE_API_URL=http://localhost:8081/api
+      NODE_ENV: development
+      # Always talk to local Docker backend (same machine). Overrides VITE_API_URL from .env.
+      VITE_API_URL: http://localhost:8080/api
     networks:
       - rloco-network
     restart: unless-stopped

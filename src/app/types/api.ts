@@ -351,6 +351,11 @@ export interface ApiError {
   code?: string;
 }
 
+/** POST /auth/register-otp/send and /auth/login-otp/send */
+export interface OtpSendResponse {
+  message: string;
+}
+
 export interface PaginatedResponse<T> {
   products?: T[]; // Products API returns 'products' field
   orders?: T[]; // Orders API returns 'orders' field

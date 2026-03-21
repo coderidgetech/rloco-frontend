@@ -1,28 +1,74 @@
 import { motion } from 'motion/react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { RlocoLogo } from '@/app/components/RlocoLogo';
 import { useUser } from '@/app/context/UserContext';
+import { authService } from '@/app/services/authService';
+import {
+  SIGNUP_OTP_DRAFT_KEY,
+  LOGIN_OTP_SESSION_KEY,
+  type SignupOtpDraft,
+  type LoginOtpSession,
+} from '@/app/lib/signupOtpDraft';
+import { getApiErrorMessage } from '@/app/lib/apiErrors';
 
 export function DesktopOTPVerificationPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { syncFromStorage } = useUser();
+  const { refreshUser } = useUser();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(60);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Get data from navigation state
-  const phone = location.state?.phone || '+1 (555) 000-0000';
-  const returnTo = location.state?.returnTo || '/';
-  const name = location.state?.name || '';
-  const email = location.state?.email || '';
-  const isSignup = location.state?.isSignup || false;
+  type OtpNavState = Partial<LoginOtpSession> & { isSignup?: boolean; name?: string; email?: string };
+  const nav = location.state as OtpNavState | null | undefined;
+
+  const loginBackup = useMemo((): LoginOtpSession | null => {
+    try {
+      const raw = sessionStorage.getItem(LOGIN_OTP_SESSION_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw) as LoginOtpSession;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const signupDraft = useMemo((): SignupOtpDraft | null => {
+    try {
+      const raw = sessionStorage.getItem(SIGNUP_OTP_DRAFT_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw) as SignupOtpDraft;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const signupDraftPhone = (signupDraft?.phone ?? '').trim();
+
+  // After refresh: infer signup if draft exists and we don't have a login OTP session
+  const isSignup =
+    nav?.isSignup === true || (signupDraftPhone !== '' && !loginBackup?.phone);
+
+  const phone = isSignup
+    ? (nav?.phone ?? signupDraftPhone).trim()
+    : (nav?.phone ?? loginBackup?.phone ?? '').trim();
+
+  const returnTo = nav?.returnTo ?? (isSignup ? '/account' : loginBackup?.returnTo ?? '/');
 
   useEffect(() => {
+    if (isSignup && !phone) {
+      toast.error('Signup session expired. Please register again.');
+      navigate('/signup', { replace: true });
+      return;
+    }
+    if (!isSignup && !phone) {
+      toast.error('Session expired. Enter your phone on the login page again.');
+      navigate('/login', { replace: true });
+      return;
+    }
     // Focus first input on mount
     inputRefs.current[0]?.focus();
 
@@ -38,7 +84,7 @@ export function DesktopOTPVerificationPage() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [isSignup, phone, navigate]);
 
   const handleChange = (index: number, value: string) => {
     if (value.length > 1) return;
@@ -73,33 +119,94 @@ export function DesktopOTPVerificationPage() {
     }
 
     setLoading(true);
+    try {
+      if (isSignup) {
+        let draft: SignupOtpDraft | null = null;
+        try {
+          const raw = sessionStorage.getItem(SIGNUP_OTP_DRAFT_KEY);
+          if (raw) draft = JSON.parse(raw) as SignupOtpDraft;
+        } catch {
+          /* ignore */
+        }
+        if (!draft) {
+          toast.error('Signup session expired. Please register again.');
+          navigate('/signup', { replace: true });
+          return;
+        }
+        await authService.completeRegistrationOtp({
+          phone: draft.phone,
+          code: otpString,
+          email: draft.email,
+          password: draft.password,
+          name: draft.name,
+        });
+        sessionStorage.removeItem(SIGNUP_OTP_DRAFT_KEY);
+        await refreshUser();
+        toast.success('Account created successfully!');
+        navigate(returnTo, { replace: true });
+        return;
+      }
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    // Store auth data (demo/OTP flow)
-    localStorage.setItem('isAuthenticated', 'true');
-    localStorage.setItem('userPhone', phone);
-    if (name) localStorage.setItem('userName', name);
-    if (email) localStorage.setItem('userEmail', email);
-
-    syncFromStorage(); // so Account page sees isAuthenticated before navigate
-    toast.success(isSignup ? 'Account created successfully!' : 'Phone verified successfully!');
-    setLoading(false);
-    navigate(returnTo, { replace: true });
+      await authService.completeLoginOtp(phone, otpString);
+      try {
+        sessionStorage.removeItem(LOGIN_OTP_SESSION_KEY);
+      } catch {
+        /* ignore */
+      }
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('userPhone');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userEmail');
+      await refreshUser();
+      toast.success('Signed in successfully!');
+      navigate(returnTo, { replace: true });
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Verification failed'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleResend = async () => {
     if (resendTimer > 0) return;
 
     setLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    setResendTimer(60);
-    toast.success('OTP resent successfully');
-    setOtp(['', '', '', '', '', '']);
-    inputRefs.current[0]?.focus();
-    setLoading(false);
+    try {
+      if (isSignup) {
+        const raw = sessionStorage.getItem(SIGNUP_OTP_DRAFT_KEY);
+        if (!raw) {
+          toast.error('Signup session expired. Please register again.');
+          navigate('/signup', { replace: true });
+          return;
+        }
+        const draft = JSON.parse(raw) as SignupOtpDraft;
+        await authService.sendRegistrationOtp(draft.phone);
+      } else {
+        await authService.sendLoginOtp(phone);
+        try {
+          const prev = loginBackup ?? { phone, returnTo, isSignup: false as const };
+          sessionStorage.setItem(
+            LOGIN_OTP_SESSION_KEY,
+            JSON.stringify({
+              ...prev,
+              phone,
+              returnTo: prev.returnTo ?? returnTo,
+              isSignup: false,
+            })
+          );
+        } catch {
+          /* ignore */
+        }
+      }
+      setResendTimer(60);
+      toast.success('OTP resent successfully');
+      setOtp(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not resend code'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

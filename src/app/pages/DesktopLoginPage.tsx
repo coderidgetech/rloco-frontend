@@ -6,6 +6,9 @@ import { toast } from 'sonner';
 import { RlocoLogo } from '@/app/components/RlocoLogo';
 import { useUser } from '@/app/context/UserContext';
 import { GoogleSignInButton } from '@/app/components/GoogleSignInButton';
+import { authService } from '@/app/services/authService';
+import { getApiErrorMessage } from '@/app/lib/apiErrors';
+import { LOGIN_OTP_SESSION_KEY, SIGNUP_OTP_DRAFT_KEY, type LoginOtpSession } from '@/app/lib/signupOtpDraft';
 
 export function DesktopLoginPage() {
   const navigate = useNavigate();
@@ -24,15 +27,31 @@ export function DesktopLoginPage() {
     }
 
     setIsLoading(true);
-    
-    // Simulate sending OTP
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast.success('OTP sent to your phone');
-    setIsLoading(false);
-    
-    // Navigate to OTP verification page (pass redirect so OTP sends user to the right place)
-    navigate('/otp-verification', { state: { phone, returnTo: redirect } });
+    try {
+      const trimmed = phone.trim();
+      await authService.sendLoginOtp(trimmed);
+      try {
+        sessionStorage.removeItem(SIGNUP_OTP_DRAFT_KEY);
+      } catch {
+        /* ignore */
+      }
+      const session: LoginOtpSession = {
+        phone: trimmed,
+        returnTo: redirect,
+        isSignup: false,
+      };
+      try {
+        sessionStorage.setItem(LOGIN_OTP_SESSION_KEY, JSON.stringify(session));
+      } catch {
+        /* ignore quota / private mode */
+      }
+      toast.success('OTP sent to your phone');
+      navigate('/otp-verification', { state: session });
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not send verification code'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleSuccess = async (idToken: string) => {
@@ -146,7 +165,10 @@ export function DesktopLoginPage() {
           <p className="text-center mt-8 text-sm text-foreground/60">
             Don't have an account?{' '}
             <button
-              onClick={() => navigate('/signup')}
+              type="button"
+              onClick={() =>
+                navigate(redirect !== '/account' ? `/signup?redirect=${encodeURIComponent(redirect)}` : '/signup')
+              }
               className="text-primary font-medium hover:underline"
             >
               Sign up

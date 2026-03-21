@@ -1,16 +1,26 @@
 import { motion } from 'motion/react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Mail, User, ArrowRight, Phone } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Mail, User, ArrowRight, Phone, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { RlocoLogo } from '@/app/components/RlocoLogo';
+import { authService } from '@/app/services/authService';
+import { SIGNUP_OTP_DRAFT_KEY, LOGIN_OTP_SESSION_KEY } from '@/app/lib/signupOtpDraft';
+import { getApiErrorMessage } from '@/app/lib/apiErrors';
+import { GoogleSignInButton } from '@/app/components/GoogleSignInButton';
+import { useUser } from '@/app/context/UserContext';
 
 export function DesktopSignupPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/account';
+  const { loginWithGoogle } = useUser();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: ''
+    phone: '',
+    password: '',
+    confirmPassword: '',
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -32,40 +42,60 @@ export function DesktopSignupPage() {
       return;
     }
 
+    if (formData.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    const phone = formData.phone.trim();
     setIsLoading(true);
-    
-    // Simulate sending OTP
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast.success('OTP sent to your phone');
-    setIsLoading(false);
-    
-    // Navigate to OTP verification page with signup data
-    navigate('/otp-verification', { 
-      state: { 
-        phone: formData.phone, 
-        name: formData.name,
-        email: formData.email,
-        returnTo: '/account',
-        isSignup: true
-      } 
-    });
+    try {
+      await authService.sendRegistrationOtp(phone);
+      sessionStorage.setItem(
+        SIGNUP_OTP_DRAFT_KEY,
+        JSON.stringify({
+          phone,
+          email: formData.email.trim(),
+          name: formData.name.trim(),
+          password: formData.password,
+        })
+      );
+      toast.success('OTP sent to your phone');
+      try {
+        sessionStorage.removeItem(LOGIN_OTP_SESSION_KEY);
+      } catch {
+        /* ignore */
+      }
+      navigate('/otp-verification', {
+        state: {
+          phone,
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          returnTo: redirect,
+          isSignup: true,
+        },
+      });
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not send verification code'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleSignup = async () => {
+  const handleGoogleSuccess = async (idToken: string) => {
     setIsLoading(true);
-    
-    // Simulate Google auth
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Store auth state
-    localStorage.setItem('isAuthenticated', 'true');
-    localStorage.setItem('userName', 'Google User');
-    localStorage.setItem('userEmail', 'user@gmail.com');
-    
-    toast.success('Successfully signed up with Google!');
+    const ok = await loginWithGoogle(idToken);
     setIsLoading(false);
-    navigate('/account');
+    if (ok) {
+      toast.success('Signed in with Google!');
+      navigate(redirect, { replace: true });
+    } else {
+      toast.error('Google sign-in failed. Please try again.');
+    }
   };
 
   return (
@@ -115,23 +145,32 @@ export function DesktopSignupPage() {
             <p className="text-foreground/60">Join Rloco today</p>
           </div>
 
-          {/* Google Sign Up - Primary Option */}
-          <motion.button
-            type="button"
-            onClick={handleGoogleSignup}
-            disabled={isLoading}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="w-full bg-white border-2 border-border/30 shadow-sm text-foreground py-4 rounded-xl font-medium flex items-center justify-center gap-3 hover:bg-foreground/5 transition-all mb-6 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path d="M19.8 10.2273C19.8 9.51819 19.7364 8.83637 19.6182 8.18182H10.2V12.05H15.6091C15.3545 13.3 14.6182 14.3591 13.5273 15.0682V17.5773H16.7909C18.7091 15.8364 19.8 13.2727 19.8 10.2273Z" fill="#4285F4"/>
-              <path d="M10.2 20C12.9 20 15.1727 19.1045 16.7909 17.5773L13.5273 15.0682C12.6182 15.6682 11.4909 16.0227 10.2 16.0227C7.59091 16.0227 5.37273 14.2636 4.56364 11.9H1.19091V14.4909C2.80909 17.7591 6.22727 20 10.2 20Z" fill="#34A853"/>
-              <path d="M4.56364 11.9C4.34545 11.3 4.22727 10.6591 4.22727 10C4.22727 9.34091 4.34545 8.7 4.56364 8.1V5.50909H1.19091C0.527273 6.85909 0.136364 8.38636 0.136364 10C0.136364 11.6136 0.527273 13.1409 1.19091 14.4909L4.56364 11.9Z" fill="#FBBC05"/>
-              <path d="M10.2 3.97727C11.6091 3.97727 12.8636 4.48182 13.8545 5.43182L16.7364 2.6C15.1682 1.13636 12.8955 0.136364 10.2 0.136364C6.22727 0.136364 2.80909 2.37727 1.19091 5.50909L4.56364 8.1C5.37273 5.73636 7.59091 3.97727 10.2 3.97727Z" fill="#EA4335"/>
-            </svg>
-            Sign up with Google
-          </motion.button>
+          {/* Google Sign In — same as login page */}
+          <div className="mb-6">
+            <GoogleSignInButton
+              onSuccess={handleGoogleSuccess}
+              onError={(msg) => toast.error(msg)}
+              shape="rectangular"
+              theme="outline"
+              size="large"
+              className="rounded-xl"
+              customContent={
+                <motion.div
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-white border-2 border-border/30 shadow-sm text-foreground py-4 rounded-xl font-medium flex items-center justify-center gap-3 hover:bg-foreground/5 transition-all"
+                >
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M19.8 10.2273C19.8 9.51819 19.7364 8.83637 19.6182 8.18182H10.2V12.05H15.6091C15.3545 13.3 14.6182 14.3591 13.5273 15.0682V17.5773H16.7909C18.7091 15.8364 19.8 13.2727 19.8 10.2273Z" fill="#4285F4"/>
+                    <path d="M10.2 20C12.9 20 15.1727 19.1045 16.7909 17.5773L13.5273 15.0682C12.6182 15.6682 11.4909 16.0227 10.2 16.0227C7.59091 16.0227 5.37273 14.2636 4.56364 11.9H1.19091V14.4909C2.80909 17.7591 6.22727 20 10.2 20Z" fill="#34A853"/>
+                    <path d="M4.56364 11.9C4.34545 11.3 4.22727 10.6591 4.22727 10C4.22727 9.34091 4.34545 8.7 4.56364 8.1V5.50909H1.19091C0.527273 6.85909 0.136364 8.38636 0.136364 10C0.136364 11.6136 0.527273 13.1409 1.19091 14.4909L4.56364 11.9Z" fill="#FBBC05"/>
+                    <path d="M10.2 3.97727C11.6091 3.97727 12.8636 4.48182 13.8545 5.43182L16.7364 2.6C15.1682 1.13636 12.8955 0.136364 10.2 0.136364C6.22727 0.136364 2.80909 2.37727 1.19091 5.50909L4.56364 8.1C5.37273 5.73636 7.59091 3.97727 10.2 3.97727Z" fill="#EA4335"/>
+                  </svg>
+                  Continue with Google
+                </motion.div>
+              }
+            />
+          </div>
 
           {/* Divider */}
           <div className="flex items-center gap-4 my-8">
@@ -189,12 +228,50 @@ export function DesktopSignupPage() {
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="Phone number"
+                  placeholder="+91 9876543210 or 10-digit mobile"
                   required
                   className="w-full pl-12 pr-4 py-4 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>
-              <p className="text-xs text-foreground/50 mt-2">We'll send you an OTP to verify your number</p>
+              <p className="text-xs text-foreground/50 mt-2">We'll send you an OTP via SMS to verify your number</p>
+            </div>
+
+            <div className="relative">
+              <label className="block text-sm font-medium mb-2 text-foreground/70">
+                Password
+              </label>
+              <div className="relative">
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40" />
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="At least 6 characters"
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  className="w-full pl-12 pr-4 py-4 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="relative">
+              <label className="block text-sm font-medium mb-2 text-foreground/70">
+                Confirm password
+              </label>
+              <div className="relative">
+                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40" />
+                <input
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  placeholder="Confirm password"
+                  required
+                  minLength={6}
+                  autoComplete="new-password"
+                  className="w-full pl-12 pr-4 py-4 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                />
+              </div>
             </div>
 
             {/* Submit Button */}
@@ -220,7 +297,10 @@ export function DesktopSignupPage() {
           <p className="text-center mt-8 text-sm text-foreground/60">
             Already have an account?{' '}
             <button
-              onClick={() => navigate('/login')}
+              type="button"
+              onClick={() =>
+                navigate(redirect !== '/account' ? `/login?redirect=${encodeURIComponent(redirect)}` : '/login')
+              }
               className="text-primary font-medium hover:underline"
             >
               Sign in

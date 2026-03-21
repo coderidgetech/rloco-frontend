@@ -6,6 +6,9 @@ import { toast } from 'sonner';
 import { RlocoLogo } from './RlocoLogo';
 import { useUser } from '../context/UserContext';
 import { GoogleSignInButton } from './GoogleSignInButton';
+import { authService } from '../services/authService';
+import { SIGNUP_OTP_DRAFT_KEY, type SignupOtpDraft } from '../lib/signupOtpDraft';
+import { getApiErrorMessage } from '../lib/apiErrors';
 
 const COUNTRIES = [
   { code: 'US', name: 'United States', dialCode: '+1', flag: '🇺🇸' },
@@ -70,13 +73,15 @@ type ViewType = 'login' | 'signup' | 'otp-verification';
 
 export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: DesktopAuthModalProps) {
   const navigate = useNavigate();
-  const { loginWithGoogle } = useUser();
+  const { loginWithGoogle, refreshUser } = useUser();
   const [currentView, setCurrentView] = useState<ViewType>(initialView);
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  /** Which flow produced the current OTP screen (login stays demo; signup uses Twilio Verify). */
+  const [otpFlow, setOtpFlow] = useState<'login' | 'signup' | null>(null);
   
   // Country selector
   const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[1]); // Default to India
@@ -86,7 +91,9 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
   const [signupData, setSignupData] = useState({
     name: '',
     email: '',
-    phone: ''
+    phone: '',
+    password: '',
+    confirmPassword: '',
   });
 
   const startCountdown = () => {
@@ -105,14 +112,56 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setOtpSent(true);
-    setCurrentView('otp-verification');
-    startCountdown();
-    toast.success('OTP sent to your phone');
-    setIsLoading(false);
+    setOtpFlow('login');
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      setOtpSent(true);
+      setCurrentView('otp-verification');
+      startCountdown();
+      toast.success('OTP sent to your phone');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendSignupOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signupData.name.trim() || !signupData.email.trim() || !signupData.phone.trim()) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    if (signupData.password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    if (signupData.password !== signupData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    const phoneForApi = signupData.phone.trim();
+    setIsLoading(true);
+    try {
+      await authService.sendRegistrationOtp(phoneForApi);
+      sessionStorage.setItem(
+        SIGNUP_OTP_DRAFT_KEY,
+        JSON.stringify({
+          phone: phoneForApi,
+          email: signupData.email.trim(),
+          name: signupData.name.trim(),
+          password: signupData.password,
+        } satisfies SignupOtpDraft)
+      );
+      setPhone(phoneForApi);
+      setOtpFlow('signup');
+      setOtpSent(true);
+      setCurrentView('otp-verification');
+      startCountdown();
+      toast.success('OTP sent to your phone');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not send verification code'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleVerifyOTP = async () => {
@@ -124,29 +173,70 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
     }
 
     setIsLoading(true);
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    localStorage.setItem('isAuthenticated', 'true');
-    localStorage.setItem('userEmail', signupData.email || 'user@rloco.com');
-    localStorage.setItem('userName', signupData.name || phone);
-    localStorage.setItem('userPhone', phone || signupData.phone);
-    
-    toast.success('Successfully verified!');
-    setIsLoading(false);
-    resetAndClose();
-    navigate('/account');
+    try {
+      if (otpFlow === 'signup') {
+        const raw = sessionStorage.getItem(SIGNUP_OTP_DRAFT_KEY);
+        if (!raw) {
+          toast.error('Signup session expired. Please try again.');
+          setCurrentView('signup');
+          setOtpSent(false);
+          setOtpFlow(null);
+          return;
+        }
+        const draft = JSON.parse(raw) as SignupOtpDraft;
+        await authService.completeRegistrationOtp({
+          phone: draft.phone,
+          code: otpValue,
+          email: draft.email,
+          password: draft.password,
+          name: draft.name,
+        });
+        sessionStorage.removeItem(SIGNUP_OTP_DRAFT_KEY);
+        await refreshUser();
+        toast.success('Account created successfully!');
+        resetAndClose();
+        navigate('/account');
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      localStorage.setItem('isAuthenticated', 'true');
+      localStorage.setItem('userEmail', signupData.email || 'user@rloco.com');
+      localStorage.setItem('userName', signupData.name || phone);
+      localStorage.setItem('userPhone', phone || signupData.phone);
+      toast.success('Successfully verified!');
+      resetAndClose();
+      navigate('/account');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Verification failed'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleResendOTP = async () => {
     if (countdown > 0) return;
     
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    startCountdown();
-    toast.success('OTP resent!');
-    setIsLoading(false);
+    try {
+      if (otpFlow === 'signup') {
+        const raw = sessionStorage.getItem(SIGNUP_OTP_DRAFT_KEY);
+        if (!raw) {
+          toast.error('Session expired');
+          return;
+        }
+        const draft = JSON.parse(raw) as SignupOtpDraft;
+        await authService.sendRegistrationOtp(draft.phone);
+      } else {
+        await new Promise((resolve) => setTimeout(resolve, 600));
+      }
+      startCountdown();
+      toast.success('OTP resent!');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not resend'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOtpChange = (index: number, value: string) => {
@@ -188,10 +278,13 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
     setOtp(['', '', '', '', '', '']);
     setOtpSent(false);
     setCountdown(0);
+    setOtpFlow(null);
     setSignupData({
       name: '',
       email: '',
-      phone: ''
+      phone: '',
+      password: '',
+      confirmPassword: '',
     });
     onClose();
   };
@@ -391,7 +484,7 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
                       <p className="text-foreground/60">Join Rloco today</p>
                     </div>
 
-                    <form onSubmit={handleSendOTP} className="space-y-3">
+                    <form onSubmit={handleSendSignupOTP} className="space-y-3">
                       <div>
                         <label className="block text-sm font-medium mb-1.5 text-foreground/70">
                           Full Name
@@ -436,11 +529,42 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
                             type="tel"
                             value={signupData.phone}
                             onChange={(e) => setSignupData({ ...signupData, phone: e.target.value })}
-                            placeholder="Phone number"
+                            placeholder="+91 9876543210 or 10-digit number"
                             required
                             className="w-full pl-10 pr-4 py-2.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                           />
                         </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-1.5 text-foreground/70">
+                          Password
+                        </label>
+                        <input
+                          type="password"
+                          value={signupData.password}
+                          onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                          placeholder="At least 6 characters"
+                          required
+                          minLength={6}
+                          autoComplete="new-password"
+                          className="w-full px-4 py-2.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1.5 text-foreground/70">
+                          Confirm password
+                        </label>
+                        <input
+                          type="password"
+                          value={signupData.confirmPassword}
+                          onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
+                          placeholder="Confirm password"
+                          required
+                          minLength={6}
+                          autoComplete="new-password"
+                          className="w-full px-4 py-2.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                        />
                       </div>
 
                       <label className="flex items-start gap-2 cursor-pointer text-xs pt-2">
