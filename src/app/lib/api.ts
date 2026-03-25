@@ -1,6 +1,33 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios';
 import { ApiError } from '../types/api';
 
+const AUTH_TOKEN_KEY = 'auth_token';
+
+const getStoredAuthToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+};
+
+const setStoredAuthToken = (token: string): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+};
+
+const clearStoredAuthToken = (): void => {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+};
+
+function requestHasAuthorizationHeader(config: InternalAxiosRequestConfig): boolean {
+  const h = config.headers;
+  if (!h) return false;
+  const raw =
+    typeof (h as any).get === 'function'
+      ? (h as any).get('Authorization')
+      : (h as any).Authorization;
+  return typeof raw === 'string' && raw.length > 0;
+}
+
 // Create axios instance with base configuration
 const api: AxiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
@@ -14,8 +41,16 @@ const api: AxiosInstance = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Add any request modifications here
-    // Auth token will be sent via HttpOnly cookie automatically
+    // Prefer cookie auth; if cookie is unavailable cross-site, send stored bearer token.
+    const token = getStoredAuthToken();
+    if (token && !requestHasAuthorizationHeader(config)) {
+      const h = config.headers;
+      if (typeof (h as any).set === 'function') {
+        (h as any).set('Authorization', `Bearer ${token}`);
+      } else {
+        (h as any).Authorization = `Bearer ${token}`;
+      }
+    }
     return config;
   },
   (error: AxiosError) => {
@@ -26,6 +61,13 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response: AxiosResponse) => {
+    const url = response.config.url || '';
+    const token = (response.data as any)?.token;
+    if (typeof token === 'string' && token.length > 0) {
+      setStoredAuthToken(token);
+    } else if (url.includes('/auth/logout')) {
+      clearStoredAuthToken();
+    }
     return response;
   },
   async (error: AxiosError<ApiError>) => {
@@ -33,6 +75,11 @@ api.interceptors.response.use(
 
     // Suppress 401 errors for /auth/me endpoint (expected when not logged in)
     if (error.response?.status === 401 && originalRequest.url?.includes('/auth/me')) {
+      // Only clear stored token when the server rejected a sent Bearer (expired/invalid).
+      // Do not clear when a stale in-flight getMe (no auth header) loses a race with login.
+      if (requestHasAuthorizationHeader(originalRequest)) {
+        clearStoredAuthToken();
+      }
       // Silently reject - this is expected when user is not authenticated
       // Create a silent error that won't trigger console logs
       const silentError = new Error('Unauthorized');
@@ -58,6 +105,7 @@ api.interceptors.response.use(
           return api(originalRequest);
         }
       } catch (refreshError) {
+        clearStoredAuthToken();
         // Refresh failed — only send storefront users away from admin; never hijack /login or /otp-verification
         if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
           window.location.href = '/admin/login';
