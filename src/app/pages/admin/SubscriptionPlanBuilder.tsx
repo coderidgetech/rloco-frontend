@@ -7,6 +7,7 @@ import { Label } from '@/app/components/ui/label';
 import { Textarea } from '@/app/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { toast } from 'sonner';
+import { PH } from '@/app/lib/formPlaceholders';
 
 export default function SubscriptionPlanBuilder() {
   const navigate = useNavigate();
@@ -220,7 +221,7 @@ export default function SubscriptionPlanBuilder() {
                         configName: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_'),
                       })
                     }
-                    placeholder="PLAN_PROFESSIONAL"
+                    placeholder={PH.planConfigCode}
                     className="font-mono"
                   />
                   <p className="text-xs text-gray-500">
@@ -234,7 +235,7 @@ export default function SubscriptionPlanBuilder() {
                     <Input
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="e.g., Professional"
+                      placeholder={PH.planName}
                     />
                   </div>
                   <div className="space-y-2">
@@ -398,7 +399,7 @@ export default function SubscriptionPlanBuilder() {
                     <Input
                       value={formData.storageLimit}
                       onChange={(e) => setFormData({ ...formData, storageLimit: e.target.value })}
-                      placeholder="10 GB"
+                      placeholder={PH.storageLimit}
                     />
                   </div>
                   <div className="space-y-2">
@@ -406,7 +407,7 @@ export default function SubscriptionPlanBuilder() {
                     <Input
                       value={formData.bandwidthLimit}
                       onChange={(e) => setFormData({ ...formData, bandwidthLimit: e.target.value })}
-                      placeholder="100 GB"
+                      placeholder={PH.bandwidthLimit}
                     />
                   </div>
                 </div>

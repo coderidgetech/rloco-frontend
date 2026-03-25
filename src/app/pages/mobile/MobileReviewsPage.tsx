@@ -7,6 +7,7 @@ import { EmptyState } from '@/app/components/mobile/EmptyState';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { reviewService, type MyReviewItem } from '@/app/services/reviewService';
+import { PH } from '@/app/lib/formPlaceholders';
 
 interface Review {
   id: string;
@@ -272,7 +273,7 @@ export function MobileReviewsPage() {
                   value={editForm.title}
                   onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
                   className="w-full border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-                  placeholder="Title"
+                  placeholder={PH.reviewTitle}
                 />
               </div>
               <div>
@@ -282,7 +283,7 @@ export function MobileReviewsPage() {
                   onChange={(e) => setEditForm((f) => ({ ...f, comment: e.target.value }))}
                   rows={4}
                   className="w-full border border-border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
-                  placeholder="Your review"
+                  placeholder={PH.reviewBody}
                 />
               </div>
               <button

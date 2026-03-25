@@ -10,6 +10,7 @@ import { useSiteConfig } from '../context/SiteConfigContext';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { newsletterService } from '../services/newsletterService';
+import { PH } from '../lib/formPlaceholders';
 
 export function Footer() {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ export function Footer() {
               <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
                 <Input
                   type="email"
-                  placeholder="Email address"
+                  placeholder={PH.email}
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
                   className="border-border/30 shadow-sm h-12"

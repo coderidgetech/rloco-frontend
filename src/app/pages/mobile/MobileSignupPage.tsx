@@ -2,6 +2,9 @@ import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, User, Phone, X, Lock } from 'lucide-react';
+import { DIAL_COUNTRIES, buildPhoneDigitsForApi } from '@/app/lib/dialCountries';
+import { PH } from '@/app/lib/formPlaceholders';
+import { PhoneCountryRow } from '@/app/components/PhoneCountryRow';
 import { toast } from 'sonner';
 import { RlocoLogo } from '@/app/components/RlocoLogo';
 import { authService } from '@/app/services/authService';
@@ -18,10 +21,15 @@ export function MobileSignupPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
     password: '',
     confirmPassword: '',
   });
+  const [phoneLocal, setPhoneLocal] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState(DIAL_COUNTRIES[1]);
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
+  /** Shown on OTP step (full international digits). */
+  const [submittedIntlPhone, setSubmittedIntlPhone] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -37,7 +45,7 @@ export function MobileSignupPage() {
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email || !formData.phone) {
+    if (!formData.name || !formData.email || !phoneLocal.trim()) {
       toast.error('Please fill in all fields');
       return;
     }
@@ -50,7 +58,11 @@ export function MobileSignupPage() {
       return;
     }
 
-    const phone = formData.phone.trim();
+    const phone = buildPhoneDigitsForApi(selectedCountry.dialCode, phoneLocal);
+    if (phone.length < 11) {
+      toast.error('Choose country and enter your full mobile number');
+      return;
+    }
     setLoading(true);
     try {
       await authService.sendRegistrationOtp(phone);
@@ -63,6 +75,7 @@ export function MobileSignupPage() {
           password: formData.password,
         })
       );
+      setSubmittedIntlPhone(phone);
       setOtpSent(true);
       setCountdown(60);
       toast.success('OTP sent to your phone');
@@ -221,7 +234,7 @@ export function MobileSignupPage() {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Full name"
+                    placeholder={PH.fullName}
                     className="w-full pl-11 pr-4 py-3.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>
@@ -238,7 +251,7 @@ export function MobileSignupPage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="Email address"
+                    placeholder={PH.email}
                     className="w-full pl-11 pr-4 py-3.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>
@@ -249,16 +262,17 @@ export function MobileSignupPage() {
                 <label className="block text-sm font-medium mb-2 text-foreground/70">
                   Phone
                 </label>
-                <div className="relative">
-                  <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40" />
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+91 9876543210 or 10-digit"
-                    className="w-full pl-11 pr-4 py-3.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                  />
-                </div>
+                <PhoneCountryRow
+                  variant="mobile"
+                  localPhone={phoneLocal}
+                  onLocalPhoneChange={setPhoneLocal}
+                  selectedCountry={selectedCountry}
+                  onSelectCountry={setSelectedCountry}
+                  showPicker={showCountryPicker}
+                  setShowPicker={setShowCountryPicker}
+                  countrySearch={countrySearch}
+                  setCountrySearch={setCountrySearch}
+                />
               </div>
 
               <div>
@@ -271,7 +285,7 @@ export function MobileSignupPage() {
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="At least 6 characters"
+                    placeholder={PH.password}
                     minLength={6}
                     autoComplete="new-password"
                     className="w-full pl-11 pr-4 py-3.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
@@ -289,7 +303,7 @@ export function MobileSignupPage() {
                     type="password"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    placeholder="Confirm password"
+                    placeholder={PH.confirmPassword}
                     minLength={6}
                     autoComplete="new-password"
                     className="w-full pl-11 pr-4 py-3.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
@@ -393,7 +407,7 @@ export function MobileSignupPage() {
                 <h2 className="text-3xl mb-2">Verify OTP</h2>
                 <p className="text-foreground/60 px-4">
                   Enter the 6-digit code sent to<br />
-                  <span className="font-medium text-foreground">{formData.phone}</span>
+                  <span className="font-medium text-foreground">{submittedIntlPhone}</span>
                 </p>
               </div>
 
@@ -438,6 +452,7 @@ export function MobileSignupPage() {
                 <button
                   onClick={() => {
                     sessionStorage.removeItem(SIGNUP_OTP_DRAFT_KEY);
+                    setSubmittedIntlPhone('');
                     setOtpSent(false);
                   }}
                   className="text-sm text-foreground/60 hover:text-foreground block mx-auto"

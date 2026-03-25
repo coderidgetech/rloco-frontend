@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Phone, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { RlocoLogo } from '@/app/components/RlocoLogo';
 import { useUser } from '@/app/context/UserContext';
@@ -9,34 +9,39 @@ import { GoogleSignInButton } from '@/app/components/GoogleSignInButton';
 import { authService } from '@/app/services/authService';
 import { getApiErrorMessage } from '@/app/lib/apiErrors';
 import { LOGIN_OTP_SESSION_KEY, SIGNUP_OTP_DRAFT_KEY, type LoginOtpSession } from '@/app/lib/signupOtpDraft';
+import { DIAL_COUNTRIES, buildPhoneDigitsForApi } from '@/app/lib/dialCountries';
+import { PhoneCountryRow } from '@/app/components/PhoneCountryRow';
 
 export function DesktopLoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/account';
   const { loginWithGoogle } = useUser();
-  const [phone, setPhone] = useState('');
+  const [phoneLocal, setPhoneLocal] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState(DIAL_COUNTRIES[1]);
+  const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [countrySearch, setCountrySearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!phone.trim()) {
-      toast.error('Please enter your phone number');
+
+    const digits = buildPhoneDigitsForApi(selectedCountry.dialCode, phoneLocal);
+    if (digits.length < 11) {
+      toast.error('Choose country and enter your full mobile number');
       return;
     }
 
     setIsLoading(true);
     try {
-      const trimmed = phone.trim();
-      await authService.sendLoginOtp(trimmed);
+      await authService.sendLoginOtp(digits);
       try {
         sessionStorage.removeItem(SIGNUP_OTP_DRAFT_KEY);
       } catch {
         /* ignore */
       }
       const session: LoginOtpSession = {
-        phone: trimmed,
+        phone: digits,
         returnTo: redirect,
         isSignup: false,
       };
@@ -128,18 +133,20 @@ export function DesktopLoginPage() {
               <label className="block text-sm font-medium mb-2 text-foreground/70">
                 Phone Number
               </label>
-              <div className="relative">
-                <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40" />
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+1 (555) 000-0000"
-                  required
-                  className="w-full pl-12 pr-4 py-4 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                />
-              </div>
-              <p className="text-xs text-foreground/50 mt-2">We'll send you an OTP to verify your number</p>
+              <PhoneCountryRow
+                variant="desktop"
+                localPhone={phoneLocal}
+                onLocalPhoneChange={setPhoneLocal}
+                selectedCountry={selectedCountry}
+                onSelectCountry={setSelectedCountry}
+                showPicker={showCountryPicker}
+                setShowPicker={setShowCountryPicker}
+                countrySearch={countrySearch}
+                setCountrySearch={setCountrySearch}
+              />
+              <p className="text-xs text-foreground/50 mt-2">
+                Select your country, then enter your number — we send a full international format to the server (no default country on the API).
+              </p>
             </div>
 
             {/* Submit Button */}

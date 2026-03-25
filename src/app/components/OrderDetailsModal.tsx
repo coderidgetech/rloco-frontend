@@ -6,6 +6,7 @@ import { orderService, OrderTrackingUpdate } from '../services/orderService';
 import { LuxuryInput } from './ui/luxury-input';
 import { LuxuryTextarea } from './ui/luxury-textarea';
 import { LuxurySelect } from './ui/luxury-select';
+import { PH } from '../lib/formPlaceholders';
 
 interface OrderProduct {
   id: string;
@@ -430,7 +431,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                       value={review}
                       onChange={(e) => setReview(e.target.value)}
                       className="h-32"
-                      placeholder="Your review"
+                      placeholder={PH.reviewBody}
                     />
 
                     {/* Submit Button */}
@@ -622,7 +623,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                     value={supportMessage}
                     onChange={(e) => setSupportMessage(e.target.value)}
                     className="h-40"
-                    placeholder="Description"
+                    placeholder={PH.description}
                   />
 
                   {/* Submit Button */}

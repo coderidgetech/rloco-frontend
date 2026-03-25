@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PH } from '../../lib/formPlaceholders';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -434,7 +435,7 @@ export const AdminPromotionsPage = () => {
               <div className="space-y-2">
                 <Label>Promotion Name *</Label>
                 <Input 
-                  placeholder="e.g., Winter Sale" 
+                  placeholder={PH.promotionName} 
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
@@ -442,7 +443,7 @@ export const AdminPromotionsPage = () => {
               <div className="space-y-2">
                 <Label>Discount Code *</Label>
                 <Input 
-                  placeholder="e.g., WINTER25" 
+                  placeholder={PH.discountCode} 
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                 />
@@ -469,7 +470,7 @@ export const AdminPromotionsPage = () => {
                 <Label>Discount Value *</Label>
                 <Input 
                   type="number" 
-                  placeholder="25" 
+                  placeholder={PH.discountValue} 
                   value={formData.value}
                   onChange={(e) => setFormData({ ...formData, value: e.target.value })}
                 />
@@ -480,7 +481,7 @@ export const AdminPromotionsPage = () => {
                 <Label>Minimum Purchase</Label>
                 <Input 
                   type="number" 
-                  placeholder="0.00" 
+                  placeholder={PH.priceZero} 
                   value={formData.min_purchase}
                   onChange={(e) => setFormData({ ...formData, min_purchase: e.target.value })}
                 />
@@ -489,7 +490,7 @@ export const AdminPromotionsPage = () => {
                 <Label>Max Discount</Label>
                 <Input 
                   type="number" 
-                  placeholder="Optional" 
+                  placeholder={PH.optional} 
                   value={formData.max_discount}
                   onChange={(e) => setFormData({ ...formData, max_discount: e.target.value })}
                 />
@@ -500,7 +501,7 @@ export const AdminPromotionsPage = () => {
                 <Label>Usage Limit</Label>
                 <Input 
                   type="number" 
-                  placeholder="Unlimited" 
+                  placeholder={PH.unlimited} 
                   value={formData.usage_limit}
                   onChange={(e) => setFormData({ ...formData, usage_limit: e.target.value })}
                 />

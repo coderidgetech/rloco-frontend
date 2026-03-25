@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback, useRef } from 'react';
 import { cartService } from '../services/cartService';
+import { isUnauthorizedApiError } from '../lib/apiErrors';
 import { useUser } from './UserContext';
 import { CartItem as APICartItem } from '../types/api';
 
@@ -84,15 +85,7 @@ const saveCartToStorage = (items: CartItem[]) => {
 };
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  // Safely get user context - handle case where UserProvider might not be available
-  let isAuthenticated = false;
-  try {
-    const userContext = useUser();
-    isAuthenticated = userContext.isAuthenticated;
-  } catch (error) {
-    // UserProvider not available, continue with unauthenticated state
-    isAuthenticated = false;
-  }
+  const { isAuthenticated } = useUser();
   
   const [items, setItems] = useState<CartItem[]>(() => loadCartFromStorage());
   const [loading, setLoading] = useState(false);
@@ -119,7 +112,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }));
       setItems(convertedItems);
     } catch (error) {
-      console.error('Failed to sync cart:', error);
+      if (!isUnauthorizedApiError(error)) {
+        console.error('Failed to sync cart:', error);
+      }
       // Keep local cart on error
     } finally {
       setLoading(false);
@@ -157,12 +152,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
                   gift_message: guest.giftMessage,
                 });
               } catch (err) {
-                console.warn('Failed to merge guest cart item:', guest.id, guest.size, err);
+                if (!isUnauthorizedApiError(err)) {
+                  console.warn('Failed to merge guest cart item:', guest.id, guest.size, err);
+                }
               }
             }
             localStorage.removeItem(CART_STORAGE_KEY);
           } catch (error) {
-            console.error('Failed to merge guest cart:', error);
+            if (!isUnauthorizedApiError(error)) {
+              console.error('Failed to merge guest cart:', error);
+            }
           } finally {
             setLoading(false);
           }
@@ -212,7 +211,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
           gift_message: newItem.giftMessage,
         });
       } catch (error) {
-        console.error('Failed to sync cart item with server:', error);
+        if (!isUnauthorizedApiError(error)) {
+          console.error('Failed to sync cart item with server:', error);
+        }
         // Keep local state — item remains in bag even if backend sync fails
       }
     }
@@ -227,7 +228,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       try {
         await cartService.removeItem(String(id), size);
       } catch (error) {
-        console.error('Failed to remove item from cart:', error);
+        if (!isUnauthorizedApiError(error)) {
+          console.error('Failed to remove item from cart:', error);
+        }
         // Revert by syncing
         await syncCart();
       }
@@ -254,7 +257,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       try {
         await cartService.updateItem(String(id), size, quantity);
       } catch (error) {
-        console.error('Failed to update cart item:', error);
+        if (!isUnauthorizedApiError(error)) {
+          console.error('Failed to update cart item:', error);
+        }
         await syncCart();
       }
     } else {
@@ -274,7 +279,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       try {
         await cartService.updateGiftOptions(String(id), size, giftWrapColor, giftMessage);
       } catch (error) {
-        console.error('Failed to update gift options:', error);
+        if (!isUnauthorizedApiError(error)) {
+          console.error('Failed to update gift options:', error);
+        }
         await syncCart();
       }
     }
@@ -286,7 +293,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       try {
         await cartService.clearCart();
       } catch (error) {
-        console.error('Failed to clear cart:', error);
+        if (!isUnauthorizedApiError(error)) {
+          console.error('Failed to clear cart:', error);
+        }
       }
     } else {
       localStorage.removeItem(CART_STORAGE_KEY);

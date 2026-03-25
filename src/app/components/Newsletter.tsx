@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { newsletterService } from '../services/newsletterService';
+import { PH } from '../lib/formPlaceholders';
 
 export function Newsletter() {
   const { config } = useSiteConfig();
@@ -71,7 +72,7 @@ export function Newsletter() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email address"
+              placeholder={PH.email}
               className="flex-1 px-6 py-4 border border-border bg-background focus:outline-none focus:border-foreground transition-colors"
             />
             <motion.button

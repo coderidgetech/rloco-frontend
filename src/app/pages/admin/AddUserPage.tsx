@@ -16,6 +16,7 @@ import {
   EyeOff,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PH } from '../../lib/formPlaceholders';
 import {
   Select,
   SelectContent,
@@ -215,7 +216,7 @@ export const AddUserPage = () => {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter full name"
+                  placeholder={PH.fullName}
                   className={errors.name ? 'border-red-500' : ''}
                 />
                 {errors.name && (
@@ -233,7 +234,7 @@ export const AddUserPage = () => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter email address"
+                    placeholder={PH.email}
                     className={`pl-10 ${errors.email ? 'border-red-500' : ''}`}
                   />
                 </div>
@@ -252,7 +253,7 @@ export const AddUserPage = () => {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder={PH.passwordMasked}
                     className={`pl-10 pr-10 ${errors.password ? 'border-red-500' : ''}`}
                   />
                   <button
@@ -281,7 +282,7 @@ export const AddUserPage = () => {
                     type={showPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder={PH.passwordMasked}
                     className={`pl-10 pr-10 ${errors.confirmPassword ? 'border-red-500' : ''}`}
                   />
                   <button

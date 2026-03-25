@@ -4,6 +4,7 @@ import { Home, Briefcase, MapPin, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { addressService } from '../services/addressService';
 import { AddressAutocompleteInput, lookupZipCode } from '../components/AddressAutocompleteInput';
+import { PH } from '../lib/formPlaceholders';
 
 interface FormData {
   name: string;
@@ -207,11 +208,11 @@ export function AddAddressPage() {
           <section>
             <p className="text-xs uppercase tracking-widest text-foreground/50 mb-4">Contact</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="Full name" field="name" placeholder="Full name" />
+              <Field label="Full name" field="name" placeholder={PH.fullName} />
               <Field
                 label="Phone number"
                 field="mobile"
-                placeholder="Phone number"
+                placeholder={PH.phone}
                 inputMode="numeric"
                 maxLength={10}
               />
@@ -235,7 +236,7 @@ export function AddAddressPage() {
                     if (components.pincode) set('pincode', components.pincode);
                     if (components.country) set('country', components.country);
                   }}
-                  placeholder="Street address"
+                  placeholder={PH.streetAddress}
                   error={errors.address_line}
                   countryCode={form.country === 'US' || form.country === 'United States' ? 'us' : 'in'}
                   className="h-11 rounded-none text-sm border-foreground/20 focus:border-foreground focus:ring-0"
@@ -245,12 +246,12 @@ export function AddAddressPage() {
               <Field
                 label="Apartment / Suite (optional)"
                 field="address_line2"
-                placeholder="Apt, suite, or building (optional)"
+                placeholder={PH.aptOptional}
                 required={false}
               />
               <div className="grid grid-cols-2 gap-4">
-                <Field label="City" field="city" placeholder="City" />
-                <Field label="State" field="state" placeholder="State" />
+                <Field label="City" field="city" placeholder={PH.city} />
+                <Field label="State" field="state" placeholder={PH.state} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -262,7 +263,7 @@ export function AddAddressPage() {
                     inputMode="numeric"
                     value={form.pincode}
                     onChange={(e) => handleZipChange(e.target.value)}
-                    placeholder="ZIP / Postal code"
+                    placeholder={PH.zip}
                     maxLength={10}
                     className={`w-full h-11 px-3 bg-background border text-sm focus:outline-none transition-colors ${
                       errors.pincode
@@ -272,7 +273,7 @@ export function AddAddressPage() {
                   />
                   {errors.pincode && <p className="text-xs text-red-500 mt-1">{errors.pincode}</p>}
                 </div>
-                <Field label="Country" field="country" placeholder="Country" />
+                <Field label="Country" field="country" placeholder={PH.country} />
               </div>
             </div>
           </section>

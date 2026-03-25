@@ -9,6 +9,7 @@ import { Button } from '../components/ui/button';
 import { returnService } from '../services/returnService';
 import { orderService } from '../services/orderService';
 import { Return, Order, CreateReturnRequest } from '../types/api';
+import { PH } from '../lib/formPlaceholders';
 
 export function ReturnsPage() {
   const navigate = useNavigate();
@@ -561,7 +562,7 @@ export function ReturnsPage() {
                     <textarea
                       value={returnDescription}
                       onChange={(e) => setReturnDescription(e.target.value)}
-                      placeholder="Additional notes (optional)"
+                      placeholder={PH.notesOptional}
                       rows={4}
                       className="w-full px-4 py-2 bg-background border border-foreground/20 focus:border-foreground focus:outline-none resize-none"
                     />

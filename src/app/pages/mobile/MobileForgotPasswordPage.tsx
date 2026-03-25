@@ -5,6 +5,7 @@ import { Mail, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { RlocoLogo } from '@/app/components/RlocoLogo';
 import { authService } from '@/app/services/authService';
+import { PH } from '@/app/lib/formPlaceholders';
 
 export function MobileForgotPasswordPage() {
   const navigate = useNavigate();
@@ -84,7 +85,7 @@ export function MobileForgotPasswordPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email address"
+                    placeholder={PH.email}
                     className="w-full pl-11 pr-4 py-3.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                   />
                 </div>

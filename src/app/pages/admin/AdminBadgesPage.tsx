@@ -23,6 +23,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
+import { PH } from '@/app/lib/formPlaceholders';
 import {
   Dialog,
   DialogContent,
@@ -282,7 +283,7 @@ export function AdminBadgesPage() {
                   <div className="space-y-2">
                     <Label>Badge Name (Internal)</Label>
                     <Input
-                      placeholder="e.g., summer_sale"
+                      placeholder={PH.badgeInternalName}
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
@@ -291,7 +292,7 @@ export function AdminBadgesPage() {
                   <div className="space-y-2">
                     <Label>Display Label</Label>
                     <Input
-                      placeholder="e.g., SUMMER SALE"
+                      placeholder={PH.badgeDisplayLabel}
                       value={formData.label}
                       onChange={(e) => setFormData({ ...formData, label: e.target.value })}
                     />
@@ -301,7 +302,7 @@ export function AdminBadgesPage() {
                 <div className="space-y-2">
                   <Label>Description</Label>
                   <Textarea
-                    placeholder="Describe when this badge should be used..."
+                    placeholder={PH.badgeUsageDescription}
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   />

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Phone, ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { RlocoLogo } from '@/app/components/RlocoLogo';
+import { PH } from '@/app/lib/formPlaceholders';
 
 export function DesktopForgotPasswordPage() {
   const navigate = useNavigate();
@@ -64,7 +65,7 @@ export function DesktopForgotPasswordPage() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Phone number"
+                  placeholder={PH.phone}
                   required
                   className="w-full pl-12 pr-4 py-4 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />

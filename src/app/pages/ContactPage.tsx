@@ -7,6 +7,7 @@ import { LuxuryInput } from '../components/ui/luxury-input';
 import { LuxuryTextarea } from '../components/ui/luxury-textarea';
 import { LuxurySelect } from '../components/ui/luxury-select';
 import { useSiteConfig } from '../context/SiteConfigContext';
+import { PH } from '../lib/formPlaceholders';
 
 export function ContactPage() {
   const { config } = useSiteConfig();
@@ -152,7 +153,7 @@ export function ContactPage() {
                 required
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Full name"
+                placeholder={PH.fullName}
               />
 
               <LuxuryInput
@@ -161,7 +162,7 @@ export function ContactPage() {
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="Email address"
+                placeholder={PH.email}
               />
 
               <LuxuryInput
@@ -169,7 +170,7 @@ export function ContactPage() {
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="Phone number"
+                placeholder={PH.phone}
               />
 
               <LuxurySelect
@@ -193,7 +194,7 @@ export function ContactPage() {
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                 rows={6}
-                placeholder="Your message"
+                placeholder={PH.message}
               />
 
               {/* Submit Button */}

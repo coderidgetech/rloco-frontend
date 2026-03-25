@@ -27,6 +27,30 @@ declare global {
   }
 }
 
+/** Google Identity Services: `initialize()` must run once per client_id; callback reads latest handlers. */
+const gsiHandlers: {
+  clientId: string | null;
+  onSuccess: ((credential: string) => void) | null;
+  onError: ((message: string) => void) | null;
+} = { clientId: null, onSuccess: null, onError: null };
+
+function ensureGsiInitialized(clientId: string) {
+  if (!window.google) return;
+  if (gsiHandlers.clientId === clientId) return;
+  gsiHandlers.clientId = clientId;
+  window.google.accounts.id.initialize({
+    client_id: clientId,
+    callback: (response) => {
+      if (response?.credential) {
+        gsiHandlers.onSuccess?.(response.credential);
+      } else {
+        gsiHandlers.onError?.('Google sign-in failed. Please try again.');
+      }
+    },
+    cancel_on_tap_outside: true,
+  });
+}
+
 interface GoogleSignInButtonProps {
   onSuccess: (idToken: string) => void;
   onError?: (message: string) => void;
@@ -55,17 +79,9 @@ export function GoogleSignInButton({
   const initButton = useCallback(() => {
     if (!window.google || !containerRef.current || !clientId) return;
 
-    window.google.accounts.id.initialize({
-      client_id: clientId,
-      callback: (response) => {
-        if (response?.credential) {
-          onSuccess(response.credential);
-        } else {
-          onError?.('Google sign-in failed. Please try again.');
-        }
-      },
-      cancel_on_tap_outside: true,
-    });
+    gsiHandlers.onSuccess = onSuccess;
+    gsiHandlers.onError = onError ?? null;
+    ensureGsiInitialized(clientId);
 
     if (!customContent) {
       window.google.accounts.id.renderButton(containerRef.current, {

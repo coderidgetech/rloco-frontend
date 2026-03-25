@@ -18,6 +18,7 @@ import {
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { PH } from '@/app/lib/formPlaceholders';
 
 const SUPPORT_CATEGORIES = [
   { 
@@ -147,7 +148,7 @@ export function MobileContactPage() {
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Full name"
+                placeholder={PH.fullName}
                 required
                 className="w-full px-4 py-3 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
@@ -162,7 +163,7 @@ export function MobileContactPage() {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="Email address"
+                placeholder={PH.email}
                 required
                 className="w-full px-4 py-3 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
@@ -177,7 +178,7 @@ export function MobileContactPage() {
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="Phone number"
+                placeholder={PH.phone}
                 className="w-full px-4 py-3 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
             </div>
@@ -213,7 +214,7 @@ export function MobileContactPage() {
                 type="text"
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                placeholder="Subject"
+                placeholder={PH.subject}
                 required
                 className="w-full px-4 py-3 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
@@ -227,7 +228,7 @@ export function MobileContactPage() {
               <textarea
                 value={formData.message}
                 onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                placeholder="Your message"
+                placeholder={PH.message}
                 rows={6}
                 required
                 className="w-full px-4 py-3 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"

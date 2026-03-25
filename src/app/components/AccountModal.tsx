@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { LuxuryInput } from './ui/luxury-input';
 import { LuxuryCheckbox } from './ui/luxury-checkbox';
+import { PH } from '../lib/formPlaceholders';
 
 interface AccountModalProps {
   isOpen: boolean;
@@ -94,7 +95,7 @@ export function AccountModal({ isOpen, onClose }: AccountModalProps) {
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Enter your full name"
+                      placeholder={PH.fullName}
                       required={!isLogin}
                     />
                   </motion.div>
@@ -105,7 +106,7 @@ export function AccountModal({ isOpen, onClose }: AccountModalProps) {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="you@example.com"
+                  placeholder={PH.email}
                   required
                 />
 
@@ -115,7 +116,7 @@ export function AccountModal({ isOpen, onClose }: AccountModalProps) {
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="••••••••"
+                    placeholder={PH.passwordMasked}
                     required
                     className="pr-10"
                   />

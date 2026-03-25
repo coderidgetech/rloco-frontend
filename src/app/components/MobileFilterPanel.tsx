@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Search, X } from 'lucide-react';
 import { categoriesByGender, colorMap } from '../utils/filterConfig';
 import { LuxuryCheckbox } from './ui/luxury-checkbox';
+import { PH } from '../lib/formPlaceholders';
 
 const BADGE_OPTIONS = ['Best Seller', 'Trending', 'Most Ordered', 'New', 'Limited Edition', 'Exclusive', 'Hot', 'Popular'] as const;
 
@@ -118,7 +119,7 @@ export function MobileFilterPanel({
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" size={16} />
                   <input
                     type="text"
-                    placeholder="Search products..."
+                    placeholder={PH.searchProducts}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-10 pr-3 py-2 border border-foreground/20 bg-transparent focus:outline-none focus:border-foreground transition-colors text-sm"

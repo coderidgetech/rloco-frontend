@@ -5,6 +5,7 @@ import { RlocoLogo } from '@/app/components/RlocoLogo';
 import { authService } from '@/app/services/authService';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
+import { PH } from '@/app/lib/formPlaceholders';
 
 export function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -75,7 +76,7 @@ export function ResetPasswordPage() {
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="New password"
+            placeholder={PH.newPassword}
             minLength={6}
             required
             className="w-full"
@@ -87,7 +88,7 @@ export function ResetPasswordPage() {
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm password"
+            placeholder={PH.confirmPassword}
             minLength={6}
             required
             className="w-full"

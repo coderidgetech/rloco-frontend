@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Alert, AlertDescription } from '../components/ui/alert';
 import { AlertCircle, LogIn, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
+import { PH } from '../lib/formPlaceholders';
 
 export function LoginPage() {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -145,7 +146,7 @@ export function LoginPage() {
                 <LuxuryInput
                   label="Name"
                   type="text"
-                  placeholder="Full name"
+                  placeholder={PH.fullName}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoComplete="name"
@@ -155,7 +156,7 @@ export function LoginPage() {
               <LuxuryInput
                 label="Email"
                 type="email"
-                placeholder="Email address"
+                placeholder={PH.email}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoComplete="email"
@@ -164,7 +165,7 @@ export function LoginPage() {
               <LuxuryInput
                 label="Password"
                 type="password"
-                placeholder="Password"
+                placeholder={PH.password}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}

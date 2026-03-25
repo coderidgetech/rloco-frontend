@@ -4,6 +4,7 @@ import { Search, ChevronDown, ChevronUp, MessageCircle, Phone, Mail, HelpCircle 
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
 import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { useNavigate } from 'react-router-dom';
+import { PH } from '@/app/lib/formPlaceholders';
 
 interface FAQ {
   id: string;
@@ -101,7 +102,7 @@ export function MobileHelpPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for help..."
+              placeholder={PH.searchHelp}
               className="w-full pl-12 pr-4 py-3 bg-muted/30 rounded-xl border border-border/20 focus:outline-none focus:border-primary transition-colors"
             />
           </div>

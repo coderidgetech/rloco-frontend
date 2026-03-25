@@ -3,6 +3,7 @@ import { X, Mail, Lock, User, Eye, EyeOff, LogIn } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { LuxuryInput } from './ui/luxury-input';
+import { PH } from '../lib/formPlaceholders';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -171,7 +172,7 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Full name"
+                    placeholder={PH.fullName}
                     error={errors.name}
                     icon={<User size={16} />}
                   />
@@ -184,7 +185,7 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email address"
+                placeholder={PH.email}
                 error={errors.email}
                 icon={<Mail size={16} />}
               />
@@ -196,7 +197,7 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
+                  placeholder={PH.password}
                   error={errors.password}
                   icon={<Lock size={16} />}
                 />
@@ -221,7 +222,7 @@ export function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps)
                     type={showPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Password"
+                    placeholder={PH.confirmPassword}
                     error={errors.confirmPassword}
                     icon={<Lock size={16} />}
                   />

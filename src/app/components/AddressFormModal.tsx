@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useCurrency } from '../context/CurrencyContext';
 import { AddressAutocompleteInput, lookupZipCode } from './AddressAutocompleteInput';
+import { PH } from '../lib/formPlaceholders';
 
 interface Address {
   id: string;
@@ -239,7 +240,7 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                           type="text"
                           value={formData.name}
                           onChange={(e) => handleInputChange('name', e.target.value)}
-                          placeholder="Full name"
+                          placeholder={PH.fullName}
                           className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
                             errors.name ? 'border-destructive' : 'border-border'
                           }`}
@@ -262,7 +263,7 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                               handleInputChange('mobile', value);
                             }
                           }}
-                          placeholder="Phone number"
+                          placeholder={PH.phone}
                           className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
                             errors.mobile ? 'border-destructive' : 'border-border'
                           }`}
@@ -293,7 +294,7 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                             if (components.state)   handleInputChange('state', components.state);
                             if (components.pincode) handleInputChange('pincode', components.pincode);
                           }}
-                          placeholder="Street address"
+                          placeholder={PH.streetAddress}
                           error={errors.addressLine}
                           countryCode={isUS ? 'us' : 'in'}
                         />
@@ -308,7 +309,7 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                             type="text"
                             value={formData.addressLine2}
                             onChange={(e) => handleInputChange('addressLine2', e.target.value)}
-                            placeholder="Apt, suite, or building (optional)"
+                            placeholder={PH.aptOptional}
                             className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
                               errors.addressLine2 ? 'border-destructive' : 'border-border'
                             }`}
@@ -326,7 +327,7 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                             inputMode="numeric"
                             value={formData.pincode}
                             onChange={(e) => handleZipChange(e.target.value)}
-                            placeholder="ZIP / Postal code"
+                            placeholder={PH.zip}
                             maxLength={isUS ? 5 : 6}
                             className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
                               errors.pincode ? 'border-destructive' : 'border-border'
@@ -345,7 +346,7 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                             type="text"
                             value={formData.city}
                             onChange={(e) => handleInputChange('city', e.target.value)}
-                            placeholder="City"
+                            placeholder={PH.city}
                             className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
                               errors.city ? 'border-destructive' : 'border-border'
                             }`}

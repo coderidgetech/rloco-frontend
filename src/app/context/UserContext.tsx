@@ -11,7 +11,7 @@ interface UserContextType {
   loginWithGoogle: (idToken: string) => Promise<boolean>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  /** Sync user from localStorage (demo/OTP login). Call after setting isAuthenticated in storage, then navigate. */
+  /** Hydrate a local placeholder user from storage (id `demo`). Not treated as `isAuthenticated` for API calls. */
   syncFromStorage: () => void;
 }
 
@@ -24,6 +24,16 @@ export const useUser = () => {
   }
   return context;
 };
+
+const DEMO_USER_ID = 'demo';
+
+function clearStaleClientAuth() {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem('isAuthenticated');
+  localStorage.removeItem('userEmail');
+  localStorage.removeItem('userName');
+  localStorage.removeItem('userPhone');
+}
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -38,7 +48,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (typeof window === 'undefined') return null;
     if (localStorage.getItem('isAuthenticated') !== 'true') return null;
     return {
-      id: 'demo',
+      id: DEMO_USER_ID,
       email: localStorage.getItem('userEmail') || 'user@example.com',
       name: localStorage.getItem('userName') || 'User',
       role: 'customer',
@@ -53,9 +63,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const currentUser = await authService.getMe();
       setUser(currentUser);
     } catch {
-      // Backend not authenticated; allow demo auth from OTP/phone login (localStorage)
-      const demoUser = getDemoUserFromStorage();
-      setUser(demoUser);
+      // No valid session: clear client-only flags so we don't call cart/wishlist APIs as "logged in"
+      clearStaleClientAuth();
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -66,8 +76,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const currentUser = await authService.getMe();
       setUser(currentUser);
     } catch {
-      const demoUser = getDemoUserFromStorage();
-      setUser(demoUser);
+      clearStaleClientAuth();
+      setUser(null);
     }
   };
 
@@ -126,12 +136,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setUser(null);
       // Clear demo auth so next checkAuth doesn't restore from localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('userEmail');
-        localStorage.removeItem('userName');
-        localStorage.removeItem('userPhone');
-      }
+      clearStaleClientAuth();
     }
   }, []);
 
@@ -139,7 +144,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     <UserContext.Provider
       value={{
         user,
-        isAuthenticated: !!user,
+        // Demo/localStorage-only user must not trigger authenticated API calls (avoids 401 spam)
+        isAuthenticated: !!user && user.id !== DEMO_USER_ID,
         isLoading,
         login,
         register,

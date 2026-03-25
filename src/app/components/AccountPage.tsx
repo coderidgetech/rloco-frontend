@@ -22,6 +22,8 @@ import { Order as APIOrder, PaymentTransaction } from '../types/api';
 import { useUser } from '../context/UserContext';
 import { useCart } from '../context/CartContext';
 import { authService } from '../services/authService';
+import { PH } from '../lib/formPlaceholders';
+import { isUnauthorizedApiError } from '../lib/apiErrors';
 
 const SETTINGS_NOTIFICATIONS_KEY = 'rloco_notifications';
 
@@ -189,10 +191,9 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
         isDefault: apiAddr.is_default,
       }));
       setAddresses(convertedAddresses);
-    } catch (error: any) {
-      console.error('Failed to fetch addresses:', error);
-      // Don't show error toast for 401 (unauthorized) - user just needs to log in
-      if (error?.response?.status !== 401) {
+    } catch (error: unknown) {
+      if (!isUnauthorizedApiError(error)) {
+        console.error('Failed to fetch addresses:', error);
         toast.error('Failed to load addresses');
       }
       setAddresses([]);
@@ -231,8 +232,10 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
         }));
       
       setTransactions(orderTransactions);
-    } catch (error: any) {
-      console.error('Failed to fetch transactions:', error);
+    } catch (error: unknown) {
+      if (!isUnauthorizedApiError(error)) {
+        console.error('Failed to fetch transactions:', error);
+      }
       // Don't show error toast as this is optional data
     } finally {
       setTransactionsLoading(false);
@@ -281,9 +284,11 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
       }));
       
       setOrders(convertedOrders);
-    } catch (error: any) {
-      console.error('Failed to fetch orders:', error);
-      toast.error('Failed to load orders');
+    } catch (error: unknown) {
+      if (!isUnauthorizedApiError(error)) {
+        console.error('Failed to fetch orders:', error);
+        toast.error('Failed to load orders');
+      }
       setOrders([]);
     } finally {
       setOrdersLoading(false);
@@ -512,6 +517,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                   type="text"
                                   value={profileData.firstName}
                                   onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
+                                  placeholder={PH.firstName}
                                 />
 
                                 <LuxuryInput
@@ -519,6 +525,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                   type="text"
                                   value={profileData.lastName}
                                   onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
+                                  placeholder={PH.lastName}
                                 />
 
                                 <LuxuryInput
@@ -526,6 +533,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                   type="email"
                                   value={profileData.email}
                                   onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
+                                  placeholder={PH.email}
                                 />
 
                                 <LuxuryInput
@@ -533,6 +541,8 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                   type="tel"
                                   value={profileData.phone}
                                   onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                                  placeholder={PH.phone}
+                                  helperText="Include country code. Bare 10-digit local numbers are not accepted."
                                 />
 
                                 <LuxuryInput
@@ -1320,7 +1330,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                   type="text"
                   name="name"
                   required
-                  placeholder="Full name"
+                  placeholder={PH.fullName}
                 />
 
                 <div>
@@ -1340,7 +1350,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                         country: components.country || p.country,
                       }));
                     }}
-                    placeholder="Street address"
+                    placeholder={PH.streetAddress}
                   />
                 </div>
 
@@ -1352,7 +1362,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                     type="text"
                     name="city"
                     required
-                    placeholder="City"
+                    placeholder={PH.city}
                     value={addAddressForm.city}
                     onChange={(e) => setAddAddressForm((p) => ({ ...p, city: e.target.value }))}
                   />
@@ -1362,7 +1372,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                     type="text"
                     name="state"
                     required
-                    placeholder="State"
+                    placeholder={PH.state}
                     value={addAddressForm.state}
                     onChange={(e) => setAddAddressForm((p) => ({ ...p, state: e.target.value }))}
                   />
@@ -1374,7 +1384,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                     type="text"
                     name="zip"
                     required
-                    placeholder="ZIP / Postal code"
+                    placeholder={PH.zip}
                     value={addAddressForm.zip}
                     onChange={(e) => setAddAddressForm((p) => ({ ...p, zip: e.target.value }))}
                   />
@@ -1384,7 +1394,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                     type="text"
                     name="country"
                     required
-                    placeholder="Country"
+                    placeholder={PH.country}
                     value={addAddressForm.country}
                     onChange={(e) => setAddAddressForm((p) => ({ ...p, country: e.target.value }))}
                   />
@@ -1489,7 +1499,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                   type="text"
                   name="cardNumber"
                   required
-                  placeholder="Card number"
+                  placeholder={PH.cardNumber}
                   maxLength={19}
                   className="font-mono"
                 />
@@ -1500,7 +1510,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                     type="text"
                     name="expiry"
                     required
-                    placeholder="MM/YY"
+                    placeholder={PH.cardExpiry}
                     maxLength={5}
                     className="font-mono"
                   />
@@ -1510,7 +1520,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                     type="text"
                     name="cvv"
                     required
-                    placeholder="CVV"
+                    placeholder={PH.cvv}
                     maxLength={4}
                     className="font-mono"
                   />
@@ -1521,7 +1531,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                   type="text"
                   name="cardholderName"
                   required
-                  placeholder="Name on card"
+                  placeholder={PH.nameOnCard}
                   className="uppercase"
                 />
 

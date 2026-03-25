@@ -7,6 +7,7 @@ import { InspirationVideo } from '@/app/components/InspirationVideos';
 import { easing } from '@/app/utils/luxuryAnimations';
 import { toast } from 'sonner';
 import { videoService, InspirationVideo as APIVideo } from '@/app/services/videoService';
+import { PH } from '@/app/lib/formPlaceholders';
 
 export function AdminVideosPage() {
   const [videos, setVideos] = useState<InspirationVideo[]>([]);
@@ -404,7 +405,7 @@ export function AdminVideosPage() {
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                       className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B4770E]"
-                      placeholder="e.g., Summer Collection 2024"
+                      placeholder={PH.videoTitle}
                     />
                   </div>
 
@@ -418,7 +419,7 @@ export function AdminVideosPage() {
                       value={formData.videoUrl}
                       onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
                       className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B4770E]"
-                      placeholder="https://example.com/video.mp4"
+                      placeholder={PH.videoUrl}
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       Direct link to MP4 video file or streaming URL
@@ -435,7 +436,7 @@ export function AdminVideosPage() {
                       value={formData.thumbnailUrl}
                       onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })}
                       className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B4770E]"
-                      placeholder="https://example.com/thumbnail.jpg"
+                      placeholder={PH.thumbnailUrl}
                     />
                   </div>
 

@@ -5,6 +5,7 @@ import { Product } from '../types/product';
 import { ProductDetail } from './ProductDetail';
 import { productService } from '../services/productService';
 import { useCurrency } from '../context/CurrencyContext';
+import { PH } from '../lib/formPlaceholders';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -129,7 +130,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       type="text"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search for products..."
+                      placeholder={PH.searchProducts}
                       autoFocus
                       className="flex-1 bg-transparent outline-none text-lg placeholder:text-muted-foreground"
                     />

@@ -6,6 +6,7 @@ import { productService } from '@/app/services/productService';
 import { Product } from '@/app/types/api';
 import { MobileProductGrid } from '@/app/components/mobile/MobileProductGrid';
 import { EmptyState } from '@/app/components/mobile/EmptyState';
+import { PH } from '@/app/lib/formPlaceholders';
 
 const TRENDING_SEARCHES = [
   'Dresses',
@@ -101,7 +102,7 @@ export function MobileSearchPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search products..."
+              placeholder={PH.searchProducts}
               autoFocus
               className="w-full pl-11 pr-10 py-3 bg-foreground/5 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             />

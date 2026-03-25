@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Footer } from '../components/Footer';
+import { PH } from '../lib/formPlaceholders';
 
 type ViewMode = 'grid' | 'list';
 type SortOption = 'recent' | 'price-low' | 'price-high' | 'name';
@@ -368,7 +369,7 @@ export function WishlistPage() {
                             min={minPrice}
                             max={priceRange[1]}
                             className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm outline-none focus:border-primary"
-                            placeholder="Min"
+                            placeholder={PH.min}
                           />
                           <input
                             type="number"
@@ -377,7 +378,7 @@ export function WishlistPage() {
                             min={priceRange[0]}
                             max={maxPrice}
                             className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm outline-none focus:border-primary"
-                            placeholder="Max"
+                            placeholder={PH.max}
                           />
                         </div>
                       </div>

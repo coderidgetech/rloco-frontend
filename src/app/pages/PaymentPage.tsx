@@ -15,6 +15,7 @@ import { StripePaymentForm } from '../components/StripePaymentForm';
 import { CreateOrderRequest } from '../types/api';
 import { Product } from '../types/api';
 import type { Order } from '../types/api';
+import { PH } from '../lib/formPlaceholders';
 
 interface Address {
   id: string;
@@ -421,7 +422,7 @@ export function PaymentPage() {
                   setUpiId(e.target.value);
                   setSelectedUPI('');
                 }}
-                placeholder="UPI ID"
+                placeholder={PH.upiId}
                 className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
               />
               <p className="text-xs text-muted-foreground mt-2">
@@ -458,7 +459,7 @@ export function PaymentPage() {
                       setCardNumber(formatted);
                     }
                   }}
-                  placeholder="Card number"
+                  placeholder={PH.cardNumber}
                   maxLength={19}
                   className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
                 />
@@ -469,7 +470,7 @@ export function PaymentPage() {
                   type="text"
                   value={cardName}
                   onChange={(e) => setCardName(e.target.value.toUpperCase())}
-                  placeholder="Name on card"
+                  placeholder={PH.nameOnCard}
                   className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
                 />
               </div>
@@ -486,7 +487,7 @@ export function PaymentPage() {
                         setExpiryDate(formatted);
                       }
                     }}
-                    placeholder="MM/YY"
+                    placeholder={PH.cardExpiry}
                     maxLength={5}
                     className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
                   />
@@ -502,7 +503,7 @@ export function PaymentPage() {
                         setCvv(value);
                       }
                     }}
-                    placeholder="CVV"
+                    placeholder={PH.cvv}
                     maxLength={3}
                     className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
                   />

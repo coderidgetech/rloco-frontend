@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PH } from '../../lib/formPlaceholders';
 import { PLACEHOLDER_IMAGE } from '../../constants';
 import { motion } from 'motion/react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
@@ -242,7 +243,7 @@ export const AdminOrdersPage = () => {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search orders by ID, customer name, or email..."
+              placeholder={PH.adminSearchOrders}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"

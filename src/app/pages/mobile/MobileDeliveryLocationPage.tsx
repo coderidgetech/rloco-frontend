@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { MapPin, Navigation, Search, Clock, ChevronRight, Plus, CheckCircle2 } from 'lucide-react';
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
 import { useIsMobile } from '@/app/hooks/useIsMobile';
+import { PH } from '@/app/lib/formPlaceholders';
 
 interface SavedAddress {
   id: number;
@@ -103,7 +104,7 @@ export function MobileDeliveryLocationPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Area, street, or landmark"
+              placeholder={PH.deliveryArea}
               className="w-full pl-11 pr-4 py-3 bg-foreground/5 border border-border/20 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>

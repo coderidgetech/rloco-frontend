@@ -17,6 +17,7 @@ import { ArrowLeft, Image as ImageIcon, Save, X, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { productService } from '../../services/productService';
 import { Product } from '../../types/api';
+import { PH } from '../../lib/formPlaceholders';
 import { useEffect } from 'react';
 
 export const AdminAddEditProductPage = () => {
@@ -446,7 +447,7 @@ export const AdminAddEditProductPage = () => {
                   </Label>
                   <Input
                     id="name"
-                    placeholder="e.g., Premium Cotton T-Shirt"
+                    placeholder={PH.productName}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
@@ -456,7 +457,7 @@ export const AdminAddEditProductPage = () => {
                   <Label htmlFor="sku">SKU (optional)</Label>
                   <Input
                     id="sku"
-                    placeholder="e.g., DRESS-BLK-M"
+                    placeholder={PH.productSku}
                     value={formData.sku}
                     onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                   />
@@ -466,7 +467,7 @@ export const AdminAddEditProductPage = () => {
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    placeholder="Detailed product description..."
+                    placeholder={PH.productDescription}
                     rows={6}
                     value={formData.description}
                     onChange={(e) =>
@@ -524,7 +525,7 @@ export const AdminAddEditProductPage = () => {
                     <Label htmlFor="subcategory">Subcategory (optional)</Label>
                     <Input
                       id="subcategory"
-                      placeholder="e.g., Casual Dresses"
+                      placeholder={PH.subcategory}
                       value={formData.subcategory}
                       onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
                     />
@@ -547,7 +548,7 @@ export const AdminAddEditProductPage = () => {
                     <Input
                       id="price"
                       type="number"
-                      placeholder="0.00"
+                      placeholder={PH.priceZero}
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     />
@@ -558,7 +559,7 @@ export const AdminAddEditProductPage = () => {
                     <Input
                       id="originalPrice"
                       type="number"
-                      placeholder="0.00"
+                      placeholder={PH.priceZero}
                       value={formData.originalPrice}
                       onChange={(e) =>
                         setFormData({ ...formData, originalPrice: e.target.value })
@@ -686,7 +687,7 @@ export const AdminAddEditProductPage = () => {
                     <div className="flex gap-2">
                       <div className="flex-1">
                         <Input
-                          placeholder="Color name (e.g., Rose Gold)"
+                          placeholder={PH.colorName}
                           value={customColorName}
                           onChange={(e) => setCustomColorName(e.target.value)}
                           onKeyDown={(e) => {
@@ -755,7 +756,7 @@ export const AdminAddEditProductPage = () => {
                     <Label htmlFor="material">Material</Label>
                     <Input
                       id="material"
-                      placeholder="e.g., 100% Cotton"
+                      placeholder={PH.material}
                       value={formData.material}
                       onChange={(e) => setFormData({ ...formData, material: e.target.value })}
                     />
@@ -765,7 +766,7 @@ export const AdminAddEditProductPage = () => {
                     <Label htmlFor="care">Care Instructions</Label>
                     <Input
                       id="care"
-                      placeholder="e.g., Machine wash cold"
+                      placeholder={PH.careInstructions}
                       value={formData.care}
                       onChange={(e) => setFormData({ ...formData, care: e.target.value })}
                     />
@@ -775,7 +776,7 @@ export const AdminAddEditProductPage = () => {
                   <Label htmlFor="details">Details (one per line)</Label>
                   <Textarea
                     id="details"
-                    placeholder="100% Cotton&#10;Imported&#10;Machine wash"
+                    placeholder={PH.productDetailsLines}
                     rows={4}
                     value={formData.details.join('\n')}
                     onChange={(e) =>

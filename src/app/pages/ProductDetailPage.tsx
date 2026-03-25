@@ -17,6 +17,7 @@ import { ProductReview } from '../types/api';
 import { useUser } from '../context/UserContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { PLACEHOLDER_IMAGE } from '../constants';
+import { PH } from '../lib/formPlaceholders';
 
 interface Review {
   id: number;
@@ -814,7 +815,7 @@ export function ProductDetailPage() {
               <div className="flex gap-2 mb-3">
                 <input
                   type="text"
-                  placeholder="Postal code"
+                  placeholder={PH.postalCode}
                   value={pincode}
                   onChange={(e) => { setPincode(e.target.value); setPincodeResult(null); }}
                   onKeyDown={(e) => e.key === 'Enter' && handlePincodeCheck()}
@@ -1059,7 +1060,7 @@ export function ProductDetailPage() {
                                           value={editReviewForm.title}
                                           onChange={(e) => setEditReviewForm({ ...editReviewForm, title: e.target.value })}
                                           className="w-full px-3 py-2 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none"
-                                          placeholder="Review title"
+                                          placeholder={PH.reviewTitle}
                                         />
                                       </div>
                                       <div>
@@ -1069,7 +1070,7 @@ export function ProductDetailPage() {
                                           onChange={(e) => setEditReviewForm({ ...editReviewForm, comment: e.target.value })}
                                           rows={4}
                                           className="w-full px-3 py-2 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none resize-none"
-                                          placeholder="Your review"
+                                          placeholder={PH.reviewBody}
                                         />
                                       </div>
                                       <div className="flex gap-3">
@@ -1252,7 +1253,7 @@ export function ProductDetailPage() {
                                     value={reviewForm.title}
                                     onChange={(e) => setReviewForm({ ...reviewForm, title: e.target.value })}
                                     className="w-full px-3 py-2 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors"
-                                    placeholder="Review title"
+                                    placeholder={PH.reviewTitle}
                                   />
                                 </div>
 
@@ -1264,7 +1265,7 @@ export function ProductDetailPage() {
                                     onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
                                     rows={4}
                                     className="w-full px-3 py-2 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors resize-none"
-                                    placeholder="Your review"
+                                    placeholder={PH.reviewBody}
                                   />
                                 </div>
 

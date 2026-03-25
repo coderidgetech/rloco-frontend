@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookOpen, X, ChevronRight, ShoppingBag, Heart, CreditCard, User, Search, TrendingUp, Package, HelpCircle } from 'lucide-react';
+import { PH } from '../lib/formPlaceholders';
 
 interface GuideSection {
   id: string;
@@ -384,7 +385,7 @@ function ShoppingGuide() {
                 <Search className="w-5 h-5 text-gray-400" />
                 <input 
                   type="text" 
-                  placeholder="Search for products, brands, or categories..." 
+                  placeholder={PH.searchCatalog} 
                   className="flex-1 border-0 bg-transparent text-gray-900 focus:outline-none"
                   disabled
                 />
@@ -852,16 +853,16 @@ function CheckoutGuide() {
                 <div className="pl-8 space-y-3">
                   <div>
                     <label className="text-xs text-gray-600 block mb-1">Card Number</label>
-                    <input type="text" placeholder="1234 5678 9012 3456" className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+                    <input type="text" placeholder={PH.cardNumber} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
                   </div>
                   <div className="grid grid-cols-3 gap-3">
                     <div className="col-span-2">
                       <label className="text-xs text-gray-600 block mb-1">Expiry Date</label>
-                      <input type="text" placeholder="MM / YY" className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+                      <input type="text" placeholder={PH.cardExpiry} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
                     </div>
                     <div>
                       <label className="text-xs text-gray-600 block mb-1">CVV</label>
-                      <input type="text" placeholder="123" className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+                      <input type="text" placeholder={PH.cvv} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
                     </div>
                   </div>
                   <div className="flex gap-2 text-xs text-gray-500">

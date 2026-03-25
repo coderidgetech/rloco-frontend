@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminService } from '../../services/adminService';
+import { PH } from '../../lib/formPlaceholders';
 
 export const AdminContentPage = () => {
   const [loading, setLoading] = useState(true);
@@ -187,7 +188,7 @@ export const AdminContentPage = () => {
                   <Input
                     value={content?.homepage?.hero?.image || ''}
                     onChange={(e) => updateContent(['homepage', 'hero', 'image'], e.target.value)}
-                    placeholder="https://example.com/hero-image.jpg"
+                    placeholder={PH.heroImageUrl}
                   />
                 </div>
                 <div className="space-y-2">
@@ -551,7 +552,7 @@ export const AdminContentPage = () => {
                   <Input
                     value={content?.seo?.social?.ogImage || ''}
                     onChange={(e) => updateContent(['seo', 'social', 'ogImage'], e.target.value)}
-                    placeholder="https://example.com/og-image.jpg"
+                    placeholder={PH.ogImageUrl}
                   />
                 </div>
                 <Button onClick={() => handleSave('Social Media Settings')} disabled={saving}>

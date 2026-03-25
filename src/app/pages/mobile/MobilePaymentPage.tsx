@@ -5,6 +5,7 @@ import { ChevronLeft, CreditCard, Smartphone, Wallet, Check, Lock, Shield } from
 import { useCart } from '@/app/context/CartContext';
 import { useCurrency } from '@/app/context/CurrencyContext';
 import { toast } from 'sonner';
+import { PH } from '@/app/lib/formPlaceholders';
 
 interface PaymentMethod {
   id: string;
@@ -248,7 +249,7 @@ export function MobilePaymentPage() {
                     type="text"
                     value={cardNumber}
                     onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                    placeholder="Card number"
+                    placeholder={PH.cardNumber}
                     className="w-full px-4 py-3.5 rounded-xl border-2 border-foreground/20 bg-white text-foreground placeholder:text-foreground/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                   />
                   <CreditCard className="absolute right-4 top-1/2 -translate-y-1/2 text-foreground/30" size={20} />
@@ -265,7 +266,7 @@ export function MobilePaymentPage() {
                   type="text"
                   value={cardName}
                   onChange={(e) => setCardName(e.target.value)}
-                  placeholder="Name on card"
+                  placeholder={PH.nameOnCard}
                   className="w-full px-4 py-3.5 rounded-xl border-2 border-foreground/20 bg-white text-foreground placeholder:text-foreground/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                 />
                 <p className="text-xs text-foreground/50 mt-1.5">Name as shown on card</p>
@@ -281,7 +282,7 @@ export function MobilePaymentPage() {
                     type="text"
                     value={expiryDate}
                     onChange={(e) => setExpiryDate(formatExpiryDate(e.target.value))}
-                    placeholder="MM/YY"
+                    placeholder={PH.cardExpiry}
                     maxLength={5}
                     className="w-full px-4 py-3.5 rounded-xl border-2 border-foreground/20 bg-white text-foreground placeholder:text-foreground/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                   />
@@ -295,7 +296,7 @@ export function MobilePaymentPage() {
                     type="text"
                     value={cvv}
                     onChange={(e) => setCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                    placeholder="CVV"
+                    placeholder={PH.cvv}
                     maxLength={4}
                     className="w-full px-4 py-3.5 rounded-xl border-2 border-foreground/20 bg-white text-foreground placeholder:text-foreground/40 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
                   />

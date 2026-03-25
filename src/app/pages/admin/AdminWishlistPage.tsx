@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PH } from '@/app/lib/formPlaceholders';
 import { motion } from 'motion/react';
 import { AdminLayout } from '@/app/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
@@ -268,7 +269,7 @@ export function AdminWishlistPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
               <Input
-                placeholder="Search products..."
+                placeholder={PH.searchProducts}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"

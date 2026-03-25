@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { MapPin, Loader2 } from 'lucide-react';
+import { PH } from '../lib/formPlaceholders';
 
 export interface AddressComponents {
   addressLine: string;
@@ -142,7 +143,7 @@ export function AddressAutocompleteInput({
   value,
   onChange,
   onAddressFill,
-  placeholder = 'Street address',
+  placeholder = PH.streetAddress,
   error,
   className = '',
   countryCode,

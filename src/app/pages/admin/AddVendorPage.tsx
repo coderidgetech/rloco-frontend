@@ -36,6 +36,7 @@ import {
 import { toast } from 'sonner';
 import { VendorTier, VendorRole, VendorPermissions, ROLE_PERMISSIONS, VENDOR_TIERS } from '../../types/vendor-permissions';
 import { adminService } from '../../services/adminService';
+import { PH } from '../../lib/formPlaceholders';
 
 export const AddVendorPage = () => {
   const navigate = useNavigate();
@@ -284,7 +285,7 @@ export const AddVendorPage = () => {
                     </Label>
                     <Input
                       id="vendorName"
-                      placeholder="Fashion Forward Inc"
+                      placeholder={PH.legalBusinessName}
                       value={vendorName}
                       onChange={(e) => setVendorName(e.target.value)}
                     />
@@ -295,7 +296,7 @@ export const AddVendorPage = () => {
                     </Label>
                     <Input
                       id="storeName"
-                      placeholder="Fashion Forward"
+                      placeholder={PH.storeDisplayName}
                       value={storeName}
                       onChange={(e) => setStoreName(e.target.value)}
                     />
@@ -312,7 +313,7 @@ export const AddVendorPage = () => {
                       <Input
                         id="email"
                         type="email"
-                        placeholder="contact@vendor.com"
+                        placeholder={PH.email}
                         className="pl-10"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -327,7 +328,7 @@ export const AddVendorPage = () => {
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
                         id="phone"
-                        placeholder="+1 (555) 000-0000"
+                        placeholder={PH.phone}
                         className="pl-10"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
@@ -343,7 +344,7 @@ export const AddVendorPage = () => {
                       <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
                         id="website"
-                        placeholder="www.vendor.com"
+                        placeholder={PH.websiteUrl}
                         className="pl-10"
                         value={website}
                         onChange={(e) => setWebsite(e.target.value)}
@@ -356,7 +357,7 @@ export const AddVendorPage = () => {
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input
                         id="contactPerson"
-                        placeholder="Enter contact person name"
+                        placeholder={PH.fullName}
                         className="pl-10"
                         value={contactPerson}
                         onChange={(e) => setContactPerson(e.target.value)}
@@ -369,7 +370,7 @@ export const AddVendorPage = () => {
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    placeholder="Brief description of the vendor..."
+                    placeholder={PH.vendorBio}
                     rows={4}
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
@@ -392,7 +393,7 @@ export const AddVendorPage = () => {
                   <Label htmlFor="address">Street Address</Label>
                   <Input
                     id="address"
-                    placeholder="Enter street address"
+                    placeholder={PH.streetAddress}
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
                   />
@@ -403,7 +404,7 @@ export const AddVendorPage = () => {
                     <Label htmlFor="city">City</Label>
                     <Input
                       id="city"
-                      placeholder="New York"
+                      placeholder={PH.city}
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
                     />
@@ -412,7 +413,7 @@ export const AddVendorPage = () => {
                     <Label htmlFor="state">State / Province</Label>
                     <Input
                       id="state"
-                      placeholder="NY"
+                      placeholder={PH.state}
                       value={state}
                       onChange={(e) => setState(e.target.value)}
                     />
@@ -424,7 +425,7 @@ export const AddVendorPage = () => {
                     <Label htmlFor="zipCode">ZIP / Postal Code</Label>
                     <Input
                       id="zipCode"
-                      placeholder="10001"
+                      placeholder={PH.zip}
                       value={zipCode}
                       onChange={(e) => setZipCode(e.target.value)}
                     />
@@ -433,7 +434,7 @@ export const AddVendorPage = () => {
                     <Label htmlFor="country">Country</Label>
                     <Input
                       id="country"
-                      placeholder="United States"
+                      placeholder={PH.country}
                       value={country}
                       onChange={(e) => setCountry(e.target.value)}
                     />
@@ -456,7 +457,7 @@ export const AddVendorPage = () => {
                   <Label htmlFor="taxId">Tax ID / VAT Number</Label>
                   <Input
                     id="taxId"
-                    placeholder="XX-XXXXXXX"
+                    placeholder={PH.taxId}
                     value={taxId}
                     onChange={(e) => setTaxId(e.target.value)}
                   />
@@ -467,7 +468,7 @@ export const AddVendorPage = () => {
                     <Label htmlFor="bankName">Bank Name</Label>
                     <Input
                       id="bankName"
-                      placeholder="Bank of America"
+                      placeholder={PH.bankName}
                       value={bankName}
                       onChange={(e) => setBankName(e.target.value)}
                     />
@@ -476,7 +477,7 @@ export const AddVendorPage = () => {
                     <Label htmlFor="accountHolderName">Account Holder Name</Label>
                     <Input
                       id="accountHolderName"
-                      placeholder="Fashion Forward Inc"
+                      placeholder={PH.accountHolderName}
                       value={accountHolderName}
                       onChange={(e) => setAccountHolderName(e.target.value)}
                     />
@@ -489,7 +490,7 @@ export const AddVendorPage = () => {
                     <Input
                       id="accountNumber"
                       type="password"
-                      placeholder="••••••••••"
+                      placeholder={PH.passwordMasked}
                       value={accountNumber}
                       onChange={(e) => setAccountNumber(e.target.value)}
                     />
@@ -498,7 +499,7 @@ export const AddVendorPage = () => {
                     <Label htmlFor="routingNumber">Routing Number</Label>
                     <Input
                       id="routingNumber"
-                      placeholder="XXXXXXXXX"
+                      placeholder={PH.accountNumber}
                       value={routingNumber}
                       onChange={(e) => setRoutingNumber(e.target.value)}
                     />

@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { Footer } from '../components/Footer';
 import { promotionService } from '../services/promotionService';
 import { Promotion } from '../types/api';
+import { PH } from '../lib/formPlaceholders';
 
 export function CartPage() {
   const navigate = useNavigate();
@@ -315,7 +316,7 @@ export function CartPage() {
                           <div>
                             <label className="text-xs text-muted-foreground block mb-1">Gift message (optional)</label>
                             <textarea
-                              placeholder="Gift message (optional)"
+                              placeholder={PH.giftMessage}
                               value={giftMessageDrafts[`${item.id}-${item.size}`] ?? item.giftMessage ?? ''}
                               onChange={(e) => setGiftMessageDrafts((prev) => ({ ...prev, [`${item.id}-${item.size}`]: e.target.value }))}
                               onBlur={(e) => {
@@ -384,7 +385,7 @@ export function CartPage() {
                         setCouponCode(e.target.value.toUpperCase());
                         setPromotionError('');
                       }}
-                      placeholder="Promo code"
+                      placeholder={PH.promoCode}
                       className="flex-1 px-4 py-2 bg-background border border-border rounded-lg outline-none focus:border-primary transition-colors uppercase"
                       onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
                     />

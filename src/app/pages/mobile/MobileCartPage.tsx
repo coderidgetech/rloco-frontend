@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '@/app/components/mobile/EmptyState';
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
+import { PH } from '@/app/lib/formPlaceholders';
 
 const COUPON_CODES = {
   'RLOCO10': 10,
@@ -182,7 +183,7 @@ export function MobileCartPage() {
                   type="text"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                  placeholder="Promo code"
+                  placeholder={PH.promoCode}
                   className="flex-1 px-4 py-3 border border-border rounded-xl text-sm"
                 />
                 <motion.button

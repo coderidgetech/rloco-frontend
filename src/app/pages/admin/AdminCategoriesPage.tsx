@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PH } from '../../lib/formPlaceholders';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -384,7 +385,7 @@ export const AdminCategoriesPage = () => {
               <div className="space-y-2">
                 <Label>Category Name *</Label>
                 <Input 
-                  placeholder="e.g., Dresses" 
+                  placeholder={PH.categoryName} 
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
@@ -392,7 +393,7 @@ export const AdminCategoriesPage = () => {
               <div className="space-y-2">
                 <Label>URL Slug *</Label>
                 <Input 
-                  placeholder="e.g., dresses" 
+                  placeholder={PH.urlSlug} 
                   value={formData.slug}
                   onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                 />
@@ -401,7 +402,7 @@ export const AdminCategoriesPage = () => {
             <div className="space-y-2">
               <Label>Description</Label>
               <Textarea
-                placeholder="Brief description of the category..."
+                placeholder={PH.categoryDescription}
                 rows={3}
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -428,7 +429,7 @@ export const AdminCategoriesPage = () => {
                 <Label>Display Order</Label>
                 <Input 
                   type="number" 
-                  placeholder="1" 
+                  placeholder={PH.displayOrder} 
                   min="1" 
                   value={formData.order}
                   onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}

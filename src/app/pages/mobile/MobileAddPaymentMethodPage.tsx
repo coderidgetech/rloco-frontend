@@ -5,6 +5,7 @@ import { CreditCard, Smartphone, ChevronRight, Lock, Check } from 'lucide-react'
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
 import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { toast } from 'sonner';
+import { PH } from '@/app/lib/formPlaceholders';
 
 type PaymentType = 'card' | 'upi';
 
@@ -192,7 +193,7 @@ export function MobileAddPaymentMethodPage() {
                     type="text"
                     value={cardNumber}
                     onChange={handleCardNumberChange}
-                    placeholder="Card number"
+                    placeholder={PH.cardNumber}
                     className="w-full px-4 py-3 bg-white border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                     inputMode="numeric"
                   />
@@ -207,7 +208,7 @@ export function MobileAddPaymentMethodPage() {
                     type="text"
                     value={cardName}
                     onChange={(e) => setCardName(e.target.value.toUpperCase())}
-                    placeholder="Name on card"
+                    placeholder={PH.nameOnCard}
                     className="w-full px-4 py-3 bg-white border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all uppercase text-sm"
                   />
                 </div>
@@ -222,7 +223,7 @@ export function MobileAddPaymentMethodPage() {
                       type="text"
                       value={expiryDate}
                       onChange={handleExpiryChange}
-                      placeholder="MM/YY"
+                      placeholder={PH.cardExpiry}
                       className="w-full px-4 py-3 bg-white border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                       inputMode="numeric"
                     />
@@ -236,7 +237,7 @@ export function MobileAddPaymentMethodPage() {
                       type="password"
                       value={cvv}
                       onChange={handleCvvChange}
-                      placeholder="CVV"
+                      placeholder={PH.cvv}
                       maxLength={3}
                       className="w-full px-4 py-3 bg-white border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                       inputMode="numeric"
@@ -296,7 +297,7 @@ export function MobileAddPaymentMethodPage() {
                     type="text"
                     value={upiId}
                     onChange={(e) => setUpiId(e.target.value.toLowerCase())}
-                    placeholder="UPI ID"
+                    placeholder={PH.upiId}
                     className="w-full px-4 py-3 bg-white border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                   />
                 </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PH } from '../../lib/formPlaceholders';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -438,7 +439,7 @@ export const AdminSettingsPage = () => {
                     type="number"
                     value={settings?.store?.minimumOrderAmount || 0}
                     onChange={(e) => updateSetting(['store', 'minimumOrderAmount'], parseFloat(e.target.value) || 0)}
-                    placeholder="0.00"
+                    placeholder={PH.priceZero}
                   />
                 </div>
                 <div className="space-y-2">
@@ -447,7 +448,7 @@ export const AdminSettingsPage = () => {
                     type="number"
                     value={settings?.store?.freeShippingThreshold || 100}
                     onChange={(e) => updateSetting(['store', 'freeShippingThreshold'], parseFloat(e.target.value) || 100)}
-                    placeholder="100.00"
+                    placeholder={PH.percentExample}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -542,7 +543,7 @@ export const AdminSettingsPage = () => {
                   <Label>Stripe Publishable Key</Label>
                   <Input
                     type="password"
-                    placeholder="pk_live_..."
+                    placeholder={PH.stripePublishableKey}
                     value={settings?.payment?.stripePublishableKey || ''}
                     onChange={(e) => updateSetting(['payment', 'stripePublishableKey'], e.target.value)}
                   />
@@ -551,7 +552,7 @@ export const AdminSettingsPage = () => {
                   <Label>Stripe Secret Key</Label>
                   <Input
                     type="password"
-                    placeholder="sk_live_..."
+                    placeholder={PH.stripeSecretKey}
                     value={settings?.payment?.stripeSecretKey || ''}
                     onChange={(e) => updateSetting(['payment', 'stripeSecretKey'], e.target.value)}
                   />
@@ -560,7 +561,7 @@ export const AdminSettingsPage = () => {
                   <Label>PayPal Client ID</Label>
                   <Input
                     type="password"
-                    placeholder="..."
+                    placeholder={PH.ellipsis}
                     value={settings?.payment?.paypalClientId || ''}
                     onChange={(e) => updateSetting(['payment', 'paypalClientId'], e.target.value)}
                   />

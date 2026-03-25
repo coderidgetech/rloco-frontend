@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../..
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { AlertCircle, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { PH } from '../../lib/formPlaceholders';
 
 export const AdminLoginPage = () => {
   const [email, setEmail] = useState('');
@@ -72,7 +73,7 @@ export const AdminLoginPage = () => {
               <LuxuryInput
                 label="Email"
                 type="email"
-                placeholder="admin@rloco.com"
+                placeholder={PH.email}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -81,7 +82,7 @@ export const AdminLoginPage = () => {
               <LuxuryInput
                 label="Password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder={PH.password}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

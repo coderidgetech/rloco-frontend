@@ -5,6 +5,7 @@ import { User, Mail, Phone, Calendar, MapPin, Camera, Save } from 'lucide-react'
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
 import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { toast } from 'sonner';
+import { PH } from '@/app/lib/formPlaceholders';
 
 export function MobileProfileEditPage() {
   const navigate = useNavigate();
@@ -67,7 +68,7 @@ export function MobileProfileEditPage() {
                 value={formData.name}
                 onChange={(e) => handleChange('name', e.target.value)}
                 className="w-full pl-12 pr-4 py-3.5 bg-white border border-border/30 rounded-xl shadow-sm focus:outline-none focus:border-primary transition-colors"
-                placeholder="Full name"
+                placeholder={PH.fullName}
               />
             </div>
           </div>
@@ -84,7 +85,7 @@ export function MobileProfileEditPage() {
                 value={formData.email}
                 onChange={(e) => handleChange('email', e.target.value)}
                 className="w-full pl-12 pr-4 py-3.5 bg-white border border-border/30 rounded-xl shadow-sm focus:outline-none focus:border-primary transition-colors"
-                placeholder="Email address"
+                placeholder={PH.email}
               />
             </div>
           </div>
@@ -101,7 +102,7 @@ export function MobileProfileEditPage() {
                 value={formData.phone}
                 onChange={(e) => handleChange('phone', e.target.value)}
                 className="w-full pl-12 pr-4 py-3.5 bg-white border border-border/30 rounded-xl shadow-sm focus:outline-none focus:border-primary transition-colors"
-                placeholder="Phone number"
+                placeholder={PH.phone}
               />
             </div>
           </div>
@@ -156,7 +157,7 @@ export function MobileProfileEditPage() {
                 value={formData.city}
                 onChange={(e) => handleChange('city', e.target.value)}
                 className="w-full pl-12 pr-4 py-3.5 bg-white border border-border/30 rounded-xl shadow-sm focus:outline-none focus:border-primary transition-colors"
-                placeholder="City"
+                placeholder={PH.city}
               />
             </div>
           </div>

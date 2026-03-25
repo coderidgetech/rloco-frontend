@@ -7,6 +7,7 @@ import { supportService, SupportTicket, TicketMessage } from '../services/suppor
 import { orderService } from '../services/orderService';
 import { Order } from '../types/api';
 import { Footer } from '../components/Footer';
+import { PH } from '../lib/formPlaceholders';
 
 export function SupportPage() {
   const { user } = useUser();
@@ -208,7 +209,7 @@ export function SupportPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search tickets..."
+                  placeholder={PH.searchTickets}
                   className="w-full pl-10 pr-4 py-2 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none"
                 />
               </div>
@@ -304,7 +305,7 @@ export function SupportPage() {
                     <textarea
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Your message"
+                      placeholder={PH.message}
                       rows={3}
                       className="flex-1 px-4 py-2 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none resize-none"
                     />
@@ -354,7 +355,7 @@ export function SupportPage() {
                       type="text"
                       value={newTicket.subject}
                       onChange={(e) => setNewTicket({ ...newTicket, subject: e.target.value })}
-                      placeholder="Subject"
+                      placeholder={PH.subject}
                       className="w-full px-4 py-2 bg-background border border-foreground/20 focus:border-foreground focus:outline-none"
                     />
                   </div>
@@ -410,7 +411,7 @@ export function SupportPage() {
                     <textarea
                       value={newTicket.message}
                       onChange={(e) => setNewTicket({ ...newTicket, message: e.target.value })}
-                      placeholder="Description"
+                      placeholder={PH.description}
                       rows={6}
                       className="w-full px-4 py-2 bg-background border border-foreground/20 focus:border-foreground focus:outline-none resize-none"
                     />

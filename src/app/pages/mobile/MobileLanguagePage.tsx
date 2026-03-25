@@ -4,6 +4,7 @@ import { ArrowLeft, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { toast } from 'sonner';
+import { PH } from '@/app/lib/formPlaceholders';
 
 interface Language {
   code: string;
@@ -70,7 +71,7 @@ export function MobileLanguagePage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search languages..."
+            placeholder={PH.searchLanguages}
             className="w-full px-4 py-3 bg-muted/30 border border-border/20 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#B4770E]/20 focus:border-[#B4770E] transition-all"
           />
         </div>

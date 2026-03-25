@@ -14,6 +14,16 @@ function isRejectedApiError(err: unknown): err is ApiError {
  * Axios interceptor turns HTTP errors into plain `{ error, message }` objects (not AxiosError).
  * This helper must handle those first, or the UI always shows generic toasts.
  */
+/** True when the request failed with HTTP 401 (session missing/expired). */
+export function isUnauthorizedApiError(err: unknown): boolean {
+  if (isAxiosError(err) && err.response?.status === 401) return true;
+  if (typeof err === 'object' && err !== null && 'response' in err) {
+    const r = (err as { response?: { status?: number } }).response;
+    if (r?.status === 401) return true;
+  }
+  return false;
+}
+
 export function getApiErrorMessage(err: unknown, fallback = 'Something went wrong'): string {
   if (isRejectedApiError(err)) {
     if (err.error?.trim()) return err.error.trim();

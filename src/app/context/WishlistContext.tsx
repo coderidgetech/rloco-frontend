@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useMemo, useCallback } from 'react';
 import { wishlistService } from '../services/wishlistService';
 import { productService } from '../services/productService';
+import { isUnauthorizedApiError } from '../lib/apiErrors';
 import { useUser } from './UserContext';
 import { Product } from '../types/api';
 
@@ -76,7 +77,9 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
       setItems(mappedItems);
     } catch (error) {
-      console.error('Failed to sync wishlist:', error);
+      if (!isUnauthorizedApiError(error)) {
+        console.error('Failed to sync wishlist:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -97,7 +100,9 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       try {
         await wishlistService.addToWishlist(String(item.id));
       } catch (error) {
-        console.error('Failed to add to wishlist:', error);
+        if (!isUnauthorizedApiError(error)) {
+          console.error('Failed to add to wishlist:', error);
+        }
         // Revert optimistic update
         setItems((prev) => prev.filter((i) => String(i.id) !== String(item.id)));
       }
@@ -113,7 +118,9 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       try {
         await wishlistService.removeFromWishlist(String(id));
       } catch (error) {
-        console.error('Failed to remove from wishlist:', error);
+        if (!isUnauthorizedApiError(error)) {
+          console.error('Failed to remove from wishlist:', error);
+        }
         // Revert by syncing
         await syncWishlist();
       }
@@ -135,7 +142,9 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
         try {
           await wishlistService.removeFromWishlist(String(item.id));
         } catch (error) {
-          console.error('Failed to remove item from wishlist:', error);
+          if (!isUnauthorizedApiError(error)) {
+            console.error('Failed to remove item from wishlist:', error);
+          }
         }
       }
     }

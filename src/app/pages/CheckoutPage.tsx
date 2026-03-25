@@ -19,6 +19,7 @@ import { StripePaymentForm } from '../components/StripePaymentForm';
 import { AddressAutocompleteInput, lookupZipCode } from '../components/AddressAutocompleteInput';
 import { CreateOrderRequest } from '../types/api';
 import type { Order } from '../types/api';
+import { PH } from '../lib/formPlaceholders';
 
 interface ShippingInfo {
   firstName: string;
@@ -828,7 +829,7 @@ export function CheckoutPage() {
                                   type="text"
                                   value={shippingInfo.firstName}
                                   onChange={(e) => setShippingInfo({ ...shippingInfo, firstName: e.target.value })}
-                                  placeholder="First name"
+                                  placeholder={PH.firstName}
                                   error={shippingErrors.firstName}
                                 />
                                 <LuxuryInput
@@ -836,7 +837,7 @@ export function CheckoutPage() {
                                   type="text"
                                   value={shippingInfo.lastName}
                                   onChange={(e) => setShippingInfo({ ...shippingInfo, lastName: e.target.value })}
-                                  placeholder="Last name"
+                                  placeholder={PH.lastName}
                                   error={shippingErrors.lastName}
                                 />
                               </div>
@@ -846,7 +847,7 @@ export function CheckoutPage() {
                                 type="email"
                                 value={shippingInfo.email}
                                 onChange={(e) => setShippingInfo({ ...shippingInfo, email: e.target.value })}
-                                placeholder="Email address"
+                                placeholder={PH.email}
                                 error={shippingErrors.email}
                               />
 
@@ -855,7 +856,7 @@ export function CheckoutPage() {
                                 type="tel"
                                 value={shippingInfo.phone}
                                 onChange={(e) => setShippingInfo({ ...shippingInfo, phone: e.target.value })}
-                                placeholder="Phone number"
+                                placeholder={PH.phone}
                                 error={shippingErrors.phone}
                               />
 
@@ -879,7 +880,7 @@ export function CheckoutPage() {
                                             : components.country || prev.country,
                                     }))
                                   }
-                                  placeholder="Street address"
+                                  placeholder={PH.streetAddress}
                                   error={shippingErrors.address}
                                   countryCode={shippingCountryCode}
                                   className="rounded-sm px-3 py-2.5 border-foreground/15 bg-background text-foreground text-sm placeholder:text-foreground/40 focus:border-foreground/40 hover:border-foreground/25"
@@ -892,7 +893,7 @@ export function CheckoutPage() {
                                   type="text"
                                   value={shippingInfo.city}
                                   onChange={(e) => setShippingInfo({ ...shippingInfo, city: e.target.value })}
-                                  placeholder="City"
+                                  placeholder={PH.city}
                                   error={shippingErrors.city}
                                 />
                                 <LuxuryInput
@@ -900,7 +901,7 @@ export function CheckoutPage() {
                                   type="text"
                                   value={shippingInfo.state}
                                   onChange={(e) => setShippingInfo({ ...shippingInfo, state: e.target.value })}
-                                  placeholder="State"
+                                  placeholder={PH.state}
                                   error={shippingErrors.state}
                                 />
                               </div>
@@ -911,7 +912,7 @@ export function CheckoutPage() {
                                   type="text"
                                   value={shippingInfo.zipCode}
                                   onChange={(e) => void handleZipCodeChange(e.target.value)}
-                                  placeholder="ZIP / Postal code"
+                                  placeholder={PH.zip}
                                   error={shippingErrors.zipCode}
                                 />
                                 <div>
@@ -1049,7 +1050,7 @@ export function CheckoutPage() {
                                         setPaymentInfo({ ...paymentInfo, cardNumber: formatted });
                                       }}
                                       className="w-full h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors font-mono"
-                                      placeholder="Card number"
+                                      placeholder={PH.cardNumber}
                                     />
                                     {paymentErrors.cardNumber && <p className="text-xs text-red-500">{paymentErrors.cardNumber}</p>}
                                   </div>
@@ -1061,7 +1062,7 @@ export function CheckoutPage() {
                                       value={paymentInfo.cardName}
                                       onChange={(e) => setPaymentInfo({ ...paymentInfo, cardName: e.target.value })}
                                       className="w-full h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors"
-                                      placeholder="Name on card"
+                                      placeholder={PH.nameOnCard}
                                     />
                                     {paymentErrors.cardName && <p className="text-xs text-red-500">{paymentErrors.cardName}</p>}
                                   </div>
@@ -1077,7 +1078,7 @@ export function CheckoutPage() {
                                           setPaymentInfo({ ...paymentInfo, expiryDate: formatted });
                                         }}
                                         className="w-full h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors font-mono"
-                                        placeholder="MM/YY"
+                                        placeholder={PH.cardExpiry}
                                         maxLength={5}
                                       />
                                       {paymentErrors.expiryDate && <p className="text-xs text-red-500">{paymentErrors.expiryDate}</p>}
@@ -1092,7 +1093,7 @@ export function CheckoutPage() {
                                           setPaymentInfo({ ...paymentInfo, cvv: value });
                                         }}
                                         className="w-full h-10 px-3 bg-background border border-foreground/20 text-sm focus:border-foreground focus:outline-none transition-colors font-mono"
-                                        placeholder="CVV"
+                                        placeholder={PH.cvv}
                                         maxLength={4}
                                       />
                                       {paymentErrors.cvv && <p className="text-xs text-red-500">{paymentErrors.cvv}</p>}

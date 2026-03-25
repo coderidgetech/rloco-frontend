@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { Mail, Send, Sparkles, Check } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { PH } from '@/app/lib/formPlaceholders';
 
 export function MobileNewsletter() {
   const [email, setEmail] = useState('');
@@ -79,7 +80,7 @@ export function MobileNewsletter() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
+                  placeholder={PH.email}
                   className="w-full px-4 py-4 pr-14 rounded-full border-2 border-border bg-white text-sm focus:outline-none focus:border-primary transition-colors"
                 />
                 <motion.button

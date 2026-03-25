@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useIsMobile } from '@/app/hooks/useIsMobile';
 import { toast } from 'sonner';
 import { authService } from '@/app/services/authService';
+import { PH } from '@/app/lib/formPlaceholders';
 
 export function MobileChangePasswordPage() {
   const navigate = useNavigate();
@@ -95,7 +96,7 @@ export function MobileChangePasswordPage() {
                 type={showCurrentPassword ? 'text' : 'password'}
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Current password"
+                placeholder={PH.currentPassword}
                 className="w-full px-4 py-3 pr-12 bg-white border border-border/30 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#B4770E]/20 focus:border-[#B4770E] transition-all"
               />
               <button
@@ -118,7 +119,7 @@ export function MobileChangePasswordPage() {
                 type={showNewPassword ? 'text' : 'password'}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="New password"
+                placeholder={PH.newPassword}
                 className="w-full px-4 py-3 pr-12 bg-white border border-border/30 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#B4770E]/20 focus:border-[#B4770E] transition-all"
               />
               <button
@@ -144,7 +145,7 @@ export function MobileChangePasswordPage() {
                 type={showConfirmPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm password"
+                placeholder={PH.confirmPassword}
                 className="w-full px-4 py-3 pr-12 bg-white border border-border/30 rounded-2xl shadow-sm focus:outline-none focus:ring-2 focus:ring-[#B4770E]/20 focus:border-[#B4770E] transition-all"
               />
               <button

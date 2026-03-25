@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from './ui/button';
+import { PH } from '../lib/formPlaceholders';
 
 interface CheckoutPageProps {
   isOpen: boolean;
@@ -349,7 +350,7 @@ export function CheckoutPage({ isOpen, onClose, appliedCoupon }: CheckoutPagePro
                                           value={shippingInfo.firstName}
                                           onChange={(e) => setShippingInfo({ ...shippingInfo, firstName: e.target.value })}
                                           className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                                          placeholder="Enter first name"
+                                          placeholder={PH.firstName}
                                         />
                                       </div>
                                     </div>
@@ -363,7 +364,7 @@ export function CheckoutPage({ isOpen, onClose, appliedCoupon }: CheckoutPagePro
                                           value={shippingInfo.lastName}
                                           onChange={(e) => setShippingInfo({ ...shippingInfo, lastName: e.target.value })}
                                           className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                                          placeholder="Enter last name"
+                                          placeholder={PH.lastName}
                                         />
                                       </div>
                                     </div>
@@ -377,7 +378,7 @@ export function CheckoutPage({ isOpen, onClose, appliedCoupon }: CheckoutPagePro
                                           value={shippingInfo.email}
                                           onChange={(e) => setShippingInfo({ ...shippingInfo, email: e.target.value })}
                                           className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                                          placeholder="Enter your email address"
+                                          placeholder={PH.email}
                                         />
                                       </div>
                                     </div>
@@ -391,7 +392,7 @@ export function CheckoutPage({ isOpen, onClose, appliedCoupon }: CheckoutPagePro
                                           value={shippingInfo.phone}
                                           onChange={(e) => setShippingInfo({ ...shippingInfo, phone: e.target.value })}
                                           className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                                          placeholder="+1 (555) 000-0000"
+                                          placeholder={PH.phone}
                                         />
                                       </div>
                                     </div>
@@ -406,7 +407,7 @@ export function CheckoutPage({ isOpen, onClose, appliedCoupon }: CheckoutPagePro
                                         value={shippingInfo.address}
                                         onChange={(e) => setShippingInfo({ ...shippingInfo, address: e.target.value })}
                                         className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                                          placeholder="Enter your street address"
+                                          placeholder={PH.streetAddress}
                                       />
                                     </div>
                                   </div>
@@ -418,7 +419,7 @@ export function CheckoutPage({ isOpen, onClose, appliedCoupon }: CheckoutPagePro
                                       value={shippingInfo.apartment}
                                       onChange={(e) => setShippingInfo({ ...shippingInfo, apartment: e.target.value })}
                                       className="w-full px-4 py-2.5 bg-background border border-border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                                      placeholder="Apt 4B (Optional)"
+                                      placeholder={PH.aptOptional}
                                     />
                                   </div>
 
@@ -430,7 +431,7 @@ export function CheckoutPage({ isOpen, onClose, appliedCoupon }: CheckoutPagePro
                                         value={shippingInfo.city}
                                         onChange={(e) => setShippingInfo({ ...shippingInfo, city: e.target.value })}
                                         className="w-full px-4 py-2.5 bg-background border border-border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                                        placeholder="New York"
+                                        placeholder={PH.city}
                                       />
                                     </div>
 
@@ -441,7 +442,7 @@ export function CheckoutPage({ isOpen, onClose, appliedCoupon }: CheckoutPagePro
                                         value={shippingInfo.state}
                                         onChange={(e) => setShippingInfo({ ...shippingInfo, state: e.target.value })}
                                         className="w-full px-4 py-2.5 bg-background border border-border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                                        placeholder="NY"
+                                        placeholder={PH.state}
                                       />
                                     </div>
 
@@ -452,7 +453,7 @@ export function CheckoutPage({ isOpen, onClose, appliedCoupon }: CheckoutPagePro
                                         value={shippingInfo.zipCode}
                                         onChange={(e) => setShippingInfo({ ...shippingInfo, zipCode: e.target.value })}
                                         className="w-full px-4 py-2.5 bg-background border border-border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                                        placeholder="10001"
+                                        placeholder={PH.zip}
                                       />
                                     </div>
                                   </div>
@@ -542,7 +543,7 @@ export function CheckoutPage({ isOpen, onClose, appliedCoupon }: CheckoutPagePro
                                             setPaymentInfo({ ...paymentInfo, cardNumber: formatted });
                                           }}
                                           className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-mono"
-                                          placeholder="1234 5678 9012 3456"
+                                          placeholder={PH.cardNumber}
                                         />
                                       </div>
                                     </div>
@@ -556,7 +557,7 @@ export function CheckoutPage({ isOpen, onClose, appliedCoupon }: CheckoutPagePro
                                           value={paymentInfo.cardName}
                                           onChange={(e) => setPaymentInfo({ ...paymentInfo, cardName: e.target.value })}
                                           className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                                          placeholder="Enter cardholder name"
+                                          placeholder={PH.nameOnCard}
                                         />
                                       </div>
                                     </div>
@@ -574,7 +575,7 @@ export function CheckoutPage({ isOpen, onClose, appliedCoupon }: CheckoutPagePro
                                               setPaymentInfo({ ...paymentInfo, expiryDate: formatted });
                                             }}
                                             className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-mono"
-                                            placeholder="MM/YY"
+                                            placeholder={PH.cardExpiry}
                                           />
                                         </div>
                                       </div>
@@ -588,7 +589,7 @@ export function CheckoutPage({ isOpen, onClose, appliedCoupon }: CheckoutPagePro
                                             value={paymentInfo.cvv}
                                             onChange={(e) => setPaymentInfo({ ...paymentInfo, cvv: e.target.value.replace(/\D/g, '').slice(0, 4) })}
                                             className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-lg outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all font-mono"
-                                            placeholder="123"
+                                            placeholder={PH.cvv}
                                           />
                                         </div>
                                       </div>

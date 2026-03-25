@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mail, X, User, Phone, ArrowLeft, ChevronDown, Search } from 'lucide-react';
+import { Mail, X, User, Phone, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { RlocoLogo } from './RlocoLogo';
 import { useUser } from '../context/UserContext';
@@ -9,59 +9,9 @@ import { GoogleSignInButton } from './GoogleSignInButton';
 import { authService } from '../services/authService';
 import { SIGNUP_OTP_DRAFT_KEY, type SignupOtpDraft } from '../lib/signupOtpDraft';
 import { getApiErrorMessage } from '../lib/apiErrors';
-
-const COUNTRIES = [
-  { code: 'US', name: 'United States', dialCode: '+1', flag: '🇺🇸' },
-  { code: 'IN', name: 'India', dialCode: '+91', flag: '🇮🇳' },
-  { code: 'GB', name: 'United Kingdom', dialCode: '+44', flag: '🇬🇧' },
-  { code: 'CA', name: 'Canada', dialCode: '+1', flag: '🇨🇦' },
-  { code: 'AU', name: 'Australia', dialCode: '+61', flag: '🇦🇺' },
-  { code: 'DE', name: 'Germany', dialCode: '+49', flag: '🇩🇪' },
-  { code: 'FR', name: 'France', dialCode: '+33', flag: '🇫🇷' },
-  { code: 'IT', name: 'Italy', dialCode: '+39', flag: '🇮🇹' },
-  { code: 'ES', name: 'Spain', dialCode: '+34', flag: '🇪🇸' },
-  { code: 'MX', name: 'Mexico', dialCode: '+52', flag: '🇲🇽' },
-  { code: 'BR', name: 'Brazil', dialCode: '+55', flag: '🇧🇷' },
-  { code: 'JP', name: 'Japan', dialCode: '+81', flag: '🇯🇵' },
-  { code: 'CN', name: 'China', dialCode: '+86', flag: '🇨🇳' },
-  { code: 'KR', name: 'South Korea', dialCode: '+82', flag: '🇰🇷' },
-  { code: 'SG', name: 'Singapore', dialCode: '+65', flag: '🇸🇬' },
-  { code: 'AE', name: 'UAE', dialCode: '+971', flag: '🇦🇪' },
-  { code: 'SA', name: 'Saudi Arabia', dialCode: '+966', flag: '🇸🇦' },
-  { code: 'ZA', name: 'South Africa', dialCode: '+27', flag: '🇿🇦' },
-  { code: 'NL', name: 'Netherlands', dialCode: '+31', flag: '🇳🇱' },
-  { code: 'SE', name: 'Sweden', dialCode: '+46', flag: '🇸🇪' },
-  { code: 'CH', name: 'Switzerland', dialCode: '+41', flag: '🇨🇭' },
-  { code: 'BE', name: 'Belgium', dialCode: '+32', flag: '🇧🇪' },
-  { code: 'AT', name: 'Austria', dialCode: '+43', flag: '🇦🇹' },
-  { code: 'NO', name: 'Norway', dialCode: '+47', flag: '🇳🇴' },
-  { code: 'DK', name: 'Denmark', dialCode: '+45', flag: '🇩🇰' },
-  { code: 'FI', name: 'Finland', dialCode: '+358', flag: '🇫🇮' },
-  { code: 'PL', name: 'Poland', dialCode: '+48', flag: '🇵🇱' },
-  { code: 'RU', name: 'Russia', dialCode: '+7', flag: '🇷🇺' },
-  { code: 'TR', name: 'Turkey', dialCode: '+90', flag: '🇹🇷' },
-  { code: 'ID', name: 'Indonesia', dialCode: '+62', flag: '🇮🇩' },
-  { code: 'MY', name: 'Malaysia', dialCode: '+60', flag: '🇲🇾' },
-  { code: 'TH', name: 'Thailand', dialCode: '+66', flag: '🇹🇭' },
-  { code: 'VN', name: 'Vietnam', dialCode: '+84', flag: '🇻🇳' },
-  { code: 'PH', name: 'Philippines', dialCode: '+63', flag: '🇵🇭' },
-  { code: 'NZ', name: 'New Zealand', dialCode: '+64', flag: '🇳🇿' },
-  { code: 'AR', name: 'Argentina', dialCode: '+54', flag: '🇦🇷' },
-  { code: 'CL', name: 'Chile', dialCode: '+56', flag: '🇨🇱' },
-  { code: 'CO', name: 'Colombia', dialCode: '+57', flag: '🇨🇴' },
-  { code: 'PE', name: 'Peru', dialCode: '+51', flag: '🇵🇪' },
-  { code: 'EG', name: 'Egypt', dialCode: '+20', flag: '🇪🇬' },
-  { code: 'NG', name: 'Nigeria', dialCode: '+234', flag: '🇳🇬' },
-  { code: 'KE', name: 'Kenya', dialCode: '+254', flag: '🇰🇪' },
-  { code: 'GH', name: 'Ghana', dialCode: '+233', flag: '🇬🇭' },
-  { code: 'IL', name: 'Israel', dialCode: '+972', flag: '🇮🇱' },
-  { code: 'PK', name: 'Pakistan', dialCode: '+92', flag: '🇵🇰' },
-  { code: 'BD', name: 'Bangladesh', dialCode: '+880', flag: '🇧🇩' },
-  { code: 'LK', name: 'Sri Lanka', dialCode: '+94', flag: '🇱🇰' },
-  { code: 'PT', name: 'Portugal', dialCode: '+351', flag: '🇵🇹' },
-  { code: 'GR', name: 'Greece', dialCode: '+30', flag: '🇬🇷' },
-  { code: 'IE', name: 'Ireland', dialCode: '+353', flag: '🇮🇪' },
-];
+import { DIAL_COUNTRIES, buildPhoneDigitsForApi } from '../lib/dialCountries';
+import { PH } from '../lib/formPlaceholders';
+import { PhoneCountryRow } from './PhoneCountryRow';
 
 interface DesktopAuthModalProps {
   isOpen: boolean;
@@ -75,7 +25,9 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
   const navigate = useNavigate();
   const { loginWithGoogle, refreshUser } = useUser();
   const [currentView, setCurrentView] = useState<ViewType>(initialView);
+  /** Full international digits for OTP verify / resend (set when code is sent). */
   const [phone, setPhone] = useState('');
+  const [loginPhoneLocal, setLoginPhoneLocal] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
@@ -84,14 +36,18 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
   const [otpFlow, setOtpFlow] = useState<'login' | 'signup' | null>(null);
   
   // Country selector
-  const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[1]); // Default to India
+  const [selectedCountry, setSelectedCountry] = useState(DIAL_COUNTRIES[1]);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
-  
+
+  const [signupSelectedCountry, setSignupSelectedCountry] = useState(DIAL_COUNTRIES[1]);
+  const [signupShowCountryPicker, setSignupShowCountryPicker] = useState(false);
+  const [signupCountrySearch, setSignupCountrySearch] = useState('');
+  const [signupPhoneLocal, setSignupPhoneLocal] = useState('');
+
   const [signupData, setSignupData] = useState({
     name: '',
     email: '',
-    phone: '',
     password: '',
     confirmPassword: '',
   });
@@ -111,14 +67,22 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
 
   const handleSendOTP = async (e: React.FormEvent) => {
     e.preventDefault();
+    const digits = buildPhoneDigitsForApi(selectedCountry.dialCode, loginPhoneLocal);
+    if (digits.length < 11) {
+      toast.error('Choose country and enter your full mobile number');
+      return;
+    }
     setIsLoading(true);
     setOtpFlow('login');
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await authService.sendLoginOtp(digits);
+      setPhone(digits);
       setOtpSent(true);
       setCurrentView('otp-verification');
       startCountdown();
       toast.success('OTP sent to your phone');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Could not send verification code'));
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +90,7 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
 
   const handleSendSignupOTP = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signupData.name.trim() || !signupData.email.trim() || !signupData.phone.trim()) {
+    if (!signupData.name.trim() || !signupData.email.trim() || !signupPhoneLocal.trim()) {
       toast.error('Please fill in all fields');
       return;
     }
@@ -138,7 +102,11 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
       toast.error('Passwords do not match');
       return;
     }
-    const phoneForApi = signupData.phone.trim();
+    const phoneForApi = buildPhoneDigitsForApi(signupSelectedCountry.dialCode, signupPhoneLocal);
+    if (phoneForApi.length < 11) {
+      toast.error('Choose country and enter your full mobile number');
+      return;
+    }
     setIsLoading(true);
     try {
       await authService.sendRegistrationOtp(phoneForApi);
@@ -199,12 +167,9 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
         return;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('userEmail', signupData.email || 'user@rloco.com');
-      localStorage.setItem('userName', signupData.name || phone);
-      localStorage.setItem('userPhone', phone || signupData.phone);
-      toast.success('Successfully verified!');
+      await authService.completeLoginOtp(phone, otpValue);
+      await refreshUser();
+      toast.success('Successfully signed in!');
       resetAndClose();
       navigate('/account');
     } catch (err) {
@@ -227,8 +192,8 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
         }
         const draft = JSON.parse(raw) as SignupOtpDraft;
         await authService.sendRegistrationOtp(draft.phone);
-      } else {
-        await new Promise((resolve) => setTimeout(resolve, 600));
+      } else if (phone) {
+        await authService.sendLoginOtp(phone);
       }
       startCountdown();
       toast.success('OTP resent!');
@@ -275,6 +240,7 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
   const resetAndClose = () => {
     setCurrentView(initialView);
     setPhone('');
+    setLoginPhoneLocal('');
     setOtp(['', '', '', '', '', '']);
     setOtpSent(false);
     setCountdown(0);
@@ -282,10 +248,13 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
     setSignupData({
       name: '',
       email: '',
-      phone: '',
       password: '',
       confirmPassword: '',
     });
+    setSignupPhoneLocal('');
+    setSignupSelectedCountry(DIAL_COUNTRIES[1]);
+    setSignupShowCountryPicker(false);
+    setSignupCountrySearch('');
     onClose();
   };
 
@@ -342,92 +311,17 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
                         <label className="block text-sm font-medium mb-2 text-foreground/70">
                           Phone Number
                         </label>
-                        <div className="flex gap-2">
-                          {/* Country Selector */}
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={() => setShowCountryPicker(!showCountryPicker)}
-                              className="h-[52px] px-3 bg-white border border-border/30 shadow-sm hover:border-border/50 rounded-xl transition-all flex items-center gap-2 min-w-[110px]"
-                            >
-                              <span className="text-xl">{selectedCountry.flag}</span>
-                              <span className="text-sm font-medium">{selectedCountry.dialCode}</span>
-                              <ChevronDown size={14} className={`text-foreground/40 transition-transform ${showCountryPicker ? 'rotate-180' : ''}`} />
-                            </button>
-
-                            {/* Country Picker Dropdown */}
-                            {showCountryPicker && (
-                              <>
-                                {/* Backdrop */}
-                                <div 
-                                  className="fixed inset-0 z-40" 
-                                  onClick={() => setShowCountryPicker(false)}
-                                />
-                                
-                                {/* Dropdown */}
-                                <motion.div
-                                  initial={{ opacity: 0, y: -10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  className="absolute left-0 top-full mt-2 w-80 bg-white border border-border/30 shadow-2xl rounded-lg overflow-hidden z-50"
-                                >
-                                  {/* Search */}
-                                  <div className="p-3 border-b border-border/20 bg-muted/10">
-                                    <div className="relative">
-                                      <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" />
-                                      <input
-                                        type="text"
-                                        value={countrySearch}
-                                        onChange={(e) => setCountrySearch(e.target.value)}
-                                        placeholder="Search country..."
-                                        className="w-full pl-9 pr-3 py-2 bg-white border border-border/30 shadow-sm text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B4770E]/20 focus:border-[#B4770E]"
-                                      />
-                                    </div>
-                                  </div>
-
-                                  {/* Country List */}
-                                  <div className="max-h-64 overflow-y-auto">
-                                    {COUNTRIES.filter(country => 
-                                      country.name.toLowerCase().includes(countrySearch.toLowerCase()) ||
-                                      country.dialCode.includes(countrySearch) ||
-                                      country.code.toLowerCase().includes(countrySearch.toLowerCase())
-                                    ).map((country) => (
-                                      <button
-                                        key={country.code}
-                                        type="button"
-                                        onClick={() => {
-                                          setSelectedCountry(country);
-                                          setShowCountryPicker(false);
-                                          setCountrySearch('');
-                                        }}
-                                        className={`w-full px-4 py-2.5 flex items-center gap-3 hover:bg-muted/30 transition-colors ${selectedCountry.code === country.code ? 'bg-[#B4770E]/10' : ''}`}
-                                      >
-                                        <span className="text-xl">{country.flag}</span>
-                                        <div className="flex-1 text-left">
-                                          <div className="text-sm font-medium">{country.name}</div>
-                                          <div className="text-xs text-foreground/50">{country.code}</div>
-                                        </div>
-                                        <span className="text-sm font-medium text-foreground/70">{country.dialCode}</span>
-                                      </button>
-                                    ))}
-                                  </div>
-                                </motion.div>
-                              </>
-                            )}
-                          </div>
-
-                          {/* Phone Input */}
-                          <div className="flex-1 relative">
-                            <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40" />
-                            <input
-                              type="tel"
-                              value={phone}
-                              onChange={(e) => setPhone(e.target.value)}
-                              placeholder="Phone number"
-                              required
-                              className="w-full pl-11 pr-4 py-3 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                            />
-                          </div>
-                        </div>
+                        <PhoneCountryRow
+                          variant="modal"
+                          localPhone={loginPhoneLocal}
+                          onLocalPhoneChange={setLoginPhoneLocal}
+                          selectedCountry={selectedCountry}
+                          onSelectCountry={setSelectedCountry}
+                          showPicker={showCountryPicker}
+                          setShowPicker={setShowCountryPicker}
+                          countrySearch={countrySearch}
+                          setCountrySearch={setCountrySearch}
+                        />
                       </div>
 
                       <motion.button
@@ -495,7 +389,7 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
                             type="text"
                             value={signupData.name}
                             onChange={(e) => setSignupData({ ...signupData, name: e.target.value })}
-                            placeholder="Full name"
+                            placeholder={PH.fullName}
                             required
                             className="w-full pl-10 pr-4 py-2.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                           />
@@ -512,7 +406,7 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
                             type="email"
                             value={signupData.email}
                             onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
-                            placeholder="Email address"
+                            placeholder={PH.email}
                             required
                             className="w-full pl-10 pr-4 py-2.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                           />
@@ -523,17 +417,17 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
                         <label className="block text-sm font-medium mb-1.5 text-foreground/70">
                           Phone
                         </label>
-                        <div className="relative">
-                          <Phone size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground/40" />
-                          <input
-                            type="tel"
-                            value={signupData.phone}
-                            onChange={(e) => setSignupData({ ...signupData, phone: e.target.value })}
-                            placeholder="+91 9876543210 or 10-digit number"
-                            required
-                            className="w-full pl-10 pr-4 py-2.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                          />
-                        </div>
+                        <PhoneCountryRow
+                          variant="modal"
+                          localPhone={signupPhoneLocal}
+                          onLocalPhoneChange={setSignupPhoneLocal}
+                          selectedCountry={signupSelectedCountry}
+                          onSelectCountry={setSignupSelectedCountry}
+                          showPicker={signupShowCountryPicker}
+                          setShowPicker={setSignupShowCountryPicker}
+                          countrySearch={signupCountrySearch}
+                          setCountrySearch={setSignupCountrySearch}
+                        />
                       </div>
 
                       <div>
@@ -544,7 +438,7 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
                           type="password"
                           value={signupData.password}
                           onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
-                          placeholder="At least 6 characters"
+                          placeholder={PH.password}
                           required
                           minLength={6}
                           autoComplete="new-password"
@@ -559,7 +453,7 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
                           type="password"
                           value={signupData.confirmPassword}
                           onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
-                          placeholder="Confirm password"
+                          placeholder={PH.confirmPassword}
                           required
                           minLength={6}
                           autoComplete="new-password"
@@ -626,7 +520,7 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
                   >
                     <button
                       onClick={() => {
-                        setCurrentView(signupData.name ? 'signup' : 'login');
+                        setCurrentView(otpFlow === 'signup' ? 'signup' : 'login');
                         setOtpSent(false);
                         setOtp(['', '', '', '', '', '']);
                       }}
@@ -644,7 +538,7 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
                       <p className="text-foreground/60">
                         Enter the 6-digit code sent to<br />
                         <span className="font-medium text-foreground">
-                          {phone || signupData.phone}
+                          {phone}
                         </span>
                       </p>
                     </div>

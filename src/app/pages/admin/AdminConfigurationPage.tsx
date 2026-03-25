@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PH } from '../../lib/formPlaceholders';
 import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Button } from '../../components/ui/button';
@@ -614,7 +615,7 @@ export const AdminConfigurationPage = () => {
                     <Input 
                       value={config.general.tagline}
                       onChange={(e) => updateConfig('general', { tagline: e.target.value })}
-                      placeholder="Your brand tagline" 
+                      placeholder={PH.tagline} 
                     />
                   </div>
                 </div>
@@ -701,7 +702,7 @@ export const AdminConfigurationPage = () => {
                   <div className="space-y-2">
                     <Label>Instagram</Label>
                     <Input 
-                      placeholder="@rloco" 
+                      placeholder={PH.socialInstagram} 
                       value={config.general.socialMedia.instagram}
                       onChange={(e) => updateConfig('general', { socialMedia: { ...config.general.socialMedia, instagram: e.target.value } })}
                     />
@@ -709,7 +710,7 @@ export const AdminConfigurationPage = () => {
                   <div className="space-y-2">
                     <Label>Facebook</Label>
                     <Input 
-                      placeholder="facebook.com/rloco" 
+                      placeholder={PH.socialFacebook} 
                       value={config.general.socialMedia.facebook}
                       onChange={(e) => updateConfig('general', { socialMedia: { ...config.general.socialMedia, facebook: e.target.value } })}
                     />
@@ -717,7 +718,7 @@ export const AdminConfigurationPage = () => {
                   <div className="space-y-2">
                     <Label>Twitter</Label>
                     <Input 
-                      placeholder="@rloco" 
+                      placeholder={PH.socialTwitter} 
                       value={config.general.socialMedia.twitter}
                       onChange={(e) => updateConfig('general', { socialMedia: { ...config.general.socialMedia, twitter: e.target.value } })}
                     />
@@ -725,7 +726,7 @@ export const AdminConfigurationPage = () => {
                   <div className="space-y-2">
                     <Label>Pinterest</Label>
                     <Input 
-                      placeholder="pinterest.com/rloco" 
+                      placeholder={PH.socialPinterest} 
                       value={config.general.socialMedia.pinterest}
                       onChange={(e) => updateConfig('general', { socialMedia: { ...config.general.socialMedia, pinterest: e.target.value } })}
                     />
@@ -733,7 +734,7 @@ export const AdminConfigurationPage = () => {
                   <div className="space-y-2">
                     <Label>YouTube</Label>
                     <Input 
-                      placeholder="youtube.com/@rloco" 
+                      placeholder={PH.socialYoutube} 
                       value={config.general.socialMedia.youtube ?? ''}
                       onChange={(e) => updateConfig('general', { socialMedia: { ...config.general.socialMedia, youtube: e.target.value } })}
                     />
@@ -867,7 +868,7 @@ export const AdminConfigurationPage = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>Allowed IP Addresses (Admin Access)</Label>
-                  <Input placeholder="192.168.1.1, 10.0.0.1" />
+                  <Input placeholder={PH.ipAllowlist} />
                   <p className="text-xs text-gray-500">Comma-separated list of IPs that can access the site</p>
                 </div>
                 <Button onClick={() => handleSave('Maintenance Mode')}>
@@ -1132,7 +1133,7 @@ export const AdminConfigurationPage = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>Custom Font URL (Google Fonts)</Label>
-                  <Input placeholder="https://fonts.googleapis.com/css2?family=..." />
+                  <Input placeholder={PH.customFontUrl} />
                   <p className="text-xs text-gray-500">Paste Google Fonts embed URL</p>
                 </div>
                 <div className="grid grid-cols-3 gap-4 pt-4 border-t">
@@ -1380,7 +1381,7 @@ export const AdminConfigurationPage = () => {
                     type="text" 
                     value={config.homepage.hero.backgroundImage || ''}
                     onChange={(e) => updateNestedConfig('homepage', 'hero', { backgroundImage: e.target.value })}
-                    placeholder="Image URL"
+                    placeholder={PH.imageUrl}
                   />
                   <p className="text-xs text-gray-500">Enter image URL or upload file (Recommended: 1920x800px, under 500KB)</p>
                 </div>
@@ -1953,21 +1954,21 @@ export const AdminConfigurationPage = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>SMTP Host</Label>
-                    <Input placeholder="smtp.example.com" defaultValue="smtp.sendgrid.net" />
+                    <Input placeholder={PH.smtpHost} defaultValue="smtp.sendgrid.net" />
                   </div>
                   <div className="space-y-2">
                     <Label>SMTP Port</Label>
-                    <Input placeholder="587" defaultValue="587" />
+                    <Input placeholder={PH.smtpPort} defaultValue="587" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>SMTP Username</Label>
-                    <Input placeholder="apikey" defaultValue="apikey" />
+                    <Input placeholder={PH.smtpUsername} defaultValue="apikey" />
                   </div>
                   <div className="space-y-2">
                     <Label>SMTP Password</Label>
-                    <Input type="password" placeholder="••••••••" />
+                    <Input type="password" placeholder={PH.passwordMasked} />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -2059,15 +2060,15 @@ export const AdminConfigurationPage = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>Twilio Account SID</Label>
-                  <Input placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" type="password" />
+                  <Input placeholder={PH.twilioAccountSid} type="password" />
                 </div>
                 <div className="space-y-2">
                   <Label>Twilio Auth Token</Label>
-                  <Input placeholder="••••••••" type="password" />
+                  <Input placeholder={PH.passwordMasked} type="password" />
                 </div>
                 <div className="space-y-2">
                   <Label>Twilio Phone Number</Label>
-                  <Input placeholder="+1 (555) 123-4567" />
+                  <Input placeholder={PH.phone} />
                 </div>
                 <div className="space-y-4 pt-4 border-t">
                   <Label>SMS Notifications</Label>
@@ -2281,7 +2282,7 @@ export const AdminConfigurationPage = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>Google Analytics Measurement ID</Label>
-                  <Input placeholder="G-XXXXXXXXXX" defaultValue="G-XXXXXXXXXX" />
+                  <Input placeholder={PH.measurementId} defaultValue="G-XXXXXXXXXX" />
                   <p className="text-xs text-gray-500">Find this in your GA4 property settings</p>
                 </div>
                 <div className="flex items-center justify-between p-4 border rounded-lg">
@@ -2323,7 +2324,7 @@ export const AdminConfigurationPage = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>Facebook Pixel ID</Label>
-                  <Input placeholder="1234567890123456" defaultValue="1234567890123456" />
+                  <Input placeholder={PH.facebookPixelId} defaultValue="1234567890123456" />
                 </div>
                 <div className="space-y-4 pt-4 border-t">
                   <Label>Standard Events</Label>
@@ -2368,24 +2369,24 @@ export const AdminConfigurationPage = () => {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   <Label>Google Tag Manager ID</Label>
-                  <Input placeholder="GTM-XXXXXXX" />
+                  <Input placeholder={PH.gtmContainerId} />
                 </div>
                 <div className="space-y-2">
                   <Label>TikTok Pixel ID</Label>
-                  <Input placeholder="XXXXXXXXXXXXXXX" />
+                  <Input placeholder={PH.tiktokPixelId} />
                 </div>
                 <div className="space-y-2">
                   <Label>Pinterest Tag ID</Label>
-                  <Input placeholder="XXXXXXXXXXXXX" />
+                  <Input placeholder={PH.pinterestTagId} />
                 </div>
                 <div className="space-y-2">
                   <Label>Hotjar Site ID</Label>
-                  <Input placeholder="XXXXXXX" />
+                  <Input placeholder={PH.hotjarSiteId} />
                 </div>
                 <div className="space-y-2">
                   <Label>Custom JavaScript (Header)</Label>
                   <Textarea
-                    placeholder="<!-- Custom scripts -->"
+                    placeholder={PH.customHeaderScripts}
                     rows={4}
                     className="font-mono text-sm"
                   />

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PH } from '../../lib/formPlaceholders';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -201,7 +202,7 @@ export const AdminCustomersPage = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
-            placeholder="Search customers by name, email, or ID..."
+            placeholder={PH.adminSearchCustomers}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
