@@ -18,6 +18,17 @@ const clearStoredAuthToken = (): void => {
   localStorage.removeItem(AUTH_TOKEN_KEY);
 };
 
+/** Persist JWT from auth responses (cookie may not be sent cross-origin). Idempotent. */
+export function persistAuthToken(token: string | undefined | null): void {
+  if (typeof token === 'string' && token.length > 0) {
+    setStoredAuthToken(token);
+  }
+}
+
+export function clearAuthToken(): void {
+  clearStoredAuthToken();
+}
+
 function requestHasAuthorizationHeader(config: InternalAxiosRequestConfig): boolean {
   const h = config.headers;
   if (!h) return false;

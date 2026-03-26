@@ -1,5 +1,10 @@
-import api from '../lib/api';
+import api, { persistAuthToken } from '../lib/api';
 import { LoginRequest, RegisterRequest, AuthResponse, User, OtpSendResponse } from '../types/api';
+
+function takeAuth(data: AuthResponse): AuthResponse {
+  persistAuthToken(data.token);
+  return data;
+}
 
 export const authService = {
   async sendRegistrationOtp(phone: string): Promise<OtpSendResponse> {
@@ -15,7 +20,7 @@ export const authService = {
 
   async completeLoginOtp(phone: string, code: string): Promise<AuthResponse> {
     const response = await api.post<AuthResponse>('/auth/login-otp/complete', { phone, code });
-    return response.data;
+    return takeAuth(response.data);
   },
 
   async completeRegistrationOtp(payload: {
@@ -32,12 +37,12 @@ export const authService = {
       password: payload.password,
       name: payload.name,
     });
-    return response.data;
+    return takeAuth(response.data);
   },
 
   async login(email: string, password: string): Promise<AuthResponse> {
     const response = await api.post<AuthResponse>('/auth/login', { email, password } as LoginRequest);
-    return response.data;
+    return takeAuth(response.data);
   },
 
   async register(email: string, password: string, name: string): Promise<AuthResponse> {
@@ -46,12 +51,12 @@ export const authService = {
       password,
       name,
     } as RegisterRequest);
-    return response.data;
+    return takeAuth(response.data);
   },
 
   async googleSignIn(idToken: string): Promise<AuthResponse> {
     const response = await api.post<AuthResponse>('/auth/google', { id_token: idToken });
-    return response.data;
+    return takeAuth(response.data);
   },
 
   async logout(): Promise<void> {
@@ -65,7 +70,7 @@ export const authService = {
 
   async refresh(): Promise<AuthResponse> {
     const response = await api.post<AuthResponse>('/auth/refresh');
-    return response.data;
+    return takeAuth(response.data);
   },
 
   async forgotPassword(email: string): Promise<{ message: string }> {

@@ -20,6 +20,8 @@ import { AddressAutocompleteInput, lookupZipCode } from '../components/AddressAu
 import { CreateOrderRequest } from '../types/api';
 import type { Order } from '../types/api';
 import { PH } from '../lib/formPlaceholders';
+import { expectedCurrencyForCountry, isCountryCurrencyMatch, normalizeCountry } from '../lib/market';
+import { getApiErrorMessage } from '../lib/apiErrors';
 
 interface ShippingInfo {
   firstName: string;
@@ -47,7 +49,7 @@ export function CheckoutPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAuthenticated, user } = useUser();
   const { items, total, clearCart, giftPackingCharge } = useCart();
-  const { formatAmount, formatPrice, convertPrice, currency } = useCurrency();
+  const { formatAmount, formatPrice, convertPrice, currency, country: storefrontCountry } = useCurrency();
   const giftPackingDisplay = currency === 'INR' ? giftPackingCharge : giftPackingCharge / 75;
   const [currentStep, setCurrentStep] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -124,10 +126,11 @@ export function CheckoutPage() {
   const [shippingErrors, setShippingErrors] = useState<Partial<Record<keyof ShippingInfo, string>>>({});
   const [paymentErrors, setPaymentErrors] = useState<Partial<Record<keyof PaymentInfo, string>>>({});
 
+  const normalizedShippingCountry = normalizeCountry(shippingInfo.country);
   const shippingCountryCode =
-    shippingInfo.country === 'United States'
+    normalizedShippingCountry === 'United States'
       ? 'us'
-      : shippingInfo.country === 'India'
+      : normalizedShippingCountry === 'India'
         ? 'in'
         : undefined;
 
@@ -296,31 +299,33 @@ export function CheckoutPage() {
   };
 
   const handleZipCodeChange = async (value: string) => {
-    const normalized =
-      shippingInfo.country === 'United States' || shippingInfo.country === 'India'
+    const countryForZip = normalizeCountry(shippingInfo.country);
+    const normalizedZip =
+      countryForZip === 'United States' || countryForZip === 'India'
         ? value.replace(/\D/g, '')
         : value;
 
-    setShippingInfo((prev) => ({ ...prev, zipCode: normalized }));
+    setShippingInfo((prev) => ({ ...prev, zipCode: normalizedZip }));
 
+    const normalizedCountry = normalizeCountry(shippingInfo.country);
     const countryCode =
-      shippingInfo.country === 'United States'
+      normalizedCountry === 'United States'
         ? 'us'
-        : shippingInfo.country === 'India'
+        : normalizedCountry === 'India'
           ? 'in'
           : undefined;
 
     if (!countryCode) return;
 
     const requiredLength = countryCode === 'us' ? 5 : 6;
-    if (normalized.length < requiredLength) return;
+    if (normalizedZip.length < requiredLength) return;
 
-    const result = await lookupZipCode(normalized, countryCode);
+    const result = await lookupZipCode(normalizedZip, countryCode);
     if (!result) return;
 
     setShippingInfo((prev) => ({
       ...prev,
-      zipCode: normalized,
+      zipCode: normalizedZip,
       city: result.city || prev.city,
       state: result.state || prev.state,
     }));
@@ -328,6 +333,10 @@ export function CheckoutPage() {
 
   const validateShipping = () => {
     const errors: Partial<Record<keyof ShippingInfo, string>> = {};
+    const normalizedShippingCountry = normalizeCountry(shippingInfo.country);
+    const hasCountryMismatch =
+      !!normalizedShippingCountry &&
+      (!isCountryCurrencyMatch(normalizedShippingCountry, currency) || normalizedShippingCountry !== storefrontCountry);
 
     // When a saved address card is selected, only verify email (address data is trusted)
     if (selectedAddressId && !showNewAddressForm) {
@@ -335,6 +344,11 @@ export function CheckoutPage() {
         errors.email = 'Email address is required to continue';
       } else if (!/\S+@\S+\.\S+/.test(shippingInfo.email)) {
         errors.email = 'Please enter a valid email address';
+      }
+      if (!normalizedShippingCountry) {
+        errors.country = 'Only India and United States are supported currently';
+      } else if (hasCountryMismatch) {
+        errors.country = `Address country (${normalizedShippingCountry}) must match selected market (${storefrontCountry})`;
       }
       setShippingErrors(errors);
       return Object.keys(errors).length === 0;
@@ -369,6 +383,12 @@ export function CheckoutPage() {
     }
     if (!shippingInfo.country.trim()) {
       errors.country = 'Country is required';
+    } else {
+      if (!normalizedShippingCountry) {
+        errors.country = 'Only India and United States are supported currently';
+      } else if (hasCountryMismatch) {
+        errors.country = `Address country (${normalizedShippingCountry}) must match selected market (${storefrontCountry})`;
+      }
     }
 
     setShippingErrors(errors);
@@ -481,11 +501,11 @@ export function CheckoutPage() {
       // Card → Stripe Elements (secure card capture on next screen)
       if (usesStripe) {
         try {
-          const paymentCurrency = currency === 'INR' ? 'inr' : 'usd';
+          const paymentCurrency = expectedCurrencyForCountry(shippingInfo.country) ?? currency;
           const paymentIntent = await paymentService.createPaymentIntent({
             order_id: order.id,
             amount: finalTotal,
-            currency: paymentCurrency,
+            currency: paymentCurrency.toLowerCase(),
             gateway: 'stripe',
             payment_method: paymentMethod === 'card' ? 'card' : paymentMethod === 'upi' ? 'upi' : 'wallet',
           });
@@ -531,7 +551,7 @@ export function CheckoutPage() {
       }, 1500);
     } catch (error: any) {
       console.error('Failed to place order:', error);
-      toast.error(error.message || 'Failed to place order. Please try again.');
+      toast.error(getApiErrorMessage(error, 'Failed to place order. Please try again.'));
     } finally {
       setIsProcessing(false);
     }
@@ -810,11 +830,11 @@ export function CheckoutPage() {
                                 <span className="text-sm text-foreground/70">Use a different address</span>
                               </button>
 
-                              {/* Show email error inline when saved address is selected but email is missing */}
-                              {selectedAddressId && !showNewAddressForm && shippingErrors.email && (
+                              {/* Show validation errors inline when a saved address is selected */}
+                              {selectedAddressId && !showNewAddressForm && (shippingErrors.email || shippingErrors.country) && (
                                 <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200">
                                   <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
-                                  <p className="text-xs text-red-600">{shippingErrors.email}</p>
+                                  <p className="text-xs text-red-600">{shippingErrors.email || shippingErrors.country}</p>
                                 </div>
                               )}
                             </>

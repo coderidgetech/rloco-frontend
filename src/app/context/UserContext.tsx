@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import { clearAuthToken } from '../lib/api';
 import { authService } from '../services/authService';
 import { User } from '../types/api';
 
@@ -105,6 +106,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       const response = await authService.googleSignIn(idToken);
       setUser(response.user);
+      // Confirm session with server (Bearer is persisted in authService). Keeps user in sync with /auth/me.
+      try {
+        const me = await authService.getMe();
+        setUser(me);
+      } catch {
+        /* keep response.user if getMe fails (e.g. transient network) */
+      }
       return true;
     } catch (error: any) {
       console.error('Google login error:', error);
@@ -134,6 +142,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      clearAuthToken();
       setUser(null);
       // Clear demo auth so next checkAuth doesn't restore from localStorage
       clearStaleClientAuth();

@@ -1,5 +1,5 @@
 import { motion, useScroll, useTransform } from 'motion/react';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, type ImgHTMLAttributes } from 'react';
 import { RlocoLogo } from './RlocoLogo';
 import { ChevronDown } from 'lucide-react';
 import { Button } from './ui/button';
@@ -101,7 +101,7 @@ export function Hero() {
             alt={config.homepage.hero.heading || 'Hero'}
             className="h-full w-full object-cover object-[center_22%] sm:object-[center_30%] md:object-center"
             onError={() => setImgError(true)}
-            fetchPriority="high"
+            {...({ fetchpriority: 'high' } as ImgHTMLAttributes<HTMLImageElement>)}
             decoding="async"
           />
           {/* Readability: stronger bottom stack for headline + CTAs */}

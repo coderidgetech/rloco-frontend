@@ -16,6 +16,8 @@ import { CreateOrderRequest } from '../types/api';
 import { Product } from '../types/api';
 import type { Order } from '../types/api';
 import { PH } from '../lib/formPlaceholders';
+import { expectedCurrencyForCountry, isCountryCurrencyMatch, normalizeCountry } from '../lib/market';
+import { getApiErrorMessage } from '../lib/apiErrors';
 
 interface Address {
   id: string;
@@ -26,6 +28,7 @@ interface Address {
   state: string;
   pincode: string;
   mobile: string;
+  country?: string;
   cashOnDelivery?: boolean;
   isDefault?: boolean;
 }
@@ -69,7 +72,7 @@ export function PaymentPage() {
   const navigate = useNavigate();
   const { user } = useUser();
   const { items, clearCart, removeFromCart } = useCart();
-  const { formatAmount, convertPrice, currency } = useCurrency();
+  const { formatAmount, convertPrice, currency, country: storefrontCountry } = useCurrency();
   const { selectedAddress, setSelectedPaymentMethod: setOrderPaymentMethod } = useOrder();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('recommended');
   const [selectedWallet, setSelectedWallet] = useState<string>('mobikwik');
@@ -186,6 +189,15 @@ export function PaymentPage() {
       toast.error('Please select a delivery address');
       return;
     }
+    const shippingCountry = normalizeCountry(deliveryAddress.country);
+    if (!shippingCountry) {
+      toast.error('Please use an address from India or United States');
+      return;
+    }
+    if (!isCountryCurrencyMatch(shippingCountry, currency) || shippingCountry !== storefrontCountry) {
+      toast.error(`Address country (${shippingCountry}) must match selected market (${storefrontCountry})`);
+      return;
+    }
 
     setIsProcessing(true);
     try {
@@ -227,7 +239,7 @@ export function PaymentPage() {
           city: deliveryAddress.city || '',
           state: deliveryAddress.state || '',
           zip_code: deliveryAddress.pincode || '',
-          country: currency === 'INR' ? 'India' : 'United States',
+          country: shippingCountry,
         },
         payment_info: paymentInfoData,
         payment_method: paymentMethodApi,
@@ -256,7 +268,7 @@ export function PaymentPage() {
           const paymentIntent = await paymentService.createPaymentIntent({
             order_id: order.id,
             amount: finalTotal,
-            currency: currency === 'INR' ? 'INR' : 'USD',
+            currency: (expectedCurrencyForCountry(shippingCountry) ?? currency).toLowerCase(),
             gateway: 'stripe',
           });
           if (paymentIntent.payment_url) {
@@ -283,7 +295,7 @@ export function PaymentPage() {
       navigate(`/order-confirmation/${order.id}`, { state: { order } });
     } catch (err: any) {
       console.error('Place order error:', err);
-      toast.error(err?.message || 'Failed to place order. Please try again.');
+      toast.error(getApiErrorMessage(err, 'Failed to place order. Please try again.'));
     } finally {
       setIsProcessing(false);
     }

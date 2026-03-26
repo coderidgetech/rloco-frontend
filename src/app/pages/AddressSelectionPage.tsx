@@ -22,6 +22,7 @@ interface Address {
   state: string;
   pincode: string;
   mobile: string;
+  country?: string;
   cashOnDelivery?: boolean;
   isDefault?: boolean;
 }
@@ -63,6 +64,7 @@ export function AddressSelectionPage() {
           state: addr.state,
           pincode: addr.pincode,
           mobile: addr.mobile,
+          country: addr.country,
           isDefault: addr.is_default,
         }));
         setAddresses(transformedAddresses);
@@ -520,15 +522,16 @@ export function AddressSelectionPage() {
         onSave={async (address) => {
           if (!isAuthenticated) {
             // Fallback to local state if not authenticated
+            const marketCountry = currency === 'USD' ? 'US' : 'IN';
             let updatedAddresses;
             if (modalMode === 'edit' && editingAddress) {
               updatedAddresses = addresses.map(addr => 
-                addr.id === editingAddress.id ? { ...address, id: editingAddress.id } : addr
+                addr.id === editingAddress.id ? { ...address, country: marketCountry, id: editingAddress.id } : addr
               );
               setAddresses(updatedAddresses);
               toast.success('Address updated successfully');
             } else {
-              updatedAddresses = [...addresses, { ...address, id: Date.now().toString() }];
+              updatedAddresses = [...addresses, { ...address, country: marketCountry, id: Date.now().toString() }];
               setAddresses(updatedAddresses);
               toast.success('Address added successfully');
             }
@@ -541,6 +544,7 @@ export function AddressSelectionPage() {
 
           try {
             if (modalMode === 'add') {
+              const marketCountry = currency === 'USD' ? 'US' : 'IN';
               const newAddress = await addressService.create({
                 name: address.name,
                 type: address.type,
@@ -550,7 +554,7 @@ export function AddressSelectionPage() {
                 state: address.state,
                 pincode: address.pincode,
                 mobile: address.mobile,
-                country: 'US',
+                country: marketCountry,
                 is_default: address.isDefault || false,
               });
 
@@ -564,6 +568,7 @@ export function AddressSelectionPage() {
                 state: newAddress.state,
                 pincode: newAddress.pincode,
                 mobile: newAddress.mobile,
+                country: newAddress.country,
                 isDefault: newAddress.is_default,
               };
 
@@ -573,6 +578,7 @@ export function AddressSelectionPage() {
               }
               toast.success('Address added successfully');
             } else if (editingAddress) {
+              const marketCountry = currency === 'USD' ? 'US' : 'IN';
               const updatedAddress = await addressService.update(editingAddress.id, {
                 name: address.name,
                 type: address.type,
@@ -582,7 +588,7 @@ export function AddressSelectionPage() {
                 state: address.state,
                 pincode: address.pincode,
                 mobile: address.mobile,
-                country: 'US',
+                country: marketCountry,
                 is_default: address.isDefault || false,
               });
 
@@ -596,6 +602,7 @@ export function AddressSelectionPage() {
                 state: updatedAddress.state,
                 pincode: updatedAddress.pincode,
                 mobile: updatedAddress.mobile,
+                country: updatedAddress.country,
                 isDefault: updatedAddress.is_default,
               };
 

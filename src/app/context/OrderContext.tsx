@@ -9,6 +9,7 @@ interface Address {
   state: string;
   pincode: string;
   mobile: string;
+  country?: string;
 }
 
 interface OrderContextType {

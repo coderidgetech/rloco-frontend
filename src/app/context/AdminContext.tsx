@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import { clearAuthToken } from '../lib/api';
 import { authService } from '../services/authService';
 import { User } from '../types/api';
 
@@ -75,6 +76,7 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      clearAuthToken();
       setUser(null);
     }
   }, []);
