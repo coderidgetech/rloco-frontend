@@ -106,13 +106,13 @@ export function ProductDetailPage() {
   
   const { addToCart, items } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const { formatPrice, convertPrice, currency } = useCurrency();
+  const { formatPrice, convertPrice, currency, market } = useCurrency();
 
   // Fetch all products for recommendations
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await productService.list({ limit: 200 });
+        const response = await productService.list({ limit: 200, market });
         setAllProducts(response.products || []);
       } catch (error) {
         console.error('Failed to fetch products for recommendations:', error);
@@ -120,7 +120,7 @@ export function ProductDetailPage() {
       }
     };
     fetchProducts();
-  }, []);
+  }, [market]);
 
   // Fetch reviews when product loads
   useEffect(() => {

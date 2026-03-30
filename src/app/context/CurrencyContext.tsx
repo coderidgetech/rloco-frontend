@@ -2,10 +2,13 @@ import { createContext, useContext, useState, ReactNode, useEffect } from 'react
 
 type Country = 'India' | 'United States';
 type Currency = 'INR' | 'USD';
+export type MarketCode = 'IN' | 'US';
 
 interface CurrencyContextType {
   country: Country;
   currency: Currency;
+  /** API/catalog market (matches backend `market` query param). */
+  market: MarketCode;
   setCountry: (country: Country) => void;
   formatPrice: (usdPrice: number, inrPrice?: number) => string;
   convertPrice: (usdPrice: number, inrPrice?: number) => number;
@@ -17,6 +20,7 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [country, setCountryState] = useState<Country>('United States'); // Default to US/USD
   const [currency, setCurrency] = useState<Currency>('USD'); // Default to USD
+  const market: MarketCode = country === 'India' ? 'IN' : 'US';
 
   // Load saved country from localStorage on mount
   useEffect(() => {
@@ -61,7 +65,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <CurrencyContext.Provider value={{ country, currency, setCountry, formatPrice, convertPrice, formatAmount }}>
+    <CurrencyContext.Provider value={{ country, currency, market, setCountry, formatPrice, convertPrice, formatAmount }}>
       {children}
     </CurrencyContext.Provider>
   );

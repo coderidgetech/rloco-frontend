@@ -145,10 +145,10 @@ function App() {
       <AppRouter>
         <ScrollToTop />
         <UserProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <AdminProvider>
-                <CurrencyProvider>
+          <CurrencyProvider>
+            <CartProvider>
+              <WishlistProvider>
+                <AdminProvider>
                   <SiteConfigProvider>
                     <OrderProvider>
                       <Toaster position="top-right" richColors closeButton duration={1500} />
@@ -225,30 +225,30 @@ function App() {
                             <Route path="/admin/products/add" element={<ProtectedRoute><AdminAddEditProductPage /></ProtectedRoute>} />
                             <Route path="/admin/products/edit" element={<ProtectedRoute><AdminAddEditProductPage /></ProtectedRoute>} />
                             <Route path="/admin/orders" element={<ProtectedRoute><AdminOrdersPage /></ProtectedRoute>} />
-                            <Route path="/admin/customers" element={<ProtectedRoute><AdminCustomersPage /></ProtectedRoute>} />
-                            <Route path="/admin/vendors" element={<ProtectedRoute><AdminVendorsPage /></ProtectedRoute>} />
-                            <Route path="/admin/vendors/add" element={<ProtectedRoute><AddVendorPage /></ProtectedRoute>} />
+                            <Route path="/admin/customers" element={<ProtectedRoute requiredRole="admin"><AdminCustomersPage /></ProtectedRoute>} />
+                            <Route path="/admin/vendors" element={<ProtectedRoute requiredRole="admin"><AdminVendorsPage /></ProtectedRoute>} />
+                            <Route path="/admin/vendors/add" element={<ProtectedRoute requiredRole="admin"><AddVendorPage /></ProtectedRoute>} />
                             <Route path="/admin/categories" element={<ProtectedRoute><AdminCategoriesPage /></ProtectedRoute>} />
-                            <Route path="/admin/content" element={<ProtectedRoute><AdminContentPage /></ProtectedRoute>} />
+                            <Route path="/admin/content" element={<ProtectedRoute requiredRole="admin"><AdminContentPage /></ProtectedRoute>} />
                             <Route path="/admin/analytics" element={<ProtectedRoute><AdminAnalyticsPage /></ProtectedRoute>} />
-                            <Route path="/admin/promotions" element={<ProtectedRoute><AdminPromotionsPage /></ProtectedRoute>} />
-                            <Route path="/admin/settings" element={<ProtectedRoute><AdminSettingsPage /></ProtectedRoute>} />
-                            <Route path="/admin/configuration" element={<ProtectedRoute><AdminConfigurationPage /></ProtectedRoute>} />
+                            <Route path="/admin/promotions" element={<ProtectedRoute requiredRole="admin"><AdminPromotionsPage /></ProtectedRoute>} />
+                            <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><AdminSettingsPage /></ProtectedRoute>} />
+                            <Route path="/admin/configuration" element={<ProtectedRoute requiredRole="admin"><AdminConfigurationPage /></ProtectedRoute>} />
                             <Route path="/admin/videos" element={<ProtectedRoute><AdminVideosPage /></ProtectedRoute>} />
-                            <Route path="/admin/subscription-plans/builder" element={<ProtectedRoute><SubscriptionPlanBuilder /></ProtectedRoute>} />
+                            <Route path="/admin/subscription-plans/builder" element={<ProtectedRoute requiredRole="admin"><SubscriptionPlanBuilder /></ProtectedRoute>} />
                             <Route path="/admin/reviews" element={<ProtectedRoute><AdminReviewsPage /></ProtectedRoute>} />
                             <Route path="/admin/wishlist" element={<ProtectedRoute><AdminWishlistPage /></ProtectedRoute>} />
-                            <Route path="/admin/badges" element={<ProtectedRoute><AdminBadgesPage /></ProtectedRoute>} />
+                            <Route path="/admin/badges" element={<ProtectedRoute requiredRole="admin"><AdminBadgesPage /></ProtectedRoute>} />
                             <Route path="/configuration" element={<ConfigurationPanel />} />
                           </Routes>
                         </MobileOnboardingRedirect>
                       </AppLayout>
                     </OrderProvider>
                   </SiteConfigProvider>
-                </CurrencyProvider>
-              </AdminProvider>
-            </WishlistProvider>
-          </CartProvider>
+                </AdminProvider>
+              </WishlistProvider>
+            </CartProvider>
+          </CurrencyProvider>
         </UserProvider>
       </AppRouter>
     </ErrorBoundary>

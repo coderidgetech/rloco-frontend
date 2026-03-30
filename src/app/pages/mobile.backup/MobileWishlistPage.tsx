@@ -9,8 +9,10 @@ import { productService } from '@/app/services/productService';
 import { Product } from '@/app/types/api';
 import { EmptyState } from '@/app/components/mobile/EmptyState';
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
+import { useCurrency } from '@/app/context/CurrencyContext';
 
 export function MobileWishlistPage() {
+  const { market } = useCurrency();
   const navigate = useNavigate();
   const { items, removeItem, clearWishlist } = useWishlist();
   const { addToCart } = useCart();
@@ -19,12 +21,12 @@ export function MobileWishlistPage() {
   useEffect(() => {
     if (items.length === 0) return;
     const ids = items.map(i => String(i.id)).filter(id => /^[0-9a-fA-F]{24}$/.test(id));
-    Promise.all(ids.map(id => productService.getById(id).catch(() => null))).then(results => {
+    Promise.all(ids.map(id => productService.getById(id, { market }).catch(() => null))).then(results => {
       const map = new Map<string, Product>();
       results.forEach((p, i) => { if (p) map.set(ids[i], p); });
       setProductsMap(map);
     });
-  }, [items]);
+  }, [items, market]);
 
   const handleAddToCart = (item: any) => {
     const product = productsMap.get(String(item.id));

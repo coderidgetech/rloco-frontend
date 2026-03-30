@@ -72,7 +72,7 @@ export function PaymentPage() {
   const navigate = useNavigate();
   const { user } = useUser();
   const { items, clearCart, removeFromCart } = useCart();
-  const { formatAmount, convertPrice, currency, country: storefrontCountry } = useCurrency();
+  const { formatAmount, convertPrice, currency, country: storefrontCountry, market } = useCurrency();
   const { selectedAddress, setSelectedPaymentMethod: setOrderPaymentMethod } = useOrder();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('recommended');
   const [selectedWallet, setSelectedWallet] = useState<string>('mobikwik');
@@ -113,7 +113,7 @@ export function PaymentPage() {
 
       try {
         const productsData = await Promise.all(
-          productIds.map(id => productService.getById(id).catch(() => null))
+          productIds.map(id => productService.getById(id, { market }).catch(() => null))
         );
         const map = new Map<string, Product>();
         productsData.forEach((product, index) => {
@@ -134,7 +134,7 @@ export function PaymentPage() {
     };
 
     fetchProducts();
-  }, [items, removeFromCart]);
+  }, [items, removeFromCart, market]);
 
   // Calculate original MRP (before any product discounts)
   const originalMRP = items.reduce((sum, item) => {

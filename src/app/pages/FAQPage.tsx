@@ -81,7 +81,7 @@ export function FAQPage() {
         },
         {
           question: 'What payment methods do you accept?',
-          answer: 'We accept all major credit cards (Visa, Mastercard, American Express, Discover), PayPal, Apple Pay, and Google Pay.',
+          answer: 'We accept all major credit cards (Visa, Mastercard, American Express, Discover), Apple Pay, and Google Pay (processed securely via Stripe).',
         },
         {
           question: 'Is my payment information secure?',

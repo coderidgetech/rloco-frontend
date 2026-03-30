@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, ShoppingBag, Search, User, Heart, ChevronDown, Globe, LogIn } from 'lucide-react';
+import { Menu, X, ShoppingBag, Search, User, Heart, ChevronDown, LogIn } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useCurrency } from '../context/CurrencyContext';
@@ -34,6 +34,13 @@ export function Navigation() {
   const { isAuthenticated } = useUser();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const isCheckoutFunnel =
+    /^\/(checkout|address|address-selection|payment|order-confirmation)(\/|$)/.test(location.pathname);
+  // Market switch exists only for catalog discovery; keep it read-only elsewhere.
+  const isCatalogRoute =
+    /^\/($|all-products$|sale$|new-arrivals$|featured-collection$|category\/|product\/)/.test(location.pathname);
+  const isMarketSwitchInteractive = !isCheckoutFunnel && isCatalogRoute;
 
   // Get configured categories or use defaults
   const womenCategories = config?.categories?.women || {
@@ -351,54 +358,69 @@ export function Navigation() {
                   Sale
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-foreground group-hover:w-full transition-all duration-300" />
                 </button>
-                <div className="relative group">
-                  <button
-                    className="text-foreground/70 hover:text-foreground transition-colors flex items-center gap-1.5 relative text-sm xl:text-base"
-                    aria-label="Select country"
+                {!isMarketSwitchInteractive ? (
+                  <div
+                    className="text-foreground/50 flex items-center gap-1.5 text-sm xl:text-base cursor-not-allowed"
+                    title={
+                      isCheckoutFunnel
+                        ? 'Market is locked during checkout'
+                        : 'Market switch is available only while browsing products'
+                    }
+                    aria-label="Market switch locked"
                   >
                     <span>{country === 'India' ? '🇮🇳' : '🇺🇸'}</span>
                     <span>{country === 'India' ? 'IN' : 'US'}</span>
-                    <svg width="8" height="5" viewBox="0 0 8 5" fill="none" className="opacity-70 flex-shrink-0">
-                      <path d="M1 1L4 4L7 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-foreground group-hover:w-full transition-all duration-300" />
-                  </button>
-                  <div className="absolute top-full right-0 mt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-                    <div className="bg-white shadow-2xl border border-foreground/10 min-w-[180px] overflow-hidden">
-                      <button
-                        onClick={() => setCountry('India')}
-                        className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-foreground/5 transition-colors text-left ${country === 'India' ? 'bg-foreground/5' : ''}`}
-                      >
-                        <span className="text-xl">🇮🇳</span>
-                        <div className="flex-1">
-                          <div className="text-sm font-medium">India</div>
-                          <div className="text-xs text-foreground/50">₹ INR</div>
-                        </div>
-                        {country === 'India' && (
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M13 4L6 11L3 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
-                      </button>
-                      <div className="h-px bg-foreground/10" />
-                      <button
-                        onClick={() => setCountry('United States')}
-                        className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-foreground/5 transition-colors text-left ${country === 'United States' ? 'bg-foreground/5' : ''}`}
-                      >
-                        <span className="text-xl">🇺🇸</span>
-                        <div className="flex-1">
-                          <div className="text-sm font-medium">United States</div>
-                          <div className="text-xs text-foreground/50">$ USD</div>
-                        </div>
-                        {country === 'United States' && (
-                          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M13 4L6 11L3 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        )}
-                      </button>
+                  </div>
+                ) : (
+                  <div className="relative group">
+                    <button
+                      className="text-foreground/70 hover:text-foreground transition-colors flex items-center gap-1.5 relative text-sm xl:text-base"
+                      aria-label="Select country"
+                    >
+                      <span>{country === 'India' ? '🇮🇳' : '🇺🇸'}</span>
+                      <span>{country === 'India' ? 'IN' : 'US'}</span>
+                      <svg width="8" height="5" viewBox="0 0 8 5" fill="none" className="opacity-70 flex-shrink-0">
+                        <path d="M1 1L4 4L7 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-foreground group-hover:w-full transition-all duration-300" />
+                    </button>
+                    <div className="absolute top-full right-0 mt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+                      <div className="bg-white shadow-2xl border border-foreground/10 min-w-[180px] overflow-hidden">
+                        <button
+                          onClick={() => setCountry('India')}
+                          className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-foreground/5 transition-colors text-left ${country === 'India' ? 'bg-foreground/5' : ''}`}
+                        >
+                          <span className="text-xl">🇮🇳</span>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium">India</div>
+                            <div className="text-xs text-foreground/50">₹ INR</div>
+                          </div>
+                          {country === 'India' && (
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M13 4L6 11L3 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </button>
+                        <div className="h-px bg-foreground/10" />
+                        <button
+                          onClick={() => setCountry('United States')}
+                          className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-foreground/5 transition-colors text-left ${country === 'United States' ? 'bg-foreground/5' : ''}`}
+                        >
+                          <span className="text-xl">🇺🇸</span>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium">United States</div>
+                            <div className="text-xs text-foreground/50">$ USD</div>
+                          </div>
+                          {country === 'United States' && (
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M13 4L6 11L3 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </motion.div>
 
               {/* Icons: Search, User, Wishlist from sm; Cart + Hamburger always; min touch target 44px on touch */}

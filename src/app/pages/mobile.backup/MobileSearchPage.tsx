@@ -7,6 +7,7 @@ import { Product } from '@/app/types/api';
 import { MobileProductGrid } from '@/app/components/mobile/MobileProductGrid';
 import { EmptyState } from '@/app/components/mobile/EmptyState';
 import { PH } from '@/app/lib/formPlaceholders';
+import { useCurrency } from '@/app/context/CurrencyContext';
 
 const TRENDING_SEARCHES = [
   'Dresses',
@@ -27,6 +28,7 @@ const CATEGORIES = [
 ];
 
 export function MobileSearchPage() {
+  const { market } = useCurrency();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -46,7 +48,7 @@ export function MobileSearchPage() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const res = await productService.list({ limit: 200 });
+        const res = await productService.list({ limit: 200, market });
         setAllProducts(res.products || []);
       } catch {
         setAllProducts([]);
@@ -55,7 +57,7 @@ export function MobileSearchPage() {
       }
     };
     fetchProducts();
-  }, []);
+  }, [market]);
 
   useEffect(() => {
     if (searchQuery.trim()) {

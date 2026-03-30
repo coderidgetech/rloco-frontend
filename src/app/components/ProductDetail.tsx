@@ -7,6 +7,7 @@ import { useWishlist } from '../context/WishlistContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { productService } from '../services/productService';
+import { useCurrency } from '../context/CurrencyContext';
 
 interface ProductDetailProps {
   product: Product | null;
@@ -26,13 +27,14 @@ export function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) 
   const { addToCart, items } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const navigate = useNavigate();
+  const { market } = useCurrency();
 
   // Fetch products for recommendations
   useEffect(() => {
     if (isOpen) {
       const fetchProducts = async () => {
         try {
-          const response = await productService.list({ limit: 200 });
+          const response = await productService.list({ limit: 200, market });
           setAllProducts(response.products || []);
         } catch (error) {
           console.error('Failed to fetch products:', error);
@@ -41,7 +43,7 @@ export function ProductDetail({ product, isOpen, onClose }: ProductDetailProps) 
       };
       fetchProducts();
     }
-  }, [isOpen]);
+  }, [isOpen, market]);
 
   if (!product) return null;
 

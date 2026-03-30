@@ -56,7 +56,7 @@ export default function SubscriptionPlanBuilder() {
     currency: 'USD',
     
     // Payment Methods
-    paymentMethods: ['credit_card', 'paypal', 'bank_transfer'],
+    paymentMethods: ['credit_card', 'bank_transfer'],
     
     // Advanced Settings
     autoRenew: true,

@@ -31,7 +31,7 @@ export function AddressSelectionPage() {
   const navigate = useNavigate();
   const { items, removeFromCart } = useCart();
   const [productsMap, setProductsMap] = useState<Map<string, Product>>(new Map());
-  const { formatPrice, formatAmount, convertPrice, currency } = useCurrency();
+  const { formatPrice, formatAmount, convertPrice, currency, market } = useCurrency();
   const { isAuthenticated } = useUser();
   const { setSelectedAddress } = useOrder();
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -103,7 +103,7 @@ export function AddressSelectionPage() {
 
       try {
         const productsData = await Promise.all(
-          productIds.map(id => productService.getById(id).catch(() => null))
+          productIds.map(id => productService.getById(id, { market }).catch(() => null))
         );
         const map = new Map<string, Product>();
         productsData.forEach((product, index) => {
@@ -124,7 +124,7 @@ export function AddressSelectionPage() {
     };
 
     fetchProducts();
-  }, [items, removeFromCart]);
+  }, [items, removeFromCart, market]);
 
   // Calculate original MRP (before any product discounts)
   const originalMRP = items.reduce((sum, item) => {

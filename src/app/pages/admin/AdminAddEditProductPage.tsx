@@ -49,6 +49,7 @@ export const AdminAddEditProductPage = () => {
     images: [] as string[],
     stock: {} as Record<string, number>,
     details: [] as string[],
+    availableMarkets: ['IN', 'US'] as ('IN' | 'US')[],
   });
 
   // Fetch product data if editing
@@ -79,6 +80,13 @@ export const AdminAddEditProductPage = () => {
           images: product.images || [],
           stock: product.stock || {},
           details: product.details || [],
+          availableMarkets: (() => {
+            const m = product.available_markets;
+            if (m?.length) {
+              return m.filter((x): x is 'IN' | 'US' => x === 'IN' || x === 'US');
+            }
+            return ['IN', 'US'] as ('IN' | 'US')[];
+          })(),
         });
       } catch (error: any) {
         console.error('Failed to fetch product:', error);
@@ -279,6 +287,10 @@ export const AdminAddEditProductPage = () => {
       toast.error('Please fill in all required fields');
       return;
     }
+    if (formData.availableMarkets.length === 0) {
+      toast.error('Select at least one market (IN / US)');
+      return;
+    }
 
     try {
       const productData: Partial<Product> = {
@@ -301,6 +313,7 @@ export const AdminAddEditProductPage = () => {
         on_sale: formData.onSale,
         new_arrival: formData.newArrival,
         is_gift: formData.isGift,
+        available_markets: formData.availableMarkets,
       };
 
       if (isEdit && productId) {
@@ -529,6 +542,48 @@ export const AdminAddEditProductPage = () => {
                       value={formData.subcategory}
                       onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
                     />
+                  </div>
+
+                  <div className="space-y-2 col-span-2">
+                    <Label>
+                      Markets <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="flex flex-wrap gap-6">
+                      <label className="flex items-center gap-2 cursor-pointer text-sm">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={formData.availableMarkets.includes('IN')}
+                          onChange={(e) => {
+                            const next = new Set(formData.availableMarkets);
+                            if (e.target.checked) next.add('IN');
+                            else next.delete('IN');
+                            setFormData({
+                              ...formData,
+                              availableMarkets: Array.from(next) as ('IN' | 'US')[],
+                            });
+                          }}
+                        />
+                        India (IN)
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-sm">
+                        <input
+                          type="checkbox"
+                          className="rounded border-gray-300"
+                          checked={formData.availableMarkets.includes('US')}
+                          onChange={(e) => {
+                            const next = new Set(formData.availableMarkets);
+                            if (e.target.checked) next.add('US');
+                            else next.delete('US');
+                            setFormData({
+                              ...formData,
+                              availableMarkets: Array.from(next) as ('IN' | 'US')[],
+                            });
+                          }}
+                        />
+                        United States (US)
+                      </label>
+                    </div>
                   </div>
                 </div>
               </CardContent>

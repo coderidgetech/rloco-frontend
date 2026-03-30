@@ -15,7 +15,7 @@ interface SearchModalProps {
 const BADGE_OPTIONS = ['Best Seller', 'Trending', 'Most Ordered', 'New', 'Limited Edition', 'Exclusive', 'Hot', 'Popular'] as const;
 
 export function SearchModal({ isOpen, onClose }: SearchModalProps) {
-  const { formatPrice } = useCurrency();
+  const { formatPrice, market } = useCurrency();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -24,24 +24,23 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch products when modal opens
+  // Fetch products when modal opens or market changes
   useEffect(() => {
-    if (isOpen && allProducts.length === 0) {
-      const fetchProducts = async () => {
-        try {
-          setLoading(true);
-          const response = await productService.list({ limit: 500 });
-          setAllProducts(response.products || []);
-        } catch (error) {
-          console.error('Failed to fetch products:', error);
-          setAllProducts([]);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchProducts();
-    }
-  }, [isOpen, allProducts.length]);
+    if (!isOpen) return;
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await productService.list({ limit: 500, market });
+        setAllProducts(response.products || []);
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+        setAllProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProducts();
+  }, [isOpen, market]);
 
   useEffect(() => {
     // Ensure allProducts is an array

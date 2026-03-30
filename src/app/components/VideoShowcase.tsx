@@ -13,7 +13,7 @@ export function VideoShowcase() {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { addToWishlist, isInWishlist } = useWishlist();
-  const { formatPrice } = useCurrency();
+  const { formatPrice, market } = useCurrency();
   
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showcaseProducts, setShowcaseProducts] = useState<Product[]>([]);
@@ -24,7 +24,7 @@ export function VideoShowcase() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const products = await productService.getFeatured(5);
+        const products = await productService.getFeatured(5, market);
         const productList = products || [];
         setShowcaseProducts(productList);
         if (productList.length > 0) {
@@ -39,7 +39,7 @@ export function VideoShowcase() {
     };
 
     fetchProducts();
-  }, []);
+  }, [market]);
 
   // Auto-slide products every 6 seconds
   useEffect(() => {

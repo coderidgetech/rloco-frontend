@@ -3337,10 +3337,6 @@ export const AdminConfigurationPage = () => {
                       <Switch defaultChecked />
                     </div>
                     <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <Label className="text-sm">PayPal</Label>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between p-2 bg-gray-50 rounded">
                       <Label className="text-sm">Bank Transfer</Label>
                       <Switch />
                     </div>

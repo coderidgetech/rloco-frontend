@@ -179,7 +179,74 @@ export const AdminOrdersPage = () => {
   };
 
   const handleExportOrders = () => {
-    toast.success('Orders exported successfully');
+    const headers = ['Order Number', 'Customer', 'Email', 'Items', 'Total', 'Status', 'Payment Method', 'Created At'];
+    const rows = filteredOrders.map((order) => [
+      order.id,
+      order.customer.name,
+      order.customer.email,
+      String(order.items),
+      order.total.toFixed(2),
+      order.status,
+      order.paymentMethod,
+      order.date,
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `orders-${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast.success('Orders exported');
+  };
+
+  const handlePrintPackingSlip = () => {
+    if (!selectedOrder) return;
+    const html = `
+      <html><head><title>Packing Slip</title></head><body>
+      <h2>Packing Slip</h2>
+      <p>Order: ${selectedOrder.order_number || selectedOrder.id}</p>
+      <p>Customer: ${selectedOrder.shipping_info?.first_name || ''} ${selectedOrder.shipping_info?.last_name || ''}</p>
+      <p>Address: ${selectedOrder.shipping_info?.address || ''}, ${selectedOrder.shipping_info?.city || ''}, ${selectedOrder.shipping_info?.state || ''} ${selectedOrder.shipping_info?.zip_code || ''}</p>
+      <ul>${(selectedOrder.items || []).map((item: any) => `<li>${item.product_name} - ${item.size} x ${item.quantity}</li>`).join('')}</ul>
+      </body></html>
+    `;
+    const win = window.open('', '_blank');
+    if (!win) return;
+    win.document.write(html);
+    win.document.close();
+    win.print();
+  };
+
+  const handleDownloadInvoice = () => {
+    if (!selectedOrder) return;
+    const lines = [
+      `Invoice`,
+      `Order: ${selectedOrder.order_number || selectedOrder.id}`,
+      `Date: ${new Date(selectedOrder.created_at).toLocaleDateString()}`,
+      '',
+      ...selectedOrder.items.map((item: any) => `${item.product_name} (${item.size}) x ${item.quantity} = $${(item.price * item.quantity).toFixed(2)}`),
+      '',
+      `Subtotal: $${selectedOrder.subtotal.toFixed(2)}`,
+      `Shipping: $${selectedOrder.shipping_cost.toFixed(2)}`,
+      `Tax: $${selectedOrder.tax.toFixed(2)}`,
+      `Discount: $${selectedOrder.discount.toFixed(2)}`,
+      `Total: $${selectedOrder.total.toFixed(2)}`,
+    ].join('\n');
+    const blob = new Blob([lines], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `invoice-${selectedOrder.order_number || selectedOrder.id}.txt`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const stats = [
@@ -467,11 +534,11 @@ export const AdminOrdersPage = () => {
 
               {/* Actions */}
               <div className="flex gap-2">
-                <Button variant="outline" className="flex-1">
+                <Button variant="outline" className="flex-1" onClick={handlePrintPackingSlip}>
                   <Package className="h-4 w-4 mr-2" />
                   Print Packing Slip
                 </Button>
-                <Button variant="outline" className="flex-1">
+                <Button variant="outline" className="flex-1" onClick={handleDownloadInvoice}>
                   <Download className="h-4 w-4 mr-2" />
                   Download Invoice
                 </Button>

@@ -10,8 +10,10 @@ import { sortOptions, extractFilterOptions, getSubcategoriesForCategory } from '
 import { PromotionalOffers } from '../components/PromotionalOffers';
 import { productService } from '../services/productService';
 import { Product } from '../types/product';
+import { useCurrency } from '../context/CurrencyContext';
 
 export function CategoryPage() {
+  const { market } = useCurrency();
   const { gender, category } = useParams<{ gender: string; category?: string }>();
   const [searchParams] = useSearchParams();
   const giftOnly = searchParams.get('gift') === 'true';
@@ -70,7 +72,7 @@ export function CategoryPage() {
         if (giftOnly) {
           params.gift = true;
         }
-        const response = await productService.list(params);
+        const response = await productService.list({ ...params, market });
         setProducts(response.products || []);
       } catch (error) {
         console.error('Failed to fetch products:', error);
@@ -80,7 +82,7 @@ export function CategoryPage() {
       }
     };
     fetchProducts();
-  }, [gender, category, giftOnly, hasValidGender, looksLikeObjectId, navigate]);
+  }, [gender, category, giftOnly, hasValidGender, looksLikeObjectId, navigate, market]);
 
   // Reset filters when URL parameters change
   useEffect(() => {

@@ -36,6 +36,7 @@ export interface Product {
   // Legacy support
   videoURL?: string;
   stock: Record<string, number>;
+  available_markets?: string[];
   vendor_id?: string;
   created_at?: string;
   updated_at?: string;

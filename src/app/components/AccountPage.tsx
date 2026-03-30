@@ -221,8 +221,12 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
           user_id: order.user_id,
           amount: order.total,
           currency: 'INR',
-          gateway: order.payment_method === 'card' || order.payment_method === 'wallet' ? 'stripe' : 
-                   order.payment_method === 'upi' ? 'paypal' : 'cod',
+          gateway:
+            order.payment_method === 'card' ||
+            order.payment_method === 'wallet' ||
+            order.payment_method === 'upi'
+              ? 'stripe'
+              : 'cod',
           gateway_transaction_id: order.payment_intent_id || order.id,
           status: order.payment_status === 'paid' ? 'succeeded' as const : 
                   order.payment_status === 'pending' ? 'pending' as const : 'failed' as const,

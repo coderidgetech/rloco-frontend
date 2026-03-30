@@ -8,8 +8,10 @@ import { MobileProductGrid } from '@/app/components/mobile/MobileProductGrid';
 import { QuickActions } from '@/app/components/mobile/QuickActions';
 import { EmptyState } from '@/app/components/mobile/EmptyState';
 import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader';
+import { useCurrency } from '@/app/context/CurrencyContext';
 
 export function MobileCategoryPage() {
+  const { market } = useCurrency();
   const { gender, category } = useParams();
   const [searchParams] = useSearchParams();
   const giftOnly = searchParams.get('gift') === 'true';
@@ -33,6 +35,7 @@ export function MobileCategoryPage() {
         setLoading(true);
         const res = await productService.list({
           limit: 200,
+          market,
           ...(gender && gender !== 'all' && { gender }),
           ...(category && { category }),
           ...(giftOnly && { gift: true }),
@@ -45,7 +48,7 @@ export function MobileCategoryPage() {
       }
     };
     fetchProducts();
-  }, [gender, category, giftOnly]);
+  }, [gender, category, giftOnly, market]);
 
   const subCategories = gender === 'women' 
     ? ['All', 'Dresses', 'Tops', 'Bottoms', 'Outerwear', 'Shoes', 'Bags', 'Jewelry']

@@ -62,7 +62,6 @@ export const AdminSettingsPage = () => {
     },
     payment: {
       creditCards: true,
-      paypal: true,
       stripe: true,
     },
     notifications: {
@@ -496,21 +495,6 @@ export const AdminSettingsPage = () => {
                 </div>
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <span className="font-bold text-purple-600">PP</span>
-                    </div>
-                    <div>
-                      <p className="font-medium">PayPal</p>
-                      <p className="text-sm text-gray-500">PayPal checkout</p>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={settings?.payment?.paypal ?? true}
-                    onCheckedChange={(v) => updateSetting(['payment', 'paypal'], v)}
-                  />
-                </div>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                       <span className="font-bold text-green-600">S</span>
                     </div>
@@ -555,15 +539,6 @@ export const AdminSettingsPage = () => {
                     placeholder={PH.stripeSecretKey}
                     value={settings?.payment?.stripeSecretKey || ''}
                     onChange={(e) => updateSetting(['payment', 'stripeSecretKey'], e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>PayPal Client ID</Label>
-                  <Input
-                    type="password"
-                    placeholder={PH.ellipsis}
-                    value={settings?.payment?.paypalClientId || ''}
-                    onChange={(e) => updateSetting(['payment', 'paypalClientId'], e.target.value)}
                   />
                 </div>
                 <Button onClick={() => handleSave('Payment Gateway')} disabled={saving}>

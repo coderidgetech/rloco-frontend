@@ -9,8 +9,10 @@ import { sortOptions } from '../utils/filterConfig';
 import { useNavigate } from 'react-router-dom';
 import { productService } from '../services/productService';
 import { Product } from '../types/product';
+import { useCurrency } from '../context/CurrencyContext';
 
 export function NewArrivalsPage() {
+  const { market } = useCurrency();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +44,7 @@ export function NewArrivalsPage() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const newArrivals = await productService.getNewArrivals(1000);
+        const newArrivals = await productService.getNewArrivals(1000, market);
         setProducts(newArrivals || []);
       } catch (error) {
         console.error('Failed to fetch new arrival products:', error);
@@ -52,7 +54,7 @@ export function NewArrivalsPage() {
       }
     };
     fetchProducts();
-  }, []);
+  }, [market]);
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);

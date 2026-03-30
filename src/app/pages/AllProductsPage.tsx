@@ -9,8 +9,10 @@ import { MobileFilterPanel } from '../components/MobileFilterPanel';
 import { sortOptions, extractFilterOptions, getSubcategoriesForCategory } from '../utils/filterConfig';
 import { productService } from '../services/productService';
 import { Product } from '../types/product';
+import { useCurrency } from '../context/CurrencyContext';
 
 export function AllProductsPage() {
+  const { market } = useCurrency();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +44,7 @@ export function AllProductsPage() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await productService.list({ limit: 1000 });
+        const response = await productService.list({ limit: 1000, market });
         setProducts(response.products || []);
       } catch (error) {
         console.error('Failed to fetch products:', error);
@@ -52,7 +54,7 @@ export function AllProductsPage() {
       }
     };
     fetchProducts();
-  }, []);
+  }, [market]);
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);

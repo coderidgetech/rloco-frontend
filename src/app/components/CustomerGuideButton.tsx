@@ -877,16 +877,6 @@ function CheckoutGuide() {
                   <input type="radio" name="payment" />
                   <div className="flex items-center gap-2">
                     <Package className="w-5 h-5 text-gray-600" />
-                    <span className="font-medium">PayPal</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border border-gray-300 rounded-lg p-4">
-                <div className="flex items-center gap-3">
-                  <input type="radio" name="payment" />
-                  <div className="flex items-center gap-2">
-                    <Package className="w-5 h-5 text-gray-600" />
                     <span className="font-medium">Apple Pay / Google Pay</span>
                   </div>
                 </div>
@@ -972,7 +962,6 @@ function CheckoutGuide() {
         <div className="grid grid-cols-2 gap-2 text-sm text-blue-800">
           <div>• Visa, Mastercard, American Express</div>
           <div>• Discover, Diners Club</div>
-          <div>• PayPal</div>
           <div>• Apple Pay, Google Pay</div>
           <div>• Shop Pay</div>
           <div>• Venmo</div>
@@ -1044,7 +1033,7 @@ function AccountGuide() {
               <span>📍 <strong>Addresses:</strong> Manage shipping addresses</span>
             </div>
             <div className="flex items-center justify-between py-2 border-b border-gray-200">
-              <span>💳 <strong>Payment Methods:</strong> Saved cards and PayPal</span>
+              <span>💳 <strong>Payment Methods:</strong> Saved cards and wallets</span>
             </div>
             <div className="flex items-center justify-between py-2 border-b border-gray-200">
               <span>⭐ <strong>Reviews:</strong> Your product reviews</span>
@@ -1383,10 +1372,8 @@ function FAQGuide() {
             <p className="text-sm text-gray-700 mb-2">We accept:</p>
             <div className="text-sm text-gray-700 space-y-1">
               <div>• Credit/Debit Cards (Visa, Mastercard, Amex, Discover)</div>
-              <div>• PayPal</div>
               <div>• Apple Pay & Google Pay</div>
               <div>• Shop Pay</div>
-              <div>• Venmo</div>
             </div>
           </div>
 

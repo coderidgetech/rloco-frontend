@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { productService } from '../services/productService';
 import { Product } from '../types/api';
+import { useCurrency } from '../context/CurrencyContext';
 
 export const useProducts = (params?: {
   limit?: number;
@@ -13,7 +14,9 @@ export const useProducts = (params?: {
   min_price?: number;
   max_price?: number;
   sort?: string;
+  market?: 'IN' | 'US';
 }) => {
+  const { market: ctxMarket } = useCurrency();
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -23,7 +26,10 @@ export const useProducts = (params?: {
     try {
       setLoading(true);
       setError(null);
-      const response = await productService.list(params);
+      const response = await productService.list({
+        ...params,
+        market: params?.market ?? ctxMarket,
+      });
       // API returns { products: [], total: number, limit: number, skip: number }
       setProducts(response.products || []);
       setTotal(response.total || 0);
@@ -33,7 +39,7 @@ export const useProducts = (params?: {
     } finally {
       setLoading(false);
     }
-  }, [params?.limit, params?.skip, params?.category, params?.gender, params?.on_sale, params?.featured, params?.new_arrival, params?.min_price, params?.max_price, params?.sort]);
+  }, [params?.limit, params?.skip, params?.category, params?.gender, params?.on_sale, params?.featured, params?.new_arrival, params?.min_price, params?.max_price, params?.sort, params?.market, ctxMarket]);
 
   useEffect(() => {
     fetchProducts();
@@ -43,6 +49,7 @@ export const useProducts = (params?: {
 };
 
 export const useFeaturedProducts = (limit: number = 10) => {
+  const { market } = useCurrency();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +59,7 @@ export const useFeaturedProducts = (limit: number = 10) => {
       try {
         setLoading(true);
         setError(null);
-        const data = await productService.getFeatured(limit);
+        const data = await productService.getFeatured(limit, market);
         setProducts(data || []);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch featured products');
@@ -63,12 +70,13 @@ export const useFeaturedProducts = (limit: number = 10) => {
     };
 
     fetchFeatured();
-  }, [limit]);
+  }, [limit, market]);
 
   return { products, loading, error };
 };
 
 export const useNewArrivals = (limit: number = 10) => {
+  const { market } = useCurrency();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -78,7 +86,7 @@ export const useNewArrivals = (limit: number = 10) => {
       try {
         setLoading(true);
         setError(null);
-        const data = await productService.getNewArrivals(limit);
+        const data = await productService.getNewArrivals(limit, market);
         setProducts(Array.isArray(data) ? data : []);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch new arrivals');
@@ -89,12 +97,13 @@ export const useNewArrivals = (limit: number = 10) => {
     };
 
     fetchNewArrivals();
-  }, [limit]);
+  }, [limit, market]);
 
   return { products, loading, error };
 };
 
 export const useOnSaleProducts = (limit: number = 10) => {
+  const { market } = useCurrency();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +113,7 @@ export const useOnSaleProducts = (limit: number = 10) => {
       try {
         setLoading(true);
         setError(null);
-        const data = await productService.getOnSale(limit);
+        const data = await productService.getOnSale(limit, market);
         setProducts(data);
       } catch (err: any) {
         setError(err.message || 'Failed to fetch on-sale products');
@@ -115,12 +124,13 @@ export const useOnSaleProducts = (limit: number = 10) => {
     };
 
     fetchOnSale();
-  }, [limit]);
+  }, [limit, market]);
 
   return { products, loading, error };
 };
 
 export const useProduct = (id: string) => {
+  const { market } = useCurrency();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -144,7 +154,7 @@ export const useProduct = (id: string) => {
       try {
         setLoading(true);
         setError(null);
-        const data = await productService.getById(id);
+        const data = await productService.getById(id, { market });
         setProduct(data);
       } catch (err: any) {
         // Suppress 400 errors (invalid ID format) as we already validated
@@ -160,7 +170,7 @@ export const useProduct = (id: string) => {
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id, market]);
 
   return { product, loading, error };
 };

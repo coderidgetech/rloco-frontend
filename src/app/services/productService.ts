@@ -15,37 +15,40 @@ export const productService = {
     min_price?: number;
     max_price?: number;
     sort?: string;
+    market?: 'IN' | 'US';
   }): Promise<PaginatedResponse<Product>> {
     const response = await api.get<PaginatedResponse<Product>>('/products', { params });
     return response.data;
   },
 
-  async getById(id: string): Promise<Product> {
+  async getById(id: string, opts?: { market?: 'IN' | 'US' }): Promise<Product> {
     const trimmed = (id || '').trim();
     if (!/^[0-9a-fA-F]{24}$/.test(trimmed)) {
       return Promise.reject(new Error('Invalid product ID'));
     }
-    const response = await api.get<Product>(`/products/${trimmed}`);
+    const response = await api.get<Product>(`/products/${trimmed}`, {
+      params: opts?.market ? { market: opts.market } : undefined,
+    });
     return response.data;
   },
 
-  async getFeatured(limit: number = 10): Promise<Product[]> {
+  async getFeatured(limit: number = 10, market?: 'IN' | 'US'): Promise<Product[]> {
     const response = await api.get<Product[]>('/products/featured', {
-      params: { limit },
+      params: { limit, ...(market ? { market } : {}) },
     });
     return response.data ?? [];
   },
 
-  async getNewArrivals(limit: number = 10): Promise<Product[]> {
+  async getNewArrivals(limit: number = 10, market?: 'IN' | 'US'): Promise<Product[]> {
     const response = await api.get<Product[]>('/products/new-arrivals', {
-      params: { limit },
+      params: { limit, ...(market ? { market } : {}) },
     });
     return response.data ?? [];
   },
 
-  async getOnSale(limit: number = 10): Promise<Product[]> {
+  async getOnSale(limit: number = 10, market?: 'IN' | 'US'): Promise<Product[]> {
     const response = await api.get<Product[]>('/products/on-sale', {
-      params: { limit },
+      params: { limit, ...(market ? { market } : {}) },
     });
     return response.data ?? [];
   },

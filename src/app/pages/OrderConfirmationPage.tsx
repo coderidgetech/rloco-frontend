@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
-import { Check, Package, Truck, MapPin, CreditCard, Mail, Phone, Calendar, Home } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Check, Package, Truck, MapPin, CreditCard, Mail, Phone, Calendar } from 'lucide-react';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { orderService } from '../services/orderService';
@@ -16,12 +16,22 @@ interface OrderConfirmationPageProps {
   subtotal?: number;
   shippingCost?: number;
   tax?: number;
+  total?: number;
+}
+
+/** Backend stores order money fields in USD; match CurrencyContext INR fallback (×75). */
+const USD_TO_INR = 75;
+
+function orderItemInr(item: any): number | undefined {
+  const v = item?.priceINR ?? item?.price_inr;
+  return typeof v === 'number' && !Number.isNaN(v) ? v : undefined;
 }
 
 export function OrderConfirmationPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { formatAmount, convertPrice } = useCurrency();
+  const { id: routeOrderId } = useParams<{ id: string }>();
+  const { formatAmount, convertPrice, currency } = useCurrency();
   const [showContent, setShowContent] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,19 +40,19 @@ export function OrderConfirmationPage() {
   const state = location.state as OrderConfirmationPageProps;
   const orderNumber = state?.orderNumber || '';
 
-  // Fetch order details if orderNumber is provided
+  // Fetch order details using order number from state or order ID from route.
   useEffect(() => {
-    if (orderNumber) {
-      fetchOrderDetails();
+    if (orderNumber || routeOrderId) {
+      fetchOrderDetails(orderNumber, routeOrderId);
     } else {
       setShowContent(true);
     }
-  }, [orderNumber]);
+  }, [orderNumber, routeOrderId]);
 
-  const fetchOrderDetails = async () => {
+  const fetchOrderDetails = async (num?: string, id?: string) => {
     try {
       setLoading(true);
-      const fetchedOrder = await orderService.getByOrderNumber(orderNumber);
+      const fetchedOrder = num ? await orderService.getByOrderNumber(num) : await orderService.getById(id!);
       setOrder(fetchedOrder);
       setShowContent(true);
     } catch (error) {
@@ -82,7 +92,10 @@ export function OrderConfirmationPage() {
     subtotal: order.subtotal || state?.subtotal || 0,
     shippingCost: order.shipping_cost || state?.shippingCost || 0,
     tax: order.tax || state?.tax || 0,
-    total: order.total || state?.subtotal || 0,
+    total:
+      typeof order.total === 'number'
+        ? order.total
+        : (state?.total ?? state?.subtotal ?? 0),
     trackingNumber: order.tracking_number,
     status: order.status,
   } : {
@@ -103,10 +116,17 @@ export function OrderConfirmationPage() {
     subtotal: state?.subtotal || 0,
     shippingCost: state?.shippingCost || 0,
     tax: state?.tax || 0,
-    total: state?.subtotal || 0,
+    total: state?.total ?? state?.subtotal ?? 0,
     trackingNumber: undefined,
     status: 'pending' as const,
   };
+
+  const usdOrderAmountToDisplay = (usd: number) =>
+    currency === 'INR' ? usd * USD_TO_INR : usd;
+  const displaySubtotal = usdOrderAmountToDisplay(orderData.subtotal);
+  const displayShipping = usdOrderAmountToDisplay(orderData.shippingCost);
+  const displayTax = usdOrderAmountToDisplay(orderData.tax);
+  const displayTotal = usdOrderAmountToDisplay(orderData.total);
 
   const fullName = `${orderData.shippingInfo.firstName} ${orderData.shippingInfo.lastName}`;
 
@@ -171,7 +191,7 @@ export function OrderConfirmationPage() {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-wider text-foreground/50 mb-2">Total Amount</p>
-                <p className="text-lg font-medium">{formatAmount(orderData.total)}</p>
+                <p className="text-lg font-medium">{formatAmount(displayTotal)}</p>
               </div>
             </div>
           </motion.div>
@@ -215,10 +235,10 @@ export function OrderConfirmationPage() {
                       </div>
                       <div className="text-right">
                         <p className="font-medium">
-                          {formatAmount(convertPrice(item.price || 0, (item as any).priceINR) * item.quantity)}
+                          {formatAmount(convertPrice(item.price || 0, orderItemInr(item)) * item.quantity)}
                         </p>
                         <p className="text-sm text-foreground/60">
-                          {formatAmount(convertPrice(item.price || 0, (item as any).priceINR))} each
+                          {formatAmount(convertPrice(item.price || 0, orderItemInr(item)))} each
                         </p>
                       </div>
                     </motion.div>
@@ -239,20 +259,22 @@ export function OrderConfirmationPage() {
                 <div className="border border-foreground/10 p-6 space-y-3">
                   <div className="flex justify-between">
                     <span className="text-foreground/60">Subtotal</span>
-                    <span>{formatAmount(orderData.subtotal)}</span>
+                    <span>{formatAmount(displaySubtotal)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-foreground/60">Shipping</span>
-                    <span className="text-green-600">{orderData.shippingCost === 0 ? 'FREE' : formatAmount(orderData.shippingCost)}</span>
+                    <span className="text-green-600">
+                      {orderData.shippingCost === 0 ? 'FREE' : formatAmount(displayShipping)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-foreground/60">Tax (18% GST)</span>
-                    <span>{formatAmount(orderData.tax)}</span>
+                    <span className="text-foreground/60">Tax</span>
+                    <span>{formatAmount(displayTax)}</span>
                   </div>
                   <div className="border-t border-foreground/10 pt-3">
                     <div className="flex justify-between items-center">
                       <span className="font-medium text-lg">Total</span>
-                      <span className="font-medium text-lg">{formatAmount(orderData.total)}</span>
+                      <span className="font-medium text-lg">{formatAmount(displayTotal)}</span>
                     </div>
                   </div>
                   <div className="pt-3 border-t border-foreground/10">

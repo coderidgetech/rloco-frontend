@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { PH } from '../../lib/formPlaceholders';
 import { PLACEHOLDER_IMAGE } from '../../constants';
 import { motion } from 'motion/react';
@@ -59,6 +59,7 @@ export const AdminProductsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [marketFilter, setMarketFilter] = useState<'all' | 'IN' | 'US'>('all');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
@@ -116,7 +117,15 @@ export const AdminProductsPage = () => {
     fetchProducts();
   }, [page, limit, categoryFilter, statusFilter, searchQuery]);
 
-  const filteredProducts = products || [];
+  const filteredProducts = useMemo(() => {
+    const list = products || [];
+    if (marketFilter === 'all') return list;
+    return list.filter((p) => {
+      const m = p.available_markets;
+      if (!m?.length) return true;
+      return m.includes(marketFilter);
+    });
+  }, [products, marketFilter]);
 
   const categoryOptions = allCategories.length > 0
     ? allCategories
@@ -165,6 +174,8 @@ export const AdminProductsPage = () => {
         featured: false,
         on_sale: product.on_sale,
         new_arrival: false,
+        available_markets:
+          product.available_markets?.length ? [...product.available_markets] : ['IN', 'US'],
       };
       await productService.create(duplicateData);
       toast.success(`Product "${product.name}" duplicated successfully`);
@@ -297,6 +308,16 @@ export const AdminProductsPage = () => {
               <SelectItem value="new">New Arrivals</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={marketFilter} onValueChange={(v) => setMarketFilter(v as 'all' | 'IN' | 'US')}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <SelectValue placeholder="Market" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All markets</SelectItem>
+              <SelectItem value="IN">India (IN)</SelectItem>
+              <SelectItem value="US">United States (US)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Products Table */}
@@ -309,6 +330,7 @@ export const AdminProductsPage = () => {
                 <TableHead>SKU</TableHead>
                 <TableHead>Category</TableHead>
                 <TableHead>Gender</TableHead>
+                <TableHead>Markets</TableHead>
                 <TableHead>Price</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead>Status</TableHead>
@@ -318,13 +340,13 @@ export const AdminProductsPage = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={10} className="text-center py-8 text-gray-500">
                     Loading products...
                   </TableCell>
                 </TableRow>
               ) : filteredProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={10} className="text-center py-8 text-gray-500">
                     No products found
                   </TableCell>
                 </TableRow>
@@ -350,6 +372,22 @@ export const AdminProductsPage = () => {
                     <TableCell>{product.category}</TableCell>
                     <TableCell>
                       <span className="capitalize">{product.gender}</span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {!product.available_markets?.length ? (
+                          <Badge variant="outline" className="text-xs">All (unassigned)</Badge>
+                        ) : (
+                          <>
+                            {product.available_markets.includes('IN') && (
+                              <Badge variant="outline" className="text-xs bg-amber-50">IN</Badge>
+                            )}
+                            {product.available_markets.includes('US') && (
+                              <Badge variant="outline" className="text-xs bg-blue-50">US</Badge>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div>

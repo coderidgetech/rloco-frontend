@@ -31,7 +31,7 @@ const paymentMethods: PaymentMethod[] = [
     id: 'mobile',
     name: 'Mobile Payment',
     icon: Smartphone,
-    description: 'PayPal, Venmo',
+    description: 'UPI, local wallets (where available)',
   },
 ];
 

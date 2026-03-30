@@ -9,8 +9,10 @@ import { sortOptions } from '../utils/filterConfig';
 import { useNavigate } from 'react-router-dom';
 import { productService } from '../services/productService';
 import { Product } from '../types/product';
+import { useCurrency } from '../context/CurrencyContext';
 
 export function SalePage() {
+  const { market } = useCurrency();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +44,7 @@ export function SalePage() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await productService.list({ on_sale: true, limit: 1000 });
+        const response = await productService.list({ on_sale: true, limit: 1000, market });
         setProducts(response.products || []);
       } catch (error) {
         console.error('Failed to fetch products:', error);
@@ -52,7 +54,7 @@ export function SalePage() {
       }
     };
     fetchProducts();
-  }, []);
+  }, [market]);
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);

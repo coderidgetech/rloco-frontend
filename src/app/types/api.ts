@@ -41,6 +41,8 @@ export interface Product {
   badge?: string;
   video_url?: string;
   stock: Record<string, number>; // size -> quantity
+  /** Markets where the product is sold: IN, US, or both */
+  available_markets?: string[];
   vendor_id?: string;
   created_at: string;
   updated_at: string;
@@ -256,7 +258,7 @@ export interface PaymentIntent {
   id: string;
   client_secret?: string;
   payment_url?: string;
-  gateway: 'stripe' | 'paypal';
+  gateway: 'stripe';
   amount: number;
   currency: string;
   metadata: Record<string, any>;
@@ -293,7 +295,7 @@ export interface CreatePaymentIntentRequest {
   order_id: string;
   amount: number;
   currency: string;
-  gateway: 'stripe' | 'paypal';
+  gateway: 'stripe';
   /** Preferred method so Stripe shows UPI/card correctly (e.g. "upi" for INR). */
   payment_method?: 'card' | 'upi' | 'wallet';
 }
@@ -301,7 +303,7 @@ export interface CreatePaymentIntentRequest {
 export interface ProcessPaymentRequest {
   payment_intent_id: string;
   payment_method_id: string;
-  gateway: 'stripe' | 'paypal';
+  gateway: 'stripe';
 }
 
 export interface CreateReviewRequest {

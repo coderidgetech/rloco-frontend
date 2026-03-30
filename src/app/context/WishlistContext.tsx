@@ -3,6 +3,7 @@ import { wishlistService } from '../services/wishlistService';
 import { productService } from '../services/productService';
 import { isUnauthorizedApiError } from '../lib/apiErrors';
 import { useUser } from './UserContext';
+import { useCurrency } from './CurrencyContext';
 import { Product } from '../types/api';
 
 interface WishlistItem {
@@ -33,6 +34,7 @@ const WishlistContext = createContext<WishlistContextType | undefined>(undefined
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useUser();
+  const { market } = useCurrency();
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -56,7 +58,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
       // Fetch product details for each wishlist entry
       const productPromises = wishlistEntries.map((entry) =>
-        productService.getById(entry.product_id).catch(() => null)
+        productService.getById(entry.product_id, { market }).catch(() => null)
       );
       const products = await Promise.all(productPromises);
 
@@ -83,7 +85,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, market]);
 
   const addToWishlist = useCallback(async (item: WishlistItem) => {
     // Optimistic update
