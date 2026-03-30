@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { ChevronRight, SlidersHorizontal, X } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { ProductCard } from '../components/ProductCard';
@@ -14,13 +14,18 @@ import { useCurrency } from '../context/CurrencyContext';
 
 export function CategoryPage() {
   const { market } = useCurrency();
+  const location = useLocation();
+  const isGiftHer = location.pathname === '/gift-for-her';
+  const isGiftHim = location.pathname === '/gift-for-him';
+  const isGiftRoute = isGiftHer || isGiftHim;
   const { gender, category } = useParams<{ gender: string; category?: string }>();
   const [searchParams] = useSearchParams();
-  const giftOnly = searchParams.get('gift') === 'true';
+  const giftOnly = searchParams.get('gift') === 'true' || isGiftRoute;
   const navigate = useNavigate();
+  const routeGender = (isGiftHer ? 'women' : isGiftHim ? 'men' : gender) as string | undefined;
   const validGenders = new Set(['women', 'men', 'all']);
-  const normalizedGender = gender?.toLowerCase();
-  const hasValidGender = normalizedGender ? validGenders.has(normalizedGender) : false;
+  const normalizedGender = routeGender?.toLowerCase();
+  const hasValidGender = isGiftRoute || (!!normalizedGender && validGenders.has(normalizedGender));
   const looksLikeObjectId = !!gender && /^[a-f0-9]{24}$/i.test(gender);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +33,9 @@ export function CategoryPage() {
   // All filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(category ? category.charAt(0).toUpperCase() + category.slice(1) : 'All');
-  const [selectedGender, setSelectedGender] = useState<'all' | 'women' | 'men'>(gender as 'all' | 'women' | 'men' || 'all');
+  const [selectedGender, setSelectedGender] = useState<'all' | 'women' | 'men'>(
+    (isGiftHer ? 'women' : isGiftHim ? 'men' : (gender as 'all' | 'women' | 'men')) || 'all'
+  );
   const [priceRange, setPriceRange] = useState([0, 10000]); // Increased max to accommodate all products
   const [sortBy, setSortBy] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
@@ -49,6 +56,7 @@ export function CategoryPage() {
 
   // Fetch products
   useEffect(() => {
+    if (isGiftRoute) return;
     if (gender && !hasValidGender) {
       if (looksLikeObjectId) {
         navigate('/all-products', { replace: true });
@@ -62,8 +70,8 @@ export function CategoryPage() {
       try {
         setLoading(true);
         const params: any = { limit: 1000 };
-        if (gender && gender !== 'all') {
-          params.gender = gender;
+        if (routeGender && routeGender !== 'all') {
+          params.gender = routeGender;
         }
         if (category) {
           // Capitalize category to match database format (e.g., "dresses" -> "Dresses")
@@ -82,14 +90,18 @@ export function CategoryPage() {
       }
     };
     fetchProducts();
-  }, [gender, category, giftOnly, hasValidGender, looksLikeObjectId, navigate, market]);
+  }, [routeGender, category, giftOnly, hasValidGender, looksLikeObjectId, navigate, market, gender, isGiftRoute]);
 
   // Reset filters when URL parameters change
   useEffect(() => {
-    if (!hasValidGender) return;
+    if (!hasValidGender && !isGiftRoute) return;
     setSelectedCategory(category ? category.charAt(0).toUpperCase() + category.slice(1) : 'All');
-    setSelectedGender(gender as 'all' | 'women' | 'men' || 'all');
-  }, [gender, category, hasValidGender]);
+    if (routeGender && routeGender !== 'all') {
+      setSelectedGender(routeGender as 'all' | 'women' | 'men');
+    } else if (isGiftRoute) {
+      setSelectedGender(isGiftHer ? 'women' : 'men');
+    }
+  }, [gender, category, hasValidGender, isGiftRoute, routeGender, isGiftHer]);
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -124,8 +136,10 @@ export function CategoryPage() {
     let filtered = [...products];
 
     // Base filter by gender from URL
-    if (gender) {
-      filtered = filtered.filter(p => p.gender.toLowerCase() === gender.toLowerCase() || p.gender === 'unisex');
+    if (routeGender) {
+      filtered = filtered.filter(
+        p => p.gender.toLowerCase() === routeGender.toLowerCase() || p.gender === 'unisex'
+      );
     }
 
     // Base filter by category from URL
@@ -147,7 +161,7 @@ export function CategoryPage() {
     }
 
     // Gender filter from sidebar (if different from URL)
-    if (selectedGender !== 'all' && (!gender || selectedGender.toLowerCase() !== gender.toLowerCase())) {
+    if (selectedGender !== 'all' && (!routeGender || selectedGender.toLowerCase() !== routeGender.toLowerCase())) {
       filtered = filtered.filter(p => p.gender === selectedGender || p.gender === 'unisex');
     }
 
@@ -201,13 +215,30 @@ export function CategoryPage() {
     }
 
     return filtered;
-  }, [products, gender, category, searchQuery, selectedCategory, selectedGender, priceRange, sortBy, selectedColors, selectedSizes, selectedMaterials, selectedSubcategories, minRating, showOnSale, showNewArrivals, showFeatured]);
+  }, [
+    products,
+    routeGender,
+    category,
+    searchQuery,
+    selectedCategory,
+    selectedGender,
+    priceRange,
+    sortBy,
+    selectedColors,
+    selectedSizes,
+    selectedMaterials,
+    selectedSubcategories,
+    minRating,
+    showOnSale,
+    showNewArrivals,
+    showFeatured,
+  ]);
 
   // Check if any filters are active
   const hasActiveFilters = 
     searchQuery !== '' || 
     (selectedCategory !== 'All' && (!category || selectedCategory.toLowerCase() !== category.toLowerCase())) || 
-    (selectedGender !== 'all' && (!gender || selectedGender.toLowerCase() !== gender.toLowerCase())) || 
+    (selectedGender !== 'all' && (!routeGender || selectedGender.toLowerCase() !== routeGender.toLowerCase())) || 
     priceRange[0] !== 0 || 
     priceRange[1] !== 10000 ||
     selectedColors.length > 0 ||
@@ -222,7 +253,7 @@ export function CategoryPage() {
   const clearAllFilters = () => {
     setSearchQuery('');
     setSelectedCategory(category ? category.charAt(0).toUpperCase() + category.slice(1) : 'All');
-    setSelectedGender(gender as 'all' | 'women' | 'men' || 'all');
+    setSelectedGender((routeGender as 'all' | 'women' | 'men') || 'all');
     setPriceRange([0, 10000]);
     setSortBy('featured');
     setSelectedColors([]);
@@ -237,16 +268,41 @@ export function CategoryPage() {
 
   const pageTitle = !hasValidGender
     ? 'Collection'
-    : giftOnly && gender === 'women'
+    : giftOnly && routeGender === 'women'
     ? 'Gift For Her'
-    : giftOnly && gender === 'men'
+    : giftOnly && routeGender === 'men'
     ? 'Gift For Him'
     : category 
-    ? `${category.charAt(0).toUpperCase() + category.slice(1)} - ${gender?.charAt(0).toUpperCase() + gender?.slice(1)}`
-    : `${gender?.charAt(0).toUpperCase() + gender?.slice(1)}'s Collection`;
+    ? `${category.charAt(0).toUpperCase() + category.slice(1)} - ${routeGender?.charAt(0).toUpperCase() + routeGender?.slice(1)}`
+    : `${routeGender?.charAt(0).toUpperCase() + routeGender?.slice(1)}'s Collection`;
 
   return (
     <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+      {isGiftRoute && (
+        <section className="border-b border-foreground/10 bg-gradient-to-b from-primary/5 to-background">
+          <div className="max-w-[1920px] mx-auto px-4 md:px-8 py-10 md:py-14 text-center">
+            <motion.p
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-[10px] uppercase tracking-[0.35em] text-primary mb-2"
+            >
+              Curated gifts
+            </motion.p>
+            <motion.h2
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="text-3xl md:text-4xl font-light tracking-tight mb-3"
+            >
+              {isGiftHer ? 'Gifts for Her' : 'Gifts for Him'}
+            </motion.h2>
+            <p className="text-foreground/60 max-w-xl mx-auto text-sm md:text-base">
+              Gift-worthy pieces, ready to make an impression.
+            </p>
+          </div>
+        </section>
+      )}
+
       {/* Breadcrumb */}
       <div className="border-b border-foreground/5 bg-background">
         <div className="max-w-[1920px] mx-auto px-4 md:px-8 py-3">
@@ -255,16 +311,23 @@ export function CategoryPage() {
               Home
             </button>
             <ChevronRight size={12} />
-            <button 
-              onClick={() => navigate(`/category/${gender}`)}
-              className="hover:text-foreground transition-colors uppercase capitalize"
-            >
-              {gender}
-            </button>
-            {category && (
+            {isGiftRoute ? (
+              <span className="text-foreground uppercase">Gift for {isGiftHer ? 'Her' : 'Him'}</span>
+            ) : (
               <>
-                <ChevronRight size={12} />
-                <span className="text-xs text-foreground uppercase capitalize">{category}</span>
+                <button
+                  type="button"
+                  onClick={() => navigate(`/category/${routeGender}`)}
+                  className="hover:text-foreground transition-colors uppercase capitalize"
+                >
+                  {routeGender}
+                </button>
+                {category && (
+                  <>
+                    <ChevronRight size={12} />
+                    <span className="text-xs text-foreground uppercase capitalize">{category}</span>
+                  </>
+                )}
               </>
             )}
           </div>
@@ -327,10 +390,10 @@ export function CategoryPage() {
             >
               <span className="text-xs text-foreground/60">Active filters:</span>
               
-              {selectedGender !== 'all' && selectedGender !== gender && (
+              {selectedGender !== 'all' && selectedGender !== routeGender && (
                 <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
                   {selectedGender}
-                  <button onClick={() => setSelectedGender(gender as any || 'all')} className="hover:opacity-70">
+                  <button onClick={() => setSelectedGender((routeGender as any) || 'all')} className="hover:opacity-70">
                     <X size={12} />
                   </button>
                 </span>
@@ -391,7 +454,7 @@ export function CategoryPage() {
           )}
         </motion.div>
 
-        <PromotionalOffers filterGender={gender as 'women' | 'men' | 'all'} selectedCategory={category} />
+        <PromotionalOffers filterGender={routeGender as 'women' | 'men' | 'all'} selectedCategory={category} />
 
         {/* Main Content: Sidebar + Products */}
         <div className="flex gap-8 items-start">
@@ -525,7 +588,7 @@ export function CategoryPage() {
                   return (
                     <motion.button
                       key={cat}
-                      onClick={() => navigate(`/category/${gender}/${cat.toLowerCase()}`)}
+                      onClick={() => navigate(`/category/${routeGender}/${cat.toLowerCase()}`)}
                       whileHover={{ y: -2 }}
                       className="px-5 py-2 border border-foreground/10 hover:border-foreground hover:bg-foreground hover:text-background transition-all whitespace-nowrap flex-shrink-0 text-xs uppercase tracking-wider"
                     >

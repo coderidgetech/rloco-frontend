@@ -1,5 +1,8 @@
 import { HomePage } from '../pages/HomePage';
+import { MobileHomePage } from '../pages/MobileHomePage';
+import { useIsMobile } from '../hooks/useIsMobile';
 
 export function ResponsiveHomePage() {
-  return <HomePage />;
+  const isMobile = useIsMobile();
+  return isMobile ? <MobileHomePage /> : <HomePage />;
 }

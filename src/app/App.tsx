@@ -79,6 +79,7 @@ import SubscriptionPlanBuilder from './pages/admin/SubscriptionPlanBuilder';
 import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
 import { AdminWishlistPage } from './pages/admin/AdminWishlistPage';
 import { AdminBadgesPage } from './pages/admin/AdminBadgesPage';
+import { VendorSettingsPage } from './pages/admin/VendorSettingsPage';
 import { ConfigurationPanel } from './pages/ConfigurationPanel';
 import { SupportPage } from './pages/SupportPage';
 
@@ -187,8 +188,8 @@ function App() {
                             <Route path="/wishlist" element={<ResponsiveWishlistPage />} />
                             <Route path="/account" element={<ResponsiveAccountPage />} />
                             <Route path="/categories" element={<DesktopHeaderWrapper title="Categories" backPath="/"><CategoriesHubPage /></DesktopHeaderWrapper>} />
-                            <Route path="/gift-for-her" element={<Navigate to="/category/women?gift=true" replace />} />
-                            <Route path="/gift-for-him" element={<Navigate to="/category/men?gift=true" replace />} />
+                            <Route path="/gift-for-her" element={<ResponsiveCategoryPage />} />
+                            <Route path="/gift-for-him" element={<ResponsiveCategoryPage />} />
                             <Route path="/gift-cards" element={<Navigate to="/all-products" replace />} />
                             <Route path="/search" element={<Navigate to="/all-products" replace />} />
                             <Route path="/notifications" element={<Navigate to="/account" replace />} />
@@ -218,7 +219,6 @@ function App() {
                             <Route path="/sustainability" element={<SustainabilityPage />} />
                             <Route path="/press" element={<PressPage />} />
                             <Route path="/cookies" element={<CookiesPage />} />
-                            <Route path="*" element={<ResponsiveNotFoundPage />} />
                             <Route path="/admin/login" element={<AdminLoginPage />} />
                             <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboardPage /></ProtectedRoute>} />
                             <Route path="/admin/products" element={<ProtectedRoute><AdminProductsPage /></ProtectedRoute>} />
@@ -239,7 +239,9 @@ function App() {
                             <Route path="/admin/reviews" element={<ProtectedRoute><AdminReviewsPage /></ProtectedRoute>} />
                             <Route path="/admin/wishlist" element={<ProtectedRoute><AdminWishlistPage /></ProtectedRoute>} />
                             <Route path="/admin/badges" element={<ProtectedRoute requiredRole="admin"><AdminBadgesPage /></ProtectedRoute>} />
+                            <Route path="/admin/vendor-settings" element={<ProtectedRoute requiredRole="vendor"><VendorSettingsPage /></ProtectedRoute>} />
                             <Route path="/configuration" element={<ConfigurationPanel />} />
+                            <Route path="*" element={<ResponsiveNotFoundPage />} />
                           </Routes>
                         </MobileOnboardingRedirect>
                       </AppLayout>

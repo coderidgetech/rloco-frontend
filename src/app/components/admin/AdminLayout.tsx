@@ -29,6 +29,7 @@ import {
   Sliders,
   ExternalLink,
   Home,
+  Building2,
 } from 'lucide-react';
 import { cn } from '../ui/utils';
 
@@ -48,78 +49,93 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     navigate('/admin/login');
   };
 
-  const menuItems = [
+  const menuItems: Array<{
+    label: string;
+    icon: typeof LayoutDashboard;
+    path: string;
+    permission: 'admin' | 'vendor';
+    vendorOnly?: boolean;
+  }> = [
     {
       label: 'Dashboard',
       icon: LayoutDashboard,
       path: '/admin/dashboard',
-      permission: 'vendor' as const,
+      permission: 'vendor',
     },
     {
       label: 'Products',
       icon: Package,
       path: '/admin/products',
-      permission: 'vendor' as const,
+      permission: 'vendor',
     },
     {
       label: 'Orders',
       icon: ShoppingCart,
       path: '/admin/orders',
-      permission: 'vendor' as const,
+      permission: 'vendor',
+    },
+    {
+      label: 'My store',
+      icon: Building2,
+      path: '/admin/vendor-settings',
+      permission: 'vendor',
+      vendorOnly: true,
     },
     {
       label: 'Categories',
       icon: FolderTree,
       path: '/admin/categories',
-      permission: 'admin' as const,
+      permission: 'admin',
     },
     {
       label: 'Customers',
       icon: Users,
       path: '/admin/customers',
-      permission: 'admin' as const,
+      permission: 'admin',
     },
     {
       label: 'Vendors',
       icon: Store,
       path: '/admin/vendors',
-      permission: 'admin' as const,
+      permission: 'admin',
     },
     {
       label: 'Analytics',
       icon: BarChart3,
       path: '/admin/analytics',
-      permission: 'vendor' as const,
+      permission: 'vendor',
     },
     {
       label: 'Content',
       icon: FileText,
       path: '/admin/content',
-      permission: 'admin' as const,
+      permission: 'admin',
     },
     {
       label: 'Promotions',
       icon: Tag,
       path: '/admin/promotions',
-      permission: 'admin' as const,
+      permission: 'admin',
     },
     {
       label: 'Configuration',
       icon: Sliders,
       path: '/admin/configuration',
-      permission: 'admin' as const,
+      permission: 'admin',
     },
     {
       label: 'Settings',
       icon: Settings,
       path: '/admin/settings',
-      permission: 'vendor' as const,
+      permission: 'vendor',
     },
   ];
 
-  const filteredMenuItems = menuItems.filter(item =>
-    hasPermission(item.permission)
-  );
+  const filteredMenuItems = menuItems.filter((item) => {
+    if (!hasPermission(item.permission)) return false;
+    if (item.vendorOnly && user?.role !== 'vendor') return false;
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-gray-50">
