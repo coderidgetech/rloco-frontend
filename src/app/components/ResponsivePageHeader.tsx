@@ -3,7 +3,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useIsMobile } from '../hooks/useIsMobile';
 
 /** Top offset = main nav row below safe area */
-const NAV_OFFSET = 'calc(env(safe-area-inset-top, 0px) + 3.75rem)';
+const NAV_OFFSET = 'calc(env(safe-area-inset-top, 0px) + 3.5rem)';
 
 interface ResponsivePageHeaderProps {
   title: string;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
@@ -23,8 +23,25 @@ import {
   Star,
   Zap,
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { VendorRole, VendorTier, VendorPermissions, ROLE_PERMISSIONS, VENDOR_TIERS } from '../../types/vendor-permissions';
+
+function normalizePrivilegeRole(role: string | undefined): VendorRole {
+  if (role === 'owner' || role === 'manager' || role === 'staff' || role === 'readonly') {
+    return role;
+  }
+  return 'owner';
+}
+
+function normalizeTier(tier: string | undefined): VendorTier {
+  if (tier === 'basic' || tier === 'premium' || tier === 'enterprise') {
+    return tier;
+  }
+  return 'basic';
+}
+
+function cloneRolePermissions(role: VendorRole): Partial<VendorPermissions> {
+  return structuredClone(ROLE_PERMISSIONS[role]) as Partial<VendorPermissions>;
+}
 
 interface VendorPrivilegeDialogProps {
   open: boolean;
@@ -33,31 +50,49 @@ interface VendorPrivilegeDialogProps {
     id: string;
     businessName: string;
     email: string;
-    tier: VendorTier;
-    role: VendorRole;
+    tier?: VendorTier | string;
+    /** App user role is often `vendor`; privilege role is owner|manager|staff|readonly */
+    role: string;
   };
-  onSave: (vendorId: string, tier: VendorTier, role: VendorRole, permissions: Partial<VendorPermissions>) => void;
+  onSave: (
+    vendorId: string,
+    tier: VendorTier,
+    role: VendorRole,
+    permissions: Partial<VendorPermissions> & Record<string, unknown>
+  ) => void;
 }
 
 export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorPrivilegeDialogProps) => {
-  const [selectedTier, setSelectedTier] = useState<VendorTier>(vendor.tier);
-  const [selectedRole, setSelectedRole] = useState<VendorRole>(vendor.role);
-  const [customPermissions, setCustomPermissions] = useState<Partial<VendorPermissions>>(
-    ROLE_PERMISSIONS[vendor.role]
+  const [selectedTier, setSelectedTier] = useState<VendorTier>('basic');
+  const [selectedRole, setSelectedRole] = useState<VendorRole>('owner');
+  const [customPermissions, setCustomPermissions] = useState<Partial<VendorPermissions>>(() =>
+    cloneRolePermissions('owner')
   );
+
+  useEffect(() => {
+    if (!open) return;
+    const r = normalizePrivilegeRole(vendor.role);
+    const t = normalizeTier(vendor.tier);
+    setSelectedTier(t);
+    setSelectedRole(r);
+    setCustomPermissions(cloneRolePermissions(r));
+  }, [open, vendor.id, vendor.role, vendor.tier]);
 
   const tierInfo = VENDOR_TIERS[selectedTier];
   const rolePermissions = ROLE_PERMISSIONS[selectedRole];
 
   const handleSave = () => {
-    onSave(vendor.id, selectedTier, selectedRole, customPermissions);
-    toast.success(`Privileges updated for ${vendor.businessName}`);
+    onSave(vendor.id, selectedTier, selectedRole, {
+      ...customPermissions,
+      tier: selectedTier,
+      vendorRole: selectedRole,
+    });
     onClose();
   };
 
   const handleRoleChange = (role: VendorRole) => {
     setSelectedRole(role);
-    setCustomPermissions(ROLE_PERMISSIONS[role]);
+    setCustomPermissions(cloneRolePermissions(role));
   };
 
   const updatePermission = (category: keyof VendorPermissions, permission: string, value: boolean) => {
@@ -93,7 +128,7 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

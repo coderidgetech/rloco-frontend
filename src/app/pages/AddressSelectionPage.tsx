@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Check, ArrowLeft, Plus, MapPin } from 'lucide-react';
+import { ArrowLeft, Plus, MapPin } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { useOrder } from '../context/OrderContext';
@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Footer } from '../components/Footer';
+import { CheckoutStepper } from '../components/CheckoutStepper';
 import { AddressFormModal } from '../components/AddressFormModal';
 import { addressService, Address as APIAddress } from '@/app/services/addressService';
 import { useUser } from '../context/UserContext';
@@ -243,24 +244,7 @@ export function AddressSelectionPage() {
             </div>
           </div>
 
-          {/* Progress Steps */}
-          <div className="flex items-center gap-2 text-xs md:text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <span className="uppercase tracking-wider">BAG</span>
-            </div>
-            <div className="h-px w-8 md:w-12 bg-border"></div>
-            <div className="flex items-center gap-2">
-              <span className="uppercase tracking-wider font-medium text-primary">ADDRESS</span>
-            </div>
-            <div className="h-px w-8 md:w-12 bg-border"></div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <span className="uppercase tracking-wider">PAYMENT</span>
-            </div>
-            <div className="ml-auto hidden md:flex items-center gap-2 text-green-600">
-              <Check size={16} />
-              <span className="text-xs">100% SECURE</span>
-            </div>
-          </div>
+          <CheckoutStepper activeStep="address" />
         </div>
       </div>
 

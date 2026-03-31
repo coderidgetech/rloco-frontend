@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading, hasPermission } = useAdmin();
+  const { user, isAuthenticated, isLoading, hasPermission } = useAdmin();
 
   // Show loading state while checking authentication
   if (isLoading) {
@@ -21,6 +21,11 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
 
   if (!isAuthenticated) {
     return <Navigate to="/admin/login" replace />;
+  }
+
+  // Storefront customer session cannot access staff portal (shared JWT would otherwise pass auth)
+  if (user?.role === 'customer') {
+    return <Navigate to="/" replace />;
   }
 
   if (requiredRole && !hasPermission(requiredRole)) {

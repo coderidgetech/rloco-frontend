@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, ShoppingBag, Search, User, Heart, ChevronDown, LogIn } from 'lucide-react';
+import { Menu, X, ShoppingBag, Search, User, Heart, ChevronDown } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useCurrency } from '../context/CurrencyContext';
@@ -26,7 +26,8 @@ export function Navigation() {
   const [accountOpen, setAccountOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<'women' | 'men' | null>(null);
   const [mobileSubMenu, setMobileSubMenu] = useState<'women' | 'men' | null>(null);
-  
+  const [navSearchQuery, setNavSearchQuery] = useState('');
+
   const { itemCount } = useCart();
   const { itemCount: wishlistCount } = useWishlist();
   const { country, setCountry } = useCurrency();
@@ -152,132 +153,48 @@ export function Navigation() {
   return (
     <>
       <nav
-        className="fixed left-0 right-0 top-0 z-50 border-b border-transparent transition-all duration-300 dark:border-border/30 dark:bg-background/95"
+        className="fixed left-0 right-0 top-0 z-50 min-h-14 border-b border-transparent transition-all duration-300 dark:border-border/30 dark:bg-background/95"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
           transform: visible ? 'translateY(0)' : 'translateY(-100%)',
           transition: 'transform 0.3s ease-in-out, background-color 0.3s ease',
-          backgroundColor:
-            isMobile
-              ? scrolled
-                ? 'rgba(255, 255, 255, 0.97)'
-                : 'rgba(255, 255, 255, 0.94)'
-              : scrolled
-                ? 'rgba(255, 255, 255, 0.8)'
-                : 'rgba(255, 255, 255, 0.6)',
-          backdropFilter: isMobile || scrolled ? 'blur(16px) saturate(1.2)' : 'blur(12px)',
-          WebkitBackdropFilter: isMobile || scrolled ? 'blur(16px) saturate(1.2)' : 'blur(12px)',
-          borderBottom:
-            isMobile || scrolled ? '1px solid rgba(0, 0, 0, 0.06)' : 'none',
-          boxShadow:
-            isMobile || scrolled ? '0 1px 0 rgba(0,0,0,0.04), 0 4px 24px -8px rgba(0,0,0,0.08)' : 'none',
+          backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.6)',
+          backdropFilter: scrolled ? 'blur(20px)' : 'blur(12px)',
+          WebkitBackdropFilter: scrolled ? 'blur(20px)' : 'blur(12px)',
+          borderBottom: scrolled ? '1px solid rgba(255, 255, 255, 0.2)' : 'none',
+          boxShadow: scrolled ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : 'none',
         }}
       >
-        <div className="w-full px-3 sm:px-4 md:px-6 lg:px-10 xl:px-16 py-2.5 sm:py-3 lg:py-4">
-          {/* Mobile / tablet: grid prevents logo vs icons overlap */}
-          <div className="grid min-h-[48px] grid-cols-[2.75rem_minmax(0,1fr)_auto] items-center gap-x-1.5 sm:min-h-[52px] sm:gap-x-2 lg:hidden">
+        <div className="flex h-14 w-full items-center px-6 md:px-12 lg:px-20">
+          <div className="relative flex h-full w-full items-center justify-between">
             <motion.button
               whileTap={{ scale: 0.94 }}
               onClick={() => setIsOpen(!isOpen)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/40 bg-background/80 text-foreground shadow-sm active:bg-muted sm:h-11 sm:w-11 dark:bg-card/80 dark:border-border/50"
+              className="md:hidden flex h-10 w-10 shrink-0 items-center justify-center rounded-lg p-2 text-foreground -ml-2"
               aria-label={isOpen ? 'Close menu' : 'Open menu'}
               type="button"
             >
-              {isOpen ? <X size={20} strokeWidth={2} /> : <Menu size={20} strokeWidth={2} />}
+              {isOpen ? <X size={22} strokeWidth={2} /> : <Menu size={22} strokeWidth={2} />}
             </motion.button>
-            <div className="flex min-w-0 justify-center overflow-hidden px-0.5">
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.97 }}
-                onClick={handleLogoClick}
-                className="flex max-w-full shrink items-center justify-center rounded-lg py-0.5 active:opacity-80"
-                aria-label="Rloco home"
-              >
-                <RlocoLogo
-                  size="sm"
-                  className="[&_svg]:!h-[18px] [&_svg]:max-w-[min(7rem,32vw)] sm:[&_svg]:!h-5 sm:[&_svg]:max-w-none"
-                />
-              </motion.button>
-            </div>
-            <div className="flex shrink-0 items-center gap-px rounded-xl border border-border/40 bg-background/90 py-0.5 pl-0.5 pr-0.5 shadow-sm dark:bg-card/90 dark:border-border/50 sm:gap-0.5 sm:rounded-2xl sm:p-1">
-              <motion.button
-                whileTap={{ scale: 0.94 }}
-                onClick={() => setSearchOpen(true)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground/75 transition-colors hover:bg-muted/80 hover:text-foreground active:bg-muted sm:h-10 sm:w-10 sm:rounded-xl"
-                aria-label="Search"
-                type="button"
-              >
-                <Search size={18} strokeWidth={2} className="sm:h-5 sm:w-5" />
-              </motion.button>
-              <motion.button
-                whileTap={{ scale: 0.94 }}
-                onClick={() => navigate('/wishlist')}
-                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground/75 transition-colors hover:bg-muted/80 hover:text-foreground active:bg-muted sm:h-10 sm:w-10 sm:rounded-xl"
-                aria-label="Wishlist"
-                type="button"
-              >
-                <Heart size={18} strokeWidth={2} className="sm:h-5 sm:w-5" />
-                <AnimatePresence>
-                  {wishlistCount > 0 && (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[9px] font-semibold text-white sm:right-1 sm:top-1 sm:h-[18px] sm:min-w-[18px] sm:text-[10px]"
-                    >
-                      {wishlistCount > 9 ? '9+' : wishlistCount}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-              <motion.button
-                whileTap={{ scale: 0.94 }}
-                onClick={() => navigate('/cart')}
-                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground/75 transition-colors hover:bg-muted/80 hover:text-foreground active:bg-muted sm:h-10 sm:w-10 sm:rounded-xl"
-                aria-label="Cart"
-                type="button"
-              >
-                <ShoppingBag size={18} strokeWidth={2} className="sm:h-[21px] sm:w-[21px]" />
-                <AnimatePresence>
-                  {itemCount > 0 && (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-0.5 text-[9px] font-semibold text-primary-foreground sm:right-1 sm:top-1 sm:h-[18px] sm:min-w-[18px] sm:text-[10px]"
-                    >
-                      {itemCount > 9 ? '9+' : itemCount}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-            </div>
-          </div>
 
-          {/* Desktop: 3-column grid */}
-          <div className="hidden min-h-16 grid-cols-[1fr_auto_1fr] items-center gap-4 lg:grid">
-          {/* Left: Desktop nav links - show from lg to avoid crowding on tablet */}
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-            className="hidden lg:flex items-center gap-5 xl:gap-8 justify-start min-w-0 flex-1"
-          >
+            <motion.div
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="hidden md:flex flex-1 items-center justify-start gap-6 lg:gap-8 min-w-0"
+            >
               <button
+                type="button"
                 onClick={() => navigate('/new-arrivals')}
-                className="text-foreground/70 hover:text-foreground transition-colors relative group"
+                className="text-foreground/70 hover:text-foreground transition-colors relative group text-sm shrink-0"
               >
                 New Arrivals
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-foreground group-hover:w-full transition-all duration-300" />
+                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-foreground transition-all duration-300 group-hover:w-full" />
               </button>
-
-              {/* Women Dropdown */}
-              <motion.div
-                className="relative"
-                onMouseEnter={() => setActiveDropdown('women')}
-              >
+              <motion.div className="relative" onMouseEnter={() => setActiveDropdown('women')}>
                 <button
-                  className="text-foreground/70 hover:text-foreground transition-colors relative group flex items-center gap-1"
+                  type="button"
+                  className="text-foreground/70 hover:text-foreground transition-colors relative group flex items-center gap-1 text-sm shrink-0"
                   onClick={() => handleCategoryClick('women')}
                 >
                   Women
@@ -289,14 +206,10 @@ export function Navigation() {
                   />
                 </button>
               </motion.div>
-
-              {/* Men Dropdown */}
-              <motion.div
-                className="relative"
-                onMouseEnter={() => setActiveDropdown('men')}
-              >
+              <motion.div className="relative" onMouseEnter={() => setActiveDropdown('men')}>
                 <button
-                  className="text-foreground/70 hover:text-foreground transition-colors relative group flex items-center gap-1"
+                  type="button"
+                  className="text-foreground/70 hover:text-foreground transition-colors relative group flex items-center gap-1 text-sm shrink-0"
                   onClick={() => handleCategoryClick('men')}
                 >
                   Men
@@ -308,201 +221,187 @@ export function Navigation() {
                   />
                 </button>
               </motion.div>
+              <button
+                type="button"
+                onClick={() => navigate('/sale')}
+                className="text-foreground/70 hover:text-foreground transition-colors relative group text-sm shrink-0"
+              >
+                Sale
+                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-foreground transition-all duration-300 group-hover:w-full" />
+              </button>
             </motion.div>
 
-            {/* Center Logo - flex-shrink-0 so it never squishes */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
+              initial={{ opacity: 0, scale: 0.92 }}
               animate={{
-                opacity:
-                  location.pathname === '/' && !scrolled && !isMobile ? 0 : 1,
-                scale: 1,
+                opacity: location.pathname === '/' && !scrolled && !isMobile ? 0 : 1,
+                scale: location.pathname === '/' && !scrolled && !isMobile ? 0.92 : 1,
               }}
-              transition={{
-                duration: 0.3,
-                ease: [0.22, 1, 0.36, 1],
-                opacity: { duration: 0.25, ease: [0.22, 1, 0.36, 1] },
-                scale: { duration: 0.3, ease: [0.22, 1, 0.36, 1] },
-              }}
-              className="flex flex-shrink-0 justify-center text-2xl tracking-tighter cursor-pointer relative"
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="absolute left-1/2 top-1/2 w-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer md:static md:left-auto md:top-auto md:w-24 md:translate-x-0 md:translate-y-0"
               onClick={handleLogoClick}
               style={{
-                pointerEvents:
-                  location.pathname === '/' && !scrolled && !isMobile ? 'none' : 'auto',
-                willChange:
-                  location.pathname === '/' && !scrolled && !isMobile ? 'opacity, transform' : 'auto',
+                pointerEvents: location.pathname === '/' && !scrolled && !isMobile ? 'none' : 'auto',
               }}
             >
               <RlocoLogo size="sm" />
             </motion.div>
 
-            {/* Right: Desktop links (lg+) + Icons - flex-1 justify-end so no overflow */}
-            <div className="flex items-center justify-end min-w-0 flex-1 gap-3 sm:gap-4 lg:gap-5 xl:gap-8">
-              {/* Desktop: Collections, Promotions, Sale, Country - only from lg */}
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className="hidden lg:flex items-center gap-4 xl:gap-6 flex-shrink-0"
-              >
-                <button
-                  onClick={() => scrollToSection('categories')}
-                  className="text-foreground/70 hover:text-foreground transition-colors relative group whitespace-nowrap text-sm xl:text-base"
-                >
-                  Collections
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-foreground group-hover:w-full transition-all duration-300" />
-                </button>
-                <button
-                  onClick={() => scrollToSection('products')}
-                  className="text-foreground/70 hover:text-foreground transition-colors relative group whitespace-nowrap text-sm xl:text-base"
-                >
-                  Promotions
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-foreground group-hover:w-full transition-all duration-300" />
-                </button>
-                <button
-                  onClick={() => navigate('/sale')}
-                  className="text-foreground/70 hover:text-foreground transition-colors relative group whitespace-nowrap text-sm xl:text-base"
-                >
-                  Sale
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-foreground group-hover:w-full transition-all duration-300" />
-                </button>
-                {!isMarketSwitchInteractive ? (
-                  <div
-                    className="text-foreground/50 flex items-center gap-1.5 text-sm xl:text-base cursor-not-allowed"
-                    title={
-                      isCheckoutFunnel
-                        ? 'Market is locked during checkout'
-                        : 'Market switch is available only while browsing products'
+            <div className="flex flex-1 items-center justify-end gap-2 md:gap-4 lg:gap-6 min-w-0 pl-6 md:pl-0">
+              <div className="relative hidden min-w-0 w-[min(200px,30vw)] max-w-[280px] sm:block lg:w-[min(280px,22vw)]">
+                <input
+                  type="text"
+                  value={navSearchQuery}
+                  onChange={(e) => setNavSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && navSearchQuery.trim()) {
+                      setSearchOpen(true);
                     }
-                    aria-label="Market switch locked"
+                  }}
+                  placeholder="Search..."
+                  className="w-full border-0 border-b border-foreground/10 bg-transparent py-1.5 pl-7 pr-7 text-xs text-foreground placeholder:text-foreground/30 focus:border-foreground/40 focus:outline-none md:pl-8 md:text-sm"
+                  aria-label="Search products"
+                />
+                <Search
+                  size={14}
+                  className="pointer-events-none absolute left-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-foreground/30 md:left-0.5 md:h-[15px] md:w-[15px]"
+                />
+                {navSearchQuery ? (
+                  <button
+                    type="button"
+                    className="absolute right-0 top-1/2 -translate-y-1/2 text-foreground/30 hover:text-foreground"
+                    onClick={() => setNavSearchQuery('')}
+                    aria-label="Clear search"
+                  >
+                    <X size={13} />
+                  </button>
+                ) : null}
+              </div>
+
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                className="sm:hidden flex h-10 w-10 shrink-0 items-center justify-center text-foreground/70"
+                aria-label="Search"
+              >
+                <Search size={20} />
+              </motion.button>
+
+              {!isMarketSwitchInteractive ? (
+                <div
+                  className="hidden md:flex items-center gap-1.5 text-sm text-foreground/50 cursor-not-allowed"
+                  title={
+                    isCheckoutFunnel
+                      ? 'Market is locked during checkout'
+                      : 'Market switch is available only while browsing products'
+                  }
+                >
+                  <span>{country === 'India' ? '🇮🇳' : '🇺🇸'}</span>
+                  <span>{country === 'India' ? 'IN' : 'US'}</span>
+                </div>
+              ) : (
+                <div className="relative group hidden md:block">
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 px-2 text-sm text-foreground/70 transition-colors hover:text-foreground"
+                    aria-label="Select country"
                   >
                     <span>{country === 'India' ? '🇮🇳' : '🇺🇸'}</span>
                     <span>{country === 'India' ? 'IN' : 'US'}</span>
-                  </div>
-                ) : (
-                  <div className="relative group">
-                    <button
-                      className="text-foreground/70 hover:text-foreground transition-colors flex items-center gap-1.5 relative text-sm xl:text-base"
-                      aria-label="Select country"
-                    >
-                      <span>{country === 'India' ? '🇮🇳' : '🇺🇸'}</span>
-                      <span>{country === 'India' ? 'IN' : 'US'}</span>
-                      <svg width="8" height="5" viewBox="0 0 8 5" fill="none" className="opacity-70 flex-shrink-0">
-                        <path d="M1 1L4 4L7 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-foreground group-hover:w-full transition-all duration-300" />
-                    </button>
-                    <div className="absolute top-full right-0 mt-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-                      <div className="bg-white shadow-2xl border border-foreground/10 min-w-[180px] overflow-hidden">
-                        <button
-                          onClick={() => setCountry('India')}
-                          className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-foreground/5 transition-colors text-left ${country === 'India' ? 'bg-foreground/5' : ''}`}
-                        >
-                          <span className="text-xl">🇮🇳</span>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium">India</div>
-                            <div className="text-xs text-foreground/50">₹ INR</div>
-                          </div>
-                          {country === 'India' && (
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M13 4L6 11L3 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          )}
-                        </button>
-                        <div className="h-px bg-foreground/10" />
-                        <button
-                          onClick={() => setCountry('United States')}
-                          className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-foreground/5 transition-colors text-left ${country === 'United States' ? 'bg-foreground/5' : ''}`}
-                        >
-                          <span className="text-xl">🇺🇸</span>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium">United States</div>
-                            <div className="text-xs text-foreground/50">$ USD</div>
-                          </div>
-                          {country === 'United States' && (
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M13 4L6 11L3 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                          )}
-                        </button>
-                      </div>
+                    <svg width="8" height="5" viewBox="0 0 8 5" fill="none" className="opacity-70">
+                      <path d="M1 1L4 4L7 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <div className="absolute top-full right-0 z-50 mt-3 opacity-0 invisible transition-all duration-300 group-hover:visible group-hover:opacity-100">
+                    <div className="min-w-[180px] overflow-hidden border border-foreground/10 bg-white shadow-2xl">
+                      <button
+                        type="button"
+                        onClick={() => setCountry('India')}
+                        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-foreground/5 ${country === 'India' ? 'bg-foreground/5' : ''}`}
+                      >
+                        <span className="text-xl">🇮🇳</span>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">India</div>
+                          <div className="text-xs text-foreground/50">₹ INR</div>
+                        </div>
+                      </button>
+                      <div className="h-px bg-foreground/10" />
+                      <button
+                        type="button"
+                        onClick={() => setCountry('United States')}
+                        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-foreground/5 ${country === 'United States' ? 'bg-foreground/5' : ''}`}
+                      >
+                        <span className="text-xl">🇺🇸</span>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">United States</div>
+                          <div className="text-xs text-foreground/50">$ USD</div>
+                        </div>
+                      </button>
                     </div>
                   </div>
-                )}
-              </motion.div>
+                </div>
+              )}
 
-              {/* Icons: Search, User, Wishlist from sm; Cart + Hamburger always; min touch target 44px on touch */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
-                className="flex items-center flex-shrink-0 gap-1 sm:gap-2 md:gap-3"
+              <motion.button
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={() => navigate(isAuthenticated ? '/account' : '/login?redirect=/account')}
+                className="hidden md:flex text-foreground/70 transition-colors hover:text-foreground"
+                aria-label="Account"
               >
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setSearchOpen(true)}
-                  className="hidden sm:flex p-2.5 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 md:p-0 justify-center items-center text-foreground/70 hover:text-foreground transition-colors rounded-md active:bg-foreground/5"
-                  aria-label="Search"
-                >
-                  <Search size={20} className="sm:w-5 sm:h-5" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate(isAuthenticated ? '/account' : '/login?redirect=/account')}
-                  className="hidden sm:flex p-2.5 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 md:p-0 justify-center items-center text-foreground/70 hover:text-foreground transition-colors rounded-md active:bg-foreground/5"
-                  aria-label="Account"
-                >
-                  <User size={20} className="sm:w-5 sm:h-5" />
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate('/wishlist')}
-                  className="hidden sm:flex p-2.5 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 md:p-0 justify-center items-center text-foreground/70 hover:text-foreground transition-colors relative rounded-md active:bg-foreground/5"
-                  aria-label="Wishlist"
-                >
-                  <Heart size={20} className="sm:w-5 sm:h-5" />
-                  <AnimatePresence>
-                    {wishlistCount > 0 && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                        className="absolute -top-0.5 -right-0.5 sm:top-0 sm:right-0 bg-red-500 text-white text-xs min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1"
-                      >
-                        {wishlistCount}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate('/cart')}
-                  className="relative flex justify-center items-center p-2.5 min-w-[44px] min-h-[44px] text-foreground/70 hover:text-foreground transition-colors rounded-md active:bg-foreground/5"
-                  aria-label="Cart"
-                >
-                  <ShoppingBag size={22} className="sm:w-5 sm:h-5" />
-                  <AnimatePresence>
-                    {itemCount > 0 && (
-                      <motion.span
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                        className="absolute -top-0.5 -right-0.5 sm:top-0 sm:right-0 bg-primary text-primary-foreground text-xs min-w-[18px] h-[18px] rounded-full flex items-center justify-center px-1"
-                      >
-                        {itemCount}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </motion.button>
-              </motion.div>
+                <User size={20} />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={() => navigate('/wishlist')}
+                className="relative text-foreground/70 transition-colors hover:text-foreground"
+                aria-label="Wishlist"
+              >
+                <Heart size={20} />
+                <AnimatePresence>
+                  {wishlistCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white"
+                    >
+                      {wishlistCount > 9 ? '9+' : wishlistCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.95 }}
+                type="button"
+                onClick={() => navigate('/cart')}
+                className="relative text-foreground/70 transition-colors hover:text-foreground"
+                aria-label="Cart"
+              >
+                <ShoppingBag size={20} />
+                <AnimatePresence>
+                  {itemCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-medium text-primary-foreground"
+                    >
+                      {itemCount > 9 ? '9+' : itemCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
             </div>
           </div>
+        </div>
 
-          {/* Mobile Navigation - scrollable when long, full width below toolbar */}
+          {/* Mobile Navigation - below 56px bar */}
           <AnimatePresence>
           {isOpen && (
             <motion.div
@@ -510,9 +409,9 @@ export function Navigation() {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className="lg:hidden overflow-hidden"
+              className="border-b border-border/40 bg-background/98 shadow-sm md:hidden overflow-hidden"
             >
-              <div className="border-t border-border/60 bg-muted/20 px-1 pt-3 pb-4 dark:bg-muted/10 max-h-[min(72vh,520px)] overflow-y-auto overscroll-contain rounded-b-2xl">
+              <div className="border-t border-border/60 bg-muted/20 px-6 pt-3 pb-4 dark:bg-muted/10 max-h-[min(72vh,520px)] overflow-y-auto overscroll-contain rounded-b-2xl">
                 <div className="flex flex-col gap-1">
                   <button
                     onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); scrollToSection('products'); }}
@@ -630,6 +529,14 @@ export function Navigation() {
                     Collections
                   </button>
                   <button
+                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); scrollToSection('products'); }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); scrollToSection('products'); }}
+                    className="text-foreground/70 hover:text-foreground transition-colors text-left py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px] flex items-center"
+                    type="button"
+                  >
+                    Promotions
+                  </button>
+                  <button
                     onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/sale'); }}
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/sale'); }}
                     className="text-foreground/70 hover:text-foreground transition-colors text-left py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px] flex items-center"
@@ -668,7 +575,6 @@ export function Navigation() {
             </motion.div>
           )}
           </AnimatePresence>
-        </div>
         
         {/* Mega Menus - Outside nav with fixed positioning */}
         <MegaMenu 
@@ -686,7 +592,7 @@ export function Navigation() {
       </nav>
 
       {/* Cart Drawer */}
-      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} initialQuery={navSearchQuery} />
       
       {/* Show LoginModal if not logged in (for modal access), AccountPage route handles logged-in state */}
       {!isAuthenticated && (

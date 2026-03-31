@@ -66,6 +66,7 @@ import { AdminProductsPage } from './pages/admin/AdminProductsPage';
 import { AdminAddEditProductPage } from './pages/admin/AdminAddEditProductPage';
 import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
 import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
+import { AdminAddUserPage } from './pages/admin/AdminAddUserPage';
 import { AdminVendorsPage } from './pages/admin/AdminVendorsPage';
 import { AddVendorPage } from './pages/admin/AddVendorPage';
 import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
@@ -226,6 +227,8 @@ function App() {
                             <Route path="/admin/products/edit" element={<ProtectedRoute><AdminAddEditProductPage /></ProtectedRoute>} />
                             <Route path="/admin/orders" element={<ProtectedRoute><AdminOrdersPage /></ProtectedRoute>} />
                             <Route path="/admin/customers" element={<ProtectedRoute requiredRole="admin"><AdminCustomersPage /></ProtectedRoute>} />
+                            <Route path="/admin/users/add" element={<ProtectedRoute requiredRole="admin"><AdminAddUserPage /></ProtectedRoute>} />
+                            <Route path="/admin/customers/add" element={<ProtectedRoute requiredRole="admin"><AdminAddUserPage /></ProtectedRoute>} />
                             <Route path="/admin/vendors" element={<ProtectedRoute requiredRole="admin"><AdminVendorsPage /></ProtectedRoute>} />
                             <Route path="/admin/vendors/add" element={<ProtectedRoute requiredRole="admin"><AddVendorPage /></ProtectedRoute>} />
                             <Route path="/admin/categories" element={<ProtectedRoute><AdminCategoriesPage /></ProtectedRoute>} />

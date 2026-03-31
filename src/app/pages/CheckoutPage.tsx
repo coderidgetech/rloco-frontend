@@ -592,30 +592,53 @@ export function CheckoutPage() {
           ? 'Choose UPI or your wallet in the options below.'
           : 'Pay securely with card, UPI, or wallet (Stripe).';
     const isINR = currency === 'INR';
+    const stripePreferred =
+      paymentMethod === 'cod' ? 'card' : paymentMethod;
+    const cancelStripe = () => {
+      setPendingStripePayment(null);
+      setIsProcessing(false);
+      toast.info('Payment cancelled');
+    };
     return (
-      <div className="min-h-screen bg-background px-4 sm:px-6 pt-page-nav pb-mobile-nav md:pb-12">
-        <div className="mx-auto max-w-md">
-          <h1 className="text-2xl font-semibold mb-2">Complete payment</h1>
-          <p className="text-muted-foreground mb-6">
-            Order {pendingStripePayment.order.order_number} — {stripeSubtitle}
-          </p>
-          {isINR && (
-            <p className="text-xs text-foreground/60 mb-4 p-3 bg-foreground/5 border border-foreground/10">
-              Paying in INR: Card and UPI should both appear below. If you only see Card, enable UPI in your Stripe Dashboard (Settings → Payment methods → UPI).
-            </p>
-          )}
-          <StripePaymentForm
-            publishableKey={stripePublishableKey!}
-            clientSecret={pendingStripePayment.clientSecret}
-            returnUrl={stripeReturnUrl}
-            preferredPaymentMethod={paymentMethod}
-            onSuccess={handleStripePaymentSuccess}
-            onCancel={() => {
-              setPendingStripePayment(null);
-              setIsProcessing(false);
-              toast.info('Payment cancelled');
-            }}
-          />
+      <div className="fixed inset-0 z-[200] flex flex-col bg-[#f6f9fc]">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e3e8ee] bg-white px-4 shadow-sm">
+          <button
+            type="button"
+            onClick={cancelStripe}
+            className="text-sm font-medium text-[#635BFF] hover:underline"
+          >
+            ← Back
+          </button>
+          <span className="text-xs text-[#6a7383]">Secure payment</span>
+          <span className="w-14" aria-hidden />
+        </header>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 pb-mobile-nav md:py-10">
+          <div className="mx-auto w-full max-w-[480px]">
+            <div className="rounded-2xl border border-[#e3e8ee] bg-white p-6 shadow-xl shadow-black/[0.04] md:p-8">
+              <h1 className="text-xl font-semibold tracking-tight text-[#30313d] md:text-2xl">Complete payment</h1>
+              <p className="mt-1 text-sm text-[#6a7383]">
+                Order {pendingStripePayment.order.order_number} — {stripeSubtitle}
+              </p>
+              {isINR && (
+                <p className="mt-4 rounded-lg border border-[#e3e8ee] bg-[#f6f9fc] p-3 text-xs text-[#6a7383]">
+                  Paying in INR: Card and UPI should both appear below. If you only see Card, enable UPI in your Stripe
+                  Dashboard (Settings → Payment methods → UPI).
+                </p>
+              )}
+              <div className="mt-6">
+                <StripePaymentForm
+                  layout="checkout"
+                  publishableKey={stripePublishableKey!}
+                  clientSecret={pendingStripePayment.clientSecret}
+                  returnUrl={stripeReturnUrl}
+                  preferredPaymentMethod={stripePreferred}
+                  onSuccess={handleStripePaymentSuccess}
+                  onCancel={cancelStripe}
+                />
+              </div>
+            </div>
+            <p className="mt-6 text-center text-[11px] text-[#6a7383]">Powered by Stripe</p>
+          </div>
         </div>
       </div>
     );

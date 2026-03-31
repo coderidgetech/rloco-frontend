@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { useAdmin } from '../../context/AdminContext';
 import { Button } from '../../components/ui/button';
@@ -15,8 +15,12 @@ export const AdminLoginPage = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAdmin();
+  const { login, user, isLoading } = useAdmin();
   const navigate = useNavigate();
+
+  if (!isLoading && user && (user.role === 'admin' || user.role === 'vendor')) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,9 +61,7 @@ export const AdminLoginPage = () => {
         <Card>
           <CardHeader>
             <CardTitle>Welcome Back</CardTitle>
-            <CardDescription>
-              Enter your credentials to access the admin panel
-            </CardDescription>
+            <CardDescription>Sign in with a staff or vendor account to manage the store.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -91,14 +93,6 @@ export const AdminLoginPage = () => {
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Signing in...' : 'Sign In'}
               </Button>
-
-              <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-sm font-semibold mb-2">Demo Credentials:</p>
-                <div className="text-xs space-y-1 text-gray-600">
-                  <p><strong>Admin:</strong> admin@rloco.com / admin123</p>
-                  <p><strong>Vendor:</strong> vendor@rloco.com / vendor123</p>
-                </div>
-              </div>
             </form>
           </CardContent>
         </Card>

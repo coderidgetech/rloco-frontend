@@ -10,77 +10,77 @@ import { PH } from '../lib/formPlaceholders';
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** When opening from the nav search field, seed the modal query */
+  initialQuery?: string;
 }
 
 const BADGE_OPTIONS = ['Best Seller', 'Trending', 'Most Ordered', 'New', 'Limited Edition', 'Exclusive', 'Hot', 'Popular'] as const;
 
-export function SearchModal({ isOpen, onClose }: SearchModalProps) {
+export function SearchModal({ isOpen, onClose, initialQuery = '' }: SearchModalProps) {
   const { formatPrice, market } = useCurrency();
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [results, setResults] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
-  const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Fetch products when modal opens or market changes
   useEffect(() => {
-    if (!isOpen) return;
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const response = await productService.list({ limit: 500, market });
-        setAllProducts(response.products || []);
-      } catch (error) {
-        console.error('Failed to fetch products:', error);
-        setAllProducts([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, [isOpen, market]);
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    return () => clearTimeout(t);
+  }, [query]);
 
   useEffect(() => {
-    // Ensure allProducts is an array
-    if (!Array.isArray(allProducts)) {
+    if (!isOpen) return;
+    const q = debouncedQuery;
+    const needsBadgeFilter = selectedBadges.length > 0;
+    if (q.length < 1 && !needsBadgeFilter) {
       setResults([]);
       return;
     }
 
-    let filtered = [...allProducts];
-
-    // Filter by search query
-    if (query.trim() !== '') {
-      const q = query.toLowerCase();
-      filtered = filtered.filter(
-        (product) =>
-          product.name.toLowerCase().includes(q) ||
-          product.category.toLowerCase().includes(q) ||
-          (product.subcategory || '').toLowerCase().includes(q)
-      );
-    }
-
-    // Filter by selected badges
-    if (selectedBadges.length > 0) {
-      filtered = filtered.filter((product) => 
-        product.badge && selectedBadges.includes(product.badge)
-      );
-    }
-
-    setResults(filtered.slice(0, query.trim() === '' ? 6 : 12));
-  }, [query, selectedBadges, allProducts]);
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const response = await productService.list(
+          q.length >= 1
+            ? { search: q, limit: 24, market }
+            : { limit: 80, market }
+        );
+        let list = response.products || [];
+        if (selectedBadges.length > 0) {
+          list = list.filter((product) => product.badge && selectedBadges.includes(product.badge));
+        }
+        if (!cancelled) setResults(list.slice(0, 24));
+      } catch (error) {
+        console.error('Failed to fetch products:', error);
+        if (!cancelled) setResults([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, debouncedQuery, market, selectedBadges]);
 
   useEffect(() => {
     if (!isOpen) {
       setQuery('');
+      setDebouncedQuery('');
       setSelectedBadges([]);
       setShowFilters(false);
+    } else {
+      const seed = (initialQuery ?? '').trim();
+      if (seed) {
+        setQuery(seed);
+        setDebouncedQuery(seed);
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, initialQuery]);
 
-  // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen && !selectedProduct) {
@@ -92,12 +92,16 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose, selectedProduct]);
 
+  const emptyHint =
+    debouncedQuery.length < 1 && selectedBadges.length === 0
+      ? 'Start typing to search for products…'
+      : null;
+
   return (
     <>
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -111,7 +115,6 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
               className="fixed inset-0 z-50"
             />
 
-            {/* Modal */}
             <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4">
               <motion.div
                 initial={{ opacity: 0, y: -50, scale: 0.95 }}
@@ -121,7 +124,6 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                 className="w-full max-w-2xl bg-background rounded-2xl shadow-2xl overflow-hidden"
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Search Input */}
                 <div className="p-6 border-b border-border">
                   <div className="flex items-center gap-4">
                     <Search size={24} className="text-muted-foreground" />
@@ -142,7 +144,6 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   </div>
                 </div>
 
-                {/* Filters */}
                 <div className="px-6 py-4 border-b border-border bg-muted/20">
                   <div className="flex items-center justify-between mb-3">
                     <button
@@ -166,7 +167,7 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                       </button>
                     )}
                   </div>
-                  
+
                   <AnimatePresence>
                     {showFilters && (
                       <motion.div
@@ -193,15 +194,23 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                                 whileTap={{ scale: 0.98 }}
                                 className={`px-3 py-2 text-xs font-bold tracking-wider uppercase rounded transition-all ${
                                   isSelected
-                                    ? badge === 'Best Seller' ? 'bg-[#B4770E] text-white shadow-md' :
-                                      badge === 'Trending' ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md' :
-                                      badge === 'Most Ordered' ? 'bg-blue-600 text-white shadow-md' :
-                                      badge === 'New' ? 'bg-green-600 text-white shadow-md' :
-                                      badge === 'Limited Edition' ? 'bg-black text-white shadow-md' :
-                                      badge === 'Exclusive' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md' :
-                                      badge === 'Hot' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md' :
-                                      badge === 'Popular' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md' :
-                                      'bg-foreground text-background shadow-md'
+                                    ? badge === 'Best Seller'
+                                      ? 'bg-[#B4770E] text-white shadow-md'
+                                      : badge === 'Trending'
+                                        ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md'
+                                        : badge === 'Most Ordered'
+                                          ? 'bg-blue-600 text-white shadow-md'
+                                          : badge === 'New'
+                                            ? 'bg-green-600 text-white shadow-md'
+                                            : badge === 'Limited Edition'
+                                              ? 'bg-black text-white shadow-md'
+                                              : badge === 'Exclusive'
+                                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                                                : badge === 'Hot'
+                                                  ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md'
+                                                  : badge === 'Popular'
+                                                    ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md'
+                                                    : 'bg-foreground text-background shadow-md'
                                     : 'bg-muted text-foreground/60 hover:bg-muted/80 border border-border'
                                 }`}
                               >
@@ -215,17 +224,25 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   </AnimatePresence>
                 </div>
 
-                {/* Results */}
                 <div className="max-h-[500px] overflow-y-auto p-6">
                   {loading ? (
                     <div className="text-center py-12 text-muted-foreground">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
                       <p>Loading products...</p>
                     </div>
+                  ) : emptyHint ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Search size={48} className="mx-auto mb-4 opacity-20" />
+                      <p>{emptyHint}</p>
+                    </div>
                   ) : results.length === 0 ? (
                     <div className="text-center py-12 text-muted-foreground">
                       <Search size={48} className="mx-auto mb-4 opacity-20" />
-                      <p>{query.trim() ? `No products found for "${query}"` : 'Start typing to search for products...'}</p>
+                      <p>
+                        {debouncedQuery
+                          ? `No products found for "${debouncedQuery}"`
+                          : 'No products match these filters.'}
+                      </p>
                     </div>
                   ) : (
                     <div className="grid gap-4">
@@ -254,17 +271,27 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                                 {product.name}
                               </h3>
                               {product.badge && (
-                                <span className={`px-1.5 py-0.5 text-[8px] font-bold tracking-wider uppercase rounded flex-shrink-0 ${
-                                  product.badge === 'Best Seller' ? 'bg-[#B4770E] text-white' :
-                                  product.badge === 'Trending' ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white' :
-                                  product.badge === 'Most Ordered' ? 'bg-blue-600 text-white' :
-                                  product.badge === 'New' ? 'bg-green-600 text-white' :
-                                  product.badge === 'Limited Edition' ? 'bg-black text-white' :
-                                  product.badge === 'Exclusive' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white' :
-                                  product.badge === 'Hot' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white' :
-                                  product.badge === 'Popular' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' :
-                                  'bg-foreground text-background'
-                                }`}>
+                                <span
+                                  className={`px-1.5 py-0.5 text-[8px] font-bold tracking-wider uppercase rounded flex-shrink-0 ${
+                                    product.badge === 'Best Seller'
+                                      ? 'bg-[#B4770E] text-white'
+                                      : product.badge === 'Trending'
+                                        ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
+                                        : product.badge === 'Most Ordered'
+                                          ? 'bg-blue-600 text-white'
+                                          : product.badge === 'New'
+                                            ? 'bg-green-600 text-white'
+                                            : product.badge === 'Limited Edition'
+                                              ? 'bg-black text-white'
+                                              : product.badge === 'Exclusive'
+                                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
+                                                : product.badge === 'Hot'
+                                                  ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
+                                                  : product.badge === 'Popular'
+                                                    ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
+                                                    : 'bg-foreground text-background'
+                                  }`}
+                                >
                                   {product.badge}
                                 </span>
                               )}
@@ -292,7 +319,6 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
                   )}
                 </div>
 
-                {/* Footer */}
                 <div className="p-4 border-t border-border bg-muted/30 text-center text-sm text-muted-foreground">
                   Press <kbd className="px-2 py-1 bg-background rounded text-xs">ESC</kbd> to close
                 </div>
@@ -302,7 +328,6 @@ export function SearchModal({ isOpen, onClose }: SearchModalProps) {
         )}
       </AnimatePresence>
 
-      {/* Product Detail Modal */}
       <ProductDetail
         product={selectedProduct}
         isOpen={!!selectedProduct}

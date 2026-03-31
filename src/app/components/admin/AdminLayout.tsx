@@ -1,9 +1,9 @@
 import { ReactNode, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
-import { useSiteConfig } from '../../context/SiteConfigContext';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { RlocoLogo } from '../RlocoLogo';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,10 +24,8 @@ import {
   Store,
   FolderTree,
   BarChart3,
-  FileText,
   Tag,
   Sliders,
-  ExternalLink,
   Home,
   Building2,
 } from 'lucide-react';
@@ -39,10 +37,9 @@ interface AdminLayoutProps {
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { user, logout, hasPermission } = useAdmin();
-  const { config } = useSiteConfig();
   const navigate = useNavigate();
   const location = useLocation();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -106,12 +103,6 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       permission: 'vendor',
     },
     {
-      label: 'Content',
-      icon: FileText,
-      path: '/admin/content',
-      permission: 'admin',
-    },
-    {
       label: 'Promotions',
       icon: Tag,
       path: '/admin/promotions',
@@ -139,43 +130,32 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50 h-16">
-        <div className="flex items-center justify-between h-full px-4">
-          <div className="flex items-center gap-4">
+      <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50 h-[56px]">
+        <div className="flex items-center justify-between h-full px-3 md:px-4">
+          <div className="flex items-center gap-2 md:gap-4 min-w-0">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden"
+              className="lg:hidden p-1 h-8 w-8 shrink-0"
             >
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
-            <Link to="/admin/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-black rounded flex items-center justify-center">
-                <span className="text-white font-bold text-sm">R</span>
+            <Link to="/admin/dashboard" className="flex items-center gap-1 md:gap-2 min-w-0">
+              <div className="w-20 md:w-24 shrink-0">
+                <RlocoLogo size="sm" className="justify-start" />
               </div>
-              <span className="font-bold text-xl">{config.general.siteName} Admin</span>
+              <span className="font-bold text-xs md:text-sm text-gray-600 ml-1 truncate">
+                {user?.role === 'admin' ? 'Admin' : 'Vendor'}
+              </span>
             </Link>
           </div>
 
-          <div className="flex items-center gap-4">
-            <Button
-              className="text-white"
-              style={{ backgroundColor: config.design.colors.primary }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = config.design.colors.primaryDark}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = config.design.colors.primary}
-              size="sm"
-              onClick={() => navigate('/')}
-            >
-              <Home className="h-4 w-4 mr-2" />
-              Back to Store
-            </Button>
-
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                  <Avatar className="h-10 w-10">
+                <Button variant="ghost" className="relative h-8 w-8 md:h-10 md:w-10 rounded-full p-0">
+                  <Avatar className="h-8 w-8 md:h-10 md:w-10">
                     <AvatarImage src={user?.avatar} alt={user?.name} />
                     <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
@@ -186,12 +166,14 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium">{user?.name}</p>
                     <p className="text-xs text-gray-500">{user?.email}</p>
-                    <p className="text-xs text-gray-500 capitalize">
-                      Role: {user?.role}
-                    </p>
+                    <p className="text-xs text-gray-500 capitalize">Role: {user?.role}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/')}>
+                  <Home className="mr-2 h-4 w-4" />
+                  Back to store
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate('/admin/settings')}>
                   <Settings className="mr-2 h-4 w-4" />
                   Settings
@@ -206,71 +188,57 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         </div>
       </header>
 
-      {/* Sidebar */}
       <aside
         className={cn(
-          'fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 transition-transform duration-300 z-40 flex flex-col',
+          'fixed left-0 top-[56px] bottom-0 w-64 bg-white border-r border-gray-200 transition-transform duration-300 z-40 flex flex-col',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
-        <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
+        <nav className="p-2 md:p-4 space-y-1 flex-1 overflow-y-auto">
           {filteredMenuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path || 
-                           (item.path === '/admin/vendors' && location.pathname.startsWith('/admin/vendors')) ||
-                           (item.path === '/admin/configuration' && location.pathname.startsWith('/admin/subscription-plans'));
+            const isActive =
+              location.pathname === item.path ||
+              (item.path === '/admin/vendors' && location.pathname.startsWith('/admin/vendors')) ||
+              (item.path === '/admin/configuration' && location.pathname.startsWith('/admin/subscription-plans'));
 
             return (
               <Link
                 key={item.path}
                 to={item.path}
+                onClick={() => setSidebarOpen(false)}
                 className={cn(
-                  'flex items-center gap-3 px-4 py-3 rounded-lg transition-colors',
-                  isActive
-                    ? 'bg-black text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                  'flex items-center gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-lg transition-colors text-sm md:text-base',
+                  isActive ? 'bg-black text-white' : 'text-gray-700 hover:bg-gray-100'
                 )}
               >
-                <Icon className="h-5 w-5" />
+                <Icon className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
                 <span className="font-medium">{item.label}</span>
               </Link>
             );
           })}
         </nav>
-        
-        {/* Back to Store Button in Sidebar */}
-        <div className="p-4 border-t border-gray-200">
+
+        <div className="p-2 md:p-4 border-t border-gray-200">
           <Button
-            onClick={() => navigate('/')}
-            className="w-full text-white"
-            style={{ backgroundColor: config.design.colors.primary }}
-            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = config.design.colors.primaryDark}
-            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = config.design.colors.primary}
-            size="sm"
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-3 px-3 md:px-4 py-2.5 md:py-3 rounded-lg transition-colors text-sm md:text-base bg-red-50 text-red-600 hover:bg-red-100"
           >
-            <Home className="h-4 w-4 mr-2" />
-            Back to Store
+            <LogOut className="h-4 w-4 md:h-5 md:w-5 flex-shrink-0" />
+            <span className="font-medium">Logout</span>
           </Button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main
-        className={cn(
-          'pt-16 transition-all duration-300',
-          sidebarOpen ? 'lg:pl-64' : 'pl-0'
-        )}
-      >
-        <div className="p-6">
-          {children}
-        </div>
+      <main className={cn('pt-[56px] transition-all duration-300 min-h-screen lg:pl-64')}>
+        <div className="p-3 md:p-4 lg:p-6">{children}</div>
       </main>
 
-      {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed left-0 right-0 bottom-0 bg-black/50 z-30 lg:hidden top-[56px]"
           onClick={() => setSidebarOpen(false)}
+          aria-hidden
         />
       )}
     </div>

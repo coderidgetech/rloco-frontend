@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Star, ChevronRight, ChevronDown, Truck, RefreshCw, Check, X, Shield, Award, Package, Sparkles, Leaf, Users, Info, MessageCircle, Ruler, Shirt, HelpCircle, Plus, Minus, ShoppingBag, ChevronLeft, Edit2, Trash2, ThumbsUp } from 'lucide-react';
+import { Heart, Star, ChevronRight, ChevronDown, Truck, RefreshCw, Check, Shield, Award, Package, Sparkles, Leaf, Users, Info, MessageCircle, Ruler, Shirt, HelpCircle, Plus, Minus, ShoppingBag, ChevronLeft, Edit2, Trash2, ThumbsUp } from 'lucide-react';
 import { Product } from '../types/api';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { toast } from 'sonner';
@@ -97,7 +97,7 @@ export function ProductDetailPage() {
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [expandedSection, setExpandedSection] = useState<string>('details');
-  const [showSizeChart, setShowSizeChart] = useState(false);
+  const sizeGuideRef = useRef<HTMLDivElement>(null);
   const [pincode, setPincode] = useState('');
   const [pincodeResult, setPincodeResult] = useState<string | null>(null);
   const [pincodeLoading, setPincodeLoading] = useState(false);
@@ -160,7 +160,6 @@ export function ProductDetailPage() {
     setSelectedImage(0);
     setSelectedSize('');
     setExpandedSection('details');
-    setShowSizeChart(false);
     setPincode('');
     setQuantity(1);
     setImageDirection(0);
@@ -525,6 +524,64 @@ export function ProductDetailPage() {
                 </motion.button>
               ))}
             </div>
+
+            {/* Size guide — below gallery (matches design) */}
+            <div
+              ref={sizeGuideRef}
+              className="border border-border/30 bg-background p-4 shadow-sm dark:border-border/40"
+            >
+              <div className="mb-3 flex items-center gap-2">
+                <Ruler size={18} className="text-[#B4770E]" />
+                <h3 className="font-medium tracking-wide">Size Guide</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border/30">
+                      <th className="px-3 py-2 text-left font-medium text-foreground/70">Size</th>
+                      <th className="px-3 py-2 text-center font-medium text-foreground/70">Chest (in)</th>
+                      <th className="px-3 py-2 text-center font-medium text-foreground/70">Waist (in)</th>
+                      <th className="px-3 py-2 text-center font-medium text-foreground/70">Hips (in)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-border/20 transition-colors hover:bg-[#B4770E]/5">
+                      <td className="px-3 py-2.5 font-medium">XS</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">32-34</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">24-26</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">34-36</td>
+                    </tr>
+                    <tr className="border-b border-border/20 transition-colors hover:bg-[#B4770E]/5">
+                      <td className="px-3 py-2.5 font-medium">S</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">34-36</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">26-28</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">36-38</td>
+                    </tr>
+                    <tr className="border-b border-border/20 transition-colors hover:bg-[#B4770E]/5">
+                      <td className="px-3 py-2.5 font-medium">M</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">36-38</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">28-30</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">38-40</td>
+                    </tr>
+                    <tr className="border-b border-border/20 transition-colors hover:bg-[#B4770E]/5">
+                      <td className="px-3 py-2.5 font-medium">L</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">38-40</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">30-32</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">40-42</td>
+                    </tr>
+                    <tr className="transition-colors hover:bg-[#B4770E]/5">
+                      <td className="px-3 py-2.5 font-medium">XL</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">40-42</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">32-34</td>
+                      <td className="px-3 py-2.5 text-center text-foreground/70">42-44</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-3 text-xs text-foreground/50">
+                All measurements are in inches. For best fit, measure yourself and compare with the chart.
+              </p>
+            </div>
           </div>
 
           {/* Right - Product Details */}
@@ -633,7 +690,8 @@ export function ProductDetailPage() {
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-xs font-medium uppercase tracking-widest">Size</span>
                   <button
-                    onClick={() => setShowSizeChart(!showSizeChart)}
+                    type="button"
+                    onClick={() => sizeGuideRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
                     className="text-xs text-foreground/60 hover:text-foreground transition-colors uppercase underline underline-offset-4"
                   >
                     Size Guide
@@ -1582,88 +1640,6 @@ export function ProductDetailPage() {
             products={completeTheLook}
           />
         )}
-
-      {/* Size Chart Modal */}
-      <AnimatePresence>
-        {showSizeChart && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              backdropFilter: 'blur(60px)',
-              WebkitBackdropFilter: 'blur(60px)',
-            }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            onClick={() => setShowSizeChart(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-background p-6 md:p-12 max-w-3xl w-full max-h-[80vh] overflow-auto"
-            >
-              <div className="flex items-center justify-between mb-6 md:mb-10">
-                <h3 className="text-xs uppercase tracking-[0.3em]">Size Guide</h3>
-                <motion.button
-                  onClick={() => setShowSizeChart(false)}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  className="w-10 h-10 flex items-center justify-center hover:bg-foreground/5 transition-colors"
-                >
-                  <X size={20} />
-                </motion.button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr className="border-b border-foreground/10">
-                      <th className="px-3 md:px-6 py-4 text-left text-xs uppercase tracking-[0.2em]">Size</th>
-                      <th className="px-3 md:px-6 py-4 text-left text-xs uppercase tracking-[0.2em]">Chest</th>
-                      <th className="px-3 md:px-6 py-4 text-left text-xs uppercase tracking-[0.2em]">Waist</th>
-                      <th className="px-3 md:px-6 py-4 text-left text-xs uppercase tracking-[0.2em]">Hip</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-foreground/5">
-                      <td className="px-3 md:px-6 py-4 tracking-wide">XS</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">32-34</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">26-28</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">34-36</td>
-                    </tr>
-                    <tr className="border-b border-foreground/5">
-                      <td className="px-3 md:px-6 py-4 tracking-wide">S</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">34-36</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">28-30</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">36-38</td>
-                    </tr>
-                    <tr className="border-b border-foreground/5">
-                      <td className="px-3 md:px-6 py-4 tracking-wide">M</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">36-38</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">30-32</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">38-40</td>
-                    </tr>
-                    <tr className="border-b border-foreground/5">
-                      <td className="px-3 md:px-6 py-4 tracking-wide">L</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">38-40</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">32-34</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">40-42</td>
-                    </tr>
-                    <tr>
-                      <td className="px-3 md:px-6 py-4 tracking-wide">XL</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">40-42</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">34-36</td>
-                      <td className="px-3 md:px-6 py-4 tracking-wide text-foreground/60">42-44</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <Footer />
     </div>

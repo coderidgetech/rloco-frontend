@@ -23,6 +23,16 @@ import {
   DialogTitle,
 } from '../../components/ui/dialog';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../components/ui/alert-dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -45,6 +55,7 @@ import {
   UserCheck,
   Ban,
   Shield,
+  Trash2,
 } from 'lucide-react';
 import { adminService } from '../../services/adminService';
 import { User } from '../../types/api';
@@ -61,6 +72,8 @@ export const AdminVendorsPage = () => {
   const [privilegeVendor, setPrivilegeVendor] = useState<User | null>(null);
   const [vendors, setVendors] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [vendorToDelete, setVendorToDelete] = useState<User | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch vendors from API
   useEffect(() => {
@@ -68,9 +81,7 @@ export const AdminVendorsPage = () => {
       try {
         setLoading(true);
         const vendorList = await adminService.listVendors();
-        // Filter to only show vendors
-        const vendorUsers = (vendorList || []).filter((user: User) => user.role === 'vendor');
-        setVendors(vendorUsers);
+        setVendors(vendorList || []);
       } catch (error) {
         console.error('Failed to fetch vendors:', error);
         toast.error('Failed to load vendors');
@@ -111,6 +122,30 @@ export const AdminVendorsPage = () => {
     } catch (error: any) {
       console.error('Failed to update vendor status:', error);
       toast.error(error?.response?.data?.error || 'Failed to update vendor status');
+    }
+  };
+
+  const handleDeleteVendor = async () => {
+    if (!vendorToDelete) return;
+    setDeleting(true);
+    try {
+      await adminService.deleteVendor(vendorToDelete.id);
+      toast.success(`${vendorToDelete.name} was removed`);
+      setVendors((prev) => prev.filter((v) => v.id !== vendorToDelete.id));
+      if (selectedVendor?.id === vendorToDelete.id) {
+        setShowVendorDialog(false);
+        setSelectedVendor(null);
+      }
+      setVendorToDelete(null);
+    } catch (error: unknown) {
+      console.error('Failed to delete vendor:', error);
+      const msg =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
+          : undefined;
+      toast.error(msg || 'Failed to delete vendor');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -321,6 +356,14 @@ export const AdminVendorsPage = () => {
                             <Shield className="h-4 w-4 mr-2" />
                             Manage Privileges
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-600 focus:text-red-600"
+                            onClick={() => setVendorToDelete(vendor)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete vendor
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -412,26 +455,50 @@ export const AdminVendorsPage = () => {
             id: privilegeVendor.id,
             businessName: privilegeVendor.name,
             email: privilegeVendor.email,
-            tier: privilegeVendor.tier,
+            tier: (privilegeVendor as User & { tier?: string }).tier,
             role: privilegeVendor.role,
           }}
-          onSave={async (vendorId, tier, role, permissions) => {
+          onSave={async (vendorId, _tier, _role, permissions) => {
             try {
-              await adminService.updateVendorPermissions(vendorId, permissions);
+              await adminService.updateVendorPermissions(vendorId, permissions as Record<string, unknown>);
               toast.success('Vendor privileges updated successfully');
-              // Refresh vendors list
               const vendorList = await adminService.listVendors();
-              const vendorUsers = vendorList.filter((user) => user.role === 'vendor');
-              setVendors(vendorUsers);
+              setVendors(vendorList || []);
               setShowPrivilegeDialog(false);
               setPrivilegeVendor(null);
-            } catch (error: any) {
+            } catch (error: unknown) {
               console.error('Failed to update vendor privileges:', error);
-              toast.error(error.message || 'Failed to update vendor privileges');
+              const msg = error instanceof Error ? error.message : 'Failed to update vendor privileges';
+              toast.error(msg);
             }
           }}
         />
       )}
+
+      <AlertDialog open={!!vendorToDelete} onOpenChange={(open) => !open && setVendorToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this vendor?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This removes the vendor record and their portal login user. This cannot be undone. Existing products or
+              orders that reference this vendor may need cleanup separately.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+              disabled={deleting}
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDeleteVendor();
+              }}
+            >
+              {deleting ? 'Deleting…' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 };

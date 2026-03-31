@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PH } from '../../lib/formPlaceholders';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -20,10 +20,8 @@ import {
 import {
   Settings,
   Palette,
-  Home,
   Menu,
   Mail,
-  Search,
   BarChart,
   Tag,
   Save,
@@ -52,129 +50,78 @@ import {
   X,
   List,
   Grid3x3,
+  FileText,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useSiteConfig } from '../../context/SiteConfigContext';
+import { defaultSiteConfig, useSiteConfig } from '../../context/SiteConfigContext';
 import { adminService } from '../../services/adminService';
+import { mergeSiteConfigFromApi } from '../../lib/siteConfigMerge';
+import { AdminSiteContentPanel } from '../../components/admin/AdminSiteContentPanel';
+
+const CONFIG_TAB_IDS = [
+  'site-content',
+  'general',
+  'design',
+  'navigation',
+  'analytics',
+  'badges',
+  'subscriptions',
+] as const;
 
 export const AdminConfigurationPage = () => {
-  const { config, updateConfig, updateNestedConfig, resetConfig, exportConfig, importConfig } = useSiteConfig();
+  const { config, updateConfig, updateNestedConfig, resetConfig, exportConfig, importConfig, refreshConfig } =
+    useSiteConfig();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') || 'general';
+  const activeTab = CONFIG_TAB_IDS.includes(tabParam as (typeof CONFIG_TAB_IDS)[number])
+    ? tabParam
+    : 'general';
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [configuration, setConfiguration] = useState<any>(config || {});
 
-  // Fetch configuration from API (only on mount)
+  // Load site config from admin API (same Mongo document as storefront /config)
   useEffect(() => {
-    const fetchConfiguration = async () => {
+    let cancelled = false;
+    (async () => {
       try {
         setLoading(true);
         const data = await adminService.getConfiguration();
-        if (data) {
-          // Backend returns the config map directly: {general: {...}, categories: {...}, ...}
-          setConfiguration(data);
-          // Also update context if needed (only once, not in dependency)
-          if (updateConfig) {
-            updateConfig(data);
-          }
-        }
+        if (cancelled || !data) return;
+        importConfig(JSON.stringify(mergeSiteConfigFromApi(data as Record<string, unknown>)));
       } catch (error) {
         console.error('Failed to fetch configuration:', error);
         toast.error('Failed to load configuration');
-        // Use context config as fallback
-        if (config) {
-          setConfiguration(config);
-        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-    };
-
-    fetchConfiguration();
-  }, []); // Only run once on mount
-
-  // Listen for config update events (separate effect)
-  useEffect(() => {
-    const handleConfigUpdate = async () => {
-      try {
-        const data = await adminService.getConfiguration();
-        if (data) {
-          setConfiguration(data);
-          if (updateConfig) {
-            updateConfig(data);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to refetch configuration:', error);
-      }
-    };
-
-    window.addEventListener('rloco_config_updated', handleConfigUpdate);
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'rloco_config_updated') {
-        handleConfigUpdate();
-      }
-    });
-
+    })();
     return () => {
-      window.removeEventListener('rloco_config_updated', handleConfigUpdate);
+      cancelled = true;
     };
-  }, []); // Only set up listeners once
+  }, [importConfig]);
 
   const handleSave = async (section?: string) => {
     try {
       setSaving(true);
-      // Use config from context (which is what the user is actually editing)
-      // Convert config to the format expected by API (plain object)
-      const configToSave = JSON.parse(JSON.stringify(config));
-      // Send the configuration map directly: {general: {...}, categories: {...}, ...}
+      const configToSave = JSON.parse(JSON.stringify(config)) as Record<string, unknown>;
       await adminService.updateConfiguration(configToSave);
-      
-      // Wait a moment for the database to update, then refetch
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // Refetch the configuration from the API to get the actual saved data
-      try {
-        const savedData = await adminService.getConfiguration();
-        if (savedData) {
-          console.log('Refetched config:', savedData);
-          setConfiguration(savedData);
-          // Also update context - updateConfig expects (section, data), so we need to update each section
-          // Instead, we'll trigger a full refresh via the event system
-          // The context will refetch from API when it receives the event
-        } else {
-          console.warn('No data returned from refetch');
-        }
-      } catch (fetchError) {
-        console.error('Failed to refetch configuration:', fetchError);
-        // The event system will trigger a refresh in SiteConfigContext
-      }
-      
-      // Trigger a refresh in all open tabs/windows
+      await refreshConfig();
       localStorage.setItem('rloco_config_updated', Date.now().toString());
-      // Dispatch custom event for same-tab refresh
       window.dispatchEvent(new CustomEvent('rloco_config_updated'));
-      // Also trigger storage event for cross-tab sync
-      window.dispatchEvent(new StorageEvent('storage', {
-        key: 'rloco_config_updated',
-        newValue: Date.now().toString(),
-      }));
-      toast.success(section ? `${section} configuration saved successfully` : 'Configuration saved successfully');
-    } catch (error: any) {
+      toast.success(section ? `${section} saved` : 'Configuration saved');
+    } catch (error: unknown) {
       console.error('Failed to save configuration:', error);
-      toast.error(error?.response?.data?.error || error?.message || 'Failed to save configuration');
+      const msg =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
+          : undefined;
+      toast.error(msg || (error instanceof Error ? error.message : 'Failed to save configuration'));
     } finally {
       setSaving(false);
     }
   };
   
-  const [emailTemplates, setEmailTemplates] = useState([
-    { id: 1, name: 'Order Confirmation', subject: 'Your Order #{order_number}', active: true },
-    { id: 2, name: 'Shipping Notification', subject: 'Your Order has Shipped', active: true },
-    { id: 3, name: 'Delivery Confirmation', subject: 'Your Order has been Delivered', active: true },
-    { id: 4, name: 'Welcome Email', subject: 'Welcome to Rloco', active: true },
-  ]);
-
   const [badges, setBadges] = useState([
     { id: 1, name: 'New Arrival', color: config.design.colors.primary, icon: 'Zap', active: true },
     { id: 2, name: 'Best Seller', color: '#FF6B6B', icon: 'TrendingUp', active: true },
@@ -444,70 +391,27 @@ export const AdminConfigurationPage = () => {
   };
 
   const handleResetConfig = async () => {
-    if (confirm('Are you sure you want to reset all configuration to defaults? This cannot be undone.')) {
-      try {
-        setSaving(true);
-        
-        // Reset to defaults in context first (this updates local state and localStorage)
-        resetConfig();
-        
-        // Get the current config from context (which resetConfig just set to defaults)
-        // Since React state updates are async, we'll use the config value after a small delay
-        // or we can read from localStorage which resetConfig updates immediately
-        let defaultConfigToSave;
-        try {
-          // Try to get from localStorage first (resetConfig saves there immediately)
-          const savedConfig = localStorage.getItem('rloco_site_config');
-          if (savedConfig) {
-            defaultConfigToSave = JSON.parse(savedConfig);
-          } else {
-            // Fallback: use current config from context
-            defaultConfigToSave = JSON.parse(JSON.stringify(config));
-          }
-        } catch {
-          // If that fails, use current config
-          defaultConfigToSave = JSON.parse(JSON.stringify(config));
-        }
-        
-        // Save default config to API
-        await adminService.updateConfiguration(defaultConfigToSave);
-        
-        // Wait a moment for the database to update, then refetch
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Refetch the configuration from the API
-        try {
-          const savedData = await adminService.getConfiguration();
-          if (savedData) {
-            setConfiguration(savedData);
-            // Update context with the saved data
-            if (updateConfig) {
-              Object.keys(savedData).forEach((section) => {
-                updateConfig(section as any, savedData[section]);
-              });
-            }
-          }
-        } catch (fetchError) {
-          console.error('Failed to refetch configuration:', fetchError);
-        }
-        
-        // Trigger a refresh in all open tabs/windows
-        localStorage.setItem('rloco_config_updated', Date.now().toString());
-        window.dispatchEvent(new CustomEvent('rloco_config_updated'));
-        window.dispatchEvent(new StorageEvent('storage', {
-          key: 'rloco_config_updated',
-          newValue: Date.now().toString(),
-        }));
-        
-        toast.success('Configuration reset to defaults and saved to API');
-      } catch (error: any) {
-        console.error('Failed to reset configuration:', error);
-        toast.error(error?.response?.data?.error || error?.message || 'Failed to reset configuration');
-        // Still reset local config even if API call fails
-        resetConfig();
-      } finally {
-        setSaving(false);
-      }
+    if (!confirm('Are you sure you want to reset all configuration to defaults? This cannot be undone.')) {
+      return;
+    }
+    try {
+      setSaving(true);
+      const payload = JSON.parse(JSON.stringify(defaultSiteConfig)) as Record<string, unknown>;
+      await adminService.updateConfiguration(payload);
+      await refreshConfig();
+      localStorage.setItem('rloco_config_updated', Date.now().toString());
+      window.dispatchEvent(new CustomEvent('rloco_config_updated'));
+      toast.success('Configuration reset to defaults and saved');
+    } catch (error: unknown) {
+      console.error('Failed to reset configuration:', error);
+      const msg =
+        error && typeof error === 'object' && 'response' in error
+          ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
+          : undefined;
+      toast.error(msg || (error instanceof Error ? error.message : 'Failed to reset configuration'));
+      resetConfig();
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -551,8 +455,16 @@ export const AdminConfigurationPage = () => {
         </div>
 
         {/* Configuration Tabs */}
-        <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-9 h-auto">
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => setSearchParams({ tab: v })}
+          className="w-full"
+        >
+          <TabsList className="grid w-full grid-cols-7 h-auto">
+            <TabsTrigger value="site-content" className="flex flex-col gap-1 py-3">
+              <FileText className="h-4 w-4" />
+              <span className="text-xs">Content</span>
+            </TabsTrigger>
             <TabsTrigger value="general" className="flex flex-col gap-1 py-3">
               <Settings className="h-4 w-4" />
               <span className="text-xs">General</span>
@@ -561,21 +473,9 @@ export const AdminConfigurationPage = () => {
               <Palette className="h-4 w-4" />
               <span className="text-xs">Design</span>
             </TabsTrigger>
-            <TabsTrigger value="homepage" className="flex flex-col gap-1 py-3">
-              <Home className="h-4 w-4" />
-              <span className="text-xs">Homepage</span>
-            </TabsTrigger>
             <TabsTrigger value="navigation" className="flex flex-col gap-1 py-3">
               <Menu className="h-4 w-4" />
               <span className="text-xs">Navigation</span>
-            </TabsTrigger>
-            <TabsTrigger value="email" className="flex flex-col gap-1 py-3">
-              <Mail className="h-4 w-4" />
-              <span className="text-xs">Email</span>
-            </TabsTrigger>
-            <TabsTrigger value="seo" className="flex flex-col gap-1 py-3">
-              <Search className="h-4 w-4" />
-              <span className="text-xs">SEO</span>
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex flex-col gap-1 py-3">
               <BarChart className="h-4 w-4" />
@@ -590,6 +490,10 @@ export const AdminConfigurationPage = () => {
               <span className="text-xs">Subscriptions</span>
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="site-content" className="space-y-6 mt-6">
+            <AdminSiteContentPanel />
+          </TabsContent>
 
           {/* ==================== GENERAL CONFIGURATION ==================== */}
           <TabsContent value="general" className="space-y-6 mt-6">
@@ -1323,211 +1227,6 @@ export const AdminConfigurationPage = () => {
             </Card>
           </TabsContent>
 
-          {/* ==================== HOMEPAGE CONFIGURATION ==================== */}
-          <TabsContent value="homepage" className="space-y-6 mt-6">
-            {/* Hero Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Hero Section</CardTitle>
-                <CardDescription>
-                  Configure the main hero banner on homepage
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg bg-green-50">
-                  <div className="space-y-0.5">
-                    <Label>Show Hero Section</Label>
-                    <p className="text-sm text-gray-500">Display hero banner on homepage</p>
-                  </div>
-                  <Switch 
-                    checked={config.homepage.hero.enabled}
-                    onCheckedChange={(checked) => updateNestedConfig('homepage', 'hero', { enabled: checked })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Hero Heading</Label>
-                  <Input 
-                    value={config.homepage.hero.heading}
-                    onChange={(e) => updateNestedConfig('homepage', 'hero', { heading: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Hero Subheading</Label>
-                  <Textarea
-                    value={config.homepage.hero.subheading}
-                    onChange={(e) => updateNestedConfig('homepage', 'hero', { subheading: e.target.value })}
-                    rows={2}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Primary Button Text</Label>
-                    <Input 
-                      value={config.homepage.hero.primaryButtonText}
-                      onChange={(e) => updateNestedConfig('homepage', 'hero', { primaryButtonText: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Primary Button Link</Label>
-                    <Input 
-                      value={config.homepage.hero.primaryButtonLink}
-                      onChange={(e) => updateNestedConfig('homepage', 'hero', { primaryButtonLink: e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Background Image</Label>
-                  <Input 
-                    type="text" 
-                    value={config.homepage.hero.backgroundImage || ''}
-                    onChange={(e) => updateNestedConfig('homepage', 'hero', { backgroundImage: e.target.value })}
-                    placeholder={PH.imageUrl}
-                  />
-                  <p className="text-xs text-gray-500">Enter image URL or upload file (Recommended: 1920x800px, under 500KB)</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Hero Style</Label>
-                  <Select 
-                    value={config.homepage.hero.style}
-                    onValueChange={(value) => updateNestedConfig('homepage', 'hero', { style: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="fullscreen">Full Screen</SelectItem>
-                      <SelectItem value="large">Large (800px)</SelectItem>
-                      <SelectItem value="medium">Medium (600px)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button onClick={() => handleSave('Hero Section')}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Hero Section
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Homepage Sections Toggle */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Homepage Sections</CardTitle>
-                <CardDescription>
-                  Enable/disable and reorder homepage sections
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  {[
-                    { key: 'featuredProducts', name: 'Featured Products' },
-                    { key: 'newArrivals', name: 'New Arrivals' },
-                    { key: 'shopByCategory', name: 'Shop by Category' },
-                    { key: 'bestSellers', name: 'Best Sellers' },
-                    { key: 'editorialFeatures', name: 'Editorial Features' },
-                    { key: 'promotionalBanner', name: 'Promotional Banner' },
-                    { key: 'testimonials', name: 'Testimonials' },
-                    { key: 'brandStory', name: 'Brand Story' },
-                    { key: 'instagramFeed', name: 'Instagram Feed' },
-                    { key: 'newsletterSignup', name: 'Newsletter Signup' },
-                  ].map((section) => (
-                    <div key={section.key} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                      <div className="flex items-center gap-3">
-                        <div className="cursor-move">
-                          <Menu className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <div>
-                          <Label className="cursor-pointer">{section.name}</Label>
-                          <p className="text-xs text-gray-500">Drag to reorder</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Switch 
-                          checked={config.homepage.sections[section.key as keyof typeof config.homepage.sections] || false}
-                          onCheckedChange={(checked) => updateNestedConfig('homepage', 'sections', { [section.key]: checked })}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Button onClick={() => handleSave('Homepage Sections')}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Section Order
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Featured Collections */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Featured Collections</CardTitle>
-                <CardDescription>
-                  Select collections to feature on homepage
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Featured Collections</Label>
-                  <p className="text-xs text-gray-500 mb-2">Select up to 6 collections to feature on homepage</p>
-                  <div className="space-y-3">
-                    {[0, 1, 2, 3, 4, 5].map((index) => {
-                      const collectionValue = Array.isArray(config.homepage.featuredCollections) 
-                        ? config.homepage.featuredCollections[index] || ''
-                        : '';
-                      return (
-                        <div key={index} className="flex items-center gap-3">
-                          <Label className="w-32 text-sm">Collection {index + 1}</Label>
-                          <Select 
-                            value={collectionValue}
-                            onValueChange={(value) => {
-                              const current = Array.isArray(config.homepage.featuredCollections) 
-                                ? [...config.homepage.featuredCollections] 
-                                : [];
-                              current[index] = value;
-                              // Remove empty values and ensure array length
-                              const updated = current.filter(v => v).slice(0, 6);
-                              updateConfig('homepage', { featuredCollections: updated });
-                            }}
-                          >
-                            <SelectTrigger className="flex-1">
-                              <SelectValue placeholder="Select collection" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="new">New Arrivals</SelectItem>
-                              <SelectItem value="women">Women's Fashion</SelectItem>
-                              <SelectItem value="men">Men's Fashion</SelectItem>
-                              <SelectItem value="accessories">Accessories</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          {index > 0 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                const current = Array.isArray(config.homepage.featuredCollections) 
-                                  ? [...config.homepage.featuredCollections] 
-                                  : [];
-                                current.splice(index, 1);
-                                updateConfig('homepage', { featuredCollections: current });
-                              }}
-                            >
-                              Remove
-                            </Button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <Button onClick={() => handleSave('Featured Collections')}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Collections
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* ==================== NAVIGATION CONFIGURATION ==================== */}
           <TabsContent value="navigation" className="space-y-6 mt-6">
@@ -1647,15 +1346,16 @@ export const AdminConfigurationPage = () => {
                     <div>
                       <Label className="text-sm mb-2 block">Clothing Categories</Label>
                       <div className="flex flex-wrap gap-2">
-                        {(configuration.categories?.women?.clothing || ['Dresses', 'Tops', 'Bottoms', 'Outerwear', 'Knitwear']).map((cat, idx) => (
+                        {(config.categories.women.clothing || []).map((cat, idx) => (
                           <div key={idx} className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
                             <Input
                               value={cat}
                               onChange={(e) => {
-                                const newCategories = { ...configuration.categories };
-                                if (!newCategories.women) newCategories.women = { clothing: [], accessories: [] };
-                                newCategories.women.clothing[idx] = e.target.value;
-                                setConfiguration({ ...configuration, categories: newCategories });
+                                const clothing = [...config.categories.women.clothing];
+                                clothing[idx] = e.target.value;
+                                updateConfig('categories', {
+                                  women: { ...config.categories.women, clothing },
+                                });
                               }}
                               className="h-7 w-24 text-sm"
                             />
@@ -1664,10 +1364,12 @@ export const AdminConfigurationPage = () => {
                               size="sm"
                               className="h-7 w-7 p-0"
                               onClick={() => {
-                                const newCategories = { ...configuration.categories };
-                                if (!newCategories.women) newCategories.women = { clothing: [], accessories: [] };
-                                newCategories.women.clothing = newCategories.women.clothing.filter((_, i) => i !== idx);
-                                setConfiguration({ ...configuration, categories: newCategories });
+                                updateConfig('categories', {
+                                  women: {
+                                    ...config.categories.women,
+                                    clothing: config.categories.women.clothing.filter((_, i) => i !== idx),
+                                  },
+                                });
                               }}
                             >
                               <X className="h-3 w-3" />
@@ -1679,10 +1381,12 @@ export const AdminConfigurationPage = () => {
                           size="sm"
                           className="h-7"
                           onClick={() => {
-                            const newCategories = { ...configuration.categories };
-                            if (!newCategories.women) newCategories.women = { clothing: [], accessories: [] };
-                            newCategories.women.clothing.push('New Category');
-                            setConfiguration({ ...configuration, categories: newCategories });
+                            updateConfig('categories', {
+                              women: {
+                                ...config.categories.women,
+                                clothing: [...config.categories.women.clothing, 'New Category'],
+                              },
+                            });
                           }}
                         >
                           <Plus className="h-3 w-3 mr-1" />
@@ -1694,15 +1398,16 @@ export const AdminConfigurationPage = () => {
                     <div>
                       <Label className="text-sm mb-2 block">Accessories Categories</Label>
                       <div className="flex flex-wrap gap-2">
-                        {(configuration.categories?.women?.accessories || ['Shoes', 'Jewelry', 'Bags']).map((cat, idx) => (
+                        {(config.categories.women.accessories || []).map((cat, idx) => (
                           <div key={idx} className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
                             <Input
                               value={cat}
                               onChange={(e) => {
-                                const newCategories = { ...configuration.categories };
-                                if (!newCategories.women) newCategories.women = { clothing: [], accessories: [] };
-                                newCategories.women.accessories[idx] = e.target.value;
-                                setConfiguration({ ...configuration, categories: newCategories });
+                                const accessories = [...config.categories.women.accessories];
+                                accessories[idx] = e.target.value;
+                                updateConfig('categories', {
+                                  women: { ...config.categories.women, accessories },
+                                });
                               }}
                               className="h-7 w-24 text-sm"
                             />
@@ -1711,10 +1416,12 @@ export const AdminConfigurationPage = () => {
                               size="sm"
                               className="h-7 w-7 p-0"
                               onClick={() => {
-                                const newCategories = { ...configuration.categories };
-                                if (!newCategories.women) newCategories.women = { clothing: [], accessories: [] };
-                                newCategories.women.accessories = newCategories.women.accessories.filter((_, i) => i !== idx);
-                                setConfiguration({ ...configuration, categories: newCategories });
+                                updateConfig('categories', {
+                                  women: {
+                                    ...config.categories.women,
+                                    accessories: config.categories.women.accessories.filter((_, i) => i !== idx),
+                                  },
+                                });
                               }}
                             >
                               <X className="h-3 w-3" />
@@ -1726,10 +1433,12 @@ export const AdminConfigurationPage = () => {
                           size="sm"
                           className="h-7"
                           onClick={() => {
-                            const newCategories = { ...configuration.categories };
-                            if (!newCategories.women) newCategories.women = { clothing: [], accessories: [] };
-                            newCategories.women.accessories.push('New Category');
-                            setConfiguration({ ...configuration, categories: newCategories });
+                            updateConfig('categories', {
+                              women: {
+                                ...config.categories.women,
+                                accessories: [...config.categories.women.accessories, 'New Category'],
+                              },
+                            });
                           }}
                         >
                           <Plus className="h-3 w-3 mr-1" />
@@ -1750,15 +1459,16 @@ export const AdminConfigurationPage = () => {
                     <div>
                       <Label className="text-sm mb-2 block">Clothing Categories</Label>
                       <div className="flex flex-wrap gap-2">
-                        {(configuration.categories?.men?.clothing || ['Shirts', 'Tops', 'Bottoms', 'Outerwear', 'Knitwear']).map((cat, idx) => (
+                        {(config.categories.men.clothing || []).map((cat, idx) => (
                           <div key={idx} className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
                             <Input
                               value={cat}
                               onChange={(e) => {
-                                const newCategories = { ...configuration.categories };
-                                if (!newCategories.men) newCategories.men = { clothing: [], accessories: [] };
-                                newCategories.men.clothing[idx] = e.target.value;
-                                setConfiguration({ ...configuration, categories: newCategories });
+                                const clothing = [...config.categories.men.clothing];
+                                clothing[idx] = e.target.value;
+                                updateConfig('categories', {
+                                  men: { ...config.categories.men, clothing },
+                                });
                               }}
                               className="h-7 w-24 text-sm"
                             />
@@ -1767,10 +1477,12 @@ export const AdminConfigurationPage = () => {
                               size="sm"
                               className="h-7 w-7 p-0"
                               onClick={() => {
-                                const newCategories = { ...configuration.categories };
-                                if (!newCategories.men) newCategories.men = { clothing: [], accessories: [] };
-                                newCategories.men.clothing = newCategories.men.clothing.filter((_, i) => i !== idx);
-                                setConfiguration({ ...configuration, categories: newCategories });
+                                updateConfig('categories', {
+                                  men: {
+                                    ...config.categories.men,
+                                    clothing: config.categories.men.clothing.filter((_, i) => i !== idx),
+                                  },
+                                });
                               }}
                             >
                               <X className="h-3 w-3" />
@@ -1782,10 +1494,12 @@ export const AdminConfigurationPage = () => {
                           size="sm"
                           className="h-7"
                           onClick={() => {
-                            const newCategories = { ...configuration.categories };
-                            if (!newCategories.men) newCategories.men = { clothing: [], accessories: [] };
-                            newCategories.men.clothing.push('New Category');
-                            setConfiguration({ ...configuration, categories: newCategories });
+                            updateConfig('categories', {
+                              men: {
+                                ...config.categories.men,
+                                clothing: [...config.categories.men.clothing, 'New Category'],
+                              },
+                            });
                           }}
                         >
                           <Plus className="h-3 w-3 mr-1" />
@@ -1797,15 +1511,16 @@ export const AdminConfigurationPage = () => {
                     <div>
                       <Label className="text-sm mb-2 block">Accessories Categories</Label>
                       <div className="flex flex-wrap gap-2">
-                        {(configuration.categories?.men?.accessories || ['Shoes', 'Accessories']).map((cat, idx) => (
+                        {(config.categories.men.accessories || []).map((cat, idx) => (
                           <div key={idx} className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
                             <Input
                               value={cat}
                               onChange={(e) => {
-                                const newCategories = { ...configuration.categories };
-                                if (!newCategories.men) newCategories.men = { clothing: [], accessories: [] };
-                                newCategories.men.accessories[idx] = e.target.value;
-                                setConfiguration({ ...configuration, categories: newCategories });
+                                const accessories = [...config.categories.men.accessories];
+                                accessories[idx] = e.target.value;
+                                updateConfig('categories', {
+                                  men: { ...config.categories.men, accessories },
+                                });
                               }}
                               className="h-7 w-24 text-sm"
                             />
@@ -1814,10 +1529,12 @@ export const AdminConfigurationPage = () => {
                               size="sm"
                               className="h-7 w-7 p-0"
                               onClick={() => {
-                                const newCategories = { ...configuration.categories };
-                                if (!newCategories.men) newCategories.men = { clothing: [], accessories: [] };
-                                newCategories.men.accessories = newCategories.men.accessories.filter((_, i) => i !== idx);
-                                setConfiguration({ ...configuration, categories: newCategories });
+                                updateConfig('categories', {
+                                  men: {
+                                    ...config.categories.men,
+                                    accessories: config.categories.men.accessories.filter((_, i) => i !== idx),
+                                  },
+                                });
                               }}
                             >
                               <X className="h-3 w-3" />
@@ -1829,10 +1546,12 @@ export const AdminConfigurationPage = () => {
                           size="sm"
                           className="h-7"
                           onClick={() => {
-                            const newCategories = { ...configuration.categories };
-                            if (!newCategories.men) newCategories.men = { clothing: [], accessories: [] };
-                            newCategories.men.accessories.push('New Category');
-                            setConfiguration({ ...configuration, categories: newCategories });
+                            updateConfig('categories', {
+                              men: {
+                                ...config.categories.men,
+                                accessories: [...config.categories.men.accessories, 'New Category'],
+                              },
+                            });
                           }}
                         >
                           <Plus className="h-3 w-3 mr-1" />
@@ -1940,327 +1659,7 @@ export const AdminConfigurationPage = () => {
             </Card>
           </TabsContent>
 
-          {/* ==================== EMAIL TEMPLATES CONFIGURATION ==================== */}
-          <TabsContent value="email" className="space-y-6 mt-6">
-            {/* Email Settings */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Email Server Configuration</CardTitle>
-                <CardDescription>
-                  SMTP settings for sending emails
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>SMTP Host</Label>
-                    <Input placeholder={PH.smtpHost} defaultValue="smtp.sendgrid.net" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>SMTP Port</Label>
-                    <Input placeholder={PH.smtpPort} defaultValue="587" />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>SMTP Username</Label>
-                    <Input placeholder={PH.smtpUsername} defaultValue="apikey" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>SMTP Password</Label>
-                    <Input type="password" placeholder={PH.passwordMasked} />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>From Email</Label>
-                  <Input type="email" defaultValue="noreply@rloco.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label>From Name</Label>
-                  <Input defaultValue="Rloco" />
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline">
-                    Test Email Configuration
-                  </Button>
-                  <Button onClick={() => handleSave('Email Server')}>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save SMTP Settings
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Email Templates */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Email Templates</CardTitle>
-                    <CardDescription>
-                      Customize automated email templates
-                    </CardDescription>
-                  </div>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Template
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  {emailTemplates.map((template) => (
-                    <div key={template.id} className="border rounded-lg p-4 hover:bg-gray-50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <Label className="font-semibold">{template.name}</Label>
-                            {template.active && (
-                              <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
-                                Active
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600">Subject: {template.subject}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          <Switch checked={template.active} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* SMS Configuration */}
-            <Card>
-              <CardHeader>
-                <CardTitle>SMS Configuration</CardTitle>
-                <CardDescription>
-                  Configure SMS notifications via Twilio
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label>Enable SMS Notifications</Label>
-                    <p className="text-sm text-gray-500">Send order updates via SMS</p>
-                  </div>
-                  <Switch />
-                </div>
-                <div className="space-y-2">
-                  <Label>Twilio Account SID</Label>
-                  <Input placeholder={PH.twilioAccountSid} type="password" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Twilio Auth Token</Label>
-                  <Input placeholder={PH.passwordMasked} type="password" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Twilio Phone Number</Label>
-                  <Input placeholder={PH.phone} />
-                </div>
-                <div className="space-y-4 pt-4 border-t">
-                  <Label>SMS Notifications</Label>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <Label className="text-sm">Order Placed</Label>
-                      <Switch />
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <Label className="text-sm">Order Shipped</Label>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <Label className="text-sm">Out for Delivery</Label>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <Label className="text-sm">Delivered</Label>
-                      <Switch defaultChecked />
-                    </div>
-                  </div>
-                </div>
-                <Button onClick={() => handleSave('SMS Configuration')}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save SMS Settings
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* ==================== SEO CONFIGURATION ==================== */}
-          <TabsContent value="seo" className="space-y-6 mt-6">
-            {/* Meta Tags */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Meta Tags & SEO</CardTitle>
-                <CardDescription>
-                  Configure meta tags for search engines
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Site Title</Label>
-                  <Input defaultValue="Rloco - Modern Luxury Fashion" />
-                  <p className="text-xs text-gray-500">Appears in browser tab and search results</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Meta Description</Label>
-                  <Textarea
-                    defaultValue="Shop curated luxury fashion at Rloco. Discover timeless pieces from the world's finest designers. Free shipping on orders over $100."
-                    rows={3}
-                  />
-                  <p className="text-xs text-gray-500">150-160 characters recommended</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Meta Keywords</Label>
-                  <Input defaultValue="luxury fashion, designer clothing, high-end fashion, premium accessories" />
-                  <p className="text-xs text-gray-500">Comma-separated keywords</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Canonical URL</Label>
-                  <Input defaultValue="https://rloco.com" />
-                </div>
-                <Button onClick={() => handleSave('Meta Tags')}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Meta Tags
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Open Graph */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Open Graph (Social Sharing)</CardTitle>
-                <CardDescription>
-                  Configure how your site appears on social media
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>OG Title</Label>
-                  <Input defaultValue="Rloco - Modern Luxury Fashion" />
-                </div>
-                <div className="space-y-2">
-                  <Label>OG Description</Label>
-                  <Textarea
-                    defaultValue="Discover curated luxury fashion collections at Rloco."
-                    rows={2}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>OG Image</Label>
-                  <Input type="file" accept="image/*" />
-                  <p className="text-xs text-gray-500">Recommended: 1200x630px</p>
-                </div>
-                <div className="space-y-2">
-                  <Label>Twitter Card Type</Label>
-                  <Select defaultValue="summary_large">
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="summary">Summary</SelectItem>
-                      <SelectItem value="summary_large">Summary Large Image</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button onClick={() => handleSave('Open Graph')}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Social Settings
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Sitemap & Robots */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Sitemap & Robots.txt</CardTitle>
-                <CardDescription>
-                  Configure search engine crawling
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label>Auto-generate Sitemap</Label>
-                    <p className="text-sm text-gray-500">Automatically create and update sitemap.xml</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Sitemap URL</Label>
-                    <p className="text-sm text-gray-500 mt-1">https://rloco.com/sitemap.xml</p>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Globe className="h-4 w-4 mr-2" />
-                    View Sitemap
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  <Label>Robots.txt Content</Label>
-                  <Textarea
-                    defaultValue={`User-agent: *\nAllow: /\nSitemap: https://rloco.com/sitemap.xml`}
-                    rows={5}
-                    className="font-mono text-sm"
-                  />
-                </div>
-                <Button onClick={() => handleSave('Sitemap & Robots')}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Crawler Settings
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Schema Markup */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Schema Markup (Structured Data)</CardTitle>
-                <CardDescription>
-                  Add structured data for rich search results
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label>Enable Organization Schema</Label>
-                    <p className="text-sm text-gray-500">Add company information schema</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label>Enable Product Schema</Label>
-                    <p className="text-sm text-gray-500">Add product rich snippets</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label>Enable Breadcrumb Schema</Label>
-                    <p className="text-sm text-gray-500">Add breadcrumb navigation data</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <Button onClick={() => handleSave('Schema Markup')}>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Schema Settings
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
           {/* ==================== ANALYTICS CONFIGURATION ==================== */}
           <TabsContent value="analytics" className="space-y-6 mt-6">

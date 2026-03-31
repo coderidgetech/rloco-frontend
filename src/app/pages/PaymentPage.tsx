@@ -1,13 +1,15 @@
-import { motion, AnimatePresence } from 'motion/react';
-import { Check, ArrowLeft, Star, Truck, Smartphone, CreditCard, Clock, Wallet, Building2, Gift, ChevronRight, ChevronDown, Tag, MapPin } from 'lucide-react';
+import { motion } from 'motion/react';
+import { ArrowLeft, Star, Truck, Smartphone, CreditCard, Clock, Wallet, Building2, Gift, ChevronRight, Tag, MapPin, ShieldCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { useOrder } from '../context/OrderContext';
 import { useUser } from '../context/UserContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { loadStripe } from '@stripe/stripe-js';
 import { Footer } from '../components/Footer';
+import { CheckoutStepper } from '../components/CheckoutStepper';
 import { productService } from '../services/productService';
 import { orderService } from '../services/orderService';
 import { paymentService } from '../services/paymentService';
@@ -38,8 +40,6 @@ interface PaymentMethod {
   name: string;
   type: 'recommended' | 'cod' | 'upi' | 'card' | 'paylater' | 'wallet' | 'emi' | 'netbanking';
   icon: any;
-  offers?: number;
-  balance?: number;
   description?: string;
 }
 
@@ -47,18 +47,19 @@ const PAYMENT_METHODS: PaymentMethod[] = [
   { id: 'recommended', name: 'Recommended', type: 'recommended', icon: Star },
   { id: 'cod', name: 'Cash On Delivery', type: 'cod', icon: Truck },
   { id: 'upi', name: 'UPI (Pay via any App)', type: 'upi', icon: Smartphone },
-  { id: 'card', name: 'Credit/Debit Card', type: 'card', icon: CreditCard, offers: 3 },
+  { id: 'card', name: 'Credit/Debit Card', type: 'card', icon: CreditCard },
   { id: 'paylater', name: 'Pay Later', type: 'paylater', icon: Clock },
   { id: 'wallets', name: 'Wallets', type: 'wallet', icon: Wallet },
-  { id: 'emi', name: 'EMI', type: 'emi', icon: CreditCard, offers: 1 },
+  { id: 'emi', name: 'EMI', type: 'emi', icon: CreditCard },
   { id: 'netbanking', name: 'Net Banking', type: 'netbanking', icon: Building2 },
 ];
 
+/** Labels only — balances and bank lists are not wired; payment happens in Stripe. */
 const WALLET_OPTIONS = [
-  { id: 'mobikwik', name: 'Mobikwik', balance: 11, logo: '💳' },
-  { id: 'paytm', name: 'Paytm', balance: 0, logo: '💰' },
-  { id: 'phonepe', name: 'PhonePe', balance: 0, logo: '📱' },
-  { id: 'amazonpay', name: 'Amazon Pay', balance: 0, logo: '🛒' },
+  { id: 'mobikwik', name: 'Mobikwik', logo: '💳' },
+  { id: 'paytm', name: 'Paytm', logo: '💰' },
+  { id: 'phonepe', name: 'PhonePe', logo: '📱' },
+  { id: 'amazonpay', name: 'Amazon Pay', logo: '🛒' },
 ];
 
 const UPI_APPS = [
@@ -70,10 +71,11 @@ const UPI_APPS = [
 
 export function PaymentPage() {
   const navigate = useNavigate();
-  const { user } = useUser();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { user, isAuthenticated } = useUser();
   const { items, clearCart, removeFromCart } = useCart();
   const { formatAmount, convertPrice, currency, country: storefrontCountry, market } = useCurrency();
-  const { selectedAddress, setSelectedPaymentMethod: setOrderPaymentMethod } = useOrder();
+  const { selectedAddress } = useOrder();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('recommended');
   const [selectedWallet, setSelectedWallet] = useState<string>('mobikwik');
   const [selectedUPI, setSelectedUPI] = useState<string>('');
@@ -82,11 +84,68 @@ export function PaymentPage() {
   const [cardName, setCardName] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [cvv, setCvv] = useState('');
-  const [showBankOffers, setShowBankOffers] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [productsMap, setProductsMap] = useState<Map<string, Product>>(new Map());
   const [pendingStripePayment, setPendingStripePayment] = useState<{ order: Order; clientSecret: string } | null>(null);
+  const [stripePreferredMethod, setStripePreferredMethod] = useState<'card' | 'upi' | 'wallet'>('card');
   const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+
+  const stripeReturnUrl = useMemo(() => `${window.location.origin}/payment`, []);
+
+  useEffect(() => {
+    const clientSecret = searchParams.get('payment_intent_client_secret');
+    const redirectStatus = searchParams.get('redirect_status');
+    if (!clientSecret || !redirectStatus || !stripePublishableKey) return;
+
+    const handleReturn = async () => {
+      try {
+        const stripe = await loadStripe(stripePublishableKey);
+        if (!stripe) return;
+        const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+        if (!paymentIntent || paymentIntent.status !== 'succeeded') {
+          if (paymentIntent?.status === 'processing') {
+            toast.info('Payment is processing. You will receive confirmation shortly.');
+          } else {
+            toast.error('Payment could not be confirmed.');
+          }
+          setSearchParams((p) => {
+            p.delete('payment_intent_client_secret');
+            p.delete('redirect_status');
+            return p;
+          });
+          return;
+        }
+        const orderId = paymentIntent.metadata?.order_id;
+        if (!orderId) {
+          toast.error('Order not found.');
+          setSearchParams((p) => {
+            p.delete('payment_intent_client_secret');
+            p.delete('redirect_status');
+            return p;
+          });
+          return;
+        }
+        toast.success('Payment confirmed!');
+        clearCart();
+        setSearchParams((p) => {
+          p.delete('payment_intent_client_secret');
+          p.delete('redirect_status');
+          return p;
+        });
+        navigate(`/order-confirmation/${orderId}`, { replace: true });
+      } catch (e) {
+        console.error('Stripe return handling:', e);
+        toast.error('Could not confirm payment.');
+        setSearchParams((p) => {
+          p.delete('payment_intent_client_secret');
+          p.delete('redirect_status');
+          return p;
+        });
+      }
+    };
+
+    handleReturn();
+  }, [searchParams, stripePublishableKey, clearCart, navigate, setSearchParams]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -168,21 +227,62 @@ export function PaymentPage() {
   const finalTotal = Math.max(platformFee, calculatedTotal);
 
   const handlePayment = async () => {
-    if (!selectedPaymentMethod || selectedPaymentMethod === 'recommended') {
+    if (!isAuthenticated) {
+      toast.error('Please log in to place your order.');
+      navigate('/login?redirect=/payment');
+      return;
+    }
+
+    if (!selectedPaymentMethod) {
       toast.error('Please select a payment method');
       return;
     }
 
-    if (selectedPaymentMethod === 'card') {
+    let orderPaymentMethod: 'cod' | 'card' | 'upi' | 'wallet';
+    let stripeIntentMethod: 'card' | 'upi' | 'wallet';
+
+    switch (selectedPaymentMethod) {
+      case 'cod':
+        orderPaymentMethod = 'cod';
+        stripeIntentMethod = 'card';
+        break;
+      case 'card':
+        orderPaymentMethod = 'card';
+        stripeIntentMethod = 'card';
+        break;
+      case 'upi':
+        orderPaymentMethod = 'upi';
+        stripeIntentMethod = 'upi';
+        break;
+      case 'wallets':
+      case 'recommended':
+        orderPaymentMethod = 'wallet';
+        stripeIntentMethod = 'wallet';
+        break;
+      case 'paylater':
+      case 'emi':
+      case 'netbanking':
+        orderPaymentMethod = 'card';
+        stripeIntentMethod = 'card';
+        break;
+      default:
+        toast.error('Please select a payment method');
+        return;
+    }
+
+    const usesStripe = orderPaymentMethod !== 'cod';
+    if (usesStripe && !stripePublishableKey) {
+      toast.error('Online payments are not configured. Please use Cash on Delivery.');
+      return;
+    }
+
+    if (usesStripe && stripePublishableKey) {
+      // Card details are collected in Stripe Elements; UPI in Elements — no local validation
+    } else if (selectedPaymentMethod === 'card' && !stripePublishableKey) {
       if (!cardNumber || !cardName || !expiryDate || !cvv) {
         toast.error('Please fill in all card details');
         return;
       }
-    }
-
-    if (selectedPaymentMethod === 'upi' && !selectedUPI && !upiId) {
-      toast.error('Please select a UPI app or enter UPI ID');
-      return;
     }
 
     if (!deliveryAddress) {
@@ -215,18 +315,20 @@ export function PaymentPage() {
       }));
 
       const paymentInfoData: Record<string, string> = {};
-      if (selectedPaymentMethod === 'card') {
-        paymentInfoData.card_number = cardNumber.replace(/\s/g, '');
-        paymentInfoData.card_name = cardName;
-        paymentInfoData.expiry_date = expiryDate;
-        paymentInfoData.cvv = cvv;
-      } else if (selectedPaymentMethod === 'upi') {
-        paymentInfoData.upi_id = upiId || selectedUPI || '';
-      } else if (selectedPaymentMethod === 'wallets') {
-        paymentInfoData.wallet_name = selectedWallet || 'Wallet';
+      if (orderPaymentMethod === 'wallet' || selectedPaymentMethod === 'recommended' || selectedPaymentMethod === 'wallets') {
+        const w = WALLET_OPTIONS.find((x) => x.id === selectedWallet);
+        paymentInfoData.wallet_name = w?.name ?? selectedWallet ?? 'Wallet';
       }
-
-      const paymentMethodApi = selectedPaymentMethod === 'cod' ? 'cod' : selectedPaymentMethod === 'card' ? 'card' : selectedPaymentMethod === 'upi' ? 'upi' : selectedPaymentMethod === 'wallets' ? 'wallet' : 'cod';
+      if (!usesStripe || !stripePublishableKey) {
+        if (selectedPaymentMethod === 'card') {
+          paymentInfoData.card_number = cardNumber.replace(/\s/g, '');
+          paymentInfoData.card_name = cardName;
+          paymentInfoData.expiry_date = expiryDate;
+          paymentInfoData.cvv = cvv;
+        } else if (selectedPaymentMethod === 'upi') {
+          paymentInfoData.upi_id = upiId || selectedUPI || '';
+        }
+      }
 
       const orderRequest: CreateOrderRequest = {
         items: orderItems,
@@ -242,14 +344,12 @@ export function PaymentPage() {
           country: shippingCountry,
         },
         payment_info: paymentInfoData,
-        payment_method: paymentMethodApi,
+        payment_method: orderPaymentMethod,
       };
 
       const order = await orderService.create(orderRequest);
 
-      // COD, UPI, and Wallet complete immediately (no payment gateway)
-      const completesOffline = paymentMethodApi === 'cod' || paymentMethodApi === 'upi' || paymentMethodApi === 'wallet';
-      if (completesOffline) {
+      if (orderPaymentMethod === 'cod') {
         clearCart();
         toast.success('Order placed successfully!');
         navigate(`/order-confirmation/${order.id}`, { state: { order } });
@@ -257,43 +357,32 @@ export function PaymentPage() {
         return;
       }
 
-      // Card only: Stripe payment intent
-      if (paymentMethodApi === 'card') {
-        if (!stripePublishableKey) {
-          toast.error('Card payments are not configured. Please use UPI, Wallet, or Cash on Delivery.');
+      try {
+        const paymentCurrency = (expectedCurrencyForCountry(shippingCountry) ?? currency).toLowerCase();
+        const paymentIntent = await paymentService.createPaymentIntent({
+          order_id: order.id,
+          amount: finalTotal,
+          currency: paymentCurrency,
+          gateway: 'stripe',
+          payment_method: stripeIntentMethod,
+        });
+        if (paymentIntent.client_secret) {
+          setStripePreferredMethod(stripeIntentMethod);
+          setPendingStripePayment({ order, clientSecret: paymentIntent.client_secret });
           setIsProcessing(false);
           return;
         }
-        try {
-          const paymentIntent = await paymentService.createPaymentIntent({
-            order_id: order.id,
-            amount: finalTotal,
-            currency: (expectedCurrencyForCountry(shippingCountry) ?? currency).toLowerCase(),
-            gateway: 'stripe',
-          });
-          if (paymentIntent.payment_url) {
-            window.location.href = paymentIntent.payment_url;
-            return;
-          }
-          if (paymentIntent.client_secret) {
-            setPendingStripePayment({ order, clientSecret: paymentIntent.client_secret });
-            setIsProcessing(false);
-            return;
-          }
-          toast.error('Payment could not be started. Please try again or use another method.');
-        } catch (paymentErr: any) {
-          console.error('Payment processing error:', paymentErr);
-          const msg = paymentErr?.response?.data?.error ?? paymentErr?.message ?? 'Payment could not be completed.';
-          toast.error(msg);
-        }
-        setIsProcessing(false);
-        return;
+        toast.error('Payment could not be started. Please try again or use Cash on Delivery.');
+      } catch (paymentErr: unknown) {
+        console.error('Payment processing error:', paymentErr);
+        const msg =
+          paymentErr && typeof paymentErr === 'object' && 'response' in paymentErr
+            ? (paymentErr as { response?: { data?: { error?: string } } }).response?.data?.error
+            : undefined;
+        toast.error(msg ?? getApiErrorMessage(paymentErr, 'Payment could not be completed.'));
       }
-
-      clearCart();
-      toast.success('Order placed successfully!');
-      navigate(`/order-confirmation/${order.id}`, { state: { order } });
-    } catch (err: any) {
+      setIsProcessing(false);
+    } catch (err: unknown) {
       console.error('Place order error:', err);
       toast.error(getApiErrorMessage(err, 'Failed to place order. Please try again.'));
     } finally {
@@ -316,6 +405,14 @@ export function PaymentPage() {
         return (
           <div>
             <h3 className="font-medium mb-4">Recommended Payment Options</h3>
+            {stripePublishableKey && (
+              <div className="flex items-start gap-3 bg-foreground/5 p-4 border border-foreground/10 rounded-lg mb-4">
+                <ShieldCheck size={16} className="text-foreground/60 mt-0.5 shrink-0" />
+                <p className="text-xs text-foreground/60 leading-relaxed">
+                  You will complete payment securely on the next screen via Stripe (card, UPI, or wallet). No card data is stored on our servers.
+                </p>
+              </div>
+            )}
             <div className="space-y-3">
               {WALLET_OPTIONS.map((wallet) => (
                 <div
@@ -336,16 +433,6 @@ export function PaymentPage() {
                       <span className="text-2xl">{wallet.logo}</span>
                       <span className="font-medium">{wallet.name}</span>
                     </div>
-                  </div>
-                  <div className="ml-11">
-                    <p className="text-sm text-muted-foreground">
-                      Balance: <span className="font-medium">{formatAmount(wallet.balance)}</span>
-                    </p>
-                    {wallet.balance < finalTotal && (
-                      <p className="text-xs text-destructive mt-1">
-                        Add {formatAmount(finalTotal - wallet.balance)} more. You can add money in the next step.
-                      </p>
-                    )}
                   </div>
                 </div>
               ))}
@@ -396,51 +483,55 @@ export function PaymentPage() {
         return (
           <div>
             <h3 className="font-medium mb-4">UPI Payment</h3>
-            
-            {/* UPI Apps */}
-            <div className="mb-6">
-              <p className="text-sm font-medium mb-3">Choose an option</p>
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                {UPI_APPS.map((app) => (
-                  <div
-                    key={app.id}
-                    onClick={() => setSelectedUPI(app.id)}
-                    className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
-                      selectedUPI === app.id ? 'border-primary bg-primary/5' : 'border-border'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        checked={selectedUPI === app.id}
-                        onChange={() => setSelectedUPI(app.id)}
-                        className="w-4 h-4 cursor-pointer accent-primary"
-                      />
-                      <span className="text-xl">{app.logo}</span>
-                      <span className="text-sm font-medium">{app.name}</span>
-                    </div>
-                  </div>
-                ))}
+            {stripePublishableKey ? (
+              <div className="bg-foreground/5 p-4 border border-foreground/10 rounded-lg mb-6 text-sm text-foreground/70">
+                Your UPI details will be collected securely on the next screen via Stripe.
               </div>
-            </div>
-
-            {/* Or Enter UPI ID */}
-            <div className="mb-6">
-              <p className="text-sm font-medium mb-3">Or enter UPI ID</p>
-              <input
-                type="text"
-                value={upiId}
-                onChange={(e) => {
-                  setUpiId(e.target.value);
-                  setSelectedUPI('');
-                }}
-                placeholder={PH.upiId}
-                className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
-              />
-              <p className="text-xs text-muted-foreground mt-2">
-                The UPI ID is in the format of name/phone number@bankname
-              </p>
-            </div>
+            ) : (
+              <>
+                <div className="mb-6">
+                  <p className="text-sm font-medium mb-3">Choose an option</p>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    {UPI_APPS.map((app) => (
+                      <div
+                        key={app.id}
+                        onClick={() => setSelectedUPI(app.id)}
+                        className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
+                          selectedUPI === app.id ? 'border-primary bg-primary/5' : 'border-border'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            checked={selectedUPI === app.id}
+                            onChange={() => setSelectedUPI(app.id)}
+                            className="w-4 h-4 cursor-pointer accent-primary"
+                          />
+                          <span className="text-xl">{app.logo}</span>
+                          <span className="text-sm font-medium">{app.name}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="mb-6">
+                  <p className="text-sm font-medium mb-3">Or enter UPI ID</p>
+                  <input
+                    type="text"
+                    value={upiId}
+                    onChange={(e) => {
+                      setUpiId(e.target.value);
+                      setSelectedUPI('');
+                    }}
+                    placeholder={PH.upiId}
+                    className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    The UPI ID is in the format of name/phone number@bankname
+                  </p>
+                </div>
+              </>
+            )}
 
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -459,68 +550,79 @@ export function PaymentPage() {
           <div>
             <h3 className="font-medium mb-4">Credit/Debit Card</h3>
             <div className="space-y-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium mb-2">Card Number</label>
-                <input
-                  type="text"
-                  value={cardNumber}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\s/g, '');
-                    if (value.length <= 16) {
-                      const formatted = value.match(/.{1,4}/g)?.join(' ') || value;
-                      setCardNumber(formatted);
-                    }
-                  }}
-                  placeholder={PH.cardNumber}
-                  maxLength={19}
-                  className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Name on Card</label>
-                <input
-                  type="text"
-                  value={cardName}
-                  onChange={(e) => setCardName(e.target.value.toUpperCase())}
-                  placeholder={PH.nameOnCard}
-                  className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Valid Thru</label>
-                  <input
-                    type="text"
-                    value={expiryDate}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '');
-                      if (value.length <= 4) {
-                        const formatted = value.length >= 2 ? `${value.slice(0, 2)}/${value.slice(2)}` : value;
-                        setExpiryDate(formatted);
-                      }
-                    }}
-                    placeholder={PH.cardExpiry}
-                    maxLength={5}
-                    className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
-                  />
+              {stripePublishableKey ? (
+                <div className="flex items-start gap-3 bg-foreground/5 p-4 border border-foreground/10 rounded-lg">
+                  <ShieldCheck size={16} className="text-foreground/60 mt-0.5 shrink-0" />
+                  <p className="text-xs text-foreground/60 leading-relaxed">
+                    Your card details will be securely collected on the next screen via Stripe. No card data is stored on our servers.
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">CVV</label>
-                  <input
-                    type="password"
-                    value={cvv}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '');
-                      if (value.length <= 3) {
-                        setCvv(value);
-                      }
-                    }}
-                    placeholder={PH.cvv}
-                    maxLength={3}
-                    className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
-                  />
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Card Number</label>
+                    <input
+                      type="text"
+                      value={cardNumber}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\s/g, '');
+                        if (value.length <= 16) {
+                          const formatted = value.match(/.{1,4}/g)?.join(' ') || value;
+                          setCardNumber(formatted);
+                        }
+                      }}
+                      placeholder={PH.cardNumber}
+                      maxLength={19}
+                      className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Name on Card</label>
+                    <input
+                      type="text"
+                      value={cardName}
+                      onChange={(e) => setCardName(e.target.value.toUpperCase())}
+                      placeholder={PH.nameOnCard}
+                      className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Valid Thru</label>
+                      <input
+                        type="text"
+                        value={expiryDate}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '');
+                          if (value.length <= 4) {
+                            const formatted = value.length >= 2 ? `${value.slice(0, 2)}/${value.slice(2)}` : value;
+                            setExpiryDate(formatted);
+                          }
+                        }}
+                        placeholder={PH.cardExpiry}
+                        maxLength={5}
+                        className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">CVV</label>
+                      <input
+                        type="password"
+                        value={cvv}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, '');
+                          if (value.length <= 3) {
+                            setCvv(value);
+                          }
+                        }}
+                        placeholder={PH.cvv}
+                        maxLength={3}
+                        className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -534,10 +636,18 @@ export function PaymentPage() {
           </div>
         );
 
-      case 'wallet':
+      case 'wallets':
         return (
           <div>
             <h3 className="font-medium mb-4">Wallets</h3>
+            {stripePublishableKey && (
+              <div className="flex items-start gap-3 bg-foreground/5 p-4 border border-foreground/10 rounded-lg mb-4">
+                <ShieldCheck size={16} className="text-foreground/60 mt-0.5 shrink-0" />
+                <p className="text-xs text-foreground/60 leading-relaxed">
+                  Complete wallet or UPI payment on the next screen via Stripe. No card data is stored on our servers.
+                </p>
+              </div>
+            )}
             <div className="space-y-3">
               {WALLET_OPTIONS.map((wallet) => (
                 <div
@@ -575,23 +685,50 @@ export function PaymentPage() {
           </div>
         );
 
+      case 'paylater':
+        return (
+          <div>
+            <h3 className="font-medium mb-4">Pay Later</h3>
+            <div className="border border-border rounded-lg p-6 mb-6">
+              <p className="text-sm text-muted-foreground mb-4">
+                You will complete payment securely on the next step via Stripe (installments or card options where available).
+              </p>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handlePayment}
+              disabled={isProcessing}
+              className="w-full py-4 bg-[#FF3F6C] hover:bg-[#E6365F] text-white uppercase tracking-wider font-medium rounded transition-colors disabled:opacity-50"
+            >
+              {isProcessing ? 'Processing...' : 'Continue to pay'}
+            </motion.button>
+          </div>
+        );
+
       case 'emi':
         return (
           <div>
             <h3 className="font-medium mb-4">EMI (Easy Installments)</h3>
-            <div className="border border-border rounded-lg p-6 mb-6 text-center">
-              <p className="text-muted-foreground">Select your bank to view EMI options</p>
+            <div className="border border-border rounded-lg p-6 mb-6 text-center text-sm text-muted-foreground">
+              {stripePublishableKey ? (
+                <p>
+                  EMI and instalment plans are chosen in the secure Stripe payment step (where your bank supports
+                  them). We do not list banks here until that data is provided by your payment provider.
+                </p>
+              ) : (
+                <p>Configure Stripe to enable EMI and card instalment options.</p>
+              )}
             </div>
-            <div className="space-y-3">
-              {['HDFC Bank', 'ICICI Bank', 'SBI Bank', 'Axis Bank'].map((bank) => (
-                <div key={bank} className="border-2 border-border rounded-lg p-4 cursor-pointer hover:border-primary transition-colors">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">{bank}</span>
-                    <ChevronRight size={20} className="text-muted-foreground" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handlePayment}
+              disabled={isProcessing}
+              className="w-full mt-6 py-4 bg-[#FF3F6C] hover:bg-[#E6365F] text-white uppercase tracking-wider font-medium rounded transition-colors disabled:opacity-50"
+            >
+              {isProcessing ? 'Processing...' : 'Continue to secure payment'}
+            </motion.button>
           </div>
         );
 
@@ -599,21 +736,15 @@ export function PaymentPage() {
         return (
           <div>
             <h3 className="font-medium mb-4">Net Banking</h3>
-            <div className="space-y-3 mb-6">
-              {['HDFC Bank', 'ICICI Bank', 'SBI Bank', 'Axis Bank', 'Kotak Mahindra Bank', 'Yes Bank'].map((bank) => (
-                <div key={bank} className="border-2 border-border rounded-lg p-4 cursor-pointer hover:border-primary transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="netbanking"
-                        className="w-5 h-5 cursor-pointer accent-primary"
-                      />
-                      <span className="font-medium">{bank}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+            <div className="space-y-3 mb-6 rounded-lg border border-border p-4 text-sm text-muted-foreground">
+              {stripePublishableKey ? (
+                <p>
+                  Net banking and bank redirects are available in the secure Stripe payment step when enabled for your
+                  account and currency. No bank list is shown here because options come from Stripe.
+                </p>
+              ) : (
+                <p>Configure Stripe to enable bank redirect and other payment methods.</p>
+              )}
             </div>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -637,23 +768,58 @@ export function PaymentPage() {
   };
 
   if (pendingStripePayment) {
+    const stripeSubtitle =
+      stripePreferredMethod === 'upi'
+        ? 'Choose the UPI tab below to pay with your UPI app.'
+        : stripePreferredMethod === 'wallet'
+          ? 'Choose UPI or your wallet in the options below.'
+          : 'Pay securely with card, UPI, or wallet (Stripe).';
+    const isINR = currency === 'INR';
+    const cancelStripe = () => {
+      setPendingStripePayment(null);
+      setIsProcessing(false);
+      toast.info('Payment cancelled');
+    };
     return (
-      <div className="min-h-screen bg-muted/20 pt-page-nav px-4 pb-12 pb-mobile-nav md:pb-12">
-        <div className="mx-auto max-w-md">
-          <h1 className="text-2xl font-semibold mb-2">Complete payment</h1>
-          <p className="text-muted-foreground mb-6">
-            Order {pendingStripePayment.order.order_number} — secure card payment via Stripe
-          </p>
-          <StripePaymentForm
-            publishableKey={stripePublishableKey!}
-            clientSecret={pendingStripePayment.clientSecret}
-            onSuccess={handleStripePaymentSuccess}
-            onCancel={() => {
-              setPendingStripePayment(null);
-              setIsProcessing(false);
-              toast.info('Payment cancelled');
-            }}
-          />
+      <div className="fixed inset-0 z-[200] flex flex-col bg-[#f6f9fc]">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-[#e3e8ee] bg-white px-4 shadow-sm">
+          <button
+            type="button"
+            onClick={cancelStripe}
+            className="text-sm font-medium text-[#635BFF] hover:underline"
+          >
+            ← Back
+          </button>
+          <span className="text-xs text-[#6a7383]">Secure payment</span>
+          <span className="w-14" aria-hidden />
+        </header>
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-6 pb-mobile-nav md:py-10">
+          <div className="mx-auto w-full max-w-[480px]">
+            <div className="rounded-2xl border border-[#e3e8ee] bg-white p-6 shadow-xl shadow-black/[0.04] md:p-8">
+              <h1 className="text-xl font-semibold tracking-tight text-[#30313d] md:text-2xl">Complete payment</h1>
+              <p className="mt-1 text-sm text-[#6a7383]">
+                Order {pendingStripePayment.order.order_number} — {stripeSubtitle}
+              </p>
+              {isINR && (
+                <p className="mt-4 rounded-lg border border-[#e3e8ee] bg-[#f6f9fc] p-3 text-xs text-[#6a7383]">
+                  Paying in INR: Card and UPI should both appear below. If you only see Card, enable UPI in your Stripe
+                  Dashboard (Settings → Payment methods → UPI).
+                </p>
+              )}
+              <div className="mt-6">
+                <StripePaymentForm
+                  layout="checkout"
+                  publishableKey={stripePublishableKey!}
+                  clientSecret={pendingStripePayment.clientSecret}
+                  returnUrl={stripeReturnUrl}
+                  preferredPaymentMethod={stripePreferredMethod}
+                  onSuccess={handleStripePaymentSuccess}
+                  onCancel={cancelStripe}
+                />
+              </div>
+            </div>
+            <p className="mt-6 text-center text-[11px] text-[#6a7383]">Powered by Stripe</p>
+          </div>
         </div>
       </div>
     );
@@ -679,24 +845,7 @@ export function PaymentPage() {
             </div>
           </div>
 
-          {/* Progress Steps */}
-          <div className="flex items-center gap-2 text-xs md:text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <span className="uppercase tracking-wider">BAG</span>
-            </div>
-            <div className="h-px w-8 md:w-12 bg-border"></div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <span className="uppercase tracking-wider">ADDRESS</span>
-            </div>
-            <div className="h-px w-8 md:w-12 bg-border"></div>
-            <div className="flex items-center gap-2">
-              <span className="uppercase tracking-wider font-medium text-primary">PAYMENT</span>
-            </div>
-            <div className="ml-auto hidden md:flex items-center gap-2 text-green-600">
-              <Check size={16} />
-              <span className="text-xs">100% SECURE</span>
-            </div>
-          </div>
+          <CheckoutStepper activeStep="payment" />
         </div>
       </div>
 
@@ -705,21 +854,16 @@ export function PaymentPage() {
         <div className="grid lg:grid-cols-[320px_1fr_380px] xl:grid-cols-[340px_1fr_420px] gap-6 md:gap-8">
           {/* Left Sidebar - Payment Methods */}
           <div className="space-y-4">
-            {/* Bank Offers */}
+            {/* Promotions — copy only until offers API exists */}
             <div className="bg-white border border-border rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Tag size={16} className="text-foreground/70" />
-                <span className="font-medium text-sm">Bank Offer</span>
+                <span className="font-medium text-sm">Offers</span>
               </div>
-              <p className="text-xs text-muted-foreground mb-2">
-                7.5% Assured Cashback* on a minimum spend of {currency === 'USD' ? '$100' : '₹100'}. T&C
+              <p className="text-xs text-muted-foreground">
+                Bank and wallet promotions will show here when connected to your promotions service. Final discounts
+                appear on your order before you pay.
               </p>
-              <button
-                onClick={() => setShowBankOffers(!showBankOffers)}
-                className="text-primary text-xs font-medium hover:underline"
-              >
-                Show More ▼
-              </button>
             </div>
 
             {/* Payment Methods */}
@@ -742,11 +886,6 @@ export function PaymentPage() {
                         <Icon size={18} />
                         <span className="text-sm font-medium">{method.name}</span>
                       </div>
-                      {method.offers && (
-                        <span className="text-xs text-green-600 font-medium">
-                          {method.offers} Offer{method.offers > 1 ? 's' : ''}
-                        </span>
-                      )}
                     </button>
                   );
                 })}

@@ -1,4 +1,15 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo, useRef } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+  useMemo,
+  useRef,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 import api from '../lib/api';
 
 // Configuration Types
@@ -188,6 +199,11 @@ export interface SiteConfig {
       maxBadges: string;
     };
   };
+  /** Optional marketing copy; stored in site config when set from admin. */
+  emailTemplates?: {
+    orderConfirmation: { subject: string; body: string };
+    welcome: { subject: string; body: string };
+  };
 }
 
 const defaultConfig: SiteConfig = {
@@ -366,6 +382,16 @@ const defaultConfig: SiteConfig = {
       maxBadges: '2',
     },
   },
+  emailTemplates: {
+    orderConfirmation: {
+      subject: 'Your order #{orderNumber} — R-Loko',
+      body: 'Thank you for your order. We will email you when it ships.',
+    },
+    welcome: {
+      subject: 'Welcome to R-Loko',
+      body: 'Thank you for creating an account. We are glad you are here.',
+    },
+  },
   categories: {
     women: {
       clothing: ['Dresses', 'Tops', 'Bottoms', 'Outerwear', 'Knitwear'],
@@ -378,6 +404,9 @@ const defaultConfig: SiteConfig = {
   },
 };
 
+/** Default site config (aligned with backend `getDefaultConfig`). */
+export const defaultSiteConfig: SiteConfig = defaultConfig;
+
 // Type-safe update functions
 type ConfigSection = keyof SiteConfig;
 type ConfigUpdate<T extends ConfigSection> = Partial<SiteConfig[T]>;
@@ -386,6 +415,8 @@ interface SiteConfigContextType {
   config: SiteConfig;
   loading: boolean;
   refreshConfig: () => Promise<void>;
+  /** Full config setter (for admin editors that need deep immutable updates). */
+  setSiteConfig: Dispatch<SetStateAction<SiteConfig>>;
   updateConfig: <T extends ConfigSection>(section: T, data: ConfigUpdate<T>) => void;
   updateNestedConfig: <T extends ConfigSection>(
     section: T,
@@ -691,6 +722,7 @@ export const SiteConfigProvider = ({ children }: { children: ReactNode }) => {
       config,
       loading,
       refreshConfig: fetchConfig,
+      setSiteConfig: setConfig,
       updateConfig,
       updateNestedConfig,
       resetConfig,

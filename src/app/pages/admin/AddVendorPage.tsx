@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { isAxiosError } from 'axios';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -35,8 +36,16 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { VendorTier, VendorRole, VendorPermissions, ROLE_PERMISSIONS, VENDOR_TIERS } from '../../types/vendor-permissions';
-import { adminService } from '../../services/adminService';
+import { adminService, type VendorCreateResponse } from '../../services/adminService';
 import { PH } from '../../lib/formPlaceholders';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/ui/dialog';
 
 export const AddVendorPage = () => {
   const navigate = useNavigate();
@@ -159,6 +168,11 @@ export const AddVendorPage = () => {
     ROLE_PERMISSIONS.owner
   );
 
+  /** Optional; if empty, server generates a password and emails it when SMTP is configured. */
+  const [initialPassword, setInitialPassword] = useState('');
+  const [confirmInitialPassword, setConfirmInitialPassword] = useState('');
+  const [createResult, setCreateResult] = useState<VendorCreateResponse | null>(null);
+
   const selectedPlan = subscriptionPlans.find((p) => p.id === selectedPlanId);
   const rolePermissions = ROLE_PERMISSIONS[selectedRole];
 
@@ -191,15 +205,23 @@ export const AddVendorPage = () => {
       return;
     }
 
+    if (initialPassword.trim() || confirmInitialPassword.trim()) {
+      if (initialPassword !== confirmInitialPassword) {
+        toast.error('Portal passwords do not match');
+        return;
+      }
+      if (initialPassword.length < 8) {
+        toast.error('Portal password must be at least 8 characters');
+        return;
+      }
+    }
+
     try {
-      // Create vendor data - map to API format
-      const vendorData = {
+      const vendorData: Parameters<typeof adminService.createVendor>[0] = {
         name: vendorName,
         email: email,
         phone: phone,
-        role: 'vendor' as const,
-        // Store additional vendor-specific data in metadata or separate fields
-        // Note: Backend may need to be extended to support all these fields
+        role: 'vendor',
         metadata: {
           storeName,
           website,
@@ -221,13 +243,19 @@ export const AddVendorPage = () => {
           permissions: customPermissions,
         },
       };
+      if (initialPassword.trim()) {
+        vendorData.initial_password = initialPassword.trim();
+      }
 
-      await adminService.createVendor(vendorData);
-      toast.success('Vendor created successfully!');
-      navigate('/admin/vendors');
-    } catch (error: any) {
+      const result = await adminService.createVendor(vendorData);
+      setCreateResult(result);
+      toast.success('Vendor created. Review portal login details.');
+    } catch (error: unknown) {
       console.error('Failed to create vendor:', error);
-      toast.error(error.message || 'Failed to create vendor');
+      const msg = isAxiosError(error)
+        ? (error.response?.data as { error?: string } | undefined)?.error
+        : undefined;
+      toast.error(msg || (error instanceof Error ? error.message : 'Failed to create vendor'));
     }
   };
 
@@ -334,6 +362,35 @@ export const AddVendorPage = () => {
                         onChange={(e) => setPhone(e.target.value)}
                       />
                     </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="portalPassword">Portal password (optional)</Label>
+                    <Input
+                      id="portalPassword"
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder="Leave blank to auto-generate"
+                      value={initialPassword}
+                      onChange={(e) => setInitialPassword(e.target.value)}
+                    />
+                    <p className="text-xs text-gray-500">
+                      Min 8 characters if set. If left blank, the server generates one and emails it when SMTP is
+                      configured.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="portalPasswordConfirm">Confirm portal password</Label>
+                    <Input
+                      id="portalPasswordConfirm"
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder="When setting a password above"
+                      value={confirmInitialPassword}
+                      onChange={(e) => setConfirmInitialPassword(e.target.value)}
+                    />
                   </div>
                 </div>
 
@@ -1048,6 +1105,73 @@ export const AddVendorPage = () => {
           </div>
         </div>
       </div>
+
+      <Dialog
+        open={!!createResult}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreateResult(null);
+            navigate('/admin/vendors');
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Vendor portal login</DialogTitle>
+            <DialogDescription>
+              Vendors use the same URL as staff: sign in with their email and password, then open Vendor settings.
+            </DialogDescription>
+          </DialogHeader>
+          {createResult && (
+            <div className="space-y-3 text-sm">
+              <p>
+                <span className="font-medium">Login URL:</span>{' '}
+                <a
+                  href={createResult.login_url}
+                  className="text-[#B4770E] underline break-all"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {createResult.login_url}
+                </a>
+              </p>
+              {createResult.credentials_email_sent && (
+                <p className="text-green-700">Credentials were emailed to the vendor address.</p>
+              )}
+              {createResult.credentials_email_error && (
+                <div className="rounded-md bg-red-50 border border-red-200 p-3 text-red-900 text-xs">
+                  <p className="font-medium">Email could not be sent</p>
+                  <p className="mt-1">{createResult.credentials_email_error}</p>
+                  <p className="mt-2 text-red-800">
+                    Share the login URL and password with the vendor manually (see below if a temporary password was
+                    returned).
+                  </p>
+                </div>
+              )}
+              {!createResult.credentials_email_sent && createResult.temporary_password && (
+                <div className="rounded-md bg-amber-50 border border-amber-200 p-3 text-amber-900">
+                  <p className="font-medium">Temporary password (copy now)</p>
+                  <code className="mt-1 block break-all text-xs">{createResult.temporary_password}</code>
+                </div>
+              )}
+              {!createResult.credentials_email_sent && !createResult.temporary_password && (
+                <p className="text-gray-600">Share the portal password you set with the vendor.</p>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              className="bg-[#B4770E] hover:bg-[#8B5A0B]"
+              onClick={() => {
+                setCreateResult(null);
+                navigate('/admin/vendors');
+              }}
+            >
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };

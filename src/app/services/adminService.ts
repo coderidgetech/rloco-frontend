@@ -2,6 +2,39 @@ import api from '../lib/api';
 import { User, Product, Order, Category, Promotion, Return, ShippingMethod, TaxRate } from '../types/api';
 import { PaginatedResponse } from '../types/api';
 
+/** Response from POST /admin/vendors — vendor row plus portal login outcome. */
+export type VendorCreateResponse = {
+  vendor: Record<string, unknown>;
+  temporary_password?: string;
+  credentials_email_sent: boolean;
+  /** Present when the server attempted to email credentials but delivery failed. */
+  credentials_email_error?: string;
+  login_url: string;
+};
+
+/** Backend GET /admin/vendors returns Vendor documents, not User — map for admin UI. */
+function mapVendorApiToUser(v: Record<string, unknown>): User {
+  const id = String(v.id ?? '');
+  const status = String(v.status ?? 'pending');
+  const perms = v.permissions as Record<string, unknown> | undefined;
+  const tier = typeof perms?.tier === 'string' ? perms.tier : undefined;
+  return {
+    id,
+    email: String(v.email ?? ''),
+    name: String(v.name ?? ''),
+    role: 'vendor',
+    vendor_id: id,
+    avatar: typeof v.logo === 'string' ? v.logo : undefined,
+    active: status === 'active',
+    created_at:
+      typeof v.created_at === 'string' ? v.created_at : new Date().toISOString(),
+    updated_at:
+      typeof v.updated_at === 'string' ? v.updated_at : new Date().toISOString(),
+    phone: typeof v.phone === 'string' ? v.phone : undefined,
+    ...(tier ? { tier } : {}),
+  } as User & { tier?: string };
+}
+
 export const adminService = {
   // Dashboard
   async getDashboardStats(): Promise<any> {
@@ -41,34 +74,36 @@ export const adminService = {
   },
 
   // Vendors
-  async listVendors(): Promise<User[]> {
-    const response = await api.get<{ vendors: User[]; total: number }>('/admin/vendors');
-    // Backend returns { vendors: [...], total: ... }
-    return response.data.vendors;
+  async listVendors(params?: { limit?: number; skip?: number }): Promise<User[]> {
+    const response = await api.get<{ vendors: Record<string, unknown>[]; total: number }>('/admin/vendors', {
+      params: { limit: 100, skip: 0, ...params },
+    });
+    const rows = response.data.vendors ?? [];
+    return rows.map(mapVendorApiToUser);
   },
 
   async getVendor(id: string): Promise<User> {
-    const response = await api.get<User>(`/admin/vendors/${id}`);
+    const response = await api.get<Record<string, unknown>>(`/admin/vendors/${id}`);
+    return mapVendorApiToUser(response.data);
+  },
+
+  async createVendor(
+    vendor: Partial<User> & { initial_password?: string; metadata?: Record<string, unknown> }
+  ): Promise<VendorCreateResponse> {
+    const response = await api.post<VendorCreateResponse>('/admin/vendors', vendor);
     return response.data;
   },
 
-  async createVendor(vendor: Partial<User>): Promise<User> {
-    const response = await api.post<User>('/admin/vendors', vendor);
-    return response.data;
-  },
-
-  async updateVendor(id: string, vendor: Partial<User>): Promise<User> {
-    const response = await api.put<User>(`/admin/vendors/${id}`, vendor);
-    return response.data;
+  async updateVendor(id: string, vendor: Partial<User>): Promise<void> {
+    await api.put(`/admin/vendors/${id}`, vendor);
   },
 
   async deleteVendor(id: string): Promise<void> {
     await api.delete(`/admin/vendors/${id}`);
   },
 
-  async updateVendorPermissions(id: string, permissions: Record<string, any>): Promise<User> {
-    const response = await api.put<User>(`/admin/vendors/${id}/permissions`, { permissions });
-    return response.data;
+  async updateVendorPermissions(id: string, permissions: Record<string, unknown>): Promise<void> {
+    await api.put(`/admin/vendors/${id}/permissions`, { permissions });
   },
 
   // Promotions
