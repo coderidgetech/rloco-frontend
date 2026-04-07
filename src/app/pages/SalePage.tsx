@@ -5,7 +5,7 @@ import { Footer } from '../components/Footer';
 import { Tag, SlidersHorizontal, X, ChevronRight } from 'lucide-react';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { MobileFilterPanel } from '../components/MobileFilterPanel';
-import { sortOptions } from '../utils/filterConfig';
+import { sortOptions, productMatchesSearchQuery } from '../utils/filterConfig';
 import { useNavigate } from 'react-router-dom';
 import { productService } from '../services/productService';
 import { Product } from '../types/product';
@@ -78,12 +78,8 @@ export function SalePage() {
   const filteredProducts = useMemo(() => {
     let filtered = products.filter(p => p.on_sale || p.onSale); // Start with sale items
 
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+    if (searchQuery.trim()) {
+      filtered = filtered.filter((p) => productMatchesSearchQuery(p, searchQuery));
     }
 
     // Category filter

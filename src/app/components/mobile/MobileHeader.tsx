@@ -3,10 +3,12 @@ import { Search, Bell } from 'lucide-react';
 import { RlocoLogo } from '../RlocoLogo';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSearchOverlay } from '@/app/context/SearchOverlayContext';
 
 export function MobileHeader() {
   const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
+  const { openSearch } = useSearchOverlay();
 
   // Handle scroll effect
   useState(() => {
@@ -47,7 +49,7 @@ export function MobileHeader() {
           {/* Search */}
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={() => navigate('/search')}
+            onClick={() => openSearch()}
             className="w-9 h-9 rounded-full bg-foreground/5 flex items-center justify-center active:bg-foreground/10 transition-colors"
             aria-label="Search"
           >

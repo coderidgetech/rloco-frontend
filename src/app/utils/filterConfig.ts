@@ -114,6 +114,26 @@ export const getSubcategoriesForCategory = (
   ).sort();
 };
 
+/** Fields used for client-side catalog search (aligned with API list `search` param). */
+export type ProductSearchable = Pick<
+  Product,
+  'name' | 'category' | 'subcategory' | 'description' | 'material' | 'sku'
+>;
+
+export function productMatchesSearchQuery(product: ProductSearchable, searchQuery: string): boolean {
+  const q = searchQuery.trim().toLowerCase();
+  if (!q) return true;
+  const sku = (product.sku ?? '').toLowerCase();
+  return (
+    product.name.toLowerCase().includes(q) ||
+    product.category.toLowerCase().includes(q) ||
+    (product.subcategory ?? '').toLowerCase().includes(q) ||
+    (product.description ?? '').toLowerCase().includes(q) ||
+    sku.includes(q) ||
+    (product.material ?? '').toLowerCase().includes(q)
+  );
+}
+
 export const sortOptions = [
   { label: 'Featured', value: 'featured' },
   { label: 'Price: Low to High', value: 'price-asc' },

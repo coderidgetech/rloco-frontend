@@ -1,13 +1,15 @@
 @custom-variant dark (&:is(.dark *));
 
 /* Ensure scroll containers have proper positioning for motion/react useScroll */
-html, body {
+html,
+body {
   position: relative;
   scroll-behavior: smooth;
 }
 
 html {
   scroll-padding-top: max(5rem, calc(3.75rem + env(safe-area-inset-top, 0px)));
+  overflow-x: clip;
 }
 @media (min-width: 768px) {
   html {
@@ -21,7 +23,8 @@ html {
 }
 
 :root {
-  --font-size: 16px;
+  /* Fluid base size: readable on small phones, capped on large / zoomed desktops */
+  --font-size: clamp(15px, 0.55vw + 13.25px, 17px);
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   
   /* 60:30:10 Color System */
@@ -159,6 +162,15 @@ html {
 
   body {
     @apply bg-background text-foreground;
+    overflow-x: clip;
+    min-width: 0;
+  }
+
+  #root {
+    min-width: 0;
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow-x: clip;
   }
 
   /**
@@ -169,6 +181,8 @@ html {
   html {
     font-size: var(--font-size);
     font-family: var(--font-family);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
   }
 
   h1 {
@@ -205,6 +219,7 @@ html {
     font-size: var(--text-base);
     font-weight: var(--font-weight-medium);
     line-height: 1.5;
+    cursor: default;
   }
 
   input {

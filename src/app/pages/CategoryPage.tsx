@@ -6,7 +6,12 @@ import { ProductCard } from '../components/ProductCard';
 import { Footer } from '../components/Footer';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { MobileFilterPanel } from '../components/MobileFilterPanel';
-import { sortOptions, extractFilterOptions, getSubcategoriesForCategory } from '../utils/filterConfig';
+import {
+  sortOptions,
+  extractFilterOptions,
+  getSubcategoriesForCategory,
+  productMatchesSearchQuery,
+} from '../utils/filterConfig';
 import { PromotionalOffers } from '../components/PromotionalOffers';
 import { productService } from '../services/productService';
 import { Product } from '../types/product';
@@ -147,12 +152,8 @@ export function CategoryPage() {
       filtered = filtered.filter(p => p.category.toLowerCase() === category.toLowerCase());
     }
 
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+    if (searchQuery.trim()) {
+      filtered = filtered.filter((p) => productMatchesSearchQuery(p, searchQuery));
     }
 
     // Category filter from sidebar (if different from URL)

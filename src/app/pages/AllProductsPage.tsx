@@ -1,19 +1,27 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronRight, Search, SlidersHorizontal, X, ChevronDown, Star } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { ProductCard } from '../components/ProductCard';
 import { Footer } from '../components/Footer';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { MobileFilterPanel } from '../components/MobileFilterPanel';
-import { sortOptions, extractFilterOptions, getSubcategoriesForCategory } from '../utils/filterConfig';
+import {
+  sortOptions,
+  extractFilterOptions,
+  getSubcategoriesForCategory,
+  productMatchesSearchQuery,
+} from '../utils/filterConfig';
 import { productService } from '../services/productService';
 import { Product } from '../types/product';
 import { useCurrency } from '../context/CurrencyContext';
+import { useSearchOverlay } from '../context/SearchOverlayContext';
 
 export function AllProductsPage() {
   const { market } = useCurrency();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { openSearch } = useSearchOverlay();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -38,6 +46,20 @@ export function AllProductsPage() {
   
   // Filter panel sections
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!searchParams.has('q')) return;
+    setSearchQuery(searchParams.get('q') ?? '');
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (searchParams.get('focus') !== '1') return;
+    const q = searchParams.get('q') ?? '';
+    openSearch(q);
+    const next = new URLSearchParams(searchParams);
+    next.delete('focus');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, openSearch, setSearchParams]);
 
   // Fetch all products
   useEffect(() => {
@@ -88,12 +110,8 @@ export function AllProductsPage() {
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
 
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+    if (searchQuery.trim()) {
+      filtered = filtered.filter((p) => productMatchesSearchQuery(p, searchQuery));
     }
 
     // Category filter

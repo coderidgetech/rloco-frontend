@@ -86,31 +86,31 @@ export function Hero() {
   return (
     <section
       ref={ref}
-      className="relative isolate min-h-[100dvh] min-h-screen w-full overflow-hidden bg-neutral-900"
+      className="relative isolate min-h-screen min-h-svh w-full overflow-hidden bg-neutral-900"
     >
-      {/* Background */}
-      <div className="absolute inset-0">
+      {/* Background: absolute fill avoids Windows/Chrome %height quirks when parent only has min-height */}
+      <div className="absolute inset-0 min-h-screen min-h-svh">
         <motion.div
           initial={{ opacity: 0, scale: 1.06 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-          className="relative h-full min-h-[100dvh] w-full"
+          className="absolute inset-0 min-h-screen min-h-svh w-full"
         >
           <img
             src={heroImg}
             alt={config.homepage.hero.heading || 'Hero'}
-            className="h-full w-full object-cover object-[center_22%] sm:object-[center_30%] md:object-center"
+            className="absolute inset-0 h-full min-h-screen min-h-svh w-full object-cover object-[center_22%] sm:object-[center_28%] md:object-center"
             onError={() => setImgError(true)}
             {...({ fetchpriority: 'high' } as ImgHTMLAttributes<HTMLImageElement>)}
             decoding="async"
           />
-          {/* Readability: stronger bottom stack for headline + CTAs */}
+          {/* Readability: slightly stronger mids for consistent contrast (Win/mac gamma) */}
           <div
-            className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-black/10 sm:from-black/65 sm:via-black/15"
+            className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/35 to-black/15 sm:from-black/70 sm:via-black/22 sm:to-black/10"
             aria-hidden
           />
           <div
-            className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-transparent sm:from-black/10"
+            className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-transparent sm:from-black/15"
             aria-hidden
           />
         </motion.div>
@@ -173,9 +173,9 @@ export function Hero() {
 
       {/* Copy + CTAs — on mobile, logo sits above tagline */}
       <div
-        className="absolute inset-x-0 bottom-0 z-30 px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-24 sm:px-8 sm:pb-[calc(2rem+env(safe-area-inset-bottom))] sm:pt-32 md:px-12 md:pb-20 lg:px-20 lg:pb-24 max-md:pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
+        className="absolute inset-x-0 bottom-0 z-30 px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-24 antialiased sm:px-8 sm:pb-[calc(2rem+env(safe-area-inset-bottom))] sm:pt-28 md:px-12 md:pb-20 md:pt-32 lg:px-20 lg:pb-24 max-md:pb-[calc(5.5rem+env(safe-area-inset-bottom))]"
       >
-        <div className="mx-auto max-w-3xl text-center lg:max-w-4xl">
+        <div className="mx-auto max-w-3xl text-center lg:max-w-4xl [text-rendering:optimizeLegibility]">
           {/* Mobile / small screens: logo directly above subheading */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -206,7 +206,7 @@ export function Hero() {
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.75, delay: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className="mb-6 text-balance text-3xl font-light uppercase leading-[1.15] tracking-[0.06em] text-white sm:mb-8 sm:text-4xl sm:tracking-[0.07em] md:text-5xl lg:text-6xl xl:text-7xl"
+                className="mb-6 text-balance text-3xl font-light uppercase leading-[1.12] tracking-[0.05em] text-white sm:mb-8 sm:text-4xl sm:leading-[1.14] sm:tracking-[0.06em] md:text-5xl md:leading-[1.1] lg:text-6xl xl:text-7xl"
                 style={{ textShadow: '0 2px 24px rgba(0,0,0,0.5)' }}
               >
                 {config.homepage.hero.heading || 'Timeless Elegance Redefined'}
@@ -234,7 +234,7 @@ export function Hero() {
               variant="outline"
               size="lg"
               onClick={scrollToProducts}
-              className="min-h-12 w-full border-2 border-white/50 bg-white/10 uppercase tracking-[0.12em] text-white backdrop-blur-sm hover:bg-white/20 hover:text-white sm:min-h-11 sm:w-auto sm:min-w-[180px]"
+              className="min-h-12 w-full border-2 border-white/50 bg-white/15 uppercase tracking-[0.12em] text-white backdrop-blur-[8px] hover:bg-white/25 hover:text-white sm:min-h-11 sm:w-auto sm:min-w-[180px]"
             >
               Explore
             </Button>

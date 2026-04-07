@@ -5,7 +5,7 @@ import { Footer } from '../components/Footer';
 import { Star, SlidersHorizontal, ChevronRight } from 'lucide-react';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { MobileFilterPanel } from '../components/MobileFilterPanel';
-import { sortOptions } from '../utils/filterConfig';
+import { sortOptions, productMatchesSearchQuery } from '../utils/filterConfig';
 import { useNavigate } from 'react-router-dom';
 import { useFeaturedProducts } from '../hooks/useProducts';
 import { Product } from '../types/api';
@@ -58,12 +58,8 @@ export function FeaturedCollectionPage() {
   const filteredProducts = useMemo(() => {
     let filtered = allProducts || []; // Start with featured items from API
 
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+    if (searchQuery.trim()) {
+      filtered = filtered.filter((p) => productMatchesSearchQuery(p, searchQuery));
     }
 
     // Category filter

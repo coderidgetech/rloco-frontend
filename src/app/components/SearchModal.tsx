@@ -1,42 +1,72 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Search, Filter } from 'lucide-react';
+import { X, Search, ChevronLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Product } from '../types/product';
 import { ProductDetail } from './ProductDetail';
 import { productService } from '../services/productService';
 import { useCurrency } from '../context/CurrencyContext';
-import { PH } from '../lib/formPlaceholders';
 
 interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
-  /** When opening from the nav search field, seed the modal query */
   initialQuery?: string;
 }
 
-const BADGE_OPTIONS = ['Best Seller', 'Trending', 'Most Ordered', 'New', 'Limited Edition', 'Exclusive', 'Hot', 'Popular'] as const;
+const RECENT_KEY = 'rloco_recent_searches_v1';
+const MAX_RECENT = 10;
+
+const TRENDING = [
+  'Dresses',
+  'Ethnic wear',
+  'Sneakers',
+  'Handbags',
+  'Men shirts',
+  'Winter jackets',
+  'New arrivals',
+  'Sale',
+];
+
+function loadRecent(): string[] {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecent(term: string) {
+  const q = term.trim();
+  if (!q) return;
+  const prev = loadRecent().filter((x) => x.toLowerCase() !== q.toLowerCase());
+  localStorage.setItem(RECENT_KEY, JSON.stringify([q, ...prev].slice(0, MAX_RECENT)));
+}
 
 export function SearchModal({ isOpen, onClose, initialQuery = '' }: SearchModalProps) {
+  const navigate = useNavigate();
   const { formatPrice, market } = useCurrency();
+  const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [results, setResults] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [recent, setRecent] = useState<string[]>([]);
 
   useEffect(() => {
-    const t = setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 280);
     return () => clearTimeout(t);
   }, [query]);
 
   useEffect(() => {
     if (!isOpen) return;
     const q = debouncedQuery;
-    const needsBadgeFilter = selectedBadges.length > 0;
-    if (q.length < 1 && !needsBadgeFilter) {
+    if (q.length < 1) {
       setResults([]);
+      setLoading(false);
       return;
     }
 
@@ -44,16 +74,8 @@ export function SearchModal({ isOpen, onClose, initialQuery = '' }: SearchModalP
     (async () => {
       setLoading(true);
       try {
-        const response = await productService.list(
-          q.length >= 1
-            ? { search: q, limit: 24, market }
-            : { limit: 80, market }
-        );
-        let list = response.products || [];
-        if (selectedBadges.length > 0) {
-          list = list.filter((product) => product.badge && selectedBadges.includes(product.badge));
-        }
-        if (!cancelled) setResults(list.slice(0, 24));
+        const response = await productService.list({ search: q, limit: 24, market });
+        if (!cancelled) setResults((response.products || []).slice(0, 24));
       } catch (error) {
         console.error('Failed to fetch products:', error);
         if (!cancelled) setResults([]);
@@ -64,20 +86,21 @@ export function SearchModal({ isOpen, onClose, initialQuery = '' }: SearchModalP
     return () => {
       cancelled = true;
     };
-  }, [isOpen, debouncedQuery, market, selectedBadges]);
+  }, [isOpen, debouncedQuery, market]);
 
   useEffect(() => {
     if (!isOpen) {
       setQuery('');
       setDebouncedQuery('');
-      setSelectedBadges([]);
-      setShowFilters(false);
+      setResults([]);
     } else {
+      setRecent(loadRecent());
       const seed = (initialQuery ?? '').trim();
       if (seed) {
         setQuery(seed);
         setDebouncedQuery(seed);
       }
+      requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [isOpen, initialQuery]);
 
@@ -87,244 +110,231 @@ export function SearchModal({ isOpen, onClose, initialQuery = '' }: SearchModalP
         onClose();
       }
     };
-
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose, selectedProduct]);
 
-  const emptyHint =
-    debouncedQuery.length < 1 && selectedBadges.length === 0
-      ? 'Start typing to search for products…'
-      : null;
+  const goToResults = (q: string) => {
+    const t = q.trim();
+    if (t) saveRecent(t);
+    const params = new URLSearchParams();
+    params.set('from', 'search');
+    params.set('q', t);
+    navigate(`/all-products?${params.toString()}`);
+    onClose();
+  };
+
+  const onPickRecentOrTrending = (term: string) => {
+    setQuery(term);
+    setDebouncedQuery(term.trim());
+    goToResults(term);
+  };
+
+  const removeRecent = (term: string) => {
+    const next = recent.filter((x) => x !== term);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+    setRecent(next);
+  };
+
+  const showExplore = debouncedQuery.length < 1;
+  const showResults = !showExplore;
 
   return (
     <>
       <AnimatePresence>
         {isOpen && (
-          <>
+          <div className="fixed inset-0 z-[200] flex flex-col md:items-center md:justify-start md:pt-14 md:px-4 md:pb-8">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              className="absolute inset-0 hidden bg-black/50 md:block"
               onClick={onClose}
-              style={{
-                backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                backdropFilter: 'blur(60px)',
-                WebkitBackdropFilter: 'blur(60px)',
-              }}
-              className="fixed inset-0 z-50"
+              aria-hidden
             />
-
-            <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4">
-              <motion.div
-                initial={{ opacity: 0, y: -50, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -50, scale: 0.95 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className="w-full max-w-2xl bg-background rounded-2xl shadow-2xl overflow-hidden"
-                onClick={(e) => e.stopPropagation()}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 24 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+              className="relative z-10 flex h-full max-h-[100dvh] w-full flex-col bg-background shadow-none md:mt-0 md:max-h-[min(680px,85vh)] md:max-w-2xl md:rounded-xl md:shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header — Myntra-style: back on mobile, search field */}
+              <div
+                className="flex shrink-0 items-center gap-2 border-b border-foreground/10 px-3 py-3 md:px-4"
+                style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
               >
-                <div className="p-6 border-b border-border">
-                  <div className="flex items-center gap-4">
-                    <Search size={24} className="text-muted-foreground" />
-                    <input
-                      type="text"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder={PH.searchProducts}
-                      autoFocus
-                      className="flex-1 bg-transparent outline-none text-lg placeholder:text-muted-foreground"
-                    />
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center text-foreground md:hidden"
+                  aria-label="Close search"
+                >
+                  <ChevronLeft size={24} strokeWidth={2} />
+                </button>
+                <div className="relative flex min-w-0 flex-1 items-center gap-2 rounded-md bg-muted/40 px-3 py-2 md:bg-muted/30">
+                  <Search size={18} className="shrink-0 text-foreground/40" />
+                  <input
+                    ref={inputRef}
+                    type="search"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search"
+                    enterKeyHint="search"
+                    className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-foreground/40 md:text-sm"
+                  />
+                  {query ? (
                     <button
-                      onClick={onClose}
-                      className="p-2 hover:bg-muted rounded-full transition-colors"
+                      type="button"
+                      onClick={() => setQuery('')}
+                      className="shrink-0 p-1 text-foreground/40 hover:text-foreground"
+                      aria-label="Clear"
                     >
-                      <X size={20} />
+                      <X size={16} />
                     </button>
-                  </div>
+                  ) : null}
                 </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="hidden h-10 w-10 shrink-0 items-center justify-center text-foreground/60 hover:text-foreground md:flex"
+                  aria-label="Close search"
+                >
+                  <X size={22} />
+                </button>
+              </div>
 
-                <div className="px-6 py-4 border-b border-border bg-muted/20">
-                  <div className="flex items-center justify-between mb-3">
-                    <button
-                      onClick={() => setShowFilters(!showFilters)}
-                      className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors"
-                    >
-                      <Filter size={16} />
-                      Filter by Badge
-                      {selectedBadges.length > 0 && (
-                        <span className="ml-1 px-2 py-0.5 bg-primary text-primary-foreground rounded-full text-xs">
-                          {selectedBadges.length}
-                        </span>
-                      )}
-                    </button>
-                    {selectedBadges.length > 0 && (
-                      <button
-                        onClick={() => setSelectedBadges([])}
-                        className="text-sm text-primary hover:text-primary/80 transition-colors font-medium"
-                      >
-                        Clear All
-                      </button>
-                    )}
-                  </div>
-
-                  <AnimatePresence>
-                    {showFilters && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="overflow-hidden"
-                      >
-                        <div className="grid grid-cols-2 gap-2 pt-3">
-                          {BADGE_OPTIONS.map((badge) => {
-                            const isSelected = selectedBadges.includes(badge);
-                            return (
-                              <motion.button
-                                key={badge}
-                                onClick={() => {
-                                  if (isSelected) {
-                                    setSelectedBadges(selectedBadges.filter((b) => b !== badge));
-                                  } else {
-                                    setSelectedBadges([...selectedBadges, badge]);
-                                  }
-                                }}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className={`px-3 py-2 text-xs font-bold tracking-wider uppercase rounded transition-all ${
-                                  isSelected
-                                    ? badge === 'Best Seller'
-                                      ? 'bg-[#B4770E] text-white shadow-md'
-                                      : badge === 'Trending'
-                                        ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-md'
-                                        : badge === 'Most Ordered'
-                                          ? 'bg-blue-600 text-white shadow-md'
-                                          : badge === 'New'
-                                            ? 'bg-green-600 text-white shadow-md'
-                                            : badge === 'Limited Edition'
-                                              ? 'bg-black text-white shadow-md'
-                                              : badge === 'Exclusive'
-                                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
-                                                : badge === 'Hot'
-                                                  ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md'
-                                                  : badge === 'Popular'
-                                                    ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md'
-                                                    : 'bg-foreground text-background shadow-md'
-                                    : 'bg-muted text-foreground/60 hover:bg-muted/80 border border-border'
-                                }`}
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+                {showExplore && (
+                  <div className="space-y-8">
+                    {recent.length > 0 && (
+                      <section>
+                        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground/50">
+                          Recent searches
+                        </h2>
+                        <div className="flex flex-wrap gap-2">
+                          {recent.map((term) => (
+                            <div
+                              key={term}
+                              className="flex max-w-full items-center gap-1 rounded-full border border-foreground/15 bg-background pl-3 pr-1 py-1.5 text-sm text-foreground hover:border-foreground/30"
+                            >
+                              <button
+                                type="button"
+                                onClick={() => onPickRecentOrTrending(term)}
+                                className="min-w-0 flex-1 truncate text-left"
                               >
-                                {badge}
-                              </motion.button>
-                            );
-                          })}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                <div className="max-h-[500px] overflow-y-auto p-6">
-                  {loading ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-                      <p>Loading products...</p>
-                    </div>
-                  ) : emptyHint ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Search size={48} className="mx-auto mb-4 opacity-20" />
-                      <p>{emptyHint}</p>
-                    </div>
-                  ) : results.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Search size={48} className="mx-auto mb-4 opacity-20" />
-                      <p>
-                        {debouncedQuery
-                          ? `No products found for "${debouncedQuery}"`
-                          : 'No products match these filters.'}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="grid gap-4">
-                      {results.map((product, index) => (
-                        <motion.div
-                          key={product.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                          onClick={() => {
-                            setSelectedProduct(product);
-                          }}
-                          className="flex gap-4 p-4 rounded-lg hover:bg-muted transition-colors cursor-pointer group"
-                        >
-                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                            <img
-                              src={product.images?.[0] || product.image || ''}
-                              alt={product.name}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                              style={{ filter: 'brightness(1.05) contrast(1.05) saturate(1.1)' }}
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-medium truncate group-hover:text-primary transition-colors">
-                                {product.name}
-                              </h3>
-                              {product.badge && (
-                                <span
-                                  className={`px-1.5 py-0.5 text-[8px] font-bold tracking-wider uppercase rounded flex-shrink-0 ${
-                                    product.badge === 'Best Seller'
-                                      ? 'bg-[#B4770E] text-white'
-                                      : product.badge === 'Trending'
-                                        ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
-                                        : product.badge === 'Most Ordered'
-                                          ? 'bg-blue-600 text-white'
-                                          : product.badge === 'New'
-                                            ? 'bg-green-600 text-white'
-                                            : product.badge === 'Limited Edition'
-                                              ? 'bg-black text-white'
-                                              : product.badge === 'Exclusive'
-                                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white'
-                                                : product.badge === 'Hot'
-                                                  ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
-                                                  : product.badge === 'Popular'
-                                                    ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
-                                                    : 'bg-foreground text-background'
-                                  }`}
-                                >
-                                  {product.badge}
-                                </span>
-                              )}
+                                {term}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeRecent(term);
+                                }}
+                                className="shrink-0 rounded-full p-1.5 text-foreground/40 hover:bg-foreground/10 hover:text-foreground"
+                                aria-label={`Remove ${term}`}
+                              >
+                                <X size={14} />
+                              </button>
                             </div>
-                            <p className="text-sm text-muted-foreground">
-                              {product.category} · {product.subcategory}
-                            </p>
-                            <div className="flex items-center gap-2 mt-1">
-                              <p className="font-medium">
-                                {formatPrice(product.price, product.price_inr || (product as any).priceINR)}
-                              </p>
-                              {(product.original_price || product.originalPrice) && (
-                                <p className="text-sm text-muted-foreground line-through">
+                          ))}
+                        </div>
+                      </section>
+                    )}
+                    <section>
+                      <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground/50">
+                        Trending
+                      </h2>
+                      <div className="flex flex-wrap gap-2">
+                        {TRENDING.map((term) => (
+                          <button
+                            key={term}
+                            type="button"
+                            onClick={() => onPickRecentOrTrending(term)}
+                            className="rounded-full border border-foreground/15 px-3 py-2 text-sm text-foreground hover:border-primary hover:text-primary"
+                          >
+                            {term}
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  </div>
+                )}
+
+                {showResults && (
+                  <div className="space-y-4">
+                    {loading ? (
+                      <div className="flex flex-col items-center py-16 text-foreground/50">
+                        <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-foreground/20 border-t-foreground/60" />
+                        <p className="text-sm">Finding styles for you…</p>
+                      </div>
+                    ) : results.length === 0 ? (
+                      <div className="py-16 text-center text-foreground/50">
+                        <Search size={40} className="mx-auto mb-3 opacity-25" />
+                        <p className="text-sm">No matches for &ldquo;{debouncedQuery}&rdquo;</p>
+                        <button
+                          type="button"
+                          onClick={() => goToResults(debouncedQuery)}
+                          className="mt-4 text-sm font-medium text-primary underline"
+                        >
+                          View all products
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-xs uppercase tracking-wider text-foreground/45">
+                          Top matches
+                        </p>
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-2">
+                          {results.map((product, index) => (
+                            <motion.button
+                              key={product.id}
+                              type="button"
+                              initial={{ opacity: 0, y: 8 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: index * 0.03 }}
+                              onClick={() => {
+                                if (debouncedQuery) saveRecent(debouncedQuery);
+                                setSelectedProduct(product);
+                              }}
+                              className="flex flex-col overflow-hidden rounded-lg border border-foreground/10 bg-background text-left transition-colors hover:border-foreground/25"
+                            >
+                              <div className="aspect-[3/4] w-full overflow-hidden bg-muted">
+                                <img
+                                  src={product.images?.[0] || product.image || ''}
+                                  alt={product.name}
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                              <div className="p-2">
+                                <p className="line-clamp-2 text-xs font-medium leading-snug text-foreground">
+                                  {product.name}
+                                </p>
+                                <p className="mt-1 text-xs font-semibold text-foreground">
                                   {formatPrice(
-                                    product.original_price || product.originalPrice || 0,
-                                    product.original_price_inr || (product as any).originalPriceINR
+                                    product.price,
+                                    product.price_inr || (product as { priceINR?: number }).priceINR
                                   )}
                                 </p>
-                              )}
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4 border-t border-border bg-muted/30 text-center text-sm text-muted-foreground">
-                  Press <kbd className="px-2 py-1 bg-background rounded text-xs">ESC</kbd> to close
-                </div>
-              </motion.div>
-            </div>
-          </>
+                              </div>
+                            </motion.button>
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => goToResults(debouncedQuery)}
+                          className="w-full rounded-lg border border-foreground/20 py-3 text-center text-sm font-medium text-foreground hover:bg-foreground/5"
+                        >
+                          View all results
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

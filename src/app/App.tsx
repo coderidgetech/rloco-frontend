@@ -1,17 +1,14 @@
-import { AnimatePresence } from 'motion/react';
 import { Toaster } from 'sonner';
 import { BrowserRouter, HashRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { Loader } from './components/Loader';
 import { ScrollProgress } from './components/ScrollProgress';
 import { ScrollToTop } from './components/ScrollToTop';
 import { Navigation } from './components/Navigation';
-import { CustomCursor } from './components/CustomCursor';
 import { ConfigApplier } from './components/ConfigApplier';
 import { ConfigIndicator } from './components/ConfigIndicator';
 import { useIsMobile } from './hooks/useIsMobile';
-import { useState, useEffect } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { BottomNavigation } from './components/mobile/BottomNavigation';
+import { SearchOverlayProvider } from './context/SearchOverlayContext';
 import { HelpGuideButton } from './components/HelpGuideButton';
 import { UserProvider } from './context/UserContext';
 import { CartProvider } from './context/CartContext';
@@ -100,29 +97,11 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile();
   const isAdminRoute = location.pathname.startsWith('/admin');
   const showMobileBottomNav = isMobile && !isAdminRoute && !MOBILE_HIDE_NAV_PATHS.some((p) => location.pathname === p || location.pathname.startsWith(p + '/'));
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (loading) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-  }, [loading]);
 
   return (
-    <>
+    <SearchOverlayProvider>
       <ConfigApplier />
       <ConfigIndicator />
-      <AnimatePresence mode="wait">
-        {loading && <Loader onComplete={() => setLoading(false)} />}
-      </AnimatePresence>
-      {!isMobile && <CustomCursor />}
       <ScrollProgress />
       {/* Site nav on all viewports (hamburger + icons on small screens) */}
       {!isAdminRoute && (
@@ -131,13 +110,11 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           <HelpGuideButton />
         </>
       )}
-      {!loading && (
-        <div className="min-h-screen bg-background text-foreground">
-          {children}
-          {showMobileBottomNav && <BottomNavigation />}
-        </div>
-      )}
-    </>
+      <div className="min-h-screen min-h-svh w-full min-w-0 overflow-x-clip break-words bg-background text-foreground antialiased">
+        {children}
+        {showMobileBottomNav && <BottomNavigation />}
+      </div>
+    </SearchOverlayProvider>
   );
 }
 
@@ -192,7 +169,7 @@ function App() {
                             <Route path="/gift-for-her" element={<ResponsiveCategoryPage />} />
                             <Route path="/gift-for-him" element={<ResponsiveCategoryPage />} />
                             <Route path="/gift-cards" element={<Navigate to="/all-products" replace />} />
-                            <Route path="/search" element={<Navigate to="/all-products" replace />} />
+                            <Route path="/search" element={<Navigate to="/all-products?from=search&focus=1" replace />} />
                             <Route path="/notifications" element={<Navigate to="/account" replace />} />
                             <Route path="/category/:gender" element={<ResponsiveCategoryPage />} />
                             <Route path="/category/:gender/:category" element={<ResponsiveCategoryPage />} />

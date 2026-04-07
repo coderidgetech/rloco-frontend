@@ -2,6 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Search, Heart, ShoppingBag, MapPin, ChevronDown } from 'lucide-react';
 import { useWishlist } from '@/app/context/WishlistContext';
 import { useCart } from '@/app/context/CartContext';
+import { useSearchOverlay } from '@/app/context/SearchOverlayContext';
+import { useDeliveryAddressPreview } from '@/app/hooks/useDeliveryAddressPreview';
 import { RlocoLogo } from '../RlocoLogo';
 
 interface MobileSubPageHeaderProps {
@@ -16,10 +18,18 @@ export function MobileSubPageHeader({
   onBack 
 }: MobileSubPageHeaderProps) {
   const navigate = useNavigate();
+  const { openSearch } = useSearchOverlay();
   const { itemCount } = useWishlist();
   const { items } = useCart();
+  const { line: deliveryLine, loading: deliveryLoading, isAuthenticated } = useDeliveryAddressPreview();
 
   const cartItemCount = items?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+
+  const deliveryText = !isAuthenticated
+    ? 'Add a delivery address'
+    : deliveryLoading
+      ? 'Loading address…'
+      : deliveryLine ?? 'Select delivery location';
 
   const handleBackClick = () => {
     if (onBack) {
@@ -64,7 +74,7 @@ export function MobileSubPageHeader({
         <div className="flex items-center gap-2">
           {/* Search */}
           <button
-            onClick={() => navigate('/search')}
+            onClick={() => openSearch()}
             className="w-10 h-10 flex items-center justify-center active:bg-foreground/5 rounded-full transition-colors touch-manipulation"
             style={{ WebkitTapHighlightColor: 'transparent' }}
             aria-label="Search"
@@ -110,16 +120,11 @@ export function MobileSubPageHeader({
           <button 
             className="flex items-center gap-3 w-full text-left touch-manipulation"
             style={{ WebkitTapHighlightColor: 'transparent' }}
-            onClick={() => {
-              // Navigate to delivery location selection
-              navigate('/delivery-location');
-            }}
+            onClick={() => navigate('/addresses')}
           >
             <MapPin size={20} className="text-foreground/70 flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
-                <span className="font-semibold">Praneeth</span> - 202 flat, 2nd floor, datta Krupa ho...
-              </p>
+              <p className="text-sm font-medium text-foreground truncate">{deliveryText}</p>
             </div>
             <ChevronDown size={20} className="text-foreground/50 flex-shrink-0" />
           </button>

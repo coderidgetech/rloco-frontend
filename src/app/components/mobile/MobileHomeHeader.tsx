@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ChevronDown, Search, Bell, Heart, User, Grid } from 'lucide-react';
+import { MapPin, ChevronDown, Search, Bell, Heart, User } from 'lucide-react';
 import { useWishlist } from '@/app/context/WishlistContext';
+import { useSearchOverlay } from '@/app/context/SearchOverlayContext';
+import { useDeliveryAddressPreview } from '@/app/hooks/useDeliveryAddressPreview';
 import { RlocoLogo } from '../RlocoLogo';
 
 interface MobileHomeHeaderProps {
@@ -9,18 +11,20 @@ interface MobileHomeHeaderProps {
   onCategoryChange?: (category: string) => void;
 }
 
-export function MobileHomeHeader({ selectedCategory = 'all', onCategoryChange }: MobileHomeHeaderProps) {
+export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
   const navigate = useNavigate();
+  const { openSearch } = useSearchOverlay();
   const { itemCount } = useWishlist();
+  const { line: deliveryLine, loading: deliveryLoading, isAuthenticated } = useDeliveryAddressPreview();
   const [notificationCount] = useState(3); // Mock notification count
-  
-  const categories = ['All', 'Men', 'Women', 'Kids'];
 
-  const handleCategoryClick = (category: string) => {
-    if (onCategoryChange) {
-      onCategoryChange(category.toLowerCase());
-    }
-  };
+  const deliveryText = !isAuthenticated
+    ? 'Add a delivery address'
+    : deliveryLoading
+      ? 'Loading address…'
+      : deliveryLine
+        ? `Deliver to ${deliveryLine}`
+        : 'Select delivery location';
 
   return (
     <header 
@@ -36,6 +40,14 @@ export function MobileHomeHeader({ selectedCategory = 'all', onCategoryChange }:
 
         {/* Action Icons */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => openSearch()}
+            className="w-10 h-10 rounded-full flex items-center justify-center active:bg-foreground/5 transition-colors touch-manipulation"
+            style={{ WebkitTapHighlightColor: 'transparent' }}
+            aria-label="Search products"
+          >
+            <Search size={24} className="text-foreground/80" />
+          </button>
           {/* Notification Icon */}
           <button
             onClick={() => navigate('/notifications')}
@@ -83,13 +95,11 @@ export function MobileHomeHeader({ selectedCategory = 'all', onCategoryChange }:
         <button 
           className="flex items-center gap-2 w-full text-left touch-manipulation"
           style={{ WebkitTapHighlightColor: 'transparent' }}
-          onClick={() => navigate('/delivery-location')}
+          onClick={() => navigate('/addresses')}
         >
           <MapPin size={20} className="text-foreground/70 flex-shrink-0" />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">
-              Deliver to <span className="font-semibold">Praneeth</span> - 202 flat, 2nd floor, datta Krup...
-            </p>
+            <p className="text-sm font-medium text-foreground truncate">{deliveryText}</p>
           </div>
           <ChevronDown size={20} className="text-foreground/50 flex-shrink-0" />
         </button>

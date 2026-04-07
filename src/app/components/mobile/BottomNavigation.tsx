@@ -1,20 +1,27 @@
 import { motion } from 'motion/react';
 import { Home, Grid, Search, ShoppingBag, User, Heart } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useCart } from '@/app/context/CartContext';
 import { useWishlist } from '@/app/context/WishlistContext';
 import { useUser } from '@/app/context/UserContext';
+import { useSearchOverlay } from '@/app/context/SearchOverlayContext';
 import { useState } from 'react';
 
 export function BottomNavigation() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const { openSearch, isSearchOpen } = useSearchOverlay();
   const { itemCount } = useCart();
   const { itemCount: wishlistCount } = useWishlist();
   const { isAuthenticated } = useUser();
   const [activeTab, setActiveTab] = useState('home');
 
   const isActive = (path: string) => location.pathname === path;
+
+  const isSearchTabActive =
+    isSearchOpen ||
+    (location.pathname === '/all-products' && searchParams.get('from') === 'search');
 
   const handleNavigation = (path: string, tab: string) => {
     setActiveTab(tab);
@@ -103,27 +110,30 @@ export function BottomNavigation() {
 
         {/* Search */}
         <button
-          onClick={() => handleNavigation('/search', 'search')}
+          onClick={() => {
+            setActiveTab('search');
+            openSearch();
+          }}
           className="flex flex-col items-center justify-center flex-1 h-full relative group"
         >
           <div className={`flex flex-col items-center transition-all ${
-            isActive('/search') ? 'scale-110' : 'scale-100'
+            isSearchTabActive ? 'scale-110' : 'scale-100'
           }`}>
             <Search
               size={22}
               className={`transition-all ${
-                isActive('/search') 
+                isSearchTabActive
                   ? 'text-primary stroke-[2.5]' 
                   : 'text-foreground/60 group-active:text-primary'
               }`}
             />
             <span className={`text-[10px] mt-1 font-medium transition-all ${
-              isActive('/search') ? 'text-primary' : 'text-foreground/60 group-active:text-primary'
+              isSearchTabActive ? 'text-primary' : 'text-foreground/60 group-active:text-primary'
             }`}>
               Search
             </span>
           </div>
-          {isActive('/search') && (
+          {isSearchTabActive && (
             <motion.div
               layoutId="activeTab"
               className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full"

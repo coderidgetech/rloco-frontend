@@ -7,8 +7,7 @@ import { useSiteConfig } from '../context/SiteConfigContext';
 import { useUser } from '../context/UserContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { SearchModal } from './SearchModal';
-import { AccountPage } from './AccountPage';
+import { useSearchOverlay } from '../context/SearchOverlayContext';
 import { RlocoLogo } from './RlocoLogo';
 import { MegaMenu } from './MegaMenu';
 import { LoginModal } from './LoginModal';
@@ -20,14 +19,11 @@ export function Navigation() {
   const [scrolled, setScrolled] = useState(false);
   const [prevScrollPos, setPrevScrollPos] = useState(0);
   const [visible, setVisible] = useState(true);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [wishlistOpen, setWishlistOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<'women' | 'men' | null>(null);
   const [mobileSubMenu, setMobileSubMenu] = useState<'women' | 'men' | null>(null);
-  const [navSearchQuery, setNavSearchQuery] = useState('');
 
+  const { openSearch } = useSearchOverlay();
   const { itemCount } = useCart();
   const { itemCount: wishlistCount } = useWishlist();
   const { country, setCountry } = useCurrency();
@@ -165,8 +161,8 @@ export function Navigation() {
           boxShadow: scrolled ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : 'none',
         }}
       >
-        <div className="flex h-14 w-full items-center px-6 md:px-12 lg:px-20">
-          <div className="relative flex h-full w-full items-center justify-between">
+        <div className="mx-auto flex h-14 w-full min-w-0 max-w-[100%] items-center gap-1.5 px-3 sm:gap-2 sm:px-4 md:px-6 lg:px-10 xl:px-14 2xl:px-20">
+          <div className="relative flex h-full w-full min-w-0 items-center justify-between gap-1">
             <motion.button
               whileTap={{ scale: 0.94 }}
               onClick={() => setIsOpen(!isOpen)}
@@ -181,12 +177,12 @@ export function Navigation() {
               initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="hidden md:flex flex-1 items-center justify-start gap-6 lg:gap-8 min-w-0"
+              className="scrollbar-hide hidden min-w-0 flex-1 items-center justify-start gap-2 overflow-x-auto md:flex lg:gap-5 xl:gap-8"
             >
               <button
                 type="button"
                 onClick={() => navigate('/new-arrivals')}
-                className="text-foreground/70 hover:text-foreground transition-colors relative group text-sm shrink-0"
+                className="shrink-0 text-foreground/70 transition-colors hover:text-foreground relative group text-xs lg:text-sm"
               >
                 New Arrivals
                 <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-foreground transition-all duration-300 group-hover:w-full" />
@@ -194,7 +190,7 @@ export function Navigation() {
               <motion.div className="relative" onMouseEnter={() => setActiveDropdown('women')}>
                 <button
                   type="button"
-                  className="text-foreground/70 hover:text-foreground transition-colors relative group flex items-center gap-1 text-sm shrink-0"
+                  className="shrink-0 flex items-center gap-1 text-foreground/70 transition-colors hover:text-foreground relative group text-xs lg:text-sm"
                   onClick={() => handleCategoryClick('women')}
                 >
                   Women
@@ -209,7 +205,7 @@ export function Navigation() {
               <motion.div className="relative" onMouseEnter={() => setActiveDropdown('men')}>
                 <button
                   type="button"
-                  className="text-foreground/70 hover:text-foreground transition-colors relative group flex items-center gap-1 text-sm shrink-0"
+                  className="shrink-0 flex items-center gap-1 text-foreground/70 transition-colors hover:text-foreground relative group text-xs lg:text-sm"
                   onClick={() => handleCategoryClick('men')}
                 >
                   Men
@@ -224,7 +220,7 @@ export function Navigation() {
               <button
                 type="button"
                 onClick={() => navigate('/sale')}
-                className="text-foreground/70 hover:text-foreground transition-colors relative group text-sm shrink-0"
+                className="shrink-0 text-foreground/70 transition-colors hover:text-foreground relative group text-xs lg:text-sm"
               >
                 Sale
                 <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-foreground transition-all duration-300 group-hover:w-full" />
@@ -238,7 +234,7 @@ export function Navigation() {
                 scale: location.pathname === '/' && !scrolled && !isMobile ? 0.92 : 1,
               }}
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute left-1/2 top-1/2 w-20 -translate-x-1/2 -translate-y-1/2 cursor-pointer md:static md:left-auto md:top-auto md:w-24 md:translate-x-0 md:translate-y-0"
+              className="absolute left-1/2 top-1/2 w-20 max-w-[28%] shrink-0 -translate-x-1/2 -translate-y-1/2 cursor-pointer md:static md:left-auto md:top-auto md:w-24 md:max-w-none md:translate-x-0 md:translate-y-0"
               onClick={handleLogoClick}
               style={{
                 pointerEvents: location.pathname === '/' && !scrolled && !isMobile ? 'none' : 'auto',
@@ -247,41 +243,26 @@ export function Navigation() {
               <RlocoLogo size="sm" />
             </motion.div>
 
-            <div className="flex flex-1 items-center justify-end gap-2 md:gap-4 lg:gap-6 min-w-0 pl-6 md:pl-0">
-              <div className="relative hidden min-w-0 w-[min(200px,30vw)] max-w-[280px] sm:block lg:w-[min(280px,22vw)]">
-                <input
-                  type="text"
-                  value={navSearchQuery}
-                  onChange={(e) => setNavSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && navSearchQuery.trim()) {
-                      setSearchOpen(true);
-                    }
-                  }}
-                  placeholder="Search..."
-                  className="w-full border-0 border-b border-foreground/10 bg-transparent py-1.5 pl-7 pr-7 text-xs text-foreground placeholder:text-foreground/30 focus:border-foreground/40 focus:outline-none md:pl-8 md:text-sm"
-                  aria-label="Search products"
-                />
+            <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 pl-3 sm:gap-2 md:gap-3 md:pl-2 lg:gap-4 xl:gap-6">
+              <button
+                type="button"
+                onClick={() => openSearch()}
+                className="relative hidden min-w-0 max-w-[200px] text-left sm:block sm:w-[min(120px,24vw)] md:max-w-[240px] md:w-[min(180px,20vw)] lg:max-w-[280px] lg:w-[min(240px,18vw)]"
+                aria-label="Search products"
+              >
                 <Search
                   size={14}
                   className="pointer-events-none absolute left-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-foreground/30 md:left-0.5 md:h-[15px] md:w-[15px]"
                 />
-                {navSearchQuery ? (
-                  <button
-                    type="button"
-                    className="absolute right-0 top-1/2 -translate-y-1/2 text-foreground/30 hover:text-foreground"
-                    onClick={() => setNavSearchQuery('')}
-                    aria-label="Clear search"
-                  >
-                    <X size={13} />
-                  </button>
-                ) : null}
-              </div>
+                <span className="block w-full border-0 border-b border-foreground/10 py-1.5 pl-7 pr-2 text-xs text-foreground/40 md:pl-8 md:text-sm">
+                  Search
+                </span>
+              </button>
 
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 type="button"
-                onClick={() => setSearchOpen(true)}
+                onClick={() => openSearch()}
                 className="sm:hidden flex h-10 w-10 shrink-0 items-center justify-center text-foreground/70"
                 aria-label="Search"
               >
@@ -546,7 +527,10 @@ export function Navigation() {
                   </button>
                   <div className="border-t border-border pt-4 mt-3 flex flex-col gap-1">
                     <button
-                      onClick={() => { setSearchOpen(true); setIsOpen(false); }}
+                      onClick={() => {
+                        openSearch();
+                        setIsOpen(false);
+                      }}
                       className="text-foreground/70 hover:text-foreground transition-colors text-left flex items-center gap-2 py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px]"
                       type="button"
                     >
@@ -592,8 +576,6 @@ export function Navigation() {
       </nav>
 
       {/* Cart Drawer */}
-      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} initialQuery={navSearchQuery} />
-      
       {/* Show LoginModal if not logged in (for modal access), AccountPage route handles logged-in state */}
       {!isAuthenticated && (
         <LoginModal 

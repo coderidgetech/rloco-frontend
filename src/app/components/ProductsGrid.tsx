@@ -133,7 +133,7 @@ export function ProductsGrid() {
             </motion.div>
 
         {/* Products Grid - 4 columns with smaller cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+        <div className="grid min-w-0 grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
           <AnimatePresence mode="popLayout">
             {displayProducts.map((product, index) => (
               <motion.div

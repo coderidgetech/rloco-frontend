@@ -14,7 +14,7 @@ export function HomePage() {
   const { config } = useSiteConfig();
 
   return (
-    <div className="snap-y snap-mandatory" style={{ position: 'relative' }}>
+    <div className="relative snap-y snap-proximity md:snap-none">
       {config.homepage.hero.enabled && (
         <div className="snap-start">
           <Hero />
