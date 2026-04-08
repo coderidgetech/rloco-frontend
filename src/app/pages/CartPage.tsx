@@ -47,6 +47,8 @@ import { cn } from '../components/ui/utils';
 /** Matches RLOKO cart design (gold accent) */
 const GOLD = '#B8860B';
 const GOLD_HOVER = '#9a7310';
+/** Keep in sync with CartContext GIFT_PACKING_PER_ITEM */
+const GIFT_PACKING_PER_ITEM_INR = 50;
 
 function cartItemKey(id: string | number, size: string) {
   return `${String(id)}::${size}`;
@@ -93,7 +95,7 @@ export function CartPage() {
   const { isAuthenticated } = useUser();
   const { selectedAddress, donationAmount, setDonationAmount } = useOrder();
   const { addToWishlist } = useWishlist();
-  const { items, removeFromCart, updateQuantity, updateGiftOptions, giftPackingCharge, addToCart } = useCart();
+  const { items, removeFromCart, updateQuantity, updateGiftOptions, addToCart } = useCart();
   const { formatPrice, formatAmount, convertPrice, currency, market } = useCurrency();
   const [giftMessageDrafts, setGiftMessageDrafts] = useState<Record<string, string>>({});
   const [couponCode, setCouponCode] = useState('');
@@ -188,13 +190,20 @@ export function CartPage() {
     }
   };
 
-  const subtotal = items.reduce((sum, item) => {
-    const itemPrice = convertPrice(item.price, (item as { priceINR?: number }).priceINR);
-    return sum + itemPrice * item.quantity;
-  }, 0);
+  const selectedLineItems = useMemo(
+    () => items.filter((item) => selectedItems.has(cartItemKey(item.id, item.size))),
+    [items, selectedItems]
+  );
+
+  const subtotal = useMemo(() => {
+    return selectedLineItems.reduce((sum, item) => {
+      const itemPrice = convertPrice(item.price, (item as { priceINR?: number }).priceINR);
+      return sum + itemPrice * item.quantity;
+    }, 0);
+  }, [selectedLineItems, convertPrice]);
 
   const totalMRP = useMemo(() => {
-    return items.reduce((sum, item) => {
+    return selectedLineItems.reduce((sum, item) => {
       const p = productMap[String(item.id)];
       const unit =
         p?.original_price != null && p.original_price > 0
@@ -202,7 +211,7 @@ export function CartPage() {
           : convertPrice(item.price, (item as { priceINR?: number }).priceINR);
       return sum + unit * item.quantity;
     }, 0);
-  }, [items, productMap, convertPrice]);
+  }, [selectedLineItems, productMap, convertPrice]);
 
   const savingsOnMRP = Math.max(0, totalMRP - subtotal);
 
@@ -224,14 +233,30 @@ export function CartPage() {
 
   const shippingThreshold = currency === 'USD' ? 200 : 15000;
   const shippingCost = currency === 'USD' ? 15 : 1125;
+  const hasSelection = selectedLineItems.length > 0;
   const shipping =
-    appliedCoupon?.promotion?.type === 'free_shipping' || appliedCoupon?.code === 'FREESHIP'
+    !hasSelection
       ? 0
-      : subtotal > shippingThreshold
+      : appliedCoupon?.promotion?.type === 'free_shipping' || appliedCoupon?.code === 'FREESHIP'
         ? 0
-        : shippingCost;
-  const tax = (subtotal - discount) * 0.08;
-  const giftPackingDisplay = currency === 'INR' ? giftPackingCharge : giftPackingCharge / 75;
+        : subtotal > shippingThreshold
+          ? 0
+          : shippingCost;
+  const tax = hasSelection ? (subtotal - discount) * 0.08 : 0;
+
+  const selectedGiftPackingChargeINR = useMemo(
+    () =>
+      selectedLineItems.reduce(
+        (sum, item) => sum + (item.isGift ? item.quantity * GIFT_PACKING_PER_ITEM_INR : 0),
+        0
+      ),
+    [selectedLineItems]
+  );
+  const giftPackingDisplay = !hasSelection
+    ? 0
+    : currency === 'INR'
+      ? selectedGiftPackingChargeINR
+      : selectedGiftPackingChargeINR / 75;
   /** Design: single “Platform fee” line = tax + shipping + gift packing */
   const platformFeeBundle = tax + shipping + giftPackingDisplay;
   const finalTotal = Math.max(
@@ -311,6 +336,10 @@ export function CartPage() {
   const handleCheckout = () => {
     if (items.length === 0) {
       toast.error('Your cart is empty');
+      return;
+    }
+    if (selectedItems.size === 0) {
+      toast.error('Select at least one item to place order');
       return;
     }
     if (!isAuthenticated) {
@@ -1025,7 +1054,11 @@ export function CartPage() {
 
               <div className="rounded-lg border border-neutral-200 bg-white p-5 space-y-3 shadow-sm dark:border-border dark:bg-card">
                 <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-neutral-800 dark:text-foreground">
-                  PRICE DETAILS ({items.length} {items.length === 1 ? 'ITEM' : 'ITEMS'})
+                  PRICE DETAILS (
+                  {selectedCount === 0
+                    ? 'NO ITEMS SELECTED'
+                    : `${selectedCount} OF ${items.length} SELECTED`}
+                  )
                 </h3>
                 <div className="flex justify-between text-sm gap-4">
                   <span className="text-neutral-600 dark:text-muted-foreground">Total MRP:</span>
@@ -1059,15 +1092,16 @@ export function CartPage() {
                 </div>
               </div>
 
-              {shipping > 0 && subtotal < shippingThreshold && (
+              {hasSelection && shipping > 0 && subtotal < shippingThreshold && (
                 <div className="p-3 rounded-lg border border-blue-500/20 bg-blue-500/10 text-sm text-blue-700 dark:text-blue-300">
                   Add {formatAmount(shippingThreshold - subtotal)} more for free shipping.
                 </div>
               )}
 
               <Button
-                className="w-full gap-2 py-6 text-base font-bold uppercase tracking-wide text-white shadow-md hover:opacity-95"
+                className="w-full gap-2 py-6 text-base font-bold uppercase tracking-wide text-white shadow-md hover:opacity-95 disabled:opacity-50"
                 style={{ backgroundColor: GOLD }}
+                disabled={selectedCount === 0}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = GOLD_HOVER)}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = GOLD)}
                 onClick={handleCheckout}
@@ -1105,8 +1139,9 @@ export function CartPage() {
             <p className="text-lg font-bold leading-tight tabular-nums truncate">{formatAmount(finalTotal)}</p>
           </div>
           <Button
-            className="ml-auto min-h-[48px] flex-1 max-w-[min(100%,280px)] gap-2 font-bold uppercase text-white hover:opacity-95"
+            className="ml-auto min-h-[48px] flex-1 max-w-[min(100%,280px)] gap-2 font-bold uppercase text-white hover:opacity-95 disabled:opacity-50"
             style={{ backgroundColor: GOLD }}
+            disabled={selectedCount === 0}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = GOLD_HOVER)}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = GOLD)}
             onClick={handleCheckout}
