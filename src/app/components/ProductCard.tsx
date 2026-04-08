@@ -1,11 +1,10 @@
 import { motion } from 'motion/react';
-import { Heart, ShoppingCart, Plus, Minus } from 'lucide-react';
+import { Heart, ShoppingCart } from 'lucide-react';
 import { Product } from '../types/product';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { toast } from 'sonner';
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 interface ProductCardProps {
@@ -18,7 +17,6 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
   const { addToCart, items } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { formatPrice } = useCurrency();
-  const [quantity, setQuantity] = useState(1);
   const navigate = useNavigate();
 
   const isWishlisted = isInWishlist(product.id);
@@ -35,23 +33,16 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
       return;
     }
     
-    for (let i = 0; i < quantity; i++) {
-      addToCart({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        priceINR: product.price_inr || product.priceINR, // Add INR price
-        image: product.images?.[0] || product.image || '',
-        size: product.sizes?.[0] || 'M',
-      });
-    }
-    
-    toast.success(`Added ${quantity} item(s) to cart`);
-  };
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      priceINR: product.price_inr || product.priceINR, // Add INR price
+      image: product.images?.[0] || product.image || '',
+      size: product.sizes?.[0] || 'M',
+    });
 
-  const handleQuantityChange = (e: React.MouseEvent, delta: number) => {
-    e.stopPropagation();
-    setQuantity(Math.max(1, quantity + delta));
+    toast.success('Added to bag');
   };
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
@@ -157,28 +148,7 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
           )}
         </div>
 
-        {/* Quantity Controls - always reserve space to keep button alignment consistent */}
-        <div className={`flex items-center justify-center gap-3 mb-3 ${isInCart ? 'invisible' : ''}`}>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) => handleQuantityChange(e, -1)}
-            className="w-8 h-8 bg-muted hover:bg-muted/80 rounded-full flex items-center justify-center transition-colors"
-          >
-            <Minus size={16} />
-          </motion.button>
-          <span className="text-sm font-semibold w-8 text-center">{quantity}</span>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) => handleQuantityChange(e, 1)}
-            className="w-8 h-8 bg-muted hover:bg-muted/80 rounded-full flex items-center justify-center transition-colors"
-          >
-            <Plus size={16} />
-          </motion.button>
-        </div>
-
-        {/* Add to Bag / Go to Cart Button */}
+        {/* Add to Bag / Go to Cart — quantity is adjusted only on the cart page */}
         <motion.button
           onClick={handleAddToCart}
           whileHover={{ scale: 1.02 }}
