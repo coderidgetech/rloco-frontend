@@ -53,28 +53,23 @@ export function MobileHomePage() {
           </div>
         </motion.div>
 
-        {/* Category Grid */}
-        <CategoryGrid />
-
-        {/* Divider - ref: h-4 */}
-        <div className="h-4 bg-foreground/5" />
-
-        {/* Gift Section */}
-        <MobileGiftSection />
-
-        {/* Divider - ref: h-4 */}
-        <div className="h-4 bg-foreground/5" />
-
-        {/* Featured Products - ref title: "Top Collection" */}
         {featuredProducts.length > 0 && (
           <>
             <MobileProductGrid
               products={featuredProducts}
               title="Top Collection"
             />
-            <div className="h-4 bg-foreground/5" />
+            <div className="h-2 bg-foreground/5" />
           </>
         )}
+
+        <CategoryGrid />
+
+        <div className="h-2 bg-foreground/5" />
+
+        <MobileGiftSection />
+
+        <div className="h-2 bg-foreground/5" />
 
         {/* New Arrivals */}
         {newArrivals.length > 0 && (

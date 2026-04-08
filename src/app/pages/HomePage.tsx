@@ -20,6 +20,11 @@ export function HomePage() {
           <Hero />
         </div>
       )}
+      {config.homepage.sections.featuredProducts && (
+        <div className="snap-start bg-background">
+          <ProductsGrid />
+        </div>
+      )}
       {config.homepage.sections.shopByCategory && (
         <div className="snap-start">
           <Categories />
@@ -28,17 +33,14 @@ export function HomePage() {
       <div className="snap-start">
         <GiftSection />
       </div>
+      {config.homepage.sections.featuredProducts && (
+        <div className="snap-start bg-background">
+          <Featured />
+        </div>
+      )}
       {config.homepage.sections.editorialFeatures && (
         <VideoShowcase />
       )}
-      <div className="relative bg-background snap-start">
-        {config.homepage.sections.featuredProducts && (
-          <>
-            <ProductsGrid />
-            <Featured />
-          </>
-        )}
-      </div>
       <div className="snap-start">
         <InspirationVideos />
       </div>

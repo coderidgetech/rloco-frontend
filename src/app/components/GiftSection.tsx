@@ -34,7 +34,7 @@ export function GiftSection() {
   const navigate = useNavigate();
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-background via-background to-muted/30 py-12 sm:py-16 md:py-24">
+    <section className="relative overflow-hidden bg-gradient-to-br from-background via-background to-muted/30 py-10 sm:py-12 md:py-14">
       <BackgroundDecor variant="default" showOrbs showDots />
 
       <motion.div
@@ -58,7 +58,7 @@ export function GiftSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-10 text-center sm:mb-12 md:mb-16"
+          className="mb-8 text-center sm:mb-9 md:mb-10"
         >
           <motion.div
             initial={{ width: 0 }}

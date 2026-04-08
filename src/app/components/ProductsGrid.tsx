@@ -79,7 +79,7 @@ export function ProductsGrid() {
   };
 
   return (
-    <section id="products" className="py-16 md:py-24 px-4 md:px-6 bg-background relative overflow-hidden">
+    <section id="products" className="pt-8 pb-10 px-4 md:pt-10 md:pb-12 md:px-6 bg-background relative overflow-hidden">
       {/* Reusable Background Decoration */}
       <BackgroundDecor 
         variant="alternate"
@@ -117,7 +117,7 @@ export function ProductsGrid() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="mb-12 text-center"
+              className="mb-8 text-center md:mb-10"
             >
               <motion.div
                 initial={{ width: 0 }}

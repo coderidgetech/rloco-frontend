@@ -124,7 +124,7 @@ export function Categories() {
 
   if (loading) {
     return (
-      <section id="categories" className="py-16 md:py-24 relative overflow-hidden bg-background">
+      <section id="categories" className="py-10 md:py-12 relative overflow-hidden bg-background">
         <div className="text-center">Loading categories...</div>
       </section>
     );
@@ -135,7 +135,7 @@ export function Categories() {
   }
 
   return (
-    <section id="categories" className="py-16 md:py-24 relative overflow-hidden bg-background">
+    <section id="categories" className="py-10 md:py-12 relative overflow-hidden bg-background">
       {/* Reusable Background Decoration */}
       <BackgroundDecor 
         variant="default"
@@ -153,7 +153,7 @@ export function Categories() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="text-center mb-12 md:mb-16"
+            className="text-center mb-8 md:mb-10"
           >
             <motion.div
               initial={{ width: 0 }}

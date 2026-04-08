@@ -76,14 +76,14 @@ export function Featured() {
   };
 
   return (
-    <section id="featured" className="py-16 md:py-24 bg-accent/20 relative" style={{ position: 'relative' }}>
+    <section id="featured" className="py-10 md:py-12 bg-accent/20 relative" style={{ position: 'relative' }}>
       <div className="w-full" style={{ position: 'relative' }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="text-center mb-12 md:mb-16"
+          className="text-center mb-8 md:mb-10"
         >
           <motion.div
             initial={{ width: 0 }}
