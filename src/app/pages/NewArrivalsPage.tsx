@@ -180,10 +180,10 @@ export function NewArrivalsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Breadcrumb */}
       <div className="border-b border-foreground/5 bg-background">
-        <div className="max-w-[1920px] mx-auto px-4 md:px-8 py-3">
+        <div className="page-container py-3">
           <div className="flex items-center gap-2 text-xs text-foreground/50">
             <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors uppercase">
               Home
@@ -203,7 +203,7 @@ export function NewArrivalsPage() {
           <div className="absolute bottom-10 left-1/4 w-20 h-20 border border-foreground/10 rotate-45" />
         </div>
 
-        <div className="max-w-[1920px] mx-auto px-4 md:px-8 py-12 md:py-20 relative z-10">
+        <div className="page-container py-12 md:py-20 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -388,7 +388,7 @@ export function NewArrivalsPage() {
         </motion.div>
 
         {/* Main Content: Sidebar + Products */}
-        <div className="flex gap-8 items-start">
+        <div className="flex min-w-0 gap-8 items-start">
           {/* Desktop Sidebar */}
           <FilterSidebar
             searchQuery={searchQuery}

@@ -129,7 +129,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen w-full min-w-0 bg-gray-50">
       <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-50 h-[56px]">
         <div className="flex items-center justify-between h-full px-3 md:px-4">
           <div className="flex items-center gap-2 md:gap-4 min-w-0">
@@ -230,7 +230,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         </div>
       </aside>
 
-      <main className={cn('pt-[56px] transition-all duration-300 min-h-screen lg:pl-64')}>
+      <main className={cn('min-h-screen w-full min-w-0 pt-[56px] transition-all duration-300 lg:pl-64')}>
         <div className="p-3 md:p-4 lg:p-6">{children}</div>
       </main>
 

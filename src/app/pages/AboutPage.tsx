@@ -6,7 +6,7 @@ import { useSiteConfig } from '../context/SiteConfigContext';
 export function AboutPage() {
   const { config } = useSiteConfig();
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Hero Section */}
       <div className="border-b border-foreground/5">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-16 md:py-24 text-center">
@@ -27,7 +27,7 @@ export function AboutPage() {
       </div>
 
       {/* Mission Section */}
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-16 md:py-24">
+      <div className="page-container-md py-16 md:py-24">
         <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -69,7 +69,7 @@ export function AboutPage() {
 
       {/* Values Section */}
       <div className="bg-foreground/[0.02] border-y border-foreground/5">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 py-16 md:py-24">
+        <div className="page-container-md py-16 md:py-24">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -126,7 +126,7 @@ export function AboutPage() {
       </div>
 
       {/* Stats Section */}
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-16 md:py-24">
+      <div className="page-container-md py-16 md:py-24">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           {[
             { value: '50K+', label: 'Happy Customers' },
@@ -151,7 +151,7 @@ export function AboutPage() {
 
       {/* Team Section */}
       <div className="bg-foreground/[0.02] border-t border-foreground/5">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 py-16 md:py-24">
+        <div className="page-container-md py-16 md:py-24">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

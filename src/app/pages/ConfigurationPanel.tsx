@@ -71,9 +71,9 @@ export function ConfigurationPanel() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/20 to-background p-4 md:p-8">
+    <div className="min-h-screen w-full min-w-0 bg-gradient-to-br from-background via-muted/20 to-background px-3 py-4 sm:px-4 md:px-6 md:py-8">
       {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8">
+      <div className="page-container-lg mb-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -121,8 +121,8 @@ export function ConfigurationPanel() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="page-container-lg">
+        <div className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-4">
           {/* Sidebar Tabs */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}

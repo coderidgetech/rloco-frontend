@@ -70,7 +70,7 @@ export function CartPage({ isOpen, onClose }: CartPageProps) {
             <div className="h-full bg-background flex flex-col">
               {/* Header */}
               <div className="border-b border-border bg-background sticky top-0 z-10">
-                <div className="w-full px-2 md:px-4 py-4 md:py-6 flex items-center justify-between">
+                <div className="page-section py-4 md:py-6 flex items-center justify-between">
                   <div className="flex items-center gap-3 md:gap-4">
                     <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center">
                       <ShoppingBag className="text-primary" size={20} />
@@ -94,7 +94,7 @@ export function CartPage({ isOpen, onClose }: CartPageProps) {
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto">
-                <div className="w-full px-2 md:px-4 py-6 md:py-8">
+                <div className="page-section py-6 md:py-8">
                   {items.length === 0 ? (
                     /* Empty Cart State */
                     <div className="h-full flex flex-col items-center justify-center text-center py-12 md:py-20">

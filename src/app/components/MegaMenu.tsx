@@ -91,12 +91,11 @@ export function MegaMenu({ isOpen, gender, onClose, onCategoryClick }: MegaMenuP
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="hidden md:block fixed z-40"
+            className="fixed z-40 hidden w-full min-w-0 md:block"
             style={{
               top: '56px',
               left: 0,
               right: 0,
-              width: '100vw',
               maxHeight: 'min(42vh, 520px)',
               backgroundColor: 'rgba(255, 255, 255, 0.95)',
               backdropFilter: 'blur(20px)',

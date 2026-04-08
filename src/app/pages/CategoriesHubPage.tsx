@@ -15,7 +15,7 @@ export function CategoriesHubPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background pb-mobile-nav px-4 py-6 md:py-8 max-w-2xl mx-auto">
+    <div className="page-container-narrow-form min-h-screen bg-background py-6 pb-mobile-nav md:py-8">
       <p className="text-sm text-muted-foreground mb-6">Choose where to shop</p>
       <div className="space-y-2">
         {ROWS.map((row, i) => (

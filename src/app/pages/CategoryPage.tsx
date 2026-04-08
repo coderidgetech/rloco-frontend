@@ -278,10 +278,10 @@ export function CategoryPage() {
     : `${routeGender?.charAt(0).toUpperCase() + routeGender?.slice(1)}'s Collection`;
 
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {isGiftRoute && (
         <section className="border-b border-foreground/10 bg-gradient-to-b from-primary/5 to-background">
-          <div className="max-w-[1920px] mx-auto px-4 md:px-8 py-10 md:py-14 text-center">
+          <div className="page-container py-10 md:py-14 text-center">
             <motion.p
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -306,7 +306,7 @@ export function CategoryPage() {
 
       {/* Breadcrumb */}
       <div className="border-b border-foreground/5 bg-background">
-        <div className="max-w-[1920px] mx-auto px-4 md:px-8 py-3">
+        <div className="page-container py-3">
           <div className="flex items-center gap-2 text-xs text-foreground/50">
             <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors uppercase">
               Home
@@ -336,7 +336,7 @@ export function CategoryPage() {
       </div>
 
       {/* Header */}
-      <div className="max-w-[1920px] mx-auto px-4 md:px-8 py-6 md:py-8">
+      <div className="page-container py-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -458,7 +458,7 @@ export function CategoryPage() {
         <PromotionalOffers filterGender={routeGender as 'women' | 'men' | 'all'} selectedCategory={category} />
 
         {/* Main Content: Sidebar + Products */}
-        <div className="flex gap-8 items-start">
+        <div className="flex min-w-0 gap-8 items-start">
           {/* Desktop Sidebar */}
           <FilterSidebar
             searchQuery={searchQuery}

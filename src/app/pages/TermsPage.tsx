@@ -3,7 +3,7 @@ import { Footer } from '../components/Footer';
 
 export function TermsPage() {
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Hero Section */}
       <div className="border-b border-foreground/5">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-16 md:py-20 text-center">

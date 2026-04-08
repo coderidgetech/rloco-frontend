@@ -214,10 +214,10 @@ export function AllProductsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Breadcrumb */}
       <div className="border-b border-foreground/5 bg-background">
-        <div className="max-w-[1920px] mx-auto px-4 md:px-8 py-3">
+        <div className="page-container py-3">
           <div className="flex items-center gap-2 text-xs text-foreground/50">
             <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors uppercase">
               Home
@@ -229,7 +229,7 @@ export function AllProductsPage() {
       </div>
 
       {/* Header */}
-      <div className="max-w-[1920px] mx-auto px-4 md:px-8 py-6 md:py-8">
+      <div className="page-container py-6 md:py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -349,7 +349,7 @@ export function AllProductsPage() {
         </motion.div>
 
         {/* Main Content: Sidebar + Products */}
-        <div className="flex gap-8 items-start">
+        <div className="flex min-w-0 gap-8 items-start">
           {/* Desktop Sidebar - Sticky with bottom constraint */}
           <motion.aside
             initial={{ opacity: 0, x: -20 }}
@@ -443,14 +443,14 @@ export function AllProductsPage() {
           />
 
           {/* Products Grid */}
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             {loading ? (
               <div className="text-center py-16">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
                 <p className="mt-4 text-gray-600">Loading products...</p>
               </div>
             ) : filteredProducts.length > 0 ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid min-w-0 grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {filteredProducts.map((product, index) => (
                   <motion.div
                     key={product.id}

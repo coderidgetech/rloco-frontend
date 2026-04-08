@@ -72,7 +72,7 @@ export function DesktopLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col lg:flex-row">
+    <div className="flex min-h-screen w-full min-w-0 flex-col bg-white lg:flex-row">
       {/* Left Side - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:px-8 pt-page-nav pb-10 lg:pb-8 lg:pt-32 min-h-[50vh] lg:min-h-0">
         <motion.div

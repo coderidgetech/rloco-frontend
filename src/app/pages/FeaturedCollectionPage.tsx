@@ -158,10 +158,10 @@ export function FeaturedCollectionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Breadcrumb */}
       <div className="border-b border-foreground/5 bg-background">
-        <div className="max-w-[1920px] mx-auto px-4 md:px-8 py-3">
+        <div className="page-container py-3">
           <div className="flex items-center gap-2 text-xs text-foreground/50">
             <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors uppercase">
               Home
@@ -196,7 +196,7 @@ export function FeaturedCollectionPage() {
 
       {/* Products Section */}
       <div className="w-full px-4 md:px-6 lg:px-12 xl:px-16 py-8 md:py-12">
-        <div className="flex gap-8">
+        <div className="flex min-w-0 gap-8">
           {/* Desktop Sidebar Filters */}
           <div className="hidden lg:block w-64 flex-shrink-0">
             <FilterSidebar
@@ -278,7 +278,7 @@ export function FeaturedCollectionPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4 }}
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+              className="grid min-w-0 grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4"
             >
               {filteredProducts.map((product, index) => (
                 <motion.div

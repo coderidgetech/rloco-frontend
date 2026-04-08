@@ -56,7 +56,7 @@ export function Footer() {
       {/* Newsletter Section - when enabled */}
       {config.navigation.footer.showNewsletter && (
         <div className="border-b border-border/10">
-          <div className="max-w-[1920px] mx-auto px-8 md:px-12 lg:px-16 xl:px-20 py-12 md:py-16">
+          <div className="page-container py-12 md:py-16">
             <div className="max-w-2xl mx-auto text-center space-y-6">
               <h3 className="text-2xl md:text-3xl font-light tracking-tight">
                 Join Our Exclusive Circle
@@ -87,7 +87,7 @@ export function Footer() {
       {/* Top Section with CTA - when newsletter is disabled */}
       {!config.navigation.footer.showNewsletter && (
         <div className="border-y border-foreground/10">
-          <div className="max-w-[1920px] mx-auto px-8 md:px-12 lg:px-16 xl:px-20 py-12 md:py-16">
+          <div className="page-container py-12 md:py-16">
             <div className="flex flex-col md:flex-row justify-between items-center gap-8">
               <div>
                 <h3 className="text-3xl md:text-4xl mb-2 tracking-tight">Experience {config.general.siteName}</h3>
@@ -107,7 +107,7 @@ export function Footer() {
       )}
 
       {/* Main Footer Content */}
-      <div className="max-w-[1920px] mx-auto px-8 md:px-12 lg:px-16 xl:px-20 py-16 md:py-20">
+      <div className="page-container py-16 md:py-20">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8 mb-16">
           {/* Brand & Contact */}
           <div className="md:col-span-4">
@@ -264,7 +264,7 @@ export function Footer() {
           transition={{ duration: 0.8, ease: 'easeOut' }}
           className="pt-12 pb-6"
         >
-          <div className="w-full max-w-6xl mx-auto" style={{ aspectRatio: '250/44.8435' }}>
+          <div className="mx-auto w-full min-w-0 max-w-6xl" style={{ aspectRatio: '250/44.8435' }}>
             <Vector />
           </div>
         </motion.div>

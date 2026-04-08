@@ -91,10 +91,10 @@ export function PressPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen w-full min-w-0 bg-background">
       {/* Hero Section */}
       <section className="relative py-20 md:py-32 border-b border-foreground/10">
-        <div className="w-full px-2 md:px-4">
+        <div className="page-section">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors mb-8"
@@ -137,7 +137,7 @@ export function PressPage() {
 
       {/* Press Releases */}
       <section className="py-20 md:py-24 border-b border-foreground/10">
-        <div className="w-full px-2 md:px-4">
+        <div className="page-section">
           <div className="max-w-5xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -190,7 +190,7 @@ export function PressPage() {
 
       {/* Featured In */}
       <section className="py-20 md:py-24 border-b border-foreground/10">
-        <div className="w-full px-2 md:px-4">
+        <div className="page-section">
           <div className="max-w-5xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -232,7 +232,7 @@ export function PressPage() {
 
       {/* Media Kit */}
       <section className="py-20 md:py-24 border-b border-foreground/10">
-        <div className="w-full px-2 md:px-4">
+        <div className="page-section">
           <div className="max-w-4xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -280,7 +280,7 @@ export function PressPage() {
 
       {/* Contact */}
       <section className="py-20 md:py-24">
-        <div className="w-full px-2 md:px-4">
+        <div className="page-section">
           <div className="max-w-3xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}

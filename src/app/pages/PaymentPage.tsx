@@ -826,7 +826,7 @@ export function PaymentPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/20 pt-page-nav pb-mobile-nav md:pb-0">
+    <div className="min-h-screen w-full min-w-0 bg-muted/20 pt-page-nav pb-mobile-nav md:pb-0">
       {/* Header with Progress Steps */}
       <div className="bg-background border-b border-border shadow-sm">
         <div className="w-full px-4 md:px-8 lg:px-16 py-4">

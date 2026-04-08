@@ -4,7 +4,7 @@ import { Ruler } from 'lucide-react';
 
 export function SizeGuidePage() {
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Hero Section */}
       <div className="border-b border-foreground/5">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-16 md:py-20 text-center">
@@ -28,7 +28,7 @@ export function SizeGuidePage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-16 md:py-20">
+      <div className="page-container-md py-16 md:py-20">
         {/* How to Measure */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

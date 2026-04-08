@@ -62,7 +62,7 @@ export function OrderDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-muted/20 flex items-center justify-center">
+      <div className="flex min-h-screen w-full min-w-0 items-center justify-center bg-muted/20">
         <p className="text-foreground/60">Loading order…</p>
       </div>
     );
@@ -70,7 +70,7 @@ export function OrderDetailPage() {
 
   if (error || !order) {
     return (
-      <div className="min-h-screen bg-muted/20 flex items-center justify-center p-4">
+      <div className="flex min-h-screen w-full min-w-0 items-center justify-center bg-muted/20 p-4">
         <div className="text-center">
           <Package size={48} className="mx-auto text-foreground/20 mb-3" />
           <p className="text-foreground/60">Order not found</p>
@@ -117,10 +117,10 @@ export function OrderDetailPage() {
 
   const topPadding = isMobile ? 'pt-[100px]' : 'pt-6';
   const bottomPadding = isMobile ? 'pb-20' : 'pb-12';
-  const containerClass = isMobile ? 'px-4 pb-6' : 'max-w-2xl mx-auto px-4 md:px-8';
+  const containerClass = isMobile ? 'px-4 pb-6' : 'page-container-narrow-form';
 
   return (
-    <div className={`min-h-screen bg-muted/20 ${bottomPadding}`}>
+    <div className={`min-h-screen w-full min-w-0 bg-muted/20 ${bottomPadding}`}>
       <ResponsivePageHeader title={order.order_number || `Order ${order.id}`} onBack={() => navigate('/orders')} />
 
       <div className={`${topPadding} ${containerClass} space-y-4`}>

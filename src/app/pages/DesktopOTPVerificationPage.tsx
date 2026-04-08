@@ -210,7 +210,7 @@ export function DesktopOTPVerificationPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col lg:flex-row">
+    <div className="flex min-h-screen w-full min-w-0 flex-col bg-white lg:flex-row">
       {/* Left Side - OTP Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center px-4 sm:p-8 pt-page-nav pb-mobile-nav lg:pb-8">
         <motion.div

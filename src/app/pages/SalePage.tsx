@@ -186,10 +186,10 @@ export function SalePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Breadcrumb */}
       <div className="border-b border-foreground/5 bg-background">
-        <div className="max-w-[1920px] mx-auto px-4 md:px-8 py-3">
+        <div className="page-container py-3">
           <div className="flex items-center gap-2 text-xs text-foreground/50">
             <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors uppercase">
               Home
@@ -357,7 +357,7 @@ export function SalePage() {
         </motion.div>
 
         {/* Main Content: Sidebar + Products */}
-        <div className="flex gap-8 items-start">
+        <div className="flex min-w-0 gap-8 items-start">
           {/* Desktop Sidebar */}
           <FilterSidebar
             searchQuery={searchQuery}

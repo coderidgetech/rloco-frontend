@@ -185,7 +185,7 @@ export function ProductDetailPage() {
 
   if (productLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background pt-page-nav px-4">
+      <div className="flex min-h-screen w-full min-w-0 items-center justify-center bg-background px-4 pt-page-nav">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading product...</p>
@@ -196,7 +196,7 @@ export function ProductDetailPage() {
 
   if (productError || !product) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background pt-page-nav px-4">
+      <div className="flex min-h-screen w-full min-w-0 items-center justify-center bg-background px-4 pt-page-nav">
         <div className="text-center">
           <h1 className="text-2xl mb-6">Product Not Found</h1>
           <p className="text-gray-600 mb-4">{productError || 'The product you are looking for does not exist.'}</p>
@@ -394,10 +394,10 @@ export function ProductDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav w-full">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Breadcrumb */}
       <div className="border-b border-foreground/5 bg-background">
-        <div className="w-full px-2 md:px-4 py-3 md:py-4">
+        <div className="page-section py-3 md:py-4">
           <div className="flex items-center gap-2 text-xs text-foreground/50">
             <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors uppercase whitespace-nowrap">Home</button>
             <ChevronRight size={12} className="flex-shrink-0" />
@@ -409,8 +409,8 @@ export function ProductDetailPage() {
       </div>
 
       {/* Main Content */}
-      <div className="w-full px-2 md:px-4 py-8 md:py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+      <div className="page-section py-8 md:py-12">
+        <div className="grid min-w-0 grid-cols-1 gap-8 md:gap-12 lg:grid-cols-2">
           {/* Left - Images Section */}
           <div className="flex flex-col gap-3">
             {/* Main Image */}

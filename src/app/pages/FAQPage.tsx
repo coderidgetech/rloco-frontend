@@ -113,10 +113,10 @@ export function FAQPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Hero Section */}
       <section className="relative py-20 md:py-32 border-b border-foreground/10">
-        <div className="w-full px-2 md:px-4">
+        <div className="page-section">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors mb-8"
@@ -129,7 +129,7 @@ export function FAQPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="max-w-3xl"
+            className="max-w-3xl w-full min-w-0"
           >
             <h1 className="text-4xl md:text-6xl mb-6">Frequently Asked Questions</h1>
             <p className="text-lg md:text-xl text-foreground/70 leading-relaxed">
@@ -141,7 +141,7 @@ export function FAQPage() {
 
       {/* FAQ Content */}
       <section className="py-20 md:py-24">
-        <div className="w-full px-2 md:px-4">
+        <div className="page-section">
           <div className="max-w-4xl mx-auto">
             {faqCategories.map((category, categoryIndex) => (
               <motion.div
@@ -202,7 +202,7 @@ export function FAQPage() {
 
       {/* Still Have Questions */}
       <section className="py-20 md:py-24 border-t border-foreground/10">
-        <div className="w-full px-2 md:px-4">
+        <div className="page-section">
           <div className="max-w-2xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}

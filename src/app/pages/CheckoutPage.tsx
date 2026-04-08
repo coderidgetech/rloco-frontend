@@ -688,7 +688,7 @@ export function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       <div className="flex flex-col">
         {/* Header with Steps */}
         <div className="border-b border-foreground/10 bg-background">

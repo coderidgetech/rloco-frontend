@@ -139,7 +139,7 @@ export function AdminWishlistPage() {
 
   return (
     <AdminLayout>
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="page-container-lg p-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

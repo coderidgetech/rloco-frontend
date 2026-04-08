@@ -4,7 +4,7 @@ import { Truck, Package, RefreshCw, MapPin, Clock, CheckCircle } from 'lucide-re
 
 export function ShippingPage() {
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Hero Section */}
       <div className="border-b border-foreground/5">
         <div className="max-w-4xl mx-auto px-4 md:px-6 py-16 md:py-20 text-center">
@@ -29,7 +29,7 @@ export function ShippingPage() {
 
       {/* Quick Facts */}
       <div className="bg-foreground/[0.02] border-b border-foreground/5">
-        <div className="max-w-6xl mx-auto px-4 md:px-6 py-12">
+        <div className="page-container-md py-12">
           <div className="grid md:grid-cols-4 gap-6">
             {[
               { icon: Truck, title: 'Free Shipping', desc: 'On orders over ₹2000' },

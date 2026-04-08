@@ -110,10 +110,10 @@ export function OrdersPage() {
   const bottomPadding = isMobile ? 'pb-mobile-nav' : 'pb-12';
 
   return (
-    <div className={`min-h-screen bg-background pt-page-nav ${bottomPadding}`}>
+    <div className={`min-h-screen w-full min-w-0 bg-background pt-page-nav ${bottomPadding}`}>
       <ResponsivePageHeader title="My Orders" onBack={() => navigate('/account')} />
 
-      <div className={isMobile ? '' : 'max-w-3xl mx-auto px-4 md:px-8'}>
+      <div className={isMobile ? '' : 'page-container-sm'}>
         <div className={`${topPadding} ${isMobile ? 'sticky z-20 bg-background border-b border-border/20' : 'mb-6'}`} style={isMobile ? { top: 'calc(env(safe-area-inset-top, 0px) + 3.75rem + 3.5rem)' } : undefined}>
           <div className="flex gap-2 py-3">
             {(['active', 'completed', 'all'] as const).map((tab) => (

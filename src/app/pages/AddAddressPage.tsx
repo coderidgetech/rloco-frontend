@@ -159,7 +159,7 @@ export function AddAddressPage() {
 
   if (fetching) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex min-h-screen w-full min-w-0 items-center justify-center bg-background">
         <Loader2 size={24} className="animate-spin text-foreground/40" />
       </div>
     );
@@ -203,7 +203,7 @@ export function AddAddressPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-background pb-mobile-nav">
       <div className="max-w-2xl mx-auto px-4 py-4 sm:py-6 space-y-6 sm:space-y-8">
           <section>
             <p className="text-xs uppercase tracking-widest text-foreground/50 mb-4">Contact</p>

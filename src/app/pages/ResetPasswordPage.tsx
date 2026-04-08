@@ -45,7 +45,7 @@ export function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6">
+      <div className="flex min-h-screen w-full min-w-0 flex-col items-center justify-center p-6">
         <RlocoLogo size="md" className="mb-6" />
         <p className="text-foreground/80">Password updated successfully. Redirecting to login...</p>
       </div>
@@ -54,7 +54,7 @@ export function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6">
+      <div className="flex min-h-screen w-full min-w-0 flex-col items-center justify-center p-6">
         <RlocoLogo size="md" className="mb-6" />
         <p className="text-foreground/80 text-center mb-4">Invalid or missing reset link.</p>
         <Button variant="outline" onClick={() => navigate('/forgot-password')}>
@@ -65,7 +65,7 @@ export function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 max-w-md mx-auto">
+    <div className="mx-auto flex min-h-screen w-full min-w-0 max-w-md flex-col items-center justify-center p-6">
       <RlocoLogo size="md" className="mb-8" />
       <h1 className="text-2xl font-semibold mb-2">Set new password</h1>
       <p className="text-foreground/60 text-sm mb-6">Enter your new password below.</p>

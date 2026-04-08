@@ -27,10 +27,10 @@ export function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Hero Section */}
       <div className="border-b border-foreground/5">
-        <div className="max-w-4xl mx-auto px-4 md:px-6 py-16 md:py-24 text-center">
+        <div className="page-container-hero py-16 md:py-24 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -48,7 +48,7 @@ export function ContactPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-16 md:py-24">
+      <div className="page-container-lg py-16 md:py-24">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20">
           {/* Contact Information */}
           <motion.div
@@ -218,7 +218,7 @@ export function ContactPage() {
 
       {/* Map Section (Placeholder) */}
       <div className="border-t border-foreground/5">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-16">
+        <div className="page-container-lg py-16">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

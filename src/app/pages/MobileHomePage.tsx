@@ -16,7 +16,7 @@ export function MobileHomePage() {
   const { products: saleProducts } = useOnSaleProducts(10);
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen w-full min-w-0 bg-background pb-20">
       <MobileHomeHeader />
 
       {/* Main Content - pt for header + delivery bar + safe area */}

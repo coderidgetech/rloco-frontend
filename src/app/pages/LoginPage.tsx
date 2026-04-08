@@ -84,7 +84,7 @@ export function LoginPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#faf9f6] pt-24">
+      <div className="flex min-h-screen w-full min-w-0 items-center justify-center bg-[#faf9f6] pt-24">
         <div className="animate-pulse text-foreground/50">Loading...</div>
       </div>
     );
@@ -95,12 +95,12 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#faf9f6] to-white px-4 py-16 pt-24">
+    <div className="flex min-h-screen w-full min-w-0 items-center justify-center bg-gradient-to-br from-[#faf9f6] to-white px-4 py-16 pt-24">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="w-full max-w-md"
+        className="w-full min-w-0 max-w-md"
       >
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-foreground rounded-full mb-3">

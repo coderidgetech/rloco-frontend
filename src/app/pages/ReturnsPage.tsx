@@ -176,10 +176,10 @@ export function ReturnsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Hero Section */}
       <section className="relative py-12 sm:py-20 md:py-32 border-b border-foreground/10">
-        <div className="w-full px-2 md:px-4">
+        <div className="page-section">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors mb-8"
@@ -205,8 +205,8 @@ export function ReturnsPage() {
 
       {/* Return Process */}
       <section className="py-20 md:py-24 border-b border-foreground/10">
-        <div className="w-full px-2 md:px-4">
-          <div className="max-w-6xl mx-auto">
+        <div className="page-section">
+          <div className="max-w-6xl mx-auto w-full min-w-0">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -245,7 +245,7 @@ export function ReturnsPage() {
 
       {/* Return Policy */}
       <section className="py-20 md:py-24 border-b border-foreground/10">
-        <div className="w-full px-2 md:px-4">
+        <div className="page-section">
           <div className="max-w-4xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -283,8 +283,8 @@ export function ReturnsPage() {
       {/* My Returns Section - Only show if user is logged in */}
       {user && (
         <section className="py-20 md:py-24 border-b border-foreground/10">
-          <div className="w-full px-2 md:px-4">
-            <div className="max-w-6xl mx-auto">
+          <div className="page-section">
+            <div className="max-w-6xl mx-auto w-full min-w-0">
               <div className="flex items-center justify-between mb-8">
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -405,7 +405,7 @@ export function ReturnsPage() {
 
       {/* CTA Section */}
       <section className="py-20 md:py-24">
-        <div className="w-full px-2 md:px-4">
+        <div className="page-section">
           <div className="max-w-3xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}

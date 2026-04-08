@@ -119,7 +119,7 @@ export function Testimonials() {
         backgroundSize: '40px 40px'
       }} />
 
-      <div className="max-w-[1920px] mx-auto px-8 md:px-12 lg:px-16 xl:px-20 relative">
+      <div className="page-container relative">
         {/* Header */}
         <div className="max-w-3xl mb-16 md:mb-20">
           <motion.div

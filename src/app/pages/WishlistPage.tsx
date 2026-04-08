@@ -131,8 +131,8 @@ export function WishlistPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav">
-      <div className="w-full px-4 md:px-6 lg:px-12 xl:px-16 py-6 md:py-8">
+    <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
+      <div className="page-container py-6 md:py-8">
         {/* Header */}
         <div className="mb-6 md:mb-8">
           <button

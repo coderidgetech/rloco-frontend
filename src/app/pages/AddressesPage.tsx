@@ -93,10 +93,10 @@ export function AddressesPage() {
 
   const topPadding = isMobile ? 'pt-4' : 'pt-6';
   const bottomPadding = isMobile ? 'pb-mobile-nav' : 'pb-12';
-  const containerClass = isMobile ? 'px-4' : 'max-w-2xl mx-auto px-4 md:px-8';
+  const containerClass = isMobile ? 'px-4' : 'page-container-narrow-form';
 
   return (
-    <div className={`min-h-screen bg-background pt-page-nav ${bottomPadding}`}>
+    <div className={`min-h-screen w-full min-w-0 bg-background pt-page-nav ${bottomPadding}`}>
       <ResponsivePageHeader title="Saved Addresses" onBack={() => navigate('/account')} />
 
       <div className={`${topPadding} ${containerClass}`}>

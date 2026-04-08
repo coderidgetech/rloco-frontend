@@ -10,16 +10,15 @@ body {
 html {
   scroll-padding-top: max(5rem, calc(3.75rem + env(safe-area-inset-top, 0px)));
   overflow-x: clip;
+  /* Reserve scrollbar width so 100% layout doesn’t shift vs 100vw (common on Windows). */
+  scrollbar-gutter: stable;
+  /* Consistent scrollbars / form controls on Windows vs macOS when light UI. */
+  color-scheme: light;
 }
 @media (min-width: 768px) {
   html {
     scroll-padding-top: 5rem;
   }
-}
-
-/* Smooth animations for all transitions */
-* {
-  transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 :root {
@@ -78,6 +77,7 @@ html {
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.145 0 0);
@@ -412,5 +412,44 @@ html {
     .pb-mobile-nav {
       padding-bottom: 0;
     }
+  }
+}
+
+@layer components {
+  /* Wide store pages (PLP, home sections, footer) */
+  .page-container {
+    @apply mx-auto w-full min-w-0 max-w-[1920px] px-3 sm:px-4 md:px-6 lg:px-8 xl:px-10 2xl:px-12;
+  }
+
+  /* Editorial / legal / FAQ-style content */
+  .page-container-md {
+    @apply mx-auto w-full min-w-0 max-w-6xl px-3 sm:px-4 md:px-6 lg:px-8;
+  }
+
+  /* Account, support, cart-style layouts */
+  .page-container-lg {
+    @apply mx-auto w-full min-w-0 max-w-7xl px-3 sm:px-4 md:px-6 lg:px-8;
+  }
+
+  /* Horizontal inset only (nested under full-bleed sections) */
+  .page-section {
+    @apply w-full min-w-0 px-3 sm:px-4 md:px-6 lg:px-8;
+  }
+
+  /* Contact / narrow hero headings */
+  .page-container-hero {
+    @apply mx-auto w-full min-w-0 max-w-4xl px-3 sm:px-4 md:px-6;
+  }
+
+  .page-container-confirmation {
+    @apply mx-auto w-full min-w-0 max-w-5xl px-3 py-12 sm:px-4 md:px-6;
+  }
+
+  .page-container-sm {
+    @apply mx-auto w-full min-w-0 max-w-3xl px-3 sm:px-4 md:px-6;
+  }
+
+  .page-container-narrow-form {
+    @apply mx-auto w-full min-w-0 max-w-2xl px-3 sm:px-4 md:px-6;
   }
 }

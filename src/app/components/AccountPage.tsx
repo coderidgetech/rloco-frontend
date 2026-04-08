@@ -396,14 +396,14 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: isStandalone ? 1 : 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className={isStandalone ? "relative w-full min-h-screen bg-white dark:bg-background" : "fixed inset-0 z-50 overflow-hidden bg-white dark:bg-background"}
+            className={isStandalone ? "relative min-h-screen w-full min-w-0 bg-white dark:bg-background" : "fixed inset-0 z-50 overflow-hidden bg-white dark:bg-background"}
             style={{ backgroundColor: 'var(--background, #ffffff)' }}
             onClick={(e) => !isStandalone && e.stopPropagation()}
           >
             <div className={`${isStandalone ? 'pt-20' : 'h-full'} bg-white dark:bg-background flex flex-col relative`} style={{ backgroundColor: 'var(--background, #ffffff)' }}>
               {/* Header */}
               <div className="border-b border-border bg-white dark:bg-background" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-                <div className="w-full px-2 md:px-4 py-6">
+                <div className="page-section py-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
@@ -430,7 +430,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto bg-white dark:bg-background" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-                <div className="w-full px-2 md:px-4 py-8">
+                <div className="page-section py-8">
                   <div className="grid lg:grid-cols-4 gap-8">
                     {/* Sidebar Navigation */}
                     <div className="lg:col-span-1">

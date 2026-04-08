@@ -417,9 +417,9 @@ export function CartPage() {
       : 'RLOCO10, SAVE20, WELCOME15';
 
   return (
-    <div className="min-h-screen bg-muted/20 dark:bg-background pt-page-nav pb-mobile-nav">
+    <div className="min-h-screen w-full min-w-0 bg-muted/20 pt-page-nav pb-mobile-nav dark:bg-background">
       <div className="bg-background border-b border-border shadow-sm">
-        <div className="w-full px-4 md:px-8 lg:px-16 py-4">
+        <div className="page-container py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 min-w-0">
               <button
@@ -442,7 +442,7 @@ export function CartPage() {
 
       <div
         className={cn(
-          'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8',
+          'page-container-lg py-4 md:py-8',
           items.length > 0 && isMobile && 'pb-28'
         )}
       >

@@ -109,7 +109,7 @@ export function DesktopSignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col lg:flex-row">
+    <div className="flex min-h-screen w-full min-w-0 flex-col bg-white lg:flex-row">
       {/* Left Side - Image with Overlay */}
       <div className="hidden lg:block lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary/5 z-10" />

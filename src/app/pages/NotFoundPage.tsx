@@ -7,13 +7,13 @@ export function NotFoundPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background pt-page-nav pb-mobile-nav flex flex-col px-4">
+    <div className="flex min-h-screen w-full min-w-0 flex-col bg-background px-4 pt-page-nav pb-mobile-nav">
       <div className="flex-1 flex items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="text-center max-w-2xl mx-auto"
+          className="mx-auto w-full min-w-0 max-w-2xl text-center"
         >
           {/* 404 Number */}
           <motion.div
