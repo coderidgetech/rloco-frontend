@@ -78,7 +78,6 @@ import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
 import { AdminWishlistPage } from './pages/admin/AdminWishlistPage';
 import { AdminBadgesPage } from './pages/admin/AdminBadgesPage';
 import { VendorSettingsPage } from './pages/admin/VendorSettingsPage';
-import { ConfigurationPanel } from './pages/ConfigurationPanel';
 import { SupportPage } from './pages/SupportPage';
 
 /** In Capacitor native app, use hash routing so the WebView never does a full reload on navigation. */
@@ -148,29 +147,30 @@ function App() {
                             <Route path="/order/:id" element={<OrderDetailPage />} />
                             <Route path="/addresses" element={<AddressesPage />} />
                             <Route path="/addresses/add" element={<DesktopHeaderWrapper title="Add address" backPath="/addresses"><AddAddressPage /></DesktopHeaderWrapper>} />
-                            <Route path="/profile/edit" element={<Navigate to="/account" replace />} />
-                            <Route path="/payment-methods" element={<Navigate to="/account" replace />} />
-                            <Route path="/add-payment-method" element={<Navigate to="/account" replace />} />
+                            <Route path="/profile/edit" element={<Navigate to="/account/profile" replace />} />
+                            <Route path="/payment-methods" element={<Navigate to="/account/payment" replace />} />
+                            <Route path="/add-payment-method" element={<Navigate to="/account/payment" replace />} />
                             <Route path="/help" element={<SupportPage />} />
                             <Route path="/support" element={<SupportPage />} />
-                            <Route path="/reviews" element={<Navigate to="/account" replace />} />
-                            <Route path="/rewards" element={<Navigate to="/account" replace />} />
-                            <Route path="/coupons" element={<Navigate to="/account" replace />} />
-                            <Route path="/settings" element={<Navigate to="/account" replace />} />
-                            <Route path="/change-password" element={<Navigate to="/account" replace />} />
-                            <Route path="/two-factor" element={<Navigate to="/account" replace />} />
-                            <Route path="/language" element={<Navigate to="/account" replace />} />
+                            <Route path="/reviews" element={<Navigate to="/account/profile" replace />} />
+                            <Route path="/rewards" element={<Navigate to="/account/profile" replace />} />
+                            <Route path="/coupons" element={<Navigate to="/account/profile" replace />} />
+                            <Route path="/settings" element={<Navigate to="/account/settings" replace />} />
+                            <Route path="/change-password" element={<Navigate to="/account/settings" replace />} />
+                            <Route path="/two-factor" element={<Navigate to="/account/settings" replace />} />
+                            <Route path="/language" element={<Navigate to="/account/settings" replace />} />
                             <Route path="/product/:id" element={<ResponsiveProductDetailPage />} />
                             <Route path="/cart" element={<ResponsiveCartPage />} />
                             <Route path="/checkout" element={<CheckoutPage />} />
                             <Route path="/wishlist" element={<ResponsiveWishlistPage />} />
-                            <Route path="/account" element={<ResponsiveAccountPage />} />
+                            <Route path="/account" element={<Navigate to="/account/profile" replace />} />
+                            <Route path="/account/:section" element={<ResponsiveAccountPage />} />
                             <Route path="/categories" element={<DesktopHeaderWrapper title="Categories" backPath="/"><CategoriesHubPage /></DesktopHeaderWrapper>} />
                             <Route path="/gift-for-her" element={<ResponsiveCategoryPage />} />
                             <Route path="/gift-for-him" element={<ResponsiveCategoryPage />} />
                             <Route path="/gift-cards" element={<Navigate to="/all-products" replace />} />
                             <Route path="/search" element={<Navigate to="/all-products?from=search&focus=1" replace />} />
-                            <Route path="/notifications" element={<Navigate to="/account" replace />} />
+                            <Route path="/notifications" element={<Navigate to="/account/profile" replace />} />
                             <Route path="/category/:gender" element={<ResponsiveCategoryPage />} />
                             <Route path="/category/:gender/:category" element={<ResponsiveCategoryPage />} />
                             <Route path="/address" element={<ResponsiveAddressSelectionPage />} />
@@ -220,7 +220,7 @@ function App() {
                             <Route path="/admin/wishlist" element={<ProtectedRoute><AdminWishlistPage /></ProtectedRoute>} />
                             <Route path="/admin/badges" element={<ProtectedRoute requiredRole="admin"><AdminBadgesPage /></ProtectedRoute>} />
                             <Route path="/admin/vendor-settings" element={<ProtectedRoute requiredRole="vendor"><VendorSettingsPage /></ProtectedRoute>} />
-                            <Route path="/configuration" element={<ConfigurationPanel />} />
+                            <Route path="/configuration" element={<Navigate to="/admin/configuration" replace />} />
                             <Route path="*" element={<ResponsiveNotFoundPage />} />
                           </Routes>
                         </MobileOnboardingRedirect>

@@ -13,6 +13,7 @@ import { addressService, Address as APIAddress } from '@/app/services/addressSer
 import { useUser } from '../context/UserContext';
 import { productService } from '../services/productService';
 import { Product } from '../types/api';
+import { getApiErrorMessage, isUnauthorizedApiError } from '../lib/apiErrors';
 
 interface Address {
   id: string;
@@ -76,11 +77,10 @@ export function AddressSelectionPage() {
         } else if (transformedAddresses.length > 0) {
           setSelectedAddressId(transformedAddresses[0].id);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Failed to fetch addresses:', err);
-        // If not authenticated, silently fail (user can still add address)
-        if (err.response?.status !== 401) {
-          toast.error('Failed to load addresses');
+        if (!isUnauthorizedApiError(err)) {
+          toast.error(getApiErrorMessage(err, 'Failed to load addresses'));
         }
       } finally {
         setLoading(false);
@@ -195,9 +195,9 @@ export function AddressSelectionPage() {
         setSelectedAddressId(updatedAddresses[0]?.id || '');
       }
       toast.success('Address removed');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to delete address:', err);
-      toast.error('Failed to remove address');
+      toast.error(getApiErrorMessage(err, 'Failed to remove address'));
     }
   };
 
@@ -601,9 +601,9 @@ export function AddressSelectionPage() {
             setShowAddressModal(false);
             setEditingAddress(null);
             setModalMode('add');
-          } catch (err: any) {
+          } catch (err: unknown) {
             console.error('Failed to save address:', err);
-            toast.error('Failed to save address');
+            toast.error(getApiErrorMessage(err, 'Failed to save address'));
           }
         }}
         editAddress={editingAddress}

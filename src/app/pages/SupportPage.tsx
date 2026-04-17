@@ -8,6 +8,7 @@ import { orderService } from '../services/orderService';
 import { Order } from '../types/api';
 import { Footer } from '../components/Footer';
 import { PH } from '../lib/formPlaceholders';
+import { getApiErrorMessage } from '../lib/apiErrors';
 
 export function SupportPage() {
   const { user } = useUser();
@@ -43,9 +44,9 @@ export function SupportPage() {
       setLoading(true);
       const response = await supportService.listTickets({ limit: 50 });
       setTickets(response.data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch tickets:', error);
-      toast.error('Failed to load support tickets');
+      toast.error(getApiErrorMessage(error, 'Failed to load support tickets'));
     } finally {
       setLoading(false);
     }
@@ -64,9 +65,9 @@ export function SupportPage() {
     try {
       const ticket = await supportService.getTicket(ticketId);
       setSelectedTicket(ticket);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch ticket details:', error);
-      toast.error('Failed to load ticket details');
+      toast.error(getApiErrorMessage(error, 'Failed to load ticket details'));
     }
   };
 
@@ -95,9 +96,9 @@ export function SupportPage() {
         order_id: '',
       });
       fetchTickets();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create ticket:', error);
-      toast.error(error.message || 'Failed to create support ticket');
+      toast.error(getApiErrorMessage(error, 'Failed to create support ticket'));
     } finally {
       setSending(false);
     }
@@ -115,9 +116,9 @@ export function SupportPage() {
       setNewMessage('');
       // Refresh ticket to get updated messages
       await fetchTicketDetails(selectedTicket.id);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to send message:', error);
-      toast.error(error.message || 'Failed to send message');
+      toast.error(getApiErrorMessage(error, 'Failed to send message'));
     } finally {
       setSending(false);
     }

@@ -12,6 +12,7 @@ import { RlocoLogo } from './RlocoLogo';
 import { MegaMenu } from './MegaMenu';
 import { LoginModal } from './LoginModal';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { ACCOUNT_DEFAULT_PATH } from '../lib/accountRoutes';
 
 export function Navigation() {
   const isMobile = useIsMobile();
@@ -134,10 +135,9 @@ export function Navigation() {
     }
   };
 
-  const handleLoginSuccess = (userData: { email: string; name: string }) => {
+  const handleLoginSuccess = () => {
     setAccountOpen(false);
-    // Navigate to account page after successful login
-    navigate('/account');
+    navigate(ACCOUNT_DEFAULT_PATH);
   };
 
   const handleLogout = () => {
@@ -328,7 +328,13 @@ export function Navigation() {
                 whileHover={{ scale: 1.06 }}
                 whileTap={{ scale: 0.95 }}
                 type="button"
-                onClick={() => navigate(isAuthenticated ? '/account' : '/login?redirect=/account')}
+                onClick={() =>
+                  navigate(
+                    isAuthenticated
+                      ? ACCOUNT_DEFAULT_PATH
+                      : `/login?redirect=${encodeURIComponent(ACCOUNT_DEFAULT_PATH)}`
+                  )
+                }
                 className="hidden md:flex text-foreground/70 transition-colors hover:text-foreground"
                 aria-label="Account"
               >
@@ -538,7 +544,14 @@ export function Navigation() {
                       Search
                     </button>
                     <button
-                      onClick={() => { navigate(isAuthenticated ? '/account' : '/login?redirect=/account'); setIsOpen(false); }}
+                      onClick={() => {
+                        navigate(
+                          isAuthenticated
+                            ? ACCOUNT_DEFAULT_PATH
+                            : `/login?redirect=${encodeURIComponent(ACCOUNT_DEFAULT_PATH)}`
+                        );
+                        setIsOpen(false);
+                      }}
                       className="text-foreground/70 hover:text-foreground transition-colors text-left flex items-center gap-2 py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px]"
                       type="button"
                     >
@@ -578,11 +591,7 @@ export function Navigation() {
       {/* Cart Drawer */}
       {/* Show LoginModal if not logged in (for modal access), AccountPage route handles logged-in state */}
       {!isAuthenticated && (
-        <LoginModal 
-          isOpen={accountOpen} 
-          onClose={() => setAccountOpen(false)} 
-          onLoginSuccess={handleLoginSuccess}
-        />
+        <LoginModal isOpen={accountOpen} onClose={() => setAccountOpen(false)} onLoginSuccess={handleLoginSuccess} />
       )}
     </>
   );

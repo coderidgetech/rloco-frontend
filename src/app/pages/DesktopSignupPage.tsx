@@ -11,12 +11,13 @@ import { GoogleSignInButton } from '@/app/components/GoogleSignInButton';
 import { useUser } from '@/app/context/UserContext';
 import { DIAL_COUNTRIES, buildPhoneDigitsForApi } from '@/app/lib/dialCountries';
 import { PH } from '@/app/lib/formPlaceholders';
+import { isAccountPath } from '@/app/lib/accountRoutes';
 import { PhoneCountryRow } from '@/app/components/PhoneCountryRow';
 
 export function DesktopSignupPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/account';
+  const redirect = searchParams.get('redirect') || '/account/profile';
   const { loginWithGoogle } = useUser();
   const [formData, setFormData] = useState({
     name: '',
@@ -311,7 +312,7 @@ export function DesktopSignupPage() {
             <button
               type="button"
               onClick={() =>
-                navigate(redirect !== '/account' ? `/login?redirect=${encodeURIComponent(redirect)}` : '/login')
+                navigate(!isAccountPath(redirect) ? `/login?redirect=${encodeURIComponent(redirect)}` : '/login')
               }
               className="text-primary font-medium hover:underline"
             >

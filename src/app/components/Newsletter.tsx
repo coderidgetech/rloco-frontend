@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { newsletterService } from '../services/newsletterService';
 import { PH } from '../lib/formPlaceholders';
+import { getApiErrorMessage } from '../lib/apiErrors';
 
 export function Newsletter() {
   const { config } = useSiteConfig();
@@ -29,8 +30,8 @@ export function Newsletter() {
         description: `We've sent a confirmation to ${email}`,
       });
       setEmail('');
-    } catch (err: any) {
-      toast.error(err?.message || 'Subscription failed. Please try again.');
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Subscription failed. Please try again.'));
     } finally {
       setLoading(false);
     }

@@ -56,7 +56,7 @@ export function DesktopOTPVerificationPage() {
     ? (nav?.phone ?? signupDraftPhone).trim()
     : (nav?.phone ?? loginBackup?.phone ?? '').trim();
 
-  const returnTo = nav?.returnTo ?? (isSignup ? '/account' : loginBackup?.returnTo ?? '/');
+  const returnTo = nav?.returnTo ?? (isSignup ? '/account/profile' : loginBackup?.returnTo ?? '/');
 
   useEffect(() => {
     if (isSignup && !phone) {

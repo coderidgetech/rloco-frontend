@@ -5,6 +5,7 @@ import { Plus, Edit2, Trash2, Home, Briefcase, MapPinned } from 'lucide-react';
 import { ResponsivePageHeader } from '@/app/components/ResponsivePageHeader';
 import { addressService, type Address as APIAddress } from '@/app/services/addressService';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/app/lib/apiErrors';
 import { useIsMobile } from '@/app/hooks/useIsMobile';
 
 interface Address {
@@ -47,8 +48,9 @@ export function AddressesPage() {
           isDefault: a.is_default ?? false,
         }))
       );
-    } catch {
+    } catch (error: unknown) {
       setAddresses([]);
+      toast.error(getApiErrorMessage(error, 'Failed to load addresses'));
     } finally {
       setLoading(false);
     }
@@ -74,8 +76,8 @@ export function AddressesPage() {
       await addressService.delete(id);
       setAddresses((prev) => prev.filter((a) => a.id !== id));
       toast.success('Address deleted');
-    } catch {
-      toast.error('Failed to delete address');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to delete address'));
     }
   };
 
@@ -86,8 +88,8 @@ export function AddressesPage() {
         prev.map((a) => ({ ...a, isDefault: a.id === id }))
       );
       toast.success('Default address updated');
-    } catch {
-      toast.error('Failed to update default');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to update default'));
     }
   };
 
@@ -97,7 +99,7 @@ export function AddressesPage() {
 
   return (
     <div className={`min-h-screen w-full min-w-0 bg-background pt-page-nav ${bottomPadding}`}>
-      <ResponsivePageHeader title="Saved Addresses" onBack={() => navigate('/account')} />
+      <ResponsivePageHeader title="Saved Addresses" onBack={() => navigate('/account/addresses')} />
 
       <div className={`${topPadding} ${containerClass}`}>
         <p className="text-sm text-muted-foreground mb-4">Manage your delivery addresses</p>

@@ -25,6 +25,7 @@ import { useWishlist } from '../context/WishlistContext';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '../lib/apiErrors';
 import { useFeaturedProducts, useProducts } from '../hooks/useProducts';
 import { useNavigate } from 'react-router-dom';
 import { Footer } from '../components/Footer';
@@ -314,8 +315,7 @@ export function CartPage() {
       }
     } catch (error: unknown) {
       console.error('Failed to validate promotion:', error);
-      const err = error as { response?: { data?: { error?: string } } };
-      toast.error(err?.response?.data?.error || 'Failed to validate promotion code');
+      toast.error(getApiErrorMessage(error, 'Failed to validate promotion code'));
       setAppliedCoupon(null);
     }
   };

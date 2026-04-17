@@ -111,8 +111,11 @@ api.interceptors.response.use(
           { withCredentials: true }
         );
 
+        const data = refreshResponse.data as { token?: string } | undefined;
+        if (data?.token) {
+          persistAuthToken(data.token);
+        }
         if (refreshResponse.data) {
-          // Retry original request
           return api(originalRequest);
         }
       } catch (refreshError) {
@@ -143,11 +146,28 @@ api.interceptors.response.use(
       return Promise.reject(timeoutError);
     }
 
-    // Extract error message from response
+    // Normalize server JSON into ApiError (interceptor rejects a plain object, not AxiosError).
+    const raw = error.response.data as unknown;
+    let primary = 'An error occurred';
+    let detail: string | undefined;
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      const d = raw as Record<string, unknown>;
+      const errStr = typeof d.error === 'string' ? d.error.trim() : '';
+      const msgStr = typeof d.message === 'string' ? d.message.trim() : '';
+      const detStr = typeof d.detail === 'string' ? d.detail.trim() : '';
+      primary = errStr || msgStr || detStr || primary;
+      detail = msgStr || errStr || undefined;
+    } else if (typeof raw === 'string' && raw.trim()) {
+      primary = raw.trim();
+    }
+    const code =
+      raw && typeof raw === 'object' && !Array.isArray(raw) && typeof (raw as { code?: unknown }).code === 'string'
+        ? (raw as { code: string }).code
+        : undefined;
     const apiError: ApiError = {
-      error: error.response.data?.error || 'An error occurred',
-      message: error.response.data?.message || error.message,
-      code: error.response.data?.code,
+      error: primary,
+      message: detail || error.message,
+      code,
     };
 
     return Promise.reject(apiError);

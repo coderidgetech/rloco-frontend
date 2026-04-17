@@ -28,6 +28,7 @@ import {
 import { toast } from 'sonner';
 import { adminService } from '../../services/adminService';
 import api from '../../lib/api';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 export const AdminSettingsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -92,9 +93,9 @@ export const AdminSettingsPage = () => {
         if (data) {
           setSettings(data);
         }
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to fetch settings:', error);
-        toast.error('Failed to load settings');
+        toast.error(getApiErrorMessage(error, 'Failed to load settings'));
       } finally {
         setLoading(false);
       }
@@ -108,9 +109,9 @@ export const AdminSettingsPage = () => {
       setSaving(true);
       await adminService.updateSettings(settings);
       toast.success(`${section} settings saved successfully`);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to save settings:', error);
-      toast.error('Failed to save settings');
+      toast.error(getApiErrorMessage(error, 'Failed to save settings'));
     } finally {
       setSaving(false);
     }
@@ -137,8 +138,8 @@ export const AdminSettingsPage = () => {
       });
       toast.success('Password updated successfully');
       setPasswordForm({ current: '', newPass: '', confirm: '' });
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || 'Failed to update password');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to update password'));
     } finally {
       setChangingPassword(false);
     }

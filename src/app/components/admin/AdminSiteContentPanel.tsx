@@ -19,6 +19,7 @@ import { adminService } from '../../services/adminService';
 import { PH } from '../../lib/formPlaceholders';
 import { defaultSiteConfig, useSiteConfig, type SiteConfig } from '../../context/SiteConfigContext';
 import { uploadImage } from '../../services/uploadService';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 const SECTION_LABELS: Record<keyof SiteConfig['homepage']['sections'], string> = {
   featuredProducts: 'Featured products',
@@ -59,9 +60,9 @@ export function AdminSiteContentPanel() {
       toast.success(`${label} saved`);
       localStorage.setItem('rloco_config_updated', Date.now().toString());
       window.dispatchEvent(new CustomEvent('rloco_config_updated'));
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to save:', error);
-      toast.error('Failed to save');
+      toast.error(getApiErrorMessage(error, 'Failed to save'));
     } finally {
       setSaving(false);
     }
@@ -544,9 +545,9 @@ export function AdminSiteContentPanel() {
                                 },
                               }));
                               toast.success('Image uploaded');
-                            } catch (e) {
+                            } catch (e: unknown) {
                               console.error(e);
-                              toast.error('Upload failed');
+                              toast.error(getApiErrorMessage(e, 'Upload failed'));
                             }
                           };
                           input.click();
@@ -601,9 +602,9 @@ export function AdminSiteContentPanel() {
                                 },
                               }));
                               toast.success('Image uploaded');
-                            } catch (e) {
+                            } catch (e: unknown) {
                               console.error(e);
-                              toast.error('Upload failed');
+                              toast.error(getApiErrorMessage(e, 'Upload failed'));
                             }
                           };
                           input.click();

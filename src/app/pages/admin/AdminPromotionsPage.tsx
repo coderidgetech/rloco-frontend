@@ -34,6 +34,7 @@ import { Plus, Edit, Trash2, Copy, Tag, Percent } from 'lucide-react';
 import { adminService } from '../../services/adminService';
 import { Promotion } from '../../types/api';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 export const AdminPromotionsPage = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -63,9 +64,9 @@ export const AdminPromotionsPage = () => {
         setLoading(true);
         const promotionList = await adminService.listPromotions();
         setPromotions(Array.isArray(promotionList) ? promotionList : []);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to fetch promotions:', error);
-        toast.error('Failed to load promotions');
+        toast.error(getApiErrorMessage(error, 'Failed to load promotions'));
         setPromotions([]);
       } finally {
         setLoading(false);
@@ -132,9 +133,9 @@ export const AdminPromotionsPage = () => {
       // Refresh promotions
       const promotionList = await adminService.listPromotions();
       setPromotions(Array.isArray(promotionList) ? promotionList : []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create promotion:', error);
-      toast.error(error.message || 'Failed to create promotion');
+      toast.error(getApiErrorMessage(error, 'Failed to create promotion'));
     }
   };
 
@@ -165,9 +166,9 @@ export const AdminPromotionsPage = () => {
       // Refresh promotions
       const promotionList = await adminService.listPromotions();
       setPromotions(Array.isArray(promotionList) ? promotionList : []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to update promotion:', error);
-      toast.error(error.message || 'Failed to update promotion');
+      toast.error(getApiErrorMessage(error, 'Failed to update promotion'));
     }
   };
 
@@ -182,9 +183,9 @@ export const AdminPromotionsPage = () => {
       // Refresh promotions
       const promotionList = await adminService.listPromotions();
       setPromotions(Array.isArray(promotionList) ? promotionList : []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to delete promotion:', error);
-      toast.error(error.message || 'Failed to delete promotion');
+      toast.error(getApiErrorMessage(error, 'Failed to delete promotion'));
     }
   };
 
@@ -206,9 +207,9 @@ export const AdminPromotionsPage = () => {
       // Refresh promotions
       const promotionList = await adminService.listPromotions();
       setPromotions(Array.isArray(promotionList) ? promotionList : []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to duplicate promotion:', error);
-      toast.error(error.message || 'Failed to duplicate promotion');
+      toast.error(getApiErrorMessage(error, 'Failed to duplicate promotion'));
     }
   };
 
@@ -221,9 +222,9 @@ export const AdminPromotionsPage = () => {
       const promotionList = await adminService.listPromotions();
       // Backend should always return an array, but ensure it's not null
       setPromotions(Array.isArray(promotionList) ? promotionList : []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to toggle promotion status:', error);
-      toast.error(error.message || 'Failed to update promotion status');
+      toast.error(getApiErrorMessage(error, 'Failed to update promotion status'));
     }
   };
 

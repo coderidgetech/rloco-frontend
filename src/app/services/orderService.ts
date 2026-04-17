@@ -17,8 +17,12 @@ export const orderService = {
     return response.data;
   },
 
-  async create(order: CreateOrderRequest): Promise<Order> {
-    const response = await api.post<Order>('/orders', order);
+  async create(order: CreateOrderRequest, opts?: { idempotencyKey?: string }): Promise<Order> {
+    const headers: Record<string, string> = {};
+    if (opts?.idempotencyKey) {
+      headers['Idempotency-Key'] = opts.idempotencyKey;
+    }
+    const response = await api.post<Order>('/orders', order, { headers });
     return response.data;
   },
 

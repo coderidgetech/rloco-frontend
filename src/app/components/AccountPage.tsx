@@ -2,11 +2,11 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   X, User, Package, MapPin, CreditCard, Heart, Settings, 
   LogOut, Edit2, Trash2, Plus, Check, Clock, Truck, 
-  Mail, Phone, Calendar, ShieldCheck, Eye, ChevronRight,
+  Mail, Calendar, ShieldCheck, Eye,
   Download, Bell, Lock, ShoppingCart
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useWishlist } from '../context/WishlistContext';
 import { OrderDetailsModal } from './OrderDetailsModal';
@@ -15,7 +15,6 @@ import { LuxuryInput } from './ui/luxury-input';
 import { LuxurySelect } from './ui/luxury-select';
 import { LuxuryCheckbox } from './ui/luxury-checkbox';
 import { orderService } from '../services/orderService';
-import { paymentService } from '../services/paymentService';
 import { addressService, Address as APIAddress } from '../services/addressService';
 import { AddressAutocompleteInput } from './AddressAutocompleteInput';
 import { Order as APIOrder, PaymentTransaction } from '../types/api';
@@ -23,9 +22,25 @@ import { useUser } from '../context/UserContext';
 import { useCart } from '../context/CartContext';
 import { authService } from '../services/authService';
 import { PH } from '../lib/formPlaceholders';
-import { isUnauthorizedApiError } from '../lib/apiErrors';
+import { getApiErrorMessage, isUnauthorizedApiError } from '../lib/apiErrors';
+import { accountPath, isAccountPath, isAccountSection, type AccountSection } from '../lib/accountRoutes';
+import {
+  DIAL_COUNTRIES,
+  buildPhoneDigitsForApi,
+  maxNationalDigitsForCountry,
+  parseStoredPhoneToCountryAndLocal,
+  type DialCountry,
+} from '../lib/dialCountries';
 
 const SETTINGS_NOTIFICATIONS_KEY = 'rloco_notifications';
+
+/** `YYYY-MM-DD` in local timezone (for `<input type="date" max>`). */
+function isoDateLocal(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 function loadSettingsNotifications(): { orders: boolean; offers: boolean; updates: boolean } {
   try {
@@ -82,28 +97,22 @@ interface Address {
   isDefault: boolean;
 }
 
-interface PaymentMethod {
-  id: string;
-  type: 'visa' | 'mastercard' | 'amex';
-  last4: string;
-  expiry: string;
-  isDefault: boolean;
-}
-
-
 export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
   const { user } = useUser();
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<TabType>('profile');
+  const { section } = useParams<{ section: string }>();
+  const activeTab: TabType = (
+    section && isAccountSection(section) ? section : 'profile'
+  ) as TabType;
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
   const [showAddAddress, setShowAddAddress] = useState(false);
-  const [showAddPayment, setShowAddPayment] = useState(false);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [addressesLoading, setAddressesLoading] = useState(false);
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [passwordForm, setPasswordForm] = useState({ current: '', next: '', confirm: '' });
+  const [passwordSaving, setPasswordSaving] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
@@ -130,8 +139,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
     }
   }, [showAddAddress]);
 
-  // Check if this is being used as a standalone page (when path is /account)
-  const isStandalone = location.pathname === '/account';
+  const isStandalone = isAccountPath(location.pathname);
 
   const formatBirthdayForInput = (value: string | undefined): string => {
     if (!value) return '';
@@ -144,9 +152,12 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
     firstName: user?.name?.split(' ')[0] || '',
     lastName: user?.name?.split(' ').slice(1).join(' ') || '',
     email: user?.email || '',
-    phone: user?.phone || '',
     birthday: formatBirthdayForInput(user?.birthday),
   });
+
+  const initialPhone = parseStoredPhoneToCountryAndLocal(user?.phone);
+  const [profilePhoneCountry, setProfilePhoneCountry] = useState<DialCountry>(initialPhone.country);
+  const [profilePhoneLocal, setProfilePhoneLocal] = useState(initialPhone.localDigits);
 
   // Update profile data when user changes (from API /auth/me)
   useEffect(() => {
@@ -155,11 +166,24 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
         firstName: user.name?.split(' ')[0] || '',
         lastName: user.name?.split(' ').slice(1).join(' ') || '',
         email: user.email || '',
-        phone: user.phone || '',
         birthday: formatBirthdayForInput(user.birthday),
       });
+      const parsed = parseStoredPhoneToCountryAndLocal(user.phone);
+      setProfilePhoneCountry(parsed.country);
+      setProfilePhoneLocal(parsed.localDigits);
     }
   }, [user]);
+
+  const onProfileLocalPhoneChange = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    const max = maxNationalDigitsForCountry(profilePhoneCountry.code);
+    setProfilePhoneLocal(digits.slice(0, max));
+  };
+
+  useEffect(() => {
+    const max = maxNationalDigitsForCountry(profilePhoneCountry.code);
+    setProfilePhoneLocal((prev) => prev.replace(/\D/g, '').slice(0, max));
+  }, [profilePhoneCountry.code]);
 
   // Fetch addresses, orders and transactions from API
   useEffect(() => {
@@ -194,7 +218,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
     } catch (error: unknown) {
       if (!isUnauthorizedApiError(error)) {
         console.error('Failed to fetch addresses:', error);
-        toast.error('Failed to load addresses');
+        toast.error(getApiErrorMessage(error, 'Failed to load addresses'));
       }
       setAddresses([]);
     } finally {
@@ -291,7 +315,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
     } catch (error: unknown) {
       if (!isUnauthorizedApiError(error)) {
         console.error('Failed to fetch orders:', error);
-        toast.error('Failed to load orders');
+        toast.error(getApiErrorMessage(error, 'Failed to load orders'));
       }
       setOrders([]);
     } finally {
@@ -303,6 +327,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
     { id: 'profile' as TabType, label: 'Profile', icon: User },
     { id: 'orders' as TabType, label: 'Orders', icon: Package },
     { id: 'addresses' as TabType, label: 'Addresses', icon: MapPin },
+    { id: 'payment' as TabType, label: 'Payment', icon: CreditCard },
     { id: 'wishlist' as TabType, label: 'Wishlist', icon: Heart },
     { id: 'settings' as TabType, label: 'Settings', icon: Settings },
   ];
@@ -354,15 +379,67 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
         name: fullName,
         email: emailTrim,
       };
-      if (profileData.phone?.trim()) updateData.phone = profileData.phone.trim();
-      if (profileData.birthday) updateData.birthday = profileData.birthday;
+      const national = profilePhoneLocal.replace(/\D/g, '');
+      if (national.length > 0) {
+        const max = maxNationalDigitsForCountry(profilePhoneCountry.code);
+        const strict = ['IN', 'US', 'CA', 'GB'].includes(profilePhoneCountry.code);
+        if (strict && national.length !== max) {
+          toast.error(`Enter the full ${max}-digit number for ${profilePhoneCountry.name}.`);
+          setProfileSaving(false);
+          return;
+        }
+        if (!strict && (national.length < 6 || national.length > max)) {
+          toast.error(`Enter between 6 and ${max} digits for this country.`);
+          setProfileSaving(false);
+          return;
+        }
+        updateData.phone = buildPhoneDigitsForApi(profilePhoneCountry.dialCode, profilePhoneLocal);
+      }
+      if (profileData.birthday) {
+        const today = isoDateLocal(new Date());
+        if (profileData.birthday > today) {
+          toast.error('Date of birth cannot be in the future.');
+          setProfileSaving(false);
+          return;
+        }
+        updateData.birthday = profileData.birthday;
+      }
       await authService.updateProfile(updateData);
       await refreshUser();
       toast.success('Profile updated successfully!');
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || 'Failed to update profile');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to update profile'));
     } finally {
       setProfileSaving(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cur = passwordForm.current.trim();
+    const next = passwordForm.next.trim();
+    const confirm = passwordForm.confirm.trim();
+    if (!cur || !next || !confirm) {
+      toast.error('Fill in all password fields');
+      return;
+    }
+    if (next.length < 6) {
+      toast.error('New password must be at least 6 characters');
+      return;
+    }
+    if (next !== confirm) {
+      toast.error('New password and confirmation do not match');
+      return;
+    }
+    setPasswordSaving(true);
+    try {
+      await authService.changePassword(cur, next);
+      toast.success('Password updated successfully');
+      setPasswordForm({ current: '', next: '', confirm: '' });
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Could not change password'));
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
@@ -437,17 +514,21 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                       <div className="bg-muted/30 rounded-xl p-4 space-y-2 sticky top-8">
                         {tabs.map((tab) => {
                           const Icon = tab.icon;
-                          const count = tab.id === 'orders' ? orders.length : 
-                                       tab.id === 'wishlist' ? wishlistItems.length : 
-                                       tab.id === 'addresses' ? addresses.length :
-                                       tab.id === 'payment' ? paymentMethods.length : null;
+                          const count =
+                            tab.id === 'orders'
+                              ? orders.length
+                              : tab.id === 'wishlist'
+                                ? wishlistItems.length
+                                : tab.id === 'addresses'
+                                  ? addresses.length
+                                  : null;
                           
                           return (
                             <motion.button
                               key={tab.id}
                               whileHover={{ scale: 1.02 }}
                               whileTap={{ scale: 0.98 }}
-                              onClick={() => setActiveTab(tab.id)}
+                              onClick={() => navigate(accountPath(tab.id as AccountSection))}
                               className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all ${
                                 activeTab === tab.id
                                   ? 'bg-primary text-primary-foreground'
@@ -540,18 +621,47 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                   placeholder={PH.email}
                                 />
 
-                                <LuxuryInput
-                                  label="Phone number"
-                                  type="tel"
-                                  value={profileData.phone}
-                                  onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                                  placeholder={PH.phone}
-                                  helperText="Include country code. Bare 10-digit local numbers are not accepted."
-                                />
+                                <div className="w-full">
+                                  <label className="block text-sm text-foreground/90 mb-1.5">
+                                    Phone number
+                                  </label>
+                                  <div className="flex gap-2 items-start">
+                                    <div className="w-[6.75rem] shrink-0">
+                                      <LuxurySelect
+                                        value={profilePhoneCountry.code}
+                                        onChange={(e) => {
+                                          const c = DIAL_COUNTRIES.find((x) => x.code === e.target.value);
+                                          if (c) setProfilePhoneCountry(c);
+                                        }}
+                                        aria-label="Country calling code"
+                                        className="py-2.5 text-sm"
+                                      >
+                                        {DIAL_COUNTRIES.map((c) => (
+                                          <option key={c.code} value={c.code}>
+                                            {c.dialCode}
+                                          </option>
+                                        ))}
+                                      </LuxurySelect>
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <LuxuryInput
+                                        type="tel"
+                                        value={profilePhoneLocal}
+                                        onChange={(e) => onProfileLocalPhoneChange(e.target.value)}
+                                        placeholder={PH.phoneLocal}
+                                        className="w-full"
+                                      />
+                                    </div>
+                                  </div>
+                                  <p className="text-xs mt-1.5 text-foreground/50">
+                                    Select country code, then enter your number (10 digits for India / US / Canada).
+                                  </p>
+                                </div>
 
                                 <LuxuryInput
                                   label="Birthday"
                                   type="date"
+                                  max={isoDateLocal(new Date())}
                                   value={profileData.birthday}
                                   onChange={(e) => setProfileData({ ...profileData, birthday: e.target.value })}
                                 />
@@ -811,7 +921,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => {
                                           toast.info('Edit your address in Saved Addresses');
-                                          navigate('/addresses');
+                                          navigate(accountPath('addresses'));
                                         }}
                                         className="flex-1 px-3 py-2 border border-border rounded-lg flex items-center justify-center gap-2 text-sm"
                                       >
@@ -826,9 +936,9 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                             await addressService.delete(address.id);
                                             toast.success('Address deleted successfully');
                                             fetchAddresses();
-                                          } catch (error: any) {
+                                          } catch (error: unknown) {
                                             console.error('Failed to delete address:', error);
-                                            toast.error('Failed to delete address');
+                                            toast.error(getApiErrorMessage(error, 'Failed to delete address'));
                                           }
                                         }}
                                         className="px-3 py-2 border border-red-500/20 rounded-lg flex items-center justify-center gap-2 text-sm text-red-600 hover:bg-red-500/10"
@@ -843,7 +953,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                           </motion.div>
                         )}
 
-                        {/* Payment Tab */}
+                        {/* Payment tab: no saved-cards API yet — honest copy + checkout CTA */}
                         {activeTab === 'payment' && (
                           <motion.div
                             key="payment"
@@ -852,109 +962,34 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                             exit={{ opacity: 0, y: -20 }}
                             className="space-y-6"
                           >
-                            <div className="flex items-center justify-between mb-6">
-                              <h2 className="text-2xl">Payment Methods</h2>
+                            <h2 className="text-2xl mb-2">Payment</h2>
+                            <p className="text-sm text-muted-foreground max-w-xl">
+                              Saved payment methods are not stored in your account yet. Pay with a card at checkout using
+                              Stripe (secure); cash on delivery is available where offered.
+                            </p>
+                            <div className="bg-muted/30 rounded-xl p-8 flex flex-col items-center text-center gap-4">
+                              <CreditCard size={48} className="text-muted-foreground" />
+                              <p className="text-sm text-muted-foreground max-w-md">
+                                Use <span className="font-medium text-foreground">Checkout</span> to enter card details.
+                                Card data is handled by Stripe and is not typed into this account screen.
+                              </p>
                               <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => setShowAddPayment(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg"
+                                type="button"
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => navigate('/cart')}
+                                className="px-6 py-3 bg-primary text-primary-foreground rounded-lg"
                               >
-                                <Plus size={18} />
-                                Add Card
+                                Go to cart
                               </motion.button>
                             </div>
-
-                            {paymentMethods.length === 0 ? (
-                              /* Empty State */
-                              <div className="flex flex-col items-center justify-center text-center py-12 md:py-20">
-                                <motion.div
-                                  initial={{ scale: 0 }}
-                                  animate={{ scale: 1 }}
-                                  transition={{ type: 'spring', damping: 15 }}
-                                  className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-muted flex items-center justify-center mb-4 md:mb-6"
-                                >
-                                  <CreditCard size={48} className="md:hidden text-muted-foreground" />
-                                  <CreditCard size={64} className="hidden md:block text-muted-foreground" />
-                                </motion.div>
-                                <h2 className="text-xl md:text-2xl mb-2 md:mb-3">No payment methods</h2>
-                                <p className="text-sm md:text-base text-muted-foreground mb-6 md:mb-8 max-w-md px-4">
-                                  You haven't added any payment methods yet. Add a card to make checkout faster!
-                                </p>
-                                <motion.button
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  onClick={() => setShowAddPayment(true)}
-                                  className="px-6 md:px-8 py-3 md:py-4 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 text-sm md:text-base"
-                                >
-                                  <Plus size={20} />
-                                  Add Your First Card
-                                </motion.button>
-                              </div>
-                            ) : (
-                              <>
-                                <div className="space-y-4">
-                                  {paymentMethods.map((card) => (
-                                <motion.div
-                                  key={card.id}
-                                  whileHover={{ scale: 1.01 }}
-                                  className="bg-gradient-to-br from-primary/20 to-primary/5 rounded-xl p-6 border border-primary/20 relative"
-                                >
-                                  {card.isDefault && (
-                                    <div className="absolute top-4 right-4 px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
-                                      Default
-                                    </div>
-                                  )}
-
-                                  <div className="flex items-center gap-4 mb-6">
-                                    <div className="w-14 h-14 rounded-xl bg-background flex items-center justify-center">
-                                      <CreditCard size={28} className="text-primary" />
-                                    </div>
-                                    <div>
-                                      <h3 className="font-medium text-lg capitalize">{card.type}</h3>
-                                      <p className="text-sm text-muted-foreground font-mono">•••• •••• •••• {card.last4}</p>
-                                    </div>
-                                  </div>
-
-                                  <div className="flex items-center justify-between">
-                                    <div className="text-sm">
-                                      <p className="text-muted-foreground mb-1">Expires</p>
-                                      <p className="font-medium font-mono">{card.expiry}</p>
-                                    </div>
-
-                                    <div className="flex gap-2">
-                                      <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className="px-3 py-2 border border-border rounded-lg flex items-center justify-center gap-2 text-sm"
-                                      >
-                                        <Edit2 size={14} />
-                                        Edit
-                                      </motion.button>
-                                      <motion.button
-                                        whileHover={{ scale: 1.05 }}
-                                        whileTap={{ scale: 0.95 }}
-                                        className="px-3 py-2 border border-red-500/20 rounded-lg flex items-center justify-center gap-2 text-sm text-red-600 hover:bg-red-500/10"
-                                      >
-                                        <Trash2 size={14} />
-                                      </motion.button>
-                                    </div>
-                                  </div>
-                                  </motion.div>
-                                  ))}
-                                </div>
-
-                                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-6 flex items-start gap-3">
-                                  <ShieldCheck size={24} className="text-blue-600 flex-shrink-0" />
-                                  <div className="text-sm">
-                                    <p className="font-medium text-blue-600 mb-1">Secure Payment Information</p>
-                                    <p className="text-blue-600/80">
-                                      Your payment information is encrypted and securely stored. We never share your card details.
-                                    </p>
-                                  </div>
-                                </div>
-                              </>
-                            )}
+                            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-6 flex items-start gap-3">
+                              <ShieldCheck size={24} className="text-blue-600 flex-shrink-0" />
+                              <p className="text-sm text-blue-600/90">
+                                We never ask you to enter full card numbers on account pages. Only use the checkout payment
+                                step.
+                              </p>
+                            </div>
                           </motion.div>
                         )}
 
@@ -1026,8 +1061,8 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                                 quantity: 1,
                                               });
                                               toast.success('Added to cart!');
-                                            } catch {
-                                              toast.error('Failed to add to cart');
+                                            } catch (err: unknown) {
+                                              toast.error(getApiErrorMessage(err, 'Failed to add to cart'));
                                             }
                                           }}
                                           className="flex-1 px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 bg-primary text-primary-foreground"
@@ -1062,12 +1097,15 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                           >
                             <h2 className="text-2xl mb-6">Account Settings</h2>
 
-                            {/* Notifications */}
+                            {/* Notifications (client-only until email/push prefs API exists) */}
                             <div className="bg-muted/30 rounded-xl p-6">
-                              <div className="flex items-center gap-3 mb-4">
+                              <div className="flex items-center gap-3 mb-2">
                                 <Bell size={24} className="text-primary" />
                                 <h3 className="font-medium">Notifications</h3>
                               </div>
+                              <p className="text-xs text-muted-foreground mb-4">
+                                These choices are saved on this device only. They do not change email or SMS from us yet.
+                              </p>
                               <div className="space-y-4">
                                 {[
                                   { key: 'orders' as const, label: 'Order updates', desc: 'Get notified about your orders' },
@@ -1096,28 +1134,44 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                 <Lock size={24} className="text-primary" />
                                 <h3 className="font-medium">Security</h3>
                               </div>
-                              <div className="space-y-3">
+                              <form onSubmit={(e) => void handleChangePassword(e)} className="space-y-4">
+                                <LuxuryInput
+                                  label="Current password"
+                                  type="password"
+                                  autoComplete="current-password"
+                                  value={passwordForm.current}
+                                  onChange={(e) => setPasswordForm((p) => ({ ...p, current: e.target.value }))}
+                                  placeholder={PH.password}
+                                />
+                                <LuxuryInput
+                                  label="New password"
+                                  type="password"
+                                  autoComplete="new-password"
+                                  value={passwordForm.next}
+                                  onChange={(e) => setPasswordForm((p) => ({ ...p, next: e.target.value }))}
+                                  placeholder={PH.password}
+                                />
+                                <LuxuryInput
+                                  label="Confirm new password"
+                                  type="password"
+                                  autoComplete="new-password"
+                                  value={passwordForm.confirm}
+                                  onChange={(e) => setPasswordForm((p) => ({ ...p, confirm: e.target.value }))}
+                                  placeholder={PH.confirmPassword}
+                                />
                                 <motion.button
-                                  type="button"
+                                  type="submit"
+                                  disabled={passwordSaving}
                                   whileHover={{ scale: 1.01 }}
                                   whileTap={{ scale: 0.99 }}
-                                  onClick={() => navigate('/change-password')}
-                                  className="w-full flex items-center justify-between p-4 bg-background rounded-lg hover:bg-muted transition-colors"
+                                  className="w-full py-3 bg-primary text-primary-foreground rounded-lg text-sm font-medium disabled:opacity-50"
                                 >
-                                  <span className="font-medium">Change Password</span>
-                                  <ChevronRight size={20} />
+                                  {passwordSaving ? 'Updating…' : 'Update password'}
                                 </motion.button>
-                                <motion.button
-                                  type="button"
-                                  whileHover={{ scale: 1.01 }}
-                                  whileTap={{ scale: 0.99 }}
-                                  onClick={() => navigate('/two-factor')}
-                                  className="w-full flex items-center justify-between p-4 bg-background rounded-lg hover:bg-muted transition-colors"
-                                >
-                                  <span className="font-medium">Two-Factor Authentication</span>
-                                  <ChevronRight size={20} />
-                                </motion.button>
-                              </div>
+                              </form>
+                              <p className="text-xs text-muted-foreground mt-4">
+                                Two-factor authentication is not available for storefront accounts yet.
+                              </p>
                             </div>
 
                             {/* Danger Zone */}
@@ -1195,10 +1249,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                     onClose?.();
                     navigate('/');
                   } catch (err: unknown) {
-                    const msg = err && typeof err === 'object' && 'response' in err && typeof (err as { response?: { data?: { error?: string } } }).response?.data?.error === 'string'
-                      ? (err as { response: { data: { error: string } } }).response.data.error
-                      : 'Failed to deactivate';
-                    toast.error(msg);
+                    toast.error(getApiErrorMessage(err, 'Failed to deactivate account'));
                   } finally {
                     setDangerLoading(null);
                     setShowDeactivateConfirm(false);
@@ -1235,10 +1286,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                     onClose?.();
                     navigate('/');
                   } catch (err: unknown) {
-                    const msg = err && typeof err === 'object' && 'response' in err && typeof (err as { response?: { data?: { error?: string } } }).response?.data?.error === 'string'
-                      ? (err as { response: { data: { error: string } } }).response.data.error
-                      : 'Failed to delete account';
-                    toast.error(msg);
+                    toast.error(getApiErrorMessage(err, 'Failed to delete account'));
                   } finally {
                     setDangerLoading(null);
                     setShowDeleteConfirm(false);
@@ -1312,9 +1360,9 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                     toast.success('Address added successfully!');
                     setShowAddAddress(false);
                     fetchAddresses();
-                  } catch (error: any) {
+                  } catch (error: unknown) {
                     console.error('Failed to add address:', error);
-                    toast.error('Failed to add address');
+                    toast.error(getApiErrorMessage(error, 'Failed to add address'));
                   }
                 }}
                 className="space-y-6"
@@ -1436,147 +1484,6 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
       )}
     </AnimatePresence>
 
-    {/* Add Payment Method Modal */}
-    <AnimatePresence>
-      {showAddPayment && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              backdropFilter: 'blur(60px)',
-              WebkitBackdropFilter: 'blur(60px)',
-            }}
-            className="fixed inset-0 z-[60]"
-            onClick={() => setShowAddPayment(false)}
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-[70] flex items-center justify-center p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="bg-background rounded-2xl p-8 max-w-md w-full">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl">Add Payment Method</h2>
-                <button
-                  onClick={() => setShowAddPayment(false)}
-                  className="p-2 hover:bg-muted rounded-full transition-colors"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.currentTarget);
-                  const cardNumber = formData.get('cardNumber') as string;
-                  const newCard: PaymentMethod = {
-                    id: String(paymentMethods.length + 1),
-                    type: formData.get('type') as 'visa' | 'mastercard' | 'amex',
-                    last4: cardNumber.slice(-4),
-                    expiry: formData.get('expiry') as string,
-                    isDefault: formData.get('isDefault') === 'on',
-                  };
-                  setPaymentMethods([...paymentMethods, newCard]);
-                  setShowAddPayment(false);
-                  toast.success('Payment method added successfully!');
-                }}
-                className="space-y-6"
-              >
-                <LuxurySelect
-                  label="Card type"
-                  name="type"
-                  required
-                >
-                  <option value="visa">Visa</option>
-                  <option value="mastercard">Mastercard</option>
-                  <option value="amex">American Express</option>
-                </LuxurySelect>
-
-                <LuxuryInput
-                  label="Card number"
-                  type="text"
-                  name="cardNumber"
-                  required
-                  placeholder={PH.cardNumber}
-                  maxLength={19}
-                  className="font-mono"
-                />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <LuxuryInput
-                    label="Expiry date"
-                    type="text"
-                    name="expiry"
-                    required
-                    placeholder={PH.cardExpiry}
-                    maxLength={5}
-                    className="font-mono"
-                  />
-
-                  <LuxuryInput
-                    label="CVV"
-                    type="text"
-                    name="cvv"
-                    required
-                    placeholder={PH.cvv}
-                    maxLength={4}
-                    className="font-mono"
-                  />
-                </div>
-
-                <LuxuryInput
-                  label="Cardholder name"
-                  type="text"
-                  name="cardholderName"
-                  required
-                  placeholder={PH.nameOnCard}
-                  className="uppercase"
-                />
-
-                <LuxuryCheckbox
-                  name="isDefault"
-                  id="isDefaultCard"
-                  label="Set as default payment method"
-                />
-
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex items-start gap-3">
-                  <ShieldCheck size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-blue-600">
-                    Your payment information is encrypted and securely stored.
-                  </p>
-                </div>
-
-                <div className="flex gap-3">
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setShowAddPayment(false)}
-                    className="flex-1 px-6 py-3 border border-border rounded-lg"
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    type="submit"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg"
-                  >
-                    Add Card
-                  </motion.button>
-                </div>
-              </form>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
     </>
   );
 }

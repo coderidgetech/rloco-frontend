@@ -53,6 +53,7 @@ import { categoryService } from '../../services/categoryService';
 import { Product } from '../../types/api';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 export const AdminProductsPage = () => {
   const navigate = useNavigate();
@@ -104,9 +105,9 @@ export const AdminProductsPage = () => {
         const response = await productService.list(params);
         setProducts(response?.products || []);
         setTotal(response?.total || 0);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to fetch products:', error);
-        toast.error('Failed to load products');
+        toast.error(getApiErrorMessage(error, 'Failed to load products'));
         setProducts([]);
         setTotal(0);
       } finally {
@@ -143,9 +144,9 @@ export const AdminProductsPage = () => {
       const response = await productService.list({ limit, skip: page * limit });
       setProducts(response.products || []);
       setTotal(response.total || 0);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to delete product:', error);
-      toast.error(error.message || 'Failed to delete product');
+      toast.error(getApiErrorMessage(error, 'Failed to delete product'));
     }
   };
 
@@ -183,9 +184,9 @@ export const AdminProductsPage = () => {
       const response = await productService.list({ limit, skip: page * limit });
       setProducts(response.products || []);
       setTotal(response.total || 0);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to duplicate product:', error);
-      toast.error(error.message || 'Failed to duplicate product');
+      toast.error(getApiErrorMessage(error, 'Failed to duplicate product'));
     }
   };
 
@@ -201,9 +202,9 @@ export const AdminProductsPage = () => {
       a.click();
       URL.revokeObjectURL(url);
       toast.success(`Exported ${list.length} products`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Export failed:', error);
-      toast.error(error?.message || 'Export failed');
+      toast.error(getApiErrorMessage(error, 'Export failed'));
     }
   };
 
@@ -233,9 +234,9 @@ export const AdminProductsPage = () => {
       const response = await productService.list({ limit, skip: page * limit });
       setProducts(response?.products || []);
       setTotal(response?.total ?? total);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Import failed:', error);
-      toast.error(error?.message || 'Import failed. Use a JSON array of products.');
+      toast.error(getApiErrorMessage(error, 'Import failed. Use a JSON array of products.'));
     }
   };
 

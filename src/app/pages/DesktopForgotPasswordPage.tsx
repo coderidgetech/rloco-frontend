@@ -1,34 +1,36 @@
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Phone, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Mail, ArrowRight, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { RlocoLogo } from '@/app/components/RlocoLogo';
 import { PH } from '@/app/lib/formPlaceholders';
+import { authService } from '@/app/services/authService';
+import { getApiErrorMessage } from '@/app/lib/apiErrors';
 
 export function DesktopForgotPasswordPage() {
   const navigate = useNavigate();
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!phone.trim()) {
-      toast.error('Please enter your phone number');
+
+    if (!email.trim()) {
+      toast.error('Please enter your email address');
       return;
     }
 
     setIsLoading(true);
-    
-    // Simulate sending OTP
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast.success('OTP sent to your phone');
-    setIsLoading(false);
-    
-    // Navigate to OTP verification page
-    navigate('/otp-verification', { state: { phone, returnTo: '/account', resetPassword: true } });
+    try {
+      await authService.forgotPassword(email.trim());
+      toast.success('If an account exists, a reset link has been sent to your email.');
+      navigate('/login');
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Something went wrong. Please try again.'));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -49,28 +51,28 @@ export function DesktopForgotPasswordPage() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-4xl mb-3">Account Recovery</h1>
-            <p className="text-foreground/60">Enter your phone number to receive a verification code</p>
+            <p className="text-foreground/60">Enter your account email to receive a password reset link</p>
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Phone Input */}
             <div className="relative">
               <label className="block text-sm font-medium mb-2 text-foreground/70">
-                Phone Number
+                Email
               </label>
               <div className="relative">
-                <Phone size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40" />
+                <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40" />
                 <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder={PH.phone}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={PH.email}
                   required
+                  autoComplete="email"
                   className="w-full pl-12 pr-4 py-4 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>
-              <p className="text-xs text-foreground/50 mt-2">We'll send you an OTP to verify your account</p>
+              <p className="text-xs text-foreground/50 mt-2">Check your inbox for a link to reset your password</p>
             </div>
 
             {/* Submit Button */}
@@ -85,7 +87,7 @@ export function DesktopForgotPasswordPage() {
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  Send Verification Code
+                  Send reset link
                   <ArrowRight size={18} />
                 </>
               )}

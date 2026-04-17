@@ -110,10 +110,11 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
 
         {/* Wishlist Button */}
         <motion.button
+          type="button"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleToggleWishlist}
-          className={`absolute top-3 right-3 md:top-4 md:right-4 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all shadow-lg backdrop-blur-sm ${
+          className={`absolute z-10 top-3 right-3 md:top-4 md:right-4 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all shadow-lg backdrop-blur-sm ${
             isWishlisted
               ? 'bg-red-500 text-white'
               : 'bg-white/90 text-foreground hover:bg-white'
@@ -123,7 +124,7 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
         </motion.button>
 
         <motion.div
-          className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         />
       </div>
 

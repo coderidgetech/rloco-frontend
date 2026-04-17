@@ -10,6 +10,7 @@ import { returnService } from '../services/returnService';
 import { orderService } from '../services/orderService';
 import { Return, Order, CreateReturnRequest } from '../types/api';
 import { PH } from '../lib/formPlaceholders';
+import { getApiErrorMessage } from '../lib/apiErrors';
 
 export function ReturnsPage() {
   const navigate = useNavigate();
@@ -59,9 +60,9 @@ export function ReturnsPage() {
       setLoading(true);
       const response = await returnService.list({ limit: 50 });
       setReturns((response as { returns?: Return[] }).returns || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch returns:', error);
-      toast.error('Failed to load returns');
+      toast.error(getApiErrorMessage(error, 'Failed to load returns'));
     } finally {
       setLoading(false);
     }
@@ -111,9 +112,9 @@ export function ReturnsPage() {
       setReturnReason('');
       setReturnDescription('');
       fetchReturns();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create return:', error);
-      toast.error(error.message || 'Failed to create return request');
+      toast.error(getApiErrorMessage(error, 'Failed to create return request'));
     } finally {
       setSubmitting(false);
     }

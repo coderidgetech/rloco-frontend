@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '../lib/apiErrors';
 import { RlocoLogo } from '@/app/components/RlocoLogo';
 import { authService } from '@/app/services/authService';
 import { Button } from '@/app/components/ui/button';
@@ -36,8 +37,8 @@ export function ResetPasswordPage() {
       setSuccess(true);
       toast.success('Password updated. You can now sign in.');
       setTimeout(() => navigate('/login'), 2000);
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to reset password. The link may have expired.');
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Failed to reset password. The link may have expired.'));
     } finally {
       setLoading(false);
     }

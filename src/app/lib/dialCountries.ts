@@ -69,3 +69,45 @@ export function buildPhoneDigitsForApi(dialCode: string, localInput: string): st
   const localDigits = localInput.replace(/\D/g, '');
   return dialDigits + localDigits;
 }
+
+/**
+ * Split a stored value (E.164 or digits) into dial country + national digits for editing.
+ */
+export function parseStoredPhoneToCountryAndLocal(stored: string | undefined | null): {
+  country: DialCountry;
+  localDigits: string;
+} {
+  const raw = (stored ?? '').trim();
+  if (!raw) {
+    return { country: DIAL_COUNTRIES[1], localDigits: '' };
+  }
+  const allDigits = raw.startsWith('+') ? raw.slice(1).replace(/\D/g, '') : raw.replace(/\D/g, '');
+  if (!allDigits) {
+    return { country: DIAL_COUNTRIES[1], localDigits: '' };
+  }
+  const byDialLen = [...DIAL_COUNTRIES].sort(
+    (a, b) => b.dialCode.replace(/\D/g, '').length - a.dialCode.replace(/\D/g, '').length
+  );
+  for (const c of byDialLen) {
+    const d = c.dialCode.replace(/\D/g, '');
+    if (d && allDigits.startsWith(d)) {
+      return { country: c, localDigits: allDigits.slice(d.length) };
+    }
+  }
+  return { country: DIAL_COUNTRIES[1], localDigits: allDigits };
+}
+
+/** Max national digits allowed after the country code (common markets = 10). */
+export function maxNationalDigitsForCountry(countryCode: string): number {
+  switch (countryCode) {
+    case 'IN':
+    case 'US':
+    case 'CA':
+    case 'GB':
+      return 10;
+    case 'AE':
+      return 9;
+    default:
+      return 12;
+  }
+}

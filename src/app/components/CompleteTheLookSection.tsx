@@ -195,9 +195,11 @@ export function CompleteTheLookSection({ currentProduct, products }: CompleteThe
                       />
                       
                       {/* Enhanced Hover Overlay */}
-                      <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent transition-opacity duration-300 ${
-                        isHovered ? 'opacity-100' : 'opacity-0'
-                      }`}>
+                      <div
+                        className={`pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent transition-opacity duration-300 ${
+                          isHovered ? 'opacity-100' : 'opacity-0'
+                        }`}
+                      >
                         <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                           <p className="text-xs uppercase tracking-wider mb-1 font-bold">Quick View</p>
                           <p className="text-[10px] text-white/80 capitalize">{product.category}</p>

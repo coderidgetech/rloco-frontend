@@ -19,6 +19,8 @@ import { productService } from '../../services/productService';
 import { Product } from '../../types/api';
 import { PH } from '../../lib/formPlaceholders';
 import { useEffect } from 'react';
+import { isAxiosError } from 'axios';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 export const AdminAddEditProductPage = () => {
   const navigate = useNavigate();
@@ -88,12 +90,13 @@ export const AdminAddEditProductPage = () => {
             return ['IN', 'US'] as ('IN' | 'US')[];
           })(),
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Failed to fetch product:', error);
-        const errorMessage = error?.response?.data?.error || error?.message || 'Failed to load product';
-        toast.error(errorMessage);
-        // Only navigate away if it's a 404 or invalid ID, not for other errors
-        if (error?.response?.status === 404 || error?.response?.status === 400) {
+        toast.error(getApiErrorMessage(error, 'Failed to load product'));
+        if (
+          isAxiosError(error) &&
+          (error.response?.status === 404 || error.response?.status === 400)
+        ) {
           navigate('/admin/products');
         }
       } finally {
@@ -325,9 +328,9 @@ export const AdminAddEditProductPage = () => {
       }
       
       navigate('/admin/products');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to save product:', error);
-      toast.error(error.message || `Failed to ${isEdit ? 'update' : 'create'} product`);
+      toast.error(getApiErrorMessage(error, `Failed to ${isEdit ? 'update' : 'create'} product`));
     }
   };
 
@@ -344,9 +347,9 @@ export const AdminAddEditProductPage = () => {
       const updated = await productService.uploadImages(productId, Array.from(files));
       setFormData((prev) => ({ ...prev, images: updated?.images || prev.images }));
       toast.success('Images uploaded');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Image upload failed:', error);
-      toast.error(error?.message || 'Image upload failed');
+      toast.error(getApiErrorMessage(error, 'Image upload failed'));
     } finally {
       setUploadingImages(false);
     }

@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '../components/ui/alert';
 import { AlertCircle, LogIn, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
 import { PH } from '../lib/formPlaceholders';
+import { getApiErrorMessage } from '../lib/apiErrors';
 
 export function LoginPage() {
   const [mode, setMode] = useState<'login' | 'signup'>('login');
@@ -21,7 +22,7 @@ export function LoginPage() {
   const { login, register, isAuthenticated, isLoading } = useUser();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/account';
+  const redirect = searchParams.get('redirect') || '/account/profile';
   const fromCheckout = redirect === '/checkout';
 
   useEffect(() => {
@@ -75,8 +76,8 @@ export function LoginPage() {
           setError('Registration failed. Email may already be in use.');
         }
       }
-    } catch (err: any) {
-      setError(err?.message || 'Something went wrong. Please try again.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Something went wrong. Please try again.'));
     } finally {
       setLoading(false);
     }

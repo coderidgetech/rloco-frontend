@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { Footer } from '../components/Footer';
-import { Mail, Phone, MapPin, Clock, Send } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { LuxuryInput } from '../components/ui/luxury-input';
@@ -8,9 +8,15 @@ import { LuxuryTextarea } from '../components/ui/luxury-textarea';
 import { LuxurySelect } from '../components/ui/luxury-select';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { PH } from '../lib/formPlaceholders';
+import api from '../lib/api';
+import { getApiErrorMessage } from '../lib/apiErrors';
 
 export function ContactPage() {
   const { config } = useSiteConfig();
+  const storeAddress = config.general.address?.trim() ?? '';
+  const mapsHref = storeAddress
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(storeAddress)}`
+    : null;
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,12 +24,26 @@ export function ContactPage() {
     subject: '',
     message: ''
   });
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate form submission
-    toast.success('Message sent! We\'ll get back to you within 24 hours.');
-    setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+    setSubmitting(true);
+    try {
+      await api.post('/contact', {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        subject: formData.subject.trim(),
+        message: formData.message.trim(),
+      });
+      toast.success("Message sent! We'll get back to you soon.");
+      setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Could not send message. Please try again or email us directly.'));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -200,9 +220,10 @@ export function ContactPage() {
               {/* Submit Button */}
               <motion.button
                 type="submit"
+                disabled={submitting}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full h-14 bg-foreground text-background hover:bg-foreground/90 transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                className="w-full h-14 bg-foreground text-background hover:bg-foreground/90 transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <Send size={16} />
                 Send Message
@@ -216,7 +237,7 @@ export function ContactPage() {
         </div>
       </div>
 
-      {/* Map Section (Placeholder) */}
+      {/* Store location: link to maps from site address (no embedded API key required). */}
       <div className="border-t border-foreground/5">
         <div className="page-container-lg py-16">
           <motion.div
@@ -224,11 +245,29 @@ export function ContactPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="aspect-[16/9] md:aspect-[21/9] bg-foreground/5 flex items-center justify-center"
+            className="aspect-[16/9] md:aspect-[21/9] bg-foreground/5 flex items-center justify-center px-6"
           >
-            <div className="text-center">
-              <MapPin size={48} className="mx-auto mb-4 text-foreground/20" />
-              <p className="text-sm uppercase tracking-[0.3em] text-foreground/40">Store Location Map</p>
+            <div className="text-center max-w-lg">
+              <MapPin size={48} className="mx-auto mb-4 text-foreground/30" />
+              <p className="text-sm uppercase tracking-[0.3em] text-foreground/50 mb-2">Store location</p>
+              {mapsHref ? (
+                <>
+                  <p className="text-foreground/70 text-sm mb-6 leading-relaxed">{storeAddress}</p>
+                  <a
+                    href={mapsHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-6 py-3 border border-foreground/20 text-sm uppercase tracking-widest hover:bg-foreground/5 transition-colors"
+                  >
+                    Open in Google Maps
+                    <ExternalLink size={16} />
+                  </a>
+                </>
+              ) : (
+                <p className="text-sm text-foreground/50">
+                  Add your store address in admin site settings to show a map link here.
+                </p>
+              )}
             </div>
           </motion.div>
         </div>

@@ -1,7 +1,9 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { Heart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 const products = [
   {
@@ -50,6 +52,7 @@ const products = [
 
 export function Products() {
   const { addToCart } = useCart();
+  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const [selectedSize, setSelectedSize] = useState<{ [key: number]: string }>({});
   const [addedToCart, setAddedToCart] = useState<number | null>(null);
 
@@ -113,18 +116,41 @@ export function Products() {
                 />
                 
                 <motion.button
+                  type="button"
                   initial={{ opacity: 0, scale: 0.8 }}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className="absolute top-4 right-4 w-12 h-12 bg-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                  animate={{ opacity: 0 }}
-                  whileInView={{ opacity: [0, 0] }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const id = String(product.id);
+                    if (isInWishlist(id)) {
+                      removeFromWishlist(id);
+                      toast.success('Removed from wishlist');
+                    } else {
+                      addToWishlist({
+                        id,
+                        name: product.name,
+                        price: product.price,
+                        image: product.image,
+                        category: product.category,
+                        gender: 'unisex',
+                        colors: [],
+                        onSale: false,
+                        newArrival: true,
+                        featured: false,
+                      });
+                      toast.success('Added to wishlist');
+                    }
+                  }}
+                  className={`absolute z-10 top-4 right-4 w-12 h-12 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg ${
+                    isInWishlist(String(product.id)) ? 'bg-red-500 text-white' : 'bg-white text-foreground'
+                  }`}
                 >
-                  <Heart size={20} />
+                  <Heart size={20} fill={isInWishlist(String(product.id)) ? 'currentColor' : 'none'} />
                 </motion.button>
 
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                 />
               </div>
 

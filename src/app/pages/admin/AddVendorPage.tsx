@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { isAxiosError } from 'axios';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -252,10 +252,7 @@ export const AddVendorPage = () => {
       toast.success('Vendor created. Review portal login details.');
     } catch (error: unknown) {
       console.error('Failed to create vendor:', error);
-      const msg = isAxiosError(error)
-        ? (error.response?.data as { error?: string } | undefined)?.error
-        : undefined;
-      toast.error(msg || (error instanceof Error ? error.message : 'Failed to create vendor'));
+      toast.error(getApiErrorMessage(error, 'Failed to create vendor'));
     }
   };
 

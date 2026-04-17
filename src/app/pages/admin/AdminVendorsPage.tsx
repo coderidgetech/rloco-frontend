@@ -62,6 +62,7 @@ import { User } from '../../types/api';
 import { toast } from 'sonner';
 import { VendorPrivilegeDialog } from '../../components/admin/VendorPrivilegeDialog';
 import { VendorTier, VendorRole, VendorPermissions } from '../../types/vendor-permissions';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 export const AdminVendorsPage = () => {
   const navigate = useNavigate();
@@ -82,9 +83,9 @@ export const AdminVendorsPage = () => {
         setLoading(true);
         const vendorList = await adminService.listVendors();
         setVendors(vendorList || []);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to fetch vendors:', error);
-        toast.error('Failed to load vendors');
+        toast.error(getApiErrorMessage(error, 'Failed to load vendors'));
         setVendors([]);
       } finally {
         setLoading(false);
@@ -119,9 +120,9 @@ export const AdminVendorsPage = () => {
       if (selectedVendor?.id === vendor.id) {
         setSelectedVendor({ ...selectedVendor, active: newActive });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to update vendor status:', error);
-      toast.error(error?.response?.data?.error || 'Failed to update vendor status');
+      toast.error(getApiErrorMessage(error, 'Failed to update vendor status'));
     }
   };
 
@@ -139,11 +140,7 @@ export const AdminVendorsPage = () => {
       setVendorToDelete(null);
     } catch (error: unknown) {
       console.error('Failed to delete vendor:', error);
-      const msg =
-        error && typeof error === 'object' && 'response' in error
-          ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
-          : undefined;
-      toast.error(msg || 'Failed to delete vendor');
+      toast.error(getApiErrorMessage(error, 'Failed to delete vendor'));
     } finally {
       setDeleting(false);
     }
@@ -159,9 +156,9 @@ export const AdminVendorsPage = () => {
       if (selectedVendor?.id === vendor.id) {
         setSelectedVendor({ ...selectedVendor, active: true });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to approve vendor:', error);
-      toast.error(error?.response?.data?.error || 'Failed to approve vendor');
+      toast.error(getApiErrorMessage(error, 'Failed to approve vendor'));
     }
   };
 
@@ -468,8 +465,7 @@ export const AdminVendorsPage = () => {
               setPrivilegeVendor(null);
             } catch (error: unknown) {
               console.error('Failed to update vendor privileges:', error);
-              const msg = error instanceof Error ? error.message : 'Failed to update vendor privileges';
-              toast.error(msg);
+              toast.error(getApiErrorMessage(error, 'Failed to update vendor privileges'));
             }
           }}
         />

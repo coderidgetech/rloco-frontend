@@ -8,6 +8,7 @@ import { useUser } from '@/app/context/UserContext';
 import { GoogleSignInButton } from '@/app/components/GoogleSignInButton';
 import { authService } from '@/app/services/authService';
 import { getApiErrorMessage } from '@/app/lib/apiErrors';
+import { isAccountPath } from '@/app/lib/accountRoutes';
 import { LOGIN_OTP_SESSION_KEY, SIGNUP_OTP_DRAFT_KEY, type LoginOtpSession } from '@/app/lib/signupOtpDraft';
 import { DIAL_COUNTRIES, buildPhoneDigitsForApi } from '@/app/lib/dialCountries';
 import { PhoneCountryRow } from '@/app/components/PhoneCountryRow';
@@ -15,7 +16,7 @@ import { PhoneCountryRow } from '@/app/components/PhoneCountryRow';
 export function DesktopLoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/account';
+  const redirect = searchParams.get('redirect') || '/account/profile';
   const { loginWithGoogle } = useUser();
   const [phoneLocal, setPhoneLocal] = useState('');
   const [selectedCountry, setSelectedCountry] = useState(DIAL_COUNTRIES[1]);
@@ -174,7 +175,7 @@ export function DesktopLoginPage() {
             <button
               type="button"
               onClick={() =>
-                navigate(redirect !== '/account' ? `/signup?redirect=${encodeURIComponent(redirect)}` : '/signup')
+                navigate(!isAccountPath(redirect) ? `/signup?redirect=${encodeURIComponent(redirect)}` : '/signup')
               }
               className="text-primary font-medium hover:underline"
             >

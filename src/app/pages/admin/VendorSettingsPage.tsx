@@ -33,6 +33,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 import {
   emptyPreferenceState,
   preferencesFromApi,
@@ -75,8 +76,8 @@ export function VendorSettingsPage() {
         setEmail(v.email);
         setLogo(v.logo || '');
         setPrefs(preferencesFromApi(v.preferences as Record<string, unknown> | undefined));
-      } catch {
-        toast.error('Could not load vendor profile');
+      } catch (err: unknown) {
+        toast.error(getApiErrorMessage(err, 'Could not load vendor profile'));
       } finally {
         setLoading(false);
       }
@@ -102,8 +103,8 @@ export function VendorSettingsPage() {
       });
       setPrefs(preferencesFromApi(updated.preferences as Record<string, unknown> | undefined));
       toast.success(msg);
-    } catch {
-      toast.error('Save failed');
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Save failed'));
     } finally {
       setSaving(false);
     }
@@ -116,8 +117,8 @@ export function VendorSettingsPage() {
       if (kind === 'logo') setLogo(url);
       else setPrefs((p) => setNested(p, 'store', { bannerUrl: url }));
       toast.success(kind === 'logo' ? 'Logo uploaded — save to persist' : 'Banner uploaded — save to persist');
-    } catch {
-      toast.error('Upload failed');
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Upload failed'));
     } finally {
       setUploadTarget(null);
     }
@@ -139,8 +140,8 @@ export function VendorSettingsPage() {
       setNewPassword('');
       setConfirmPassword('');
       toast.success('Password updated');
-    } catch {
-      toast.error('Could not change password');
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Could not change password'));
     } finally {
       setSaving(false);
     }

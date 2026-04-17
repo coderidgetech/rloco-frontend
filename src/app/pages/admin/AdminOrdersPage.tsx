@@ -43,6 +43,7 @@ import {
 import { orderService } from '../../services/orderService';
 import { Order } from '../../types/api';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 export const AdminOrdersPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,9 +73,9 @@ export const AdminOrdersPage = () => {
         const response = await orderService.list(params) as { orders?: Order[]; total?: number };
         setOrders(response?.orders || []);
         setTotal(response?.total ?? 0);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to fetch orders:', error);
-        toast.error('Failed to load orders');
+        toast.error(getApiErrorMessage(error, 'Failed to load orders'));
         setOrders([]);
       } finally {
         setLoading(false);
@@ -171,9 +172,9 @@ export const AdminOrdersPage = () => {
         if (updatedOrder) {
           setSelectedOrder(updatedOrder);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Failed to update order status:', error);
-        toast.error(error.message || 'Failed to update order status');
+        toast.error(getApiErrorMessage(error, 'Failed to update order status'));
       }
     }
   };

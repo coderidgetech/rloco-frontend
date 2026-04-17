@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { addressService } from '../services/addressService';
 import { AddressAutocompleteInput, lookupZipCode } from '../components/AddressAutocompleteInput';
 import { PH } from '../lib/formPlaceholders';
+import { getApiErrorMessage } from '../lib/apiErrors';
 
 interface FormData {
   name: string;
@@ -147,11 +148,7 @@ export function AddAddressPage() {
       }
       navigate(-1);
     } catch (err: unknown) {
-      const msg =
-        err && typeof err === 'object' && 'response' in err
-          ? (err as { response?: { data?: { error?: string } } }).response?.data?.error
-          : undefined;
-      toast.error(msg ?? (err instanceof Error ? err.message : 'Failed to save address'));
+      toast.error(getApiErrorMessage(err, 'Failed to save address'));
     } finally {
       setLoading(false);
     }

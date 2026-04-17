@@ -11,6 +11,7 @@ import { SIGNUP_OTP_DRAFT_KEY, type SignupOtpDraft } from '../lib/signupOtpDraft
 import { getApiErrorMessage } from '../lib/apiErrors';
 import { DIAL_COUNTRIES, buildPhoneDigitsForApi } from '../lib/dialCountries';
 import { PH } from '../lib/formPlaceholders';
+import { ACCOUNT_DEFAULT_PATH } from '../lib/accountRoutes';
 import { PhoneCountryRow } from './PhoneCountryRow';
 
 interface DesktopAuthModalProps {
@@ -163,7 +164,7 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
         await refreshUser();
         toast.success('Account created successfully!');
         resetAndClose();
-        navigate('/account');
+        navigate(ACCOUNT_DEFAULT_PATH);
         return;
       }
 
@@ -171,7 +172,7 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
       await refreshUser();
       toast.success('Successfully signed in!');
       resetAndClose();
-      navigate('/account');
+      navigate(ACCOUNT_DEFAULT_PATH);
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Verification failed'));
     } finally {
@@ -231,7 +232,7 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
     if (ok) {
       toast.success('Signed in with Google!');
       resetAndClose();
-      navigate('/account');
+      navigate(ACCOUNT_DEFAULT_PATH);
     } else {
       toast.error('Google sign-in failed. Please try again.');
     }

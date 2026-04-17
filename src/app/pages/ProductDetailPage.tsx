@@ -18,6 +18,7 @@ import { useUser } from '../context/UserContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { PLACEHOLDER_IMAGE } from '../constants';
 import { PH } from '../lib/formPlaceholders';
+import { getApiErrorMessage } from '../lib/apiErrors';
 
 interface Review {
   id: number;
@@ -1152,9 +1153,9 @@ export function ProductDetailPage() {
                                               setEditingReview(null);
                                               setEditReviewForm({ rating: 5, title: '', comment: '' });
                                               toast.success('Review updated successfully!');
-                                            } catch (error: any) {
+                                            } catch (error: unknown) {
                                               console.error('Failed to update review:', error);
-                                              toast.error(error.message || 'Failed to update review');
+                                              toast.error(getApiErrorMessage(error, 'Failed to update review'));
                                             }
                                           }}
                                           className="flex-1 px-4 py-2 bg-foreground text-background hover:bg-foreground/90 transition-colors text-sm uppercase tracking-wider"
@@ -1208,9 +1209,9 @@ export function ProductDetailPage() {
                                                     const updatedReviews = await productService.getReviews(id!);
                                                     setReviews(updatedReviews);
                                                     toast.success('Review deleted successfully');
-                                                  } catch (error: any) {
+                                                  } catch (error: unknown) {
                                                     console.error('Failed to delete review:', error);
-                                                    toast.error(error.message || 'Failed to delete review');
+                                                    toast.error(getApiErrorMessage(error, 'Failed to delete review'));
                                                   }
                                                 }
                                               }}
@@ -1245,12 +1246,12 @@ export function ProductDetailPage() {
                                               try {
                                                 await reviewService.markHelpful(id!, review.id);
                                                 toast.success('Thank you for your feedback!');
-                                              } catch (error: any) {
+                                              } catch (error: unknown) {
                                                 console.error('Failed to mark review as helpful:', error);
                                                 const newSet = new Set(markingHelpful);
                                                 newSet.delete(review.id);
                                                 setMarkingHelpful(newSet);
-                                                toast.error('Failed to mark review as helpful');
+                                                toast.error(getApiErrorMessage(error, 'Failed to mark review as helpful'));
                                               }
                                             }}
                                             disabled={markingHelpful.has(review.id)}
@@ -1352,9 +1353,9 @@ export function ProductDetailPage() {
                                         setReviewForm({ rating: 5, title: '', comment: '' });
                                         setShowReviewForm(false);
                                         toast.success('Review submitted successfully!');
-                                      } catch (error: any) {
+                                      } catch (error: unknown) {
                                         console.error('Failed to submit review:', error);
-                                        toast.error(error.message || 'Failed to submit review. Please try again.');
+                                        toast.error(getApiErrorMessage(error, 'Failed to submit review. Please try again.'));
                                       } finally {
                                         setSubmittingReview(false);
                                       }

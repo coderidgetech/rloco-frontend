@@ -44,6 +44,7 @@ import { useNavigate } from 'react-router-dom';
 import { adminService } from '../../services/adminService';
 import { User } from '../../types/api';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 export const AdminCustomersPage = () => {
   const navigate = useNavigate();
@@ -70,9 +71,9 @@ export const AdminCustomersPage = () => {
         setCustomers(customerList);
         const totalCount = typeof (response as any)?.total === 'number' ? (response as any).total : customerList.length;
         setTotal(totalCount);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to fetch customers:', error);
-        toast.error('Failed to load customers');
+        toast.error(getApiErrorMessage(error, 'Failed to load customers'));
         setCustomers([]);
       } finally {
         setLoading(false);
@@ -112,9 +113,9 @@ export const AdminCustomersPage = () => {
       if (selectedCustomer?.id === customer.id) {
         setSelectedCustomer({ ...selectedCustomer, active: newActive });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to update customer status:', error);
-      toast.error(error?.message || 'Failed to update customer status');
+      toast.error(getApiErrorMessage(error, 'Failed to update customer status'));
     }
   };
 

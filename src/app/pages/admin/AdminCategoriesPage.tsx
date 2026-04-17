@@ -41,6 +41,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { categoryService } from '../../services/categoryService';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 interface Category {
   id: string;
@@ -81,8 +82,8 @@ export const AdminCategoriesPage = () => {
         setError(null);
         const data = await categoryService.list();
         setCategories(data || []);
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch categories');
+      } catch (err: unknown) {
+        setError(getApiErrorMessage(err, 'Failed to fetch categories'));
         console.error('Failed to fetch categories:', err);
         // Keep empty array on error
         setCategories([]);
@@ -143,9 +144,9 @@ export const AdminCategoriesPage = () => {
       // Refresh categories
       const data = await categoryService.list();
       setCategories(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create category:', error);
-      toast.error(error.message || 'Failed to create category');
+      toast.error(getApiErrorMessage(error, 'Failed to create category'));
     }
   };
 
@@ -173,9 +174,9 @@ export const AdminCategoriesPage = () => {
       // Refresh categories
       const data = await categoryService.list();
       setCategories(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to update category:', error);
-      toast.error(error.message || 'Failed to update category');
+      toast.error(getApiErrorMessage(error, 'Failed to update category'));
     }
   };
 
@@ -190,9 +191,9 @@ export const AdminCategoriesPage = () => {
       // Refresh categories
       const data = await categoryService.list();
       setCategories(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to delete category:', error);
-      toast.error(error.message || 'Failed to delete category');
+      toast.error(getApiErrorMessage(error, 'Failed to delete category'));
     }
   };
 
@@ -209,9 +210,9 @@ export const AdminCategoriesPage = () => {
       // Refresh categories
       const data = await categoryService.list();
       setCategories(data || []);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to toggle category visibility:', error);
-      toast.error(error.message || 'Failed to update category visibility');
+      toast.error(getApiErrorMessage(error, 'Failed to update category visibility'));
     }
   };
 

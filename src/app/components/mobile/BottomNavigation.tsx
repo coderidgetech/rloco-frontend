@@ -6,6 +6,7 @@ import { useWishlist } from '@/app/context/WishlistContext';
 import { useUser } from '@/app/context/UserContext';
 import { useSearchOverlay } from '@/app/context/SearchOverlayContext';
 import { useState } from 'react';
+import { ACCOUNT_DEFAULT_PATH, isAccountPath } from '@/app/lib/accountRoutes';
 
 export function BottomNavigation() {
   const navigate = useNavigate();
@@ -29,7 +30,9 @@ export function BottomNavigation() {
   };
 
   const handleAccountClick = () => {
-    const target = isAuthenticated ? '/account' : '/login?redirect=/account';
+    const target = isAuthenticated
+      ? ACCOUNT_DEFAULT_PATH
+      : `/login?redirect=${encodeURIComponent(ACCOUNT_DEFAULT_PATH)}`;
     handleNavigation(target, 'account');
   };
 
@@ -148,26 +151,26 @@ export function BottomNavigation() {
           className="flex flex-col items-center justify-center flex-1 h-full relative group"
         >
           <div className={`flex flex-col items-center transition-all ${
-            location.pathname === '/account' ? 'scale-110' : 'scale-100'
+            isAccountPath(location.pathname) ? 'scale-110' : 'scale-100'
           }`}>
             <div className="relative">
               <User
                 size={22}
                 className={`transition-all ${
-                  location.pathname === '/account' 
+                  isAccountPath(location.pathname)
                     ? 'text-primary stroke-[2.5]' 
                     : 'text-foreground/60 group-active:text-primary'
                 }`}
-                fill={location.pathname === '/account' ? '#B4770E' : 'none'}
+                fill={isAccountPath(location.pathname) ? '#B4770E' : 'none'}
               />
             </div>
             <span className={`text-[10px] mt-1 font-medium transition-all ${
-              location.pathname === '/account' ? 'text-primary' : 'text-foreground/60 group-active:text-primary'
+              isAccountPath(location.pathname) ? 'text-primary' : 'text-foreground/60 group-active:text-primary'
             }`}>
               Account
             </span>
           </div>
-          {location.pathname === '/account' && (
+          {isAccountPath(location.pathname) && (
             <motion.div
               layoutId="activeTab"
               className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-full"

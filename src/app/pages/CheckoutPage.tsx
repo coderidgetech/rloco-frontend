@@ -22,6 +22,7 @@ import type { Order } from '../types/api';
 import { PH } from '../lib/formPlaceholders';
 import { expectedCurrencyForCountry, isCountryCurrencyMatch, normalizeCountry } from '../lib/market';
 import { getApiErrorMessage } from '../lib/apiErrors';
+import { checkoutIdempotencyKey } from '../lib/checkoutIdempotency';
 
 interface ShippingInfo {
   firstName: string;
@@ -496,7 +497,7 @@ export function CheckoutPage() {
       };
 
       // Create order (gateway check already passed above — no dangling orders)
-      const order = await orderService.create(orderRequest);
+      const order = await orderService.create(orderRequest, { idempotencyKey: checkoutIdempotencyKey() });
 
       // Card → Stripe Elements (secure card capture on next screen)
       if (usesStripe) {
@@ -504,7 +505,7 @@ export function CheckoutPage() {
           const paymentCurrency = expectedCurrencyForCountry(shippingInfo.country) ?? currency;
           const paymentIntent = await paymentService.createPaymentIntent({
             order_id: order.id,
-            amount: finalTotal,
+            amount: order.total,
             currency: paymentCurrency.toLowerCase(),
             gateway: 'stripe',
             payment_method: paymentMethod === 'card' ? 'card' : paymentMethod === 'upi' ? 'upi' : 'wallet',
@@ -519,10 +520,9 @@ export function CheckoutPage() {
           toast.error('Payment could not be started. Please try again or use Cash on Delivery.');
           setIsProcessing(false);
           return;
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error('Failed to create payment intent:', error);
-          const msg = error?.response?.data?.error ?? error?.message ?? 'Failed to initialize payment.';
-          toast.error(msg);
+          toast.error(getApiErrorMessage(error, 'Failed to initialize payment.'));
           setIsProcessing(false);
           return;
         }

@@ -146,10 +146,11 @@ export function Featured() {
 
                 {/* Wishlist Button */}
                 <motion.button
+                  type="button"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={(e) => toggleWishlist(product, e)}
-                  className={`absolute top-3 right-3 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all shadow-lg backdrop-blur-sm ${
+                  className={`absolute z-10 top-3 right-3 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all shadow-lg backdrop-blur-sm ${
                     isInWishlist(String(product.id))
                       ? 'bg-red-500 text-white'
                       : 'bg-white/90 text-foreground hover:bg-white'
@@ -159,7 +160,7 @@ export function Featured() {
                 </motion.button>
 
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"
                   initial={{ opacity: 0 }}
                   whileHover={{ opacity: 1 }}
                   transition={{ duration: 0.3 }}

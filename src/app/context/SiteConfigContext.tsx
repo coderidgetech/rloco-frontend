@@ -572,15 +572,6 @@ export const SiteConfigProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [fetchConfig]);
 
-  // Poll for config changes every 30 seconds (optional - can be disabled)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchConfig();
-    }, 30000); // Refresh every 30 seconds
-
-    return () => clearInterval(interval);
-  }, [fetchConfig]);
-
   // Use ref to track if this is the initial mount
   const isInitialMount = useRef(true);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

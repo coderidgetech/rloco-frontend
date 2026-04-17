@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PH } from '../../lib/formPlaceholders';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 import {
   Select,
   SelectContent,
@@ -113,10 +114,15 @@ export const AddUserPage = () => {
               toast.warning('User created but could not update role. Please update manually.');
             }
           }
-        } catch (updateError: any) {
+        } catch (updateError: unknown) {
           // If role update fails, user is still created as customer
           console.error('Failed to update role:', updateError);
-          toast.warning('User created but role update failed. User is set as customer. Please update role manually.');
+          toast.warning(
+            getApiErrorMessage(
+              updateError,
+              'User created but role update failed. User is set as customer. Please update role manually.'
+            )
+          );
         }
       }
 
@@ -132,9 +138,9 @@ export const AddUserPage = () => {
       setTimeout(() => {
         navigate('/admin/customers');
       }, 1500);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to create user:', error);
-      toast.error(error.response?.data?.error || error.message || 'Failed to create user');
+      toast.error(getApiErrorMessage(error, 'Failed to create user'));
     } finally {
       setIsLoading(false);
     }

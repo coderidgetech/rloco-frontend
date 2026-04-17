@@ -29,6 +29,7 @@ import {
 } from '@/app/components/ui/dropdown-menu';
 import { adminService } from '@/app/services/adminService';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/app/lib/apiErrors';
 
 interface Review {
   id: string;
@@ -87,9 +88,9 @@ export function AdminReviewsPage() {
       }));
       
       setReviews(transformedReviews);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch reviews:', error);
-      toast.error('Failed to load reviews');
+      toast.error(getApiErrorMessage(error, 'Failed to load reviews'));
       setReviews([]);
     } finally {
       setLoading(false);
@@ -101,8 +102,8 @@ export function AdminReviewsPage() {
       await adminService.updateReviewStatus(id, 'approved');
       toast.success('Review approved');
       await fetchReviews();
-    } catch (error: any) {
-      toast.error('Failed to approve review');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to approve review'));
     }
   };
 
@@ -111,8 +112,8 @@ export function AdminReviewsPage() {
       await adminService.updateReviewStatus(id, 'rejected');
       toast.success('Review rejected');
       await fetchReviews();
-    } catch (error: any) {
-      toast.error('Failed to reject review');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to reject review'));
     }
   };
 
@@ -122,8 +123,8 @@ export function AdminReviewsPage() {
       await adminService.updateReviewStatus(id, 'rejected');
       toast.success('Review removed');
       await fetchReviews();
-    } catch (error: any) {
-      toast.error('Failed to delete review');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to delete review'));
     }
   };
 

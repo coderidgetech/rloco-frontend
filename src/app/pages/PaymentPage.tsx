@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { ArrowLeft, Star, Truck, Smartphone, CreditCard, Clock, Wallet, Building2, Gift, ChevronRight, Tag, MapPin, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Truck, CreditCard, Tag, MapPin, ShieldCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { useOrder } from '../context/OrderContext';
@@ -17,9 +17,9 @@ import { StripePaymentForm } from '../components/StripePaymentForm';
 import { CreateOrderRequest } from '../types/api';
 import { Product } from '../types/api';
 import type { Order } from '../types/api';
-import { PH } from '../lib/formPlaceholders';
 import { expectedCurrencyForCountry, isCountryCurrencyMatch, normalizeCountry } from '../lib/market';
 import { getApiErrorMessage } from '../lib/apiErrors';
+import { checkoutIdempotencyKey } from '../lib/checkoutIdempotency';
 
 interface Address {
   id: string;
@@ -35,39 +35,7 @@ interface Address {
   isDefault?: boolean;
 }
 
-interface PaymentMethod {
-  id: string;
-  name: string;
-  type: 'recommended' | 'cod' | 'upi' | 'card' | 'paylater' | 'wallet' | 'emi' | 'netbanking';
-  icon: any;
-  description?: string;
-}
-
-const PAYMENT_METHODS: PaymentMethod[] = [
-  { id: 'recommended', name: 'Recommended', type: 'recommended', icon: Star },
-  { id: 'cod', name: 'Cash On Delivery', type: 'cod', icon: Truck },
-  { id: 'upi', name: 'UPI (Pay via any App)', type: 'upi', icon: Smartphone },
-  { id: 'card', name: 'Credit/Debit Card', type: 'card', icon: CreditCard },
-  { id: 'paylater', name: 'Pay Later', type: 'paylater', icon: Clock },
-  { id: 'wallets', name: 'Wallets', type: 'wallet', icon: Wallet },
-  { id: 'emi', name: 'EMI', type: 'emi', icon: CreditCard },
-  { id: 'netbanking', name: 'Net Banking', type: 'netbanking', icon: Building2 },
-];
-
-/** Labels only — balances and bank lists are not wired; payment happens in Stripe. */
-const WALLET_OPTIONS = [
-  { id: 'mobikwik', name: 'Mobikwik', logo: '💳' },
-  { id: 'paytm', name: 'Paytm', logo: '💰' },
-  { id: 'phonepe', name: 'PhonePe', logo: '📱' },
-  { id: 'amazonpay', name: 'Amazon Pay', logo: '🛒' },
-];
-
-const UPI_APPS = [
-  { id: 'googlepay', name: 'Google Pay', logo: '🅖' },
-  { id: 'phonepe', name: 'PhonePe', logo: '📱' },
-  { id: 'paytm', name: 'Paytm', logo: '💰' },
-  { id: 'bhim', name: 'BHIM UPI', logo: '🏦' },
-];
+type PaymentRail = 'cod' | 'stripe';
 
 export function PaymentPage() {
   const navigate = useNavigate();
@@ -76,19 +44,15 @@ export function PaymentPage() {
   const { items, clearCart, removeFromCart } = useCart();
   const { formatAmount, convertPrice, currency, country: storefrontCountry, market } = useCurrency();
   const { selectedAddress } = useOrder();
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('recommended');
-  const [selectedWallet, setSelectedWallet] = useState<string>('mobikwik');
-  const [selectedUPI, setSelectedUPI] = useState<string>('');
-  const [upiId, setUpiId] = useState('');
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvv, setCvv] = useState('');
+  const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+  const [paymentRail, setPaymentRail] = useState<PaymentRail>(() =>
+    (import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined) ? 'stripe' : 'cod'
+  );
   const [isProcessing, setIsProcessing] = useState(false);
   const [productsMap, setProductsMap] = useState<Map<string, Product>>(new Map());
   const [pendingStripePayment, setPendingStripePayment] = useState<{ order: Order; clientSecret: string } | null>(null);
-  const [stripePreferredMethod, setStripePreferredMethod] = useState<'card' | 'upi' | 'wallet'>('card');
-  const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY as string | undefined;
+  /** Stripe Elements layout hint; server enables card+UPI for INR via PaymentIntent. */
+  const stripePreferredMethod: 'card' | 'upi' | 'wallet' = 'card';
 
   const stripeReturnUrl = useMemo(() => `${window.location.origin}/payment`, []);
 
@@ -233,56 +197,13 @@ export function PaymentPage() {
       return;
     }
 
-    if (!selectedPaymentMethod) {
-      toast.error('Please select a payment method');
+    const orderPaymentMethod: 'cod' | 'card' =
+      paymentRail === 'cod' ? 'cod' : 'card';
+    const stripeIntentMethod: 'card' | 'upi' | 'wallet' = 'card';
+
+    if (orderPaymentMethod !== 'cod' && !stripePublishableKey) {
+      toast.error('Online payments are not configured. Choose Cash on Delivery.');
       return;
-    }
-
-    let orderPaymentMethod: 'cod' | 'card' | 'upi' | 'wallet';
-    let stripeIntentMethod: 'card' | 'upi' | 'wallet';
-
-    switch (selectedPaymentMethod) {
-      case 'cod':
-        orderPaymentMethod = 'cod';
-        stripeIntentMethod = 'card';
-        break;
-      case 'card':
-        orderPaymentMethod = 'card';
-        stripeIntentMethod = 'card';
-        break;
-      case 'upi':
-        orderPaymentMethod = 'upi';
-        stripeIntentMethod = 'upi';
-        break;
-      case 'wallets':
-      case 'recommended':
-        orderPaymentMethod = 'wallet';
-        stripeIntentMethod = 'wallet';
-        break;
-      case 'paylater':
-      case 'emi':
-      case 'netbanking':
-        orderPaymentMethod = 'card';
-        stripeIntentMethod = 'card';
-        break;
-      default:
-        toast.error('Please select a payment method');
-        return;
-    }
-
-    const usesStripe = orderPaymentMethod !== 'cod';
-    if (usesStripe && !stripePublishableKey) {
-      toast.error('Online payments are not configured. Please use Cash on Delivery.');
-      return;
-    }
-
-    if (usesStripe && stripePublishableKey) {
-      // Card details are collected in Stripe Elements; UPI in Elements — no local validation
-    } else if (selectedPaymentMethod === 'card' && !stripePublishableKey) {
-      if (!cardNumber || !cardName || !expiryDate || !cvv) {
-        toast.error('Please fill in all card details');
-        return;
-      }
     }
 
     if (!deliveryAddress) {
@@ -314,22 +235,6 @@ export function PaymentPage() {
         quantity: item.quantity,
       }));
 
-      const paymentInfoData: Record<string, string> = {};
-      if (orderPaymentMethod === 'wallet' || selectedPaymentMethod === 'recommended' || selectedPaymentMethod === 'wallets') {
-        const w = WALLET_OPTIONS.find((x) => x.id === selectedWallet);
-        paymentInfoData.wallet_name = w?.name ?? selectedWallet ?? 'Wallet';
-      }
-      if (!usesStripe || !stripePublishableKey) {
-        if (selectedPaymentMethod === 'card') {
-          paymentInfoData.card_number = cardNumber.replace(/\s/g, '');
-          paymentInfoData.card_name = cardName;
-          paymentInfoData.expiry_date = expiryDate;
-          paymentInfoData.cvv = cvv;
-        } else if (selectedPaymentMethod === 'upi') {
-          paymentInfoData.upi_id = upiId || selectedUPI || '';
-        }
-      }
-
       const orderRequest: CreateOrderRequest = {
         items: orderItems,
         shipping_info: {
@@ -343,11 +248,11 @@ export function PaymentPage() {
           zip_code: deliveryAddress.pincode || '',
           country: shippingCountry,
         },
-        payment_info: paymentInfoData,
+        payment_info: {},
         payment_method: orderPaymentMethod,
       };
 
-      const order = await orderService.create(orderRequest);
+      const order = await orderService.create(orderRequest, { idempotencyKey: checkoutIdempotencyKey() });
 
       if (orderPaymentMethod === 'cod') {
         clearCart();
@@ -361,13 +266,12 @@ export function PaymentPage() {
         const paymentCurrency = (expectedCurrencyForCountry(shippingCountry) ?? currency).toLowerCase();
         const paymentIntent = await paymentService.createPaymentIntent({
           order_id: order.id,
-          amount: finalTotal,
+          amount: order.total,
           currency: paymentCurrency,
           gateway: 'stripe',
           payment_method: stripeIntentMethod,
         });
         if (paymentIntent.client_secret) {
-          setStripePreferredMethod(stripeIntentMethod);
           setPendingStripePayment({ order, clientSecret: paymentIntent.client_secret });
           setIsProcessing(false);
           return;
@@ -375,11 +279,7 @@ export function PaymentPage() {
         toast.error('Payment could not be started. Please try again or use Cash on Delivery.');
       } catch (paymentErr: unknown) {
         console.error('Payment processing error:', paymentErr);
-        const msg =
-          paymentErr && typeof paymentErr === 'object' && 'response' in paymentErr
-            ? (paymentErr as { response?: { data?: { error?: string } } }).response?.data?.error
-            : undefined;
-        toast.error(msg ?? getApiErrorMessage(paymentErr, 'Payment could not be completed.'));
+        toast.error(getApiErrorMessage(paymentErr, 'Payment could not be completed.'));
       }
       setIsProcessing(false);
     } catch (err: unknown) {
@@ -400,380 +300,73 @@ export function PaymentPage() {
   };
 
   const renderPaymentContent = () => {
-    switch (selectedPaymentMethod) {
-      case 'recommended':
-        return (
-          <div>
-            <h3 className="font-medium mb-4">Recommended Payment Options</h3>
-            {stripePublishableKey && (
-              <div className="flex items-start gap-3 bg-foreground/5 p-4 border border-foreground/10 rounded-lg mb-4">
-                <ShieldCheck size={16} className="text-foreground/60 mt-0.5 shrink-0" />
-                <p className="text-xs text-foreground/60 leading-relaxed">
-                  You will complete payment securely on the next screen via Stripe (card, UPI, or wallet). No card data is stored on our servers.
+    if (paymentRail === 'cod') {
+      return (
+        <div>
+          <h3 className="font-medium mb-4">Cash on delivery</h3>
+          <div className="border border-border rounded-lg p-6 mb-6">
+            <div className="flex items-start gap-3 mb-4">
+              <Truck className="text-primary mt-1" size={24} />
+              <div>
+                <h4 className="font-medium mb-2">Pay when your order arrives</h4>
+                <p className="text-sm text-muted-foreground">
+                  Pay the delivery partner in cash (or as they accept). No online payment is taken now.
                 </p>
               </div>
-            )}
-            <div className="space-y-3">
-              {WALLET_OPTIONS.map((wallet) => (
-                <div
-                  key={wallet.id}
-                  className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
-                    selectedWallet === wallet.id ? 'border-primary bg-primary/5' : 'border-border'
-                  }`}
-                  onClick={() => setSelectedWallet(wallet.id)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        checked={selectedWallet === wallet.id}
-                        onChange={() => setSelectedWallet(wallet.id)}
-                        className="w-5 h-5 cursor-pointer accent-primary"
-                      />
-                      <span className="text-2xl">{wallet.logo}</span>
-                      <span className="font-medium">{wallet.name}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handlePayment}
-              disabled={isProcessing}
-              className="w-full mt-6 py-4 bg-[#FF3F6C] hover:bg-[#E6365F] text-white uppercase tracking-wider font-medium rounded transition-colors disabled:opacity-50"
-            >
-              {isProcessing ? 'Processing...' : 'Add Money & Pay'}
-            </motion.button>
-          </div>
-        );
-
-      case 'cod':
-        return (
-          <div>
-            <h3 className="font-medium mb-4">Cash On Delivery</h3>
-            <div className="border border-border rounded-lg p-6 mb-6">
-              <div className="flex items-start gap-3 mb-4">
-                <Truck className="text-primary mt-1" size={24} />
-                <div>
-                  <h4 className="font-medium mb-2">Pay on delivery available</h4>
-                  <p className="text-sm text-muted-foreground">
-                    You can pay cash to the delivery partner when your order arrives.
-                  </p>
-                </div>
-              </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-                ℹ️ Please keep exact change handy to help us serve you better
-              </div>
+            <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3 text-sm text-blue-800 dark:text-blue-200">
+              Keep close to the order total for smoother delivery.
             </div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handlePayment}
-              disabled={isProcessing}
-              className="w-full py-4 bg-[#FF3F6C] hover:bg-[#E6365F] text-white uppercase tracking-wider font-medium rounded transition-colors disabled:opacity-50"
-            >
-              {isProcessing ? 'Processing...' : 'Place Order'}
-            </motion.button>
           </div>
-        );
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handlePayment}
+            disabled={isProcessing}
+            className="w-full py-4 bg-[#FF3F6C] hover:bg-[#E6365F] text-white uppercase tracking-wider font-medium rounded transition-colors disabled:opacity-50"
+          >
+            {isProcessing ? 'Processing...' : 'Place order (COD)'}
+          </motion.button>
+        </div>
+      );
+    }
 
-      case 'upi':
-        return (
-          <div>
-            <h3 className="font-medium mb-4">UPI Payment</h3>
-            {stripePublishableKey ? (
-              <div className="bg-foreground/5 p-4 border border-foreground/10 rounded-lg mb-6 text-sm text-foreground/70">
-                Your UPI details will be collected securely on the next screen via Stripe.
-              </div>
-            ) : (
-              <>
-                <div className="mb-6">
-                  <p className="text-sm font-medium mb-3">Choose an option</p>
-                  <div className="grid grid-cols-2 gap-3 mb-4">
-                    {UPI_APPS.map((app) => (
-                      <div
-                        key={app.id}
-                        onClick={() => setSelectedUPI(app.id)}
-                        className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
-                          selectedUPI === app.id ? 'border-primary bg-primary/5' : 'border-border'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <input
-                            type="radio"
-                            checked={selectedUPI === app.id}
-                            onChange={() => setSelectedUPI(app.id)}
-                            className="w-4 h-4 cursor-pointer accent-primary"
-                          />
-                          <span className="text-xl">{app.logo}</span>
-                          <span className="text-sm font-medium">{app.name}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="mb-6">
-                  <p className="text-sm font-medium mb-3">Or enter UPI ID</p>
-                  <input
-                    type="text"
-                    value={upiId}
-                    onChange={(e) => {
-                      setUpiId(e.target.value);
-                      setSelectedUPI('');
-                    }}
-                    placeholder={PH.upiId}
-                    className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
-                  />
-                  <p className="text-xs text-muted-foreground mt-2">
-                    The UPI ID is in the format of name/phone number@bankname
-                  </p>
-                </div>
-              </>
-            )}
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handlePayment}
-              disabled={isProcessing}
-              className="w-full py-4 bg-[#FF3F6C] hover:bg-[#E6365F] text-white uppercase tracking-wider font-medium rounded transition-colors disabled:opacity-50"
-            >
-              {isProcessing ? 'Processing...' : 'Verify & Pay'}
-            </motion.button>
-          </div>
-        );
-
-      case 'card':
-        return (
-          <div>
-            <h3 className="font-medium mb-4">Credit/Debit Card</h3>
-            <div className="space-y-4 mb-6">
-              {stripePublishableKey ? (
-                <div className="flex items-start gap-3 bg-foreground/5 p-4 border border-foreground/10 rounded-lg">
-                  <ShieldCheck size={16} className="text-foreground/60 mt-0.5 shrink-0" />
-                  <p className="text-xs text-foreground/60 leading-relaxed">
-                    Your card details will be securely collected on the next screen via Stripe. No card data is stored on our servers.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Card Number</label>
-                    <input
-                      type="text"
-                      value={cardNumber}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\s/g, '');
-                        if (value.length <= 16) {
-                          const formatted = value.match(/.{1,4}/g)?.join(' ') || value;
-                          setCardNumber(formatted);
-                        }
-                      }}
-                      placeholder={PH.cardNumber}
-                      maxLength={19}
-                      className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Name on Card</label>
-                    <input
-                      type="text"
-                      value={cardName}
-                      onChange={(e) => setCardName(e.target.value.toUpperCase())}
-                      placeholder={PH.nameOnCard}
-                      className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Valid Thru</label>
-                      <input
-                        type="text"
-                        value={expiryDate}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '');
-                          if (value.length <= 4) {
-                            const formatted = value.length >= 2 ? `${value.slice(0, 2)}/${value.slice(2)}` : value;
-                            setExpiryDate(formatted);
-                          }
-                        }}
-                        placeholder={PH.cardExpiry}
-                        maxLength={5}
-                        className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">CVV</label>
-                      <input
-                        type="password"
-                        value={cvv}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '');
-                          if (value.length <= 3) {
-                            setCvv(value);
-                          }
-                        }}
-                        placeholder={PH.cvv}
-                        maxLength={3}
-                        className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:border-primary transition-colors"
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handlePayment}
-              disabled={isProcessing}
-              className="w-full py-4 bg-[#FF3F6C] hover:bg-[#E6365F] text-white uppercase tracking-wider font-medium rounded transition-colors disabled:opacity-50"
-            >
-              {isProcessing ? 'Processing...' : 'Pay Now'}
-            </motion.button>
-          </div>
-        );
-
-      case 'wallets':
-        return (
-          <div>
-            <h3 className="font-medium mb-4">Wallets</h3>
-            {stripePublishableKey && (
-              <div className="flex items-start gap-3 bg-foreground/5 p-4 border border-foreground/10 rounded-lg mb-4">
-                <ShieldCheck size={16} className="text-foreground/60 mt-0.5 shrink-0" />
-                <p className="text-xs text-foreground/60 leading-relaxed">
-                  Complete wallet or UPI payment on the next screen via Stripe. No card data is stored on our servers.
-                </p>
-              </div>
-            )}
-            <div className="space-y-3">
-              {WALLET_OPTIONS.map((wallet) => (
-                <div
-                  key={wallet.id}
-                  className={`border-2 rounded-lg p-4 cursor-pointer transition-colors ${
-                    selectedWallet === wallet.id ? 'border-primary bg-primary/5' : 'border-border'
-                  }`}
-                  onClick={() => setSelectedWallet(wallet.id)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        checked={selectedWallet === wallet.id}
-                        onChange={() => setSelectedWallet(wallet.id)}
-                        className="w-5 h-5 cursor-pointer accent-primary"
-                      />
-                      <span className="text-2xl">{wallet.logo}</span>
-                      <span className="font-medium">{wallet.name}</span>
-                    </div>
-                    <ChevronRight size={20} className="text-muted-foreground" />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handlePayment}
-              disabled={isProcessing}
-              className="w-full mt-6 py-4 bg-[#FF3F6C] hover:bg-[#E6365F] text-white uppercase tracking-wider font-medium rounded transition-colors disabled:opacity-50"
-            >
-              {isProcessing ? 'Processing...' : 'Continue'}
-            </motion.button>
-          </div>
-        );
-
-      case 'paylater':
-        return (
-          <div>
-            <h3 className="font-medium mb-4">Pay Later</h3>
-            <div className="border border-border rounded-lg p-6 mb-6">
-              <p className="text-sm text-muted-foreground mb-4">
-                You will complete payment securely on the next step via Stripe (installments or card options where available).
-              </p>
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handlePayment}
-              disabled={isProcessing}
-              className="w-full py-4 bg-[#FF3F6C] hover:bg-[#E6365F] text-white uppercase tracking-wider font-medium rounded transition-colors disabled:opacity-50"
-            >
-              {isProcessing ? 'Processing...' : 'Continue to pay'}
-            </motion.button>
-          </div>
-        );
-
-      case 'emi':
-        return (
-          <div>
-            <h3 className="font-medium mb-4">EMI (Easy Installments)</h3>
-            <div className="border border-border rounded-lg p-6 mb-6 text-center text-sm text-muted-foreground">
-              {stripePublishableKey ? (
+    return (
+      <div>
+        <h3 className="font-medium mb-4">Pay online (Stripe)</h3>
+        {stripePublishableKey ? (
+          <>
+            <div className="flex items-start gap-3 bg-foreground/5 p-4 border border-foreground/10 rounded-lg mb-6">
+              <ShieldCheck size={16} className="text-foreground/60 mt-0.5 shrink-0" />
+              <div className="text-xs text-foreground/60 leading-relaxed space-y-2">
                 <p>
-                  EMI and instalment plans are chosen in the secure Stripe payment step (where your bank supports
-                  them). We do not list banks here until that data is provided by your payment provider.
+                  Card, UPI (INR), wallets, and other methods enabled in your Stripe Dashboard appear in the secure
+                  payment step. We do not collect card numbers on this page.
                 </p>
-              ) : (
-                <p>Configure Stripe to enable EMI and card instalment options.</p>
-              )}
+              </div>
             </div>
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={handlePayment}
               disabled={isProcessing}
-              className="w-full mt-6 py-4 bg-[#FF3F6C] hover:bg-[#E6365F] text-white uppercase tracking-wider font-medium rounded transition-colors disabled:opacity-50"
+              className="w-full py-4 bg-[#FF3F6C] hover:bg-[#E6365F] text-white uppercase tracking-wider font-medium rounded transition-colors disabled:opacity-50"
             >
               {isProcessing ? 'Processing...' : 'Continue to secure payment'}
             </motion.button>
-          </div>
-        );
-
-      case 'netbanking':
-        return (
-          <div>
-            <h3 className="font-medium mb-4">Net Banking</h3>
-            <div className="space-y-3 mb-6 rounded-lg border border-border p-4 text-sm text-muted-foreground">
-              {stripePublishableKey ? (
-                <p>
-                  Net banking and bank redirects are available in the secure Stripe payment step when enabled for your
-                  account and currency. No bank list is shown here because options come from Stripe.
-                </p>
-              ) : (
-                <p>Configure Stripe to enable bank redirect and other payment methods.</p>
-              )}
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handlePayment}
-              disabled={isProcessing}
-              className="w-full py-4 bg-[#FF3F6C] hover:bg-[#E6365F] text-white uppercase tracking-wider font-medium rounded transition-colors disabled:opacity-50"
-            >
-              {isProcessing ? 'Processing...' : 'Pay Securely'}
-            </motion.button>
-          </div>
-        );
-
-      default:
-        return (
-          <div className="text-center py-12 text-muted-foreground">
-            Select a payment method
-          </div>
-        );
-    }
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground mb-4">
+            Online payments are not configured. Choose <span className="font-medium">Cash on delivery</span> in the
+            sidebar or set <code className="text-xs">VITE_STRIPE_PUBLISHABLE_KEY</code> and server Stripe keys.
+          </p>
+        )}
+      </div>
+    );
   };
 
   if (pendingStripePayment) {
-    const stripeSubtitle =
-      stripePreferredMethod === 'upi'
-        ? 'Choose the UPI tab below to pay with your UPI app.'
-        : stripePreferredMethod === 'wallet'
-          ? 'Choose UPI or your wallet in the options below.'
-          : 'Pay securely with card, UPI, or wallet (Stripe).';
+    const stripeSubtitle = 'Complete payment with Stripe (card, UPI for INR, or other methods enabled in your Dashboard).';
     const isINR = currency === 'INR';
     const cancelStripe = () => {
       setPendingStripePayment(null);
@@ -866,41 +459,34 @@ export function PaymentPage() {
               </p>
             </div>
 
-            {/* Payment Methods */}
+            {/* Payment rails: COD vs Stripe (non-Stripe gateways would be a third rail when integrated). */}
             <div className="bg-white border border-border rounded-lg p-4">
-              <h3 className="font-medium mb-4 text-sm">Choose Payment Mode</h3>
+              <h3 className="font-medium mb-4 text-sm">Payment</h3>
               <div className="space-y-1">
-                {PAYMENT_METHODS.map((method) => {
-                  const Icon = method.icon;
-                  return (
-                    <button
-                      key={method.id}
-                      onClick={() => setSelectedPaymentMethod(method.id)}
-                      className={`w-full flex items-center justify-between px-3 py-3 rounded-lg transition-colors ${
-                        selectedPaymentMethod === method.id
-                          ? 'bg-primary/10 text-primary border-l-4 border-primary'
-                          : 'hover:bg-muted border-l-4 border-transparent'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Icon size={18} />
-                        <span className="text-sm font-medium">{method.name}</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Gift Card */}
-            <div className="bg-white border border-border rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Gift size={16} className="text-foreground/70" />
-                  <span className="text-sm font-medium">Have a Gift Card?</span>
-                </div>
-                <button className="text-xs uppercase tracking-wider font-medium text-primary hover:underline">
-                  Apply
+                <button
+                  type="button"
+                  onClick={() => setPaymentRail('cod')}
+                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-left ${
+                    paymentRail === 'cod'
+                      ? 'bg-primary/10 text-primary border-l-4 border-primary'
+                      : 'hover:bg-muted border-l-4 border-transparent'
+                  }`}
+                >
+                  <Truck size={18} />
+                  <span className="text-sm font-medium">Cash on delivery</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => stripePublishableKey && setPaymentRail('stripe')}
+                  disabled={!stripePublishableKey}
+                  className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-left ${
+                    paymentRail === 'stripe'
+                      ? 'bg-primary/10 text-primary border-l-4 border-primary'
+                      : 'hover:bg-muted border-l-4 border-transparent'
+                  } ${!stripePublishableKey ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <CreditCard size={18} />
+                  <span className="text-sm font-medium">Pay online (Stripe)</span>
                 </button>
               </div>
             </div>

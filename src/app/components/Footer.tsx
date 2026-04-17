@@ -9,6 +9,7 @@ import { Input } from './ui/input';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '../lib/apiErrors';
 import { newsletterService } from '../services/newsletterService';
 import { PH } from '../lib/formPlaceholders';
 
@@ -31,8 +32,8 @@ export function Footer() {
         description: `We've sent a confirmation to ${newsletterEmail}`,
       });
       setNewsletterEmail('');
-    } catch (err: any) {
-      toast.error(err?.message || 'Subscription failed. Please try again.');
+    } catch (err: unknown) {
+      toast.error(getApiErrorMessage(err, 'Subscription failed. Please try again.'));
     } finally {
       setNewsletterLoading(false);
     }

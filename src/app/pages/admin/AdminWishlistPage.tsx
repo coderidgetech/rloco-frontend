@@ -21,6 +21,7 @@ import { productService } from '@/app/services/productService';
 import { wishlistService } from '@/app/services/wishlistService';
 import { Product } from '@/app/types/api';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/app/lib/apiErrors';
 
 interface WishlistProduct {
   id: string;
@@ -52,7 +53,8 @@ export function AdminWishlistPage() {
     try {
       const data = await wishlistService.getUserAnalytics();
       setUserAnalytics({ total_wishlists: data.total_wishlists ?? 0, active_users: data.active_users ?? 0 });
-    } catch {
+    } catch (err: unknown) {
+      console.warn('Wishlist user analytics:', err);
       setUserAnalytics({ total_wishlists: 0, active_users: 0 });
     }
   };
@@ -104,9 +106,9 @@ export function AdminWishlistPage() {
           return next;
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to fetch products:', error);
-      toast.error('Failed to load products');
+      toast.error(getApiErrorMessage(error, 'Failed to load products'));
       setProducts([]);
     } finally {
       setLoading(false);

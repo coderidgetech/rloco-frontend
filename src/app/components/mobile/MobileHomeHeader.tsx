@@ -16,7 +16,7 @@ export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
   const { openSearch } = useSearchOverlay();
   const { itemCount } = useWishlist();
   const { line: deliveryLine, loading: deliveryLoading, isAuthenticated } = useDeliveryAddressPreview();
-  const [notificationCount] = useState(3); // Mock notification count
+  const [notificationCount] = useState(0);
 
   const deliveryText = !isAuthenticated
     ? 'Add a delivery address'
@@ -80,7 +80,7 @@ export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
 
           {/* Account Icon */}
           <button
-            onClick={() => navigate('/account')}
+            onClick={() => navigate('/account/profile')}
             className="w-10 h-10 rounded-full flex items-center justify-center active:bg-foreground/5 transition-colors touch-manipulation"
             style={{ WebkitTapHighlightColor: 'transparent' }}
             aria-label="Account"

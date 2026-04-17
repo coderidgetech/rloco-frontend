@@ -57,6 +57,7 @@ import { defaultSiteConfig, useSiteConfig } from '../../context/SiteConfigContex
 import { adminService } from '../../services/adminService';
 import { mergeSiteConfigFromApi } from '../../lib/siteConfigMerge';
 import { AdminSiteContentPanel } from '../../components/admin/AdminSiteContentPanel';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 const CONFIG_TAB_IDS = [
   'site-content',
@@ -89,9 +90,9 @@ export const AdminConfigurationPage = () => {
         const data = await adminService.getConfiguration();
         if (cancelled || !data) return;
         importConfig(JSON.stringify(mergeSiteConfigFromApi(data as Record<string, unknown>)));
-      } catch (error) {
+      } catch (error: unknown) {
         console.error('Failed to fetch configuration:', error);
-        toast.error('Failed to load configuration');
+        toast.error(getApiErrorMessage(error, 'Failed to load configuration'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -112,11 +113,7 @@ export const AdminConfigurationPage = () => {
       toast.success(section ? `${section} saved` : 'Configuration saved');
     } catch (error: unknown) {
       console.error('Failed to save configuration:', error);
-      const msg =
-        error && typeof error === 'object' && 'response' in error
-          ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
-          : undefined;
-      toast.error(msg || (error instanceof Error ? error.message : 'Failed to save configuration'));
+      toast.error(getApiErrorMessage(error, 'Failed to save configuration'));
     } finally {
       setSaving(false);
     }
@@ -404,11 +401,7 @@ export const AdminConfigurationPage = () => {
       toast.success('Configuration reset to defaults and saved');
     } catch (error: unknown) {
       console.error('Failed to reset configuration:', error);
-      const msg =
-        error && typeof error === 'object' && 'response' in error
-          ? (error as { response?: { data?: { error?: string } } }).response?.data?.error
-          : undefined;
-      toast.error(msg || (error instanceof Error ? error.message : 'Failed to reset configuration'));
+      toast.error(getApiErrorMessage(error, 'Failed to reset configuration'));
       resetConfig();
     } finally {
       setSaving(false);

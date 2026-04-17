@@ -111,7 +111,7 @@ export function OrdersPage() {
 
   return (
     <div className={`min-h-screen w-full min-w-0 bg-background pt-page-nav ${bottomPadding}`}>
-      <ResponsivePageHeader title="My Orders" onBack={() => navigate('/account')} />
+      <ResponsivePageHeader title="My Orders" onBack={() => navigate('/account/orders')} />
 
       <div className={isMobile ? '' : 'page-container-sm'}>
         <div className={`${topPadding} ${isMobile ? 'sticky z-20 bg-background border-b border-border/20' : 'mb-6'}`} style={isMobile ? { top: 'calc(env(safe-area-inset-top, 0px) + 3.75rem + 3.5rem)' } : undefined}>

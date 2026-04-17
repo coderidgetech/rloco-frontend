@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '../../components/ui/alert';
 import { AlertCircle, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { PH } from '../../lib/formPlaceholders';
+import { getApiErrorMessage } from '../../lib/apiErrors';
 
 export const AdminLoginPage = () => {
   const [email, setEmail] = useState('');
@@ -35,8 +36,8 @@ export const AdminLoginPage = () => {
       } else {
         setError('Invalid email or password');
       }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'An error occurred. Please try again.'));
     } finally {
       setLoading(false);
     }
