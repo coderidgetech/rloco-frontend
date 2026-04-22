@@ -17,6 +17,16 @@ RUN pnpm install --frozen-lockfile
 # Copy source code
 COPY . .
 
+# Vite bakes VITE_* at build time (see `.env.example` and `.do/app.yaml`)
+ARG VITE_API_URL=https://rloko.com/api
+ARG VITE_STRIPE_PUBLISHABLE_KEY
+ARG VITE_GOOGLE_CLIENT_ID
+ARG VITE_GOOGLE_MAPS_API_KEY
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
+
 # Build the application
 RUN pnpm run build
 
