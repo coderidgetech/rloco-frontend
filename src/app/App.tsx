@@ -180,6 +180,7 @@ function App() {
                             <Route path="/order-confirmation" element={<ResponsiveOrderConfirmationPage />} />
                             <Route path="/order-confirmation/:id" element={<ResponsiveOrderConfirmationPage />} />
                             <Route path="/all-products" element={<ResponsiveAllProductsPage />} />
+                            <Route path="/shop" element={<Navigate to="/all-products" replace />} />
                             <Route path="/not-found" element={<ResponsiveNotFoundPage />} />
                             <Route path="/sale" element={<ResponsiveSalePage />} />
                             <Route path="/new-arrivals" element={<ResponsiveNewArrivalsPage />} />
