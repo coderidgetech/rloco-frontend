@@ -156,7 +156,7 @@ export function HelpGuideButton() {
                       <div>
                         <div className="text-xs text-gray-500 mb-1">ADMIN</div>
                         <div className="text-xs font-mono bg-gray-50 p-2 rounded">
-                          <div>admin@rloco.com</div>
+                          <div>admin@rloko.com</div>
                           <div>admin123</div>
                         </div>
                       </div>
@@ -250,7 +250,7 @@ function QuickStartGuide() {
               <h3 className="font-medium text-gray-900 mb-2">Login & Access Dashboard</h3>
               <p className="text-sm text-gray-600 mb-2">Use your admin credentials to access the portal</p>
               <div className="bg-white border border-gray-200 rounded p-3 text-sm">
-                <div className="font-mono text-[#B4770E]">admin@rloco.com / admin123</div>
+                <div className="font-mono text-[#B4770E]">admin@rloko.com / admin123</div>
               </div>
             </div>
           </div>
