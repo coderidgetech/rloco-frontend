@@ -54,8 +54,9 @@ export default defineConfig({
     exclude: [],
   },
   build: {
-    // Ensure source maps for better debugging
-    sourcemap: true,
+    // sourcemaps slow Docker/Droplet builds; set SOURCEMAP=1 for debug builds
+    sourcemap: process.env.SOURCEMAP === '1',
+    reportCompressedSize: false,
     // Use '/' for web (Cloudflare Pages) so script/assets load from root and avoid MIME/404 issues on client routes.
     // For Capacitor/mobile, build uses same output; Capacitor loads from app origin.
     base: '/',

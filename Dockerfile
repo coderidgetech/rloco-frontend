@@ -1,4 +1,5 @@
-# Multi-stage build for React + Vite frontend
+# syntax=docker/dockerfile:1.4
+# Multi-stage build for React + Vite frontend. Use: DOCKER_BUILDKIT=1 docker build ...
 
 # Stage 1: Build
 FROM node:20-alpine AS builder
@@ -11,8 +12,9 @@ RUN npm install -g pnpm
 # Copy package files
 COPY package.json pnpm-lock.yaml* ./
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies (BuildKit: persist pnpm store between builds)
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
@@ -27,7 +29,8 @@ ENV VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY
 ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
 
-# Build the application
+# SOURCEMAP=1 in build-args only when you need prod sourcemaps
+ENV SOURCEMAP=0
 RUN pnpm run build
 
 # Stage 2: Production
