@@ -20,7 +20,8 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 COPY . .
 
 # Vite bakes VITE_* at build time (see `.env.example` and `.do/app.yaml`)
-ARG VITE_API_URL=https://rloko.com/api
+# Default matches staging; override with --build-arg or CI (publish-droplet-images.yml).
+ARG VITE_API_URL=https://dev.rloko.com/api
 ARG VITE_STRIPE_PUBLISHABLE_KEY
 ARG VITE_GOOGLE_CLIENT_ID
 ARG VITE_GOOGLE_MAPS_API_KEY
