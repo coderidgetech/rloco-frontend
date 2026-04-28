@@ -13,6 +13,7 @@ import { useProduct } from '../hooks/useProducts';
 import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
 import { shippingService } from '../services/shippingService';
+import { DEFAULT_ITEM_WEIGHT_LB } from '../constants/shipping';
 import { ProductReview } from '../types/api';
 import { useUser } from '../context/UserContext';
 import { useCurrency } from '../context/CurrencyContext';
@@ -100,6 +101,9 @@ export function ProductDetailPage() {
   const [expandedSection, setExpandedSection] = useState<string>('details');
   const sizeGuideRef = useRef<HTMLDivElement>(null);
   const [pincode, setPincode] = useState('');
+  const [deliveryCity, setDeliveryCity] = useState('');
+  const [deliveryState, setDeliveryState] = useState('');
+  const [deliveryStreet, setDeliveryStreet] = useState('');
   const [pincodeResult, setPincodeResult] = useState<string | null>(null);
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
@@ -107,7 +111,7 @@ export function ProductDetailPage() {
   
   const { addToCart, items } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
-  const { formatPrice, convertPrice, currency, market } = useCurrency();
+  const { formatPrice, convertPrice, currency, market, country } = useCurrency();
 
   // Fetch all products for recommendations
   useEffect(() => {
@@ -162,6 +166,9 @@ export function ProductDetailPage() {
     setSelectedSize('');
     setExpandedSection('details');
     setPincode('');
+    setDeliveryCity('');
+    setDeliveryState('');
+    setDeliveryStreet('');
     setQuantity(1);
     setImageDirection(0);
   }, [id]);
@@ -365,21 +372,46 @@ export function ProductDetailPage() {
       setPincodeResult('Please enter a valid postal code');
       return;
     }
+    if (!deliveryCity.trim() || !deliveryState.trim()) {
+      setPincodeResult('Enter city and state for a live carrier quote (Shippo).');
+      return;
+    }
+    if (!product) return;
     setPincodeLoading(true);
     setPincodeResult(null);
+    const usdToInr = 75;
+    const lineSubtotalUsd =
+      currency === 'INR' && product.price_inr != null
+        ? (product.price_inr * quantity) / usdToInr
+        : product.price * quantity;
     try {
       const methods = await shippingService.calculate({
-        country: 'IN',
+        country,
+        state: deliveryState.trim(),
+        city: deliveryCity.trim(),
+        address: deliveryStreet.trim() || 'Residential',
         postal_code: pincode.trim(),
-        subtotal: product?.price || 0,
+        first_name: 'Guest',
+        last_name: 'Estimate',
+        email: 'estimate@example.com',
+        phone: country === 'India' ? '+91 99999 99999' : '+1 213 200 2000',
+        subtotal: lineSubtotalUsd,
+        weight: quantity * DEFAULT_ITEM_WEIGHT_LB,
       });
       if (methods && methods.length > 0) {
         const method = methods[0];
         const deliveryDate = getEstimatedDelivery();
-        const convertedCost =
-          method.currency?.toUpperCase() === 'USD' ? method.base_cost * 75 : method.base_cost;
-        const cost = convertedCost === 0 ? 'Free' : `₹${convertedCost}`;
-        setPincodeResult(`Delivery by ${deliveryDate} · ${cost}`);
+        const mCur = method.currency?.toUpperCase() ?? 'USD';
+        const displayAmount =
+          mCur === 'USD' && currency === 'INR'
+            ? `₹${Math.round(method.base_cost * usdToInr).toLocaleString('en-IN')}`
+            : mCur === 'USD'
+              ? `$${method.base_cost.toFixed(2)}`
+              : `₹${method.base_cost.toFixed(0)}`;
+        const cost = method.base_cost === 0 ? 'Free' : displayAmount;
+        setPincodeResult(
+          `Delivery by ${deliveryDate} · from ${cost}${method.name ? ` (${method.name})` : ''}`,
+        );
       } else {
         setPincodeResult(`Estimated delivery by ${getEstimatedDelivery()}`);
       }
@@ -870,7 +902,33 @@ export function ProductDetailPage() {
             >
               <div className="mb-4">
                 <span className="text-xs font-medium uppercase tracking-widest">Check Delivery</span>
+                <p className="text-[11px] text-foreground/50 mt-1 normal-case tracking-normal">
+                  City, state, and postal code enable live Shippo rates; street is optional.
+                </p>
               </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                <input
+                  type="text"
+                  placeholder="City"
+                  value={deliveryCity}
+                  onChange={(e) => { setDeliveryCity(e.target.value); setPincodeResult(null); }}
+                  className="h-11 px-4 border border-foreground/20 text-sm bg-background focus:border-foreground focus:outline-none transition-colors"
+                />
+                <input
+                  type="text"
+                  placeholder={country === 'India' ? 'State' : 'State (e.g. CA)'}
+                  value={deliveryState}
+                  onChange={(e) => { setDeliveryState(e.target.value); setPincodeResult(null); }}
+                  className="h-11 px-4 border border-foreground/20 text-sm bg-background focus:border-foreground focus:outline-none transition-colors"
+                />
+              </div>
+              <input
+                type="text"
+                placeholder="Street (optional)"
+                value={deliveryStreet}
+                onChange={(e) => { setDeliveryStreet(e.target.value); setPincodeResult(null); }}
+                className="w-full h-11 px-4 border border-foreground/20 text-sm bg-background focus:border-foreground focus:outline-none transition-colors mb-2"
+              />
               <div className="flex gap-2 mb-3">
                 <input
                   type="text"

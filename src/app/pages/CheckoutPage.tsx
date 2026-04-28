@@ -12,6 +12,7 @@ import { LuxurySelect } from '../components/ui/luxury-select';
 import { LuxuryCheckbox } from '../components/ui/luxury-checkbox';
 import { orderService } from '../services/orderService';
 import { shippingService } from '../services/shippingService';
+import { DEFAULT_ITEM_WEIGHT_LB } from '../constants/shipping';
 import { taxService } from '../services/taxService';
 import { paymentService } from '../services/paymentService';
 import { addressService, Address } from '../services/addressService';
@@ -241,6 +242,7 @@ export function CheckoutPage() {
 
   // USD subtotal for backend APIs (shipping/tax return USD amounts)
   const subtotalUSD = total;
+  const cartWeightLb = items.reduce((s, i) => s + i.quantity * DEFAULT_ITEM_WEIGHT_LB, 0);
 
   // Calculate shipping and tax when shipping info is available (backend uses USD)
   useEffect(() => {
@@ -258,6 +260,7 @@ export function CheckoutPage() {
             email: shippingInfo.email,
             phone: shippingInfo.phone,
             subtotal: subtotalUSD,
+            weight: cartWeightLb > 0 ? cartWeightLb : DEFAULT_ITEM_WEIGHT_LB,
           });
           if (shippingMethods.length > 0) {
             setShippingCost(shippingMethods[0].base_cost || 0);
@@ -283,7 +286,20 @@ export function CheckoutPage() {
       };
       calculateCosts();
     }
-  }, [shippingInfo.country, shippingInfo.state, shippingInfo.city, shippingInfo.zipCode, subtotalUSD, currentStep]);
+  }, [
+    shippingInfo.country,
+    shippingInfo.state,
+    shippingInfo.city,
+    shippingInfo.zipCode,
+    shippingInfo.address,
+    shippingInfo.firstName,
+    shippingInfo.lastName,
+    shippingInfo.email,
+    shippingInfo.phone,
+    subtotalUSD,
+    currentStep,
+    cartWeightLb,
+  ]);
 
   const formatCardNumber = (value: string) => {
     const cleaned = value.replace(/\s/g, '');
