@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useCallback, ReactNode, useState } from 'react';
+import api from '../lib/api';
 
 declare global {
   interface Window {
@@ -73,8 +74,30 @@ export function GoogleSignInButton({
   customContent,
 }: GoogleSignInButtonProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const clientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID as string | undefined;
+  const envClientId = ((import.meta as any).env?.VITE_GOOGLE_CLIENT_ID as string | undefined)?.trim() || '';
+  const [apiClientId, setApiClientId] = useState('');
+  const [fetchedFromApi, setFetchedFromApi] = useState(!!envClientId);
+  const clientId =
+    envClientId || (fetchedFromApi ? (apiClientId.trim() || undefined) : undefined);
   const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    if (envClientId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await api.get<{ google_client_id?: string }>('/auth/client-config');
+        if (!cancelled) setApiClientId((data?.google_client_id || '').trim());
+      } catch {
+        if (!cancelled) setApiClientId('');
+      } finally {
+        if (!cancelled) setFetchedFromApi(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [envClientId]);
 
   const initButton = useCallback(() => {
     if (!window.google || !containerRef.current || !clientId) return;
@@ -121,11 +144,23 @@ export function GoogleSignInButton({
   }, [clientId, initButton]);
 
   if (!clientId) {
+    if (!fetchedFromApi) {
+      return (
+        <button
+          type="button"
+          disabled
+          className={`w-full flex items-center justify-center gap-3 py-3 border border-foreground/20 text-foreground/50 text-sm cursor-wait ${className}`}
+        >
+          <span className="inline-block h-4 w-4 animate-pulse rounded-full bg-foreground/20" />
+          Sign-in options…
+        </button>
+      );
+    }
     return (
       <button
         type="button"
         disabled
-        title="Set VITE_GOOGLE_CLIENT_ID in frontend/.env to enable Google Sign-In"
+        title="Set GOOGLE_CLIENT_ID on the API, or VITE_GOOGLE_CLIENT_ID in the web build, or add GitHub secret VITE_GOOGLE_CLIENT_ID for the Publish Droplet images workflow."
         className={`w-full flex items-center justify-center gap-3 py-3 border border-foreground/20 text-foreground/40 text-sm cursor-not-allowed ${className}`}
       >
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
