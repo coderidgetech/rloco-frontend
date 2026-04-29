@@ -160,7 +160,7 @@ export function GoogleSignInButton({
       <button
         type="button"
         disabled
-        title="Set GOOGLE_CLIENT_ID on the API, or VITE_GOOGLE_CLIENT_ID in the web build, or add GitHub secret VITE_GOOGLE_CLIENT_ID for the Publish Droplet images workflow."
+        title="Google sign-in is not available on this app right now."
         className={`w-full flex items-center justify-center gap-3 py-3 border border-foreground/20 text-foreground/40 text-sm cursor-not-allowed ${className}`}
       >
         <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
@@ -169,7 +169,7 @@ export function GoogleSignInButton({
           <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18z"/>
           <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.31z"/>
         </svg>
-        Continue with Google (not configured)
+        Continue with Google
       </button>
     );
   }

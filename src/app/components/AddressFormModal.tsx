@@ -5,17 +5,22 @@ import { toast } from 'sonner';
 import { useCurrency } from '../context/CurrencyContext';
 import { AddressAutocompleteInput, lookupZipCode } from './AddressAutocompleteInput';
 import { PH } from '../lib/formPlaceholders';
+import { normalizeCountry } from '../lib/market';
+
+type MarketCountry = 'India' | 'United States';
 
 interface Address {
   id: string;
   name: string;
   type: 'HOME' | 'OFFICE' | 'OTHER';
   addressLine: string;
-  addressLine2?: string; // For US: Apt/Suite
+  addressLine2?: string;
   city: string;
   state: string;
-  pincode: string; // or zipCode for US
+  pincode: string;
   mobile: string;
+  /** Shown in UI and sent to the API; must match [normalizeCountry] for checkout rules. */
+  country: MarketCountry;
   cashOnDelivery?: boolean;
   isDefault?: boolean;
 }
@@ -40,11 +45,15 @@ interface AddressFormModalProps {
   mode: 'add' | 'edit';
 }
 
+function toMarketCountry(c?: string | null, fallback: MarketCountry = 'United States'): MarketCountry {
+  return normalizeCountry(c) ?? fallback;
+}
+
 export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }: AddressFormModalProps) {
-  const { currency } = useCurrency();
-  const isUS = currency === 'USD';
-  
-  const [formData, setFormData] = useState<Omit<Address, 'id'>>(({
+  const { country: storefrontCountry } = useCurrency();
+  const isUS = (c: MarketCountry) => c === 'United States';
+
+  const [formData, setFormData] = useState<Omit<Address, 'id'>>(() => ({
     name: '',
     type: 'HOME',
     addressLine: '',
@@ -53,6 +62,7 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
     state: '',
     pincode: '',
     mobile: '',
+    country: 'United States',
     cashOnDelivery: true,
     isDefault: false,
   }));
@@ -70,11 +80,11 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
         state: editAddress.state,
         pincode: editAddress.pincode,
         mobile: editAddress.mobile,
+        country: toMarketCountry((editAddress as { country?: string }).country, storefrontCountry),
         cashOnDelivery: editAddress.cashOnDelivery,
         isDefault: editAddress.isDefault,
       });
     } else {
-      // Reset form for add mode
       setFormData({
         name: '',
         type: 'HOME',
@@ -84,44 +94,42 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
         state: '',
         pincode: '',
         mobile: '',
+        country: storefrontCountry,
         cashOnDelivery: true,
         isDefault: false,
       });
     }
     setErrors({});
-  }, [editAddress, mode, isOpen]);
+  }, [editAddress, mode, isOpen, storefrontCountry]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
+    const us = isUS(formData.country);
+    const pinD = formData.pincode.replace(/\D/g, '');
 
     if (!formData.name.trim()) {
       newErrors.name = 'Name is required';
     }
 
     if (!formData.mobile.trim()) {
-      newErrors.mobile = isUS ? 'Phone number is required' : 'Mobile number is required';
-    } else if (isUS) {
-      // US phone validation (10 digits)
-      if (!/^[0-9]{10}$/.test(formData.mobile.replace(/\s/g, ''))) {
-        newErrors.mobile = 'Please enter a valid 10-digit phone number';
-      }
+      newErrors.mobile = us ? 'Phone number is required' : 'Mobile number is required';
     } else {
-      // India phone validation
-      if (!/^[0-9]{10}$/.test(formData.mobile.replace(/\s/g, ''))) {
-        newErrors.mobile = 'Please enter a valid 10-digit mobile number';
+      const d = formData.mobile.replace(/\D/g, '');
+      if (!/^\d{10}$/.test(d)) {
+        newErrors.mobile = us
+          ? 'Please enter a valid 10-digit phone number'
+          : 'Please enter a valid 10-digit mobile number';
       }
     }
 
     if (!formData.pincode.trim()) {
-      newErrors.pincode = isUS ? 'ZIP Code is required' : 'Pincode is required';
-    } else if (isUS) {
-      // US ZIP code validation (5 digits)
-      if (!/^[0-9]{5}$/.test(formData.pincode)) {
-        newErrors.pincode = 'Please enter a valid 5-digit ZIP code';
+      newErrors.pincode = us ? 'ZIP code is required' : 'Pincode is required';
+    } else if (us) {
+      if (pinD.length !== 5 && pinD.length !== 9) {
+        newErrors.pincode = 'Enter a 5-digit ZIP or 9 digits (ZIP+4, no hyphens)';
       }
     } else {
-      // India pincode validation (6 digits)
-      if (!/^[0-9]{6}$/.test(formData.pincode)) {
+      if (!/^\d{6}$/.test(pinD)) {
         newErrors.pincode = 'Please enter a valid 6-digit pincode';
       }
     }
@@ -172,12 +180,12 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
   };
 
   const handleZipChange = async (value: string) => {
+    const us = isUS(formData.country);
     const digits = value.replace(/\D/g, '');
-    const maxLen = isUS ? 5 : 6;
+    const maxLen = us ? 9 : 6;
     if (digits.length > maxLen) return;
     handleInputChange('pincode', digits);
-    // Auto-fill city + state when ZIP is complete
-    if (isUS && digits.length === 5) {
+    if (us && digits.length === 5) {
       const result = await lookupZipCode(digits, 'us');
       if (result) {
         handleInputChange('city', result.city);
@@ -188,6 +196,8 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
   };
 
   if (!isOpen) return null;
+
+  const us = isUS(formData.country);
 
   return (
     <AnimatePresence>
@@ -252,7 +262,7 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
 
                       <div>
                         <label className="block text-sm font-medium mb-2">
-                          {isUS ? 'Phone Number' : 'Mobile Number'} <span className="text-destructive">*</span>
+                          {us ? 'Phone number' : 'Mobile number'} <span className="text-destructive">*</span>
                         </label>
                         <input
                           type="tel"
@@ -278,12 +288,35 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                   {/* Address Details */}
                   <div>
                     <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-4">
-                      Address Details
+                      Address details
                     </h3>
                     <div className="space-y-4">
                       <div>
+                        <label className="block text-sm font-medium mb-2" htmlFor="addr-modal-country">
+                          Country <span className="text-destructive">*</span>
+                        </label>
+                        <select
+                          id="addr-modal-country"
+                          value={formData.country}
+                          onChange={(e) => {
+                            const c = e.target.value as MarketCountry;
+                            setFormData((prev) => ({
+                              ...prev,
+                              country: c,
+                              pincode: '',
+                              mobile: prev.mobile.replace(/\D/g, '').slice(0, 10),
+                            }));
+                            if (errors.pincode) setErrors((o) => ({ ...o, pincode: '' }));
+                          }}
+                          className="w-full px-4 py-3 border border-border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                        >
+                          <option value="India">India</option>
+                          <option value="United States">United States</option>
+                        </select>
+                      </div>
+                      <div>
                         <label className="block text-sm font-medium mb-2">
-                          {isUS ? 'Street Address' : 'Address (House No, Building, Street, Area)'} <span className="text-destructive">*</span>
+                          {us ? 'Street address' : 'Address (house no., building, street, area)'} <span className="text-destructive">*</span>
                         </label>
                         <AddressAutocompleteInput
                           value={formData.addressLine}
@@ -293,42 +326,44 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                             if (components.city)    handleInputChange('city', components.city);
                             if (components.state)   handleInputChange('state', components.state);
                             if (components.pincode) handleInputChange('pincode', components.pincode);
+                            if (components.country) {
+                              handleInputChange('country', toMarketCountry(components.country, formData.country));
+                            }
                           }}
                           placeholder={PH.streetAddress}
                           error={errors.addressLine}
-                          countryCode={isUS ? 'us' : 'in'}
+                          countryCode={us ? 'us' : 'in'}
                         />
                       </div>
 
-                      {isUS && (
-                        <div>
-                          <label className="block text-sm font-medium mb-2">
-                            Apt/Suite (Optional)
-                          </label>
-                          <input
-                            type="text"
-                            value={formData.addressLine2}
-                            onChange={(e) => handleInputChange('addressLine2', e.target.value)}
-                            placeholder={PH.aptOptional}
-                            className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
-                              errors.addressLine2 ? 'border-destructive' : 'border-border'
-                            }`}
-                          />
-                        </div>
-                      )}
+                      <div>
+                        <label className="block text-sm font-medium mb-2">
+                          Apartment, suite, landmark (optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.addressLine2}
+                          onChange={(e) => handleInputChange('addressLine2', e.target.value)}
+                          placeholder={PH.aptOptional}
+                          className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
+                            errors.addressLine2 ? 'border-destructive' : 'border-border'
+                          }`}
+                        />
+                      </div>
 
                       <div className="grid md:grid-cols-3 gap-4">
-                        <div className={isUS ? 'md:col-span-1' : 'md:col-span-1'}>
+                        <div>
                           <label className="block text-sm font-medium mb-2">
-                            {isUS ? 'ZIP Code' : 'Pincode'} <span className="text-destructive">*</span>
+                            {us ? 'ZIP code' : 'PIN code'} <span className="text-destructive">*</span>
                           </label>
                           <input
                             type="text"
                             inputMode="numeric"
+                            autoComplete="postal-code"
                             value={formData.pincode}
                             onChange={(e) => handleZipChange(e.target.value)}
-                            placeholder={PH.zip}
-                            maxLength={isUS ? 5 : 6}
+                            placeholder={us ? '5 or 9 digits' : '6-digit PIN'}
+                            maxLength={us ? 9 : 6}
                             className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
                               errors.pincode ? 'border-destructive' : 'border-border'
                             }`}
@@ -360,20 +395,30 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                           <label className="block text-sm font-medium mb-2">
                             State <span className="text-destructive">*</span>
                           </label>
-                          <select
-                            value={formData.state}
-                            onChange={(e) => handleInputChange('state', e.target.value)}
-                            className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
-                              errors.state ? 'border-destructive' : 'border-border'
-                            }`}
-                          >
-                            <option value="">Select State</option>
-                            {isUS ? US_STATES.map(state => (
-                              <option key={state} value={state}>{state}</option>
-                            )) : (
-                              <option value={formData.state}>{formData.state}</option>
-                            )}
-                          </select>
+                          {us ? (
+                            <select
+                              value={formData.state}
+                              onChange={(e) => handleInputChange('state', e.target.value)}
+                              className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
+                                errors.state ? 'border-destructive' : 'border-border'
+                              }`}
+                            >
+                              <option value="">Select state</option>
+                              {US_STATES.map((state) => (
+                                <option key={state} value={state}>{state}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              type="text"
+                              value={formData.state}
+                              onChange={(e) => handleInputChange('state', e.target.value)}
+                              placeholder="State or UT"
+                              className={`w-full px-4 py-3 border rounded-lg outline-none focus:ring-2 focus:ring-primary/20 transition-all ${
+                                errors.state ? 'border-destructive' : 'border-border'
+                              }`}
+                            />
+                          )}
                           {errors.state && (
                             <p className="text-xs text-destructive mt-1">{errors.state}</p>
                           )}
@@ -387,8 +432,10 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                     <h3 className="text-xs uppercase tracking-wider text-muted-foreground font-medium mb-4">
                       Save Address As
                     </h3>
-                    <div className="flex gap-3">
-                      {(['HOME', 'OFFICE', 'OTHER'] as const).map((type) => (
+                    <div className="flex flex-wrap gap-3">
+                      {(['HOME', 'OFFICE', 'OTHER'] as const).map((type) => {
+                        const label = type === 'HOME' ? 'Home' : type === 'OFFICE' ? 'Work' : 'Other';
+                        return (
                         <button
                           key={type}
                           type="button"
@@ -399,9 +446,10 @@ export function AddressFormModal({ isOpen, onClose, onSave, editAddress, mode }:
                               : 'border-border hover:border-primary'
                           }`}
                         >
-                          {type}
+                          {label}
                         </button>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
 

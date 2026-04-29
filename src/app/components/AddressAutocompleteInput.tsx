@@ -1,8 +1,5 @@
 /**
- * AddressAutocompleteInput
- *
- * Uses Google Places API (VITE_GOOGLE_MAPS_API_KEY).
- * ZIP → city/state auto-fill uses Zippopotam.us (US only, always free).
+ * AddressAutocompleteInput – street-line suggestions; ZIP lookup uses Zippopotam.
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -24,7 +21,7 @@ interface Suggestion {
   fill: () => Promise<AddressComponents> | AddressComponents;
 }
 
-const GOOGLE_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
+const GOOGLE_KEY = (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined)?.trim() || undefined;
 
 // ─── Google Places ─────────────────────────────────────────────────────────────
 let googleScriptLoaded = false;
@@ -33,6 +30,10 @@ const googleScriptCallbacks: Array<() => void> = [];
 
 function loadGoogleScript(): Promise<void> {
   return new Promise((resolve) => {
+    if (!GOOGLE_KEY) {
+      resolve();
+      return;
+    }
     if (googleScriptLoaded) { resolve(); return; }
     googleScriptCallbacks.push(resolve);
     if (googleScriptLoading) return;
@@ -46,6 +47,11 @@ function loadGoogleScript(): Promise<void> {
       googleScriptCallbacks.forEach((cb) => cb());
       googleScriptCallbacks.length = 0;
     };
+    script.onerror = () => {
+      googleScriptLoading = false;
+      googleScriptCallbacks.forEach((cb) => cb());
+      googleScriptCallbacks.length = 0;
+    };
     document.head.appendChild(script);
   });
 }
@@ -54,9 +60,10 @@ async function fetchGoogleSuggestions(
   query: string,
   countryCode: string | undefined
 ): Promise<Suggestion[]> {
+  if (!GOOGLE_KEY) return [];
   await loadGoogleScript();
   const g = (window as any).google;
-  if (!g) return [];
+  if (!g?.maps?.places) return [];
 
   const options: { input: string; types?: string[]; componentRestrictions?: { country: string } } = {
     input: query,
@@ -71,7 +78,8 @@ async function fetchGoogleSuggestions(
     svc.getPlacePredictions(
       options,
       (predictions: any[], status: string) => {
-        if (status !== g.maps.places.PlacesServiceStatus.OK || !predictions) {
+        const S = g.maps.places.PlacesServiceStatus;
+        if (status !== S.OK || !predictions) {
           resolve([]);
           return;
         }
@@ -99,17 +107,17 @@ async function fetchGoogleSuggestions(
                     const route     = get('route');
                     const postalCode = get('postal_code');
                     const postalCodeSuffix = get('postal_code_suffix');
-                    const countryCode = getShort('country');
+                    const cCode = getShort('country');
                     const normalizedPostalCode =
-                      countryCode === 'US'
-                        ? postalCode
+                      cCode === 'US' && postalCode
+                        ? (postalCodeSuffix ? `${postalCode}-${postalCodeSuffix}` : postalCode)
                         : [postalCode, postalCodeSuffix].filter(Boolean).join('-');
                     res({
                       addressLine: [streetNum, route].filter(Boolean).join(' ') || p.description.split(',')[0],
                       city:        get('locality') || get('sublocality') || get('administrative_area_level_2'),
                       state:       get('administrative_area_level_1'),
                       pincode:     normalizedPostalCode,
-                      country:     get('country') || countryCode,
+                      country:     get('country') || cCode,
                     });
                   }
                 );
@@ -169,12 +177,11 @@ export function AddressAutocompleteInput({
     debounce(async (query: string) => {
       const q = query.trim();
       if (q.length < 2) { setSuggestions([]); setOpen(false); return; }
+      if (!GOOGLE_KEY) { setSuggestions([]); setOpen(false); return; }
 
       setLoading(true);
       try {
-        const results = GOOGLE_KEY
-          ? await fetchGoogleSuggestions(query, countryCode)
-          : [];
+        const results = await fetchGoogleSuggestions(query, countryCode);
         setSuggestions(results);
         setOpen(results.length > 0);
       } catch {

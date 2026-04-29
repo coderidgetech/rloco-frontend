@@ -6,6 +6,8 @@ import { addressService } from '../services/addressService';
 import { AddressAutocompleteInput, lookupZipCode } from '../components/AddressAutocompleteInput';
 import { PH } from '../lib/formPlaceholders';
 import { getApiErrorMessage } from '../lib/apiErrors';
+import { useCurrency } from '../context/CurrencyContext';
+import { normalizeCountry } from '../lib/market';
 
 interface FormData {
   name: string;
@@ -28,7 +30,7 @@ const EMPTY_FORM: FormData = {
   city: '',
   state: '',
   pincode: '',
-  country: 'India',
+  country: 'United States',
   type: 'HOME',
   is_default: false,
 };
@@ -39,16 +41,32 @@ const ADDRESS_TYPES: { value: FormData['type']; label: string; icon: React.React
   { value: 'OTHER', label: 'Other', icon: <MapPin size={16} /> },
 ];
 
+function readCountryFromStorage(): FormData['country'] {
+  if (typeof localStorage === 'undefined') return 'United States';
+  const c = localStorage.getItem('selectedCountry') as FormData['country'] | null;
+  return c === 'India' || c === 'United States' ? c : 'United States';
+}
+
 export function AddAddressPage() {
   const navigate = useNavigate();
+  const { country: storefrontCountry } = useCurrency();
   const [params] = useSearchParams();
   const editId = params.get('edit');
   const isEdit = !!editId;
 
-  const [form, setForm] = useState<FormData>(EMPTY_FORM);
+  const [form, setForm] = useState<FormData>(() => ({
+    ...EMPTY_FORM,
+    country: readCountryFromStorage(),
+  }));
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEdit);
+
+  // New address: follow selected storefront (India vs United States) like major marketplaces
+  useEffect(() => {
+    if (isEdit) return;
+    setForm((f) => (f.country === storefrontCountry ? f : { ...f, country: storefrontCountry }));
+  }, [isEdit, storefrontCountry]);
 
   useEffect(() => {
     if (!editId) return;
@@ -64,7 +82,7 @@ export function AddAddressPage() {
           city: addr.city,
           state: addr.state,
           pincode: addr.pincode,
-          country: addr.country,
+          country: normalizeCountry(addr.country) ?? 'United States',
           type: addr.type,
           is_default: addr.is_default,
         });
@@ -86,28 +104,48 @@ export function AddAddressPage() {
   };
 
   const handleZipChange = async (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 10);
+    const nc = normalizeCountry(form.country);
+    const maxLen = nc === 'India' ? 6 : nc === 'United States' ? 9 : 10;
+    const digits = value.replace(/\D/g, '').slice(0, maxLen);
     set('pincode', digits);
-    if (digits.length === 5 && (form.country === 'US' || form.country === 'United States')) {
+    if (digits.length === 5 && nc === 'United States') {
       const result = await lookupZipCode(digits, 'us');
       if (result) {
         set('city', result.city);
         set('state', result.state);
-        toast.success(`Filled: ${result.city}, ${result.state}`);
+        toast.success(`Updated city and state for ${result.city}, ${result.state}`);
       }
     }
   };
 
   const validate = (): boolean => {
     const e: Partial<Record<keyof FormData, string>> = {};
+    const phoneDigits = form.mobile.replace(/\D/g, '');
+    const pinDigits = form.pincode.replace(/\D/g, '');
+    const market = normalizeCountry(form.country);
+
     if (!form.name.trim()) e.name = 'Full name is required';
-    if (!form.mobile.trim()) e.mobile = 'Mobile number is required';
-    else if (!/^\d{10}$/.test(form.mobile.replace(/\D/g, '')))
-      e.mobile = 'Enter a valid 10-digit number';
+    else if (form.name.trim().length < 2) e.name = 'Enter at least 2 characters';
+
+    if (!form.mobile.trim()) e.mobile = 'Phone number is required';
+    else if (market === 'India' || market === 'United States') {
+      if (!/^\d{10}$/.test(phoneDigits)) e.mobile = 'Enter a valid 10-digit number';
+    } else if (phoneDigits.length < 8) e.mobile = 'Enter a valid phone number';
+    else if (phoneDigits.length > 15) e.mobile = 'Phone number is too long';
+
     if (!form.address_line.trim()) e.address_line = 'Street address is required';
     if (!form.city.trim()) e.city = 'City is required';
-    if (!form.state.trim()) e.state = 'State is required';
-    if (!form.pincode.trim()) e.pincode = 'Pincode / ZIP is required';
+    if (!form.state.trim()) e.state = 'State or region is required';
+
+    if (!form.pincode.trim()) e.pincode = 'Pincode or ZIP is required';
+    else if (market === 'India') {
+      if (!/^\d{6}$/.test(pinDigits)) e.pincode = 'Enter a 6-digit PIN code';
+    } else if (market === 'United States') {
+      if (pinDigits.length !== 5 && pinDigits.length !== 9) {
+        e.pincode = 'Enter a 5-digit ZIP or 9 digits (ZIP+4, no hyphens needed)';
+      }
+    } else if (pinDigits.length < 3) e.pincode = 'Enter a valid postal code';
+
     if (!form.country.trim()) e.country = 'Country is required';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -187,10 +225,13 @@ export function AddAddressPage() {
       <input
         type={type}
         inputMode={inputMode}
+        name={String(field)}
         value={form[field] as string}
         onChange={(e) => set(field, e.target.value)}
         placeholder={placeholder}
         maxLength={maxLength}
+        autoComplete={field === 'name' ? 'name' : field === 'mobile' ? 'tel' : 'off'}
+        aria-invalid={errors[field] ? true : undefined}
         className={`w-full h-11 px-3 bg-background border text-sm focus:outline-none transition-colors ${
           errors[field] ? 'border-red-400 focus:border-red-500' : 'border-foreground/20 focus:border-foreground'
         }`}
@@ -235,7 +276,7 @@ export function AddAddressPage() {
                   }}
                   placeholder={PH.streetAddress}
                   error={errors.address_line}
-                  countryCode={form.country === 'US' || form.country === 'United States' ? 'us' : 'in'}
+                  countryCode={normalizeCountry(form.country) === 'United States' ? 'us' : 'in'}
                   className="h-11 rounded-none text-sm border-foreground/20 focus:border-foreground focus:ring-0"
                 />
               </div>
@@ -253,15 +294,19 @@ export function AddAddressPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs uppercase tracking-wider text-foreground/60 mb-1.5">
-                    Pincode / ZIP<span className="text-red-500 ml-0.5">*</span>
+                    {normalizeCountry(form.country) === 'India' ? 'PIN code' : normalizeCountry(form.country) === 'United States' ? 'ZIP code' : 'Postal code'}
+                    <span className="text-red-500 ml-0.5">*</span>
                   </label>
                   <input
                     type="text"
+                    name="postal-code"
                     inputMode="numeric"
                     value={form.pincode}
                     onChange={(e) => handleZipChange(e.target.value)}
-                    placeholder={PH.zip}
-                    maxLength={10}
+                    placeholder={normalizeCountry(form.country) === 'India' ? '6-digit PIN' : PH.zip}
+                    maxLength={normalizeCountry(form.country) === 'India' ? 6 : 9}
+                    autoComplete="postal-code"
+                    aria-invalid={errors.pincode ? true : undefined}
                     className={`w-full h-11 px-3 bg-background border text-sm focus:outline-none transition-colors ${
                       errors.pincode
                         ? 'border-red-400 focus:border-red-500'
@@ -270,7 +315,34 @@ export function AddAddressPage() {
                   />
                   {errors.pincode && <p className="text-xs text-red-500 mt-1">{errors.pincode}</p>}
                 </div>
-                <Field label="Country" field="country" placeholder={PH.country} />
+                <div>
+                  <label className="block text-xs uppercase tracking-wider text-foreground/60 mb-1.5" htmlFor="add-address-country">
+                    Country<span className="text-red-500 ml-0.5">*</span>
+                  </label>
+                  <select
+                    id="add-address-country"
+                    value={form.country === 'India' || form.country === 'United States' ? form.country : 'United States'}
+                    onChange={(e) => {
+                      const v = e.target.value as FormData['country'];
+                      set('country', v);
+                      if (v === 'India' || v === 'United States') {
+                        set('pincode', '');
+                        const d = form.mobile.replace(/\D/g, '');
+                        set('mobile', d.length > 10 ? d.slice(0, 10) : d);
+                      }
+                    }}
+                    className={`w-full h-11 px-3 bg-background border text-sm focus:outline-none transition-colors ${
+                      errors.country
+                        ? 'border-red-400 focus:border-red-500'
+                        : 'border-foreground/20 focus:border-foreground'
+                    }`}
+                    aria-invalid={errors.country ? true : undefined}
+                  >
+                    <option value="India">India</option>
+                    <option value="United States">United States</option>
+                  </select>
+                  {errors.country && <p className="text-xs text-red-500 mt-1">{errors.country}</p>}
+                </div>
               </div>
             </div>
           </section>
@@ -297,23 +369,19 @@ export function AddAddressPage() {
           </section>
 
           <section>
-            <label className="flex items-center justify-between p-4 border border-foreground/20 cursor-pointer hover:bg-foreground/5 transition-colors">
-              <div>
-                <p className="text-sm">Set as default address</p>
-                <p className="text-xs text-foreground/50 mt-0.5">Used automatically at checkout</p>
-              </div>
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => set('is_default', !form.is_default)}
-                onKeyDown={(e) => e.key === 'Enter' && set('is_default', !form.is_default)}
-                className={`relative w-11 h-6 transition-colors shrink-0 ${form.is_default ? 'bg-foreground' : 'bg-foreground/20'}`}
-              >
-                <span
-                  className={`absolute top-0.5 w-5 h-5 bg-background transition-all ${form.is_default ? 'left-[22px]' : 'left-0.5'}`}
-                />
-              </div>
-            </label>
+            <div className="flex items-start gap-3 p-4 border border-foreground/20">
+              <input
+                type="checkbox"
+                id="default-address"
+                checked={form.is_default}
+                onChange={(e) => set('is_default', e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-foreground/30 accent-foreground"
+              />
+              <label htmlFor="default-address" className="cursor-pointer flex-1 min-w-0">
+                <p className="text-sm font-medium">Set as default address</p>
+                <p className="text-xs text-foreground/50 mt-0.5">We&apos;ll pre-select it at checkout and for deliveries</p>
+              </label>
+            </div>
           </section>
 
           <div className="pt-2 pb-8">
