@@ -16,7 +16,8 @@ import { LuxurySelect } from './ui/luxury-select';
 import { LuxuryCheckbox } from './ui/luxury-checkbox';
 import { orderService } from '../services/orderService';
 import { addressService, Address as APIAddress } from '../services/addressService';
-import { AddressAutocompleteInput } from './AddressAutocompleteInput';
+import { AddressFormModal } from './AddressFormModal';
+import { normalizeCountry } from '../lib/market';
 import { Order as APIOrder, PaymentTransaction } from '../types/api';
 import { useUser } from '../context/UserContext';
 import { useCart } from '../context/CartContext';
@@ -90,11 +91,50 @@ interface Address {
   type: 'home' | 'work' | 'other';
   name: string;
   address: string;
+  addressLine2?: string;
   city: string;
   state: string;
   zip: string;
   country: string;
+  mobile?: string;
   isDefault: boolean;
+}
+
+type ModalAddress = {
+  id: string;
+  name: string;
+  type: 'HOME' | 'OFFICE' | 'OTHER';
+  addressLine: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  pincode: string;
+  mobile: string;
+  country: 'India' | 'United States';
+  cashOnDelivery?: boolean;
+  isDefault?: boolean;
+};
+
+function toModalAddress(a: Address): ModalAddress {
+  const typeMap: Record<Address['type'], ModalAddress['type']> = {
+    home: 'HOME',
+    work: 'OFFICE',
+    other: 'OTHER',
+  };
+  const country = normalizeCountry(a.country) ?? 'India';
+  return {
+    id: a.id,
+    name: a.name,
+    type: typeMap[a.type] ?? 'HOME',
+    addressLine: a.address,
+    addressLine2: a.addressLine2 || '',
+    city: a.city,
+    state: a.state,
+    pincode: a.zip,
+    mobile: (a.mobile || '').replace(/\D/g, '').slice(0, 10),
+    country,
+    isDefault: a.isDefault,
+  };
 }
 
 export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
@@ -108,7 +148,9 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [invoiceOrder, setInvoiceOrder] = useState<Order | null>(null);
-  const [showAddAddress, setShowAddAddress] = useState(false);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [editingAddressModal, setEditingAddressModal] = useState<ModalAddress | null>(null);
+  const [addressModalMode, setAddressModalMode] = useState<'add' | 'edit'>('add');
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [addressesLoading, setAddressesLoading] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ current: '', next: '', confirm: '' });
@@ -125,19 +167,11 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [dangerLoading, setDangerLoading] = useState<'deactivate' | 'delete' | null>(null);
   const [profileSaving, setProfileSaving] = useState(false);
-  const [addAddressForm, setAddAddressForm] = useState({ addressLine: '', city: '', state: '', zip: '', country: '' });
-
   useEffect(() => {
     if (activeTab === 'settings') {
       localStorage.setItem(SETTINGS_NOTIFICATIONS_KEY, JSON.stringify(settingsNotifications));
     }
   }, [activeTab, settingsNotifications]);
-
-  useEffect(() => {
-    if (showAddAddress) {
-      setAddAddressForm({ addressLine: '', city: '', state: '', zip: '', country: '' });
-    }
-  }, [showAddAddress]);
 
   const isStandalone = isAccountPath(location.pathname);
 
@@ -208,10 +242,12 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
         type: apiAddr.type.toLowerCase() as 'home' | 'work' | 'other',
         name: apiAddr.name,
         address: apiAddr.address_line,
+        addressLine2: apiAddr.address_line2,
         city: apiAddr.city,
         state: apiAddr.state,
         zip: apiAddr.pincode,
         country: apiAddr.country,
+        mobile: apiAddr.mobile,
         isDefault: apiAddr.is_default,
       }));
       setAddresses(convertedAddresses);
@@ -839,7 +875,11 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
-                                onClick={() => setShowAddAddress(true)}
+                                onClick={() => {
+                                  setEditingAddressModal(null);
+                                  setAddressModalMode('add');
+                                  setShowAddressModal(true);
+                                }}
                                 className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg"
                               >
                                 <Plus size={18} />
@@ -870,7 +910,11 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                 <motion.button
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
-                                  onClick={() => setShowAddAddress(true)}
+                                  onClick={() => {
+                                    setEditingAddressModal(null);
+                                    setAddressModalMode('add');
+                                    setShowAddressModal(true);
+                                  }}
                                   className="px-6 md:px-8 py-3 md:py-4 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 text-sm md:text-base"
                                 >
                                   <Plus size={20} />
@@ -920,8 +964,9 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => {
-                                          toast.info('Edit your address in Saved Addresses');
-                                          navigate(accountPath('addresses'));
+                                          setEditingAddressModal(toModalAddress(address));
+                                          setAddressModalMode('edit');
+                                          setShowAddressModal(true);
                                         }}
                                         className="flex-1 px-3 py-2 border border-border rounded-lg flex items-center justify-center gap-2 text-sm"
                                       >
@@ -1301,188 +1346,56 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
       )}
     </AnimatePresence>
 
-    {/* Add Address Modal */}
-    <AnimatePresence>
-      {showAddAddress && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            style={{
-              backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              backdropFilter: 'blur(60px)',
-              WebkitBackdropFilter: 'blur(60px)',
-            }}
-            className="fixed inset-0 z-[60]"
-            onClick={() => setShowAddAddress(false)}
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="fixed inset-0 z-[70] flex items-center justify-center p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="bg-background rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl">Add New Address</h2>
-                <button
-                  onClick={() => setShowAddAddress(false)}
-                  className="p-2 hover:bg-muted rounded-full transition-colors"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (!addAddressForm.addressLine.trim()) {
-                    toast.error('Please enter a street address');
-                    return;
-                  }
-                  try {
-                    const formData = new FormData(e.currentTarget);
-                    const addressType = formData.get('type') as string;
-                    const newAddress = {
-                      type: addressType.toUpperCase() as 'HOME' | 'OFFICE' | 'OTHER',
-                      name: formData.get('name') as string,
-                      address_line: addAddressForm.addressLine.trim(),
-                      city: addAddressForm.city.trim(),
-                      state: addAddressForm.state.trim(),
-                      pincode: addAddressForm.zip.trim(),
-                      country: addAddressForm.country.trim(),
-                      mobile: formData.get('mobile') as string || '',
-                      is_default: formData.get('isDefault') === 'on',
-                    };
-                    await addressService.create(newAddress);
-                    toast.success('Address added successfully!');
-                    setShowAddAddress(false);
-                    fetchAddresses();
-                  } catch (error: unknown) {
-                    console.error('Failed to add address:', error);
-                    toast.error(getApiErrorMessage(error, 'Failed to add address'));
-                  }
-                }}
-                className="space-y-6"
-              >
-                <LuxurySelect
-                  label="Address type"
-                  name="type"
-                  required
-                >
-                  <option value="home">Home</option>
-                  <option value="work">Work</option>
-                  <option value="other">Other</option>
-                </LuxurySelect>
-
-                <LuxuryInput
-                  label="Full name"
-                  type="text"
-                  name="name"
-                  required
-                  placeholder={PH.fullName}
-                />
-
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Street address <span className="text-destructive">*</span>
-                  </label>
-                  <AddressAutocompleteInput
-                    value={addAddressForm.addressLine}
-                    onChange={(val) => setAddAddressForm((p) => ({ ...p, addressLine: val }))}
-                    onAddressFill={(components) => {
-                      setAddAddressForm((p) => ({
-                        ...p,
-                        addressLine: components.addressLine,
-                        city: components.city || p.city,
-                        state: components.state || p.state,
-                        zip: components.pincode || p.zip,
-                        country: components.country || p.country,
-                      }));
-                    }}
-                    placeholder={PH.streetAddress}
-                  />
-                </div>
-
-                <input type="hidden" name="address" value={addAddressForm.addressLine} />
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <LuxuryInput
-                    label="City"
-                    type="text"
-                    name="city"
-                    required
-                    placeholder={PH.city}
-                    value={addAddressForm.city}
-                    onChange={(e) => setAddAddressForm((p) => ({ ...p, city: e.target.value }))}
-                  />
-
-                  <LuxuryInput
-                    label="State"
-                    type="text"
-                    name="state"
-                    required
-                    placeholder={PH.state}
-                    value={addAddressForm.state}
-                    onChange={(e) => setAddAddressForm((p) => ({ ...p, state: e.target.value }))}
-                  />
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <LuxuryInput
-                    label="ZIP code"
-                    type="text"
-                    name="zip"
-                    required
-                    placeholder={PH.zip}
-                    value={addAddressForm.zip}
-                    onChange={(e) => setAddAddressForm((p) => ({ ...p, zip: e.target.value }))}
-                  />
-
-                  <LuxuryInput
-                    label="Country"
-                    type="text"
-                    name="country"
-                    required
-                    placeholder={PH.country}
-                    value={addAddressForm.country}
-                    onChange={(e) => setAddAddressForm((p) => ({ ...p, country: e.target.value }))}
-                  />
-                </div>
-
-                <LuxuryCheckbox
-                  name="isDefault"
-                  id="isDefault"
-                  label="Set as default address"
-                />
-
-                <div className="flex gap-3">
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setShowAddAddress(false)}
-                    className="flex-1 px-6 py-3 border border-border rounded-lg"
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    type="submit"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="flex-1 px-6 py-3 bg-primary text-primary-foreground rounded-lg"
-                  >
-                    Add Address
-                  </motion.button>
-                </div>
-              </form>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+    <AddressFormModal
+      isOpen={showAddressModal}
+      onClose={() => {
+        setShowAddressModal(false);
+        setEditingAddressModal(null);
+        setAddressModalMode('add');
+      }}
+      onSave={async (address) => {
+        try {
+          if (addressModalMode === 'add') {
+            await addressService.create({
+              name: address.name,
+              type: address.type,
+              address_line: address.addressLine,
+              address_line2: address.addressLine2,
+              city: address.city,
+              state: address.state,
+              pincode: address.pincode,
+              mobile: address.mobile,
+              country: address.country,
+              is_default: address.isDefault || false,
+            });
+            toast.success('Address added successfully!');
+          } else {
+            await addressService.update(address.id, {
+              name: address.name,
+              type: address.type,
+              address_line: address.addressLine,
+              address_line2: address.addressLine2,
+              city: address.city,
+              state: address.state,
+              pincode: address.pincode,
+              mobile: address.mobile,
+              country: address.country,
+              is_default: address.isDefault || false,
+            });
+            toast.success('Address updated successfully!');
+          }
+          setShowAddressModal(false);
+          setEditingAddressModal(null);
+          setAddressModalMode('add');
+          fetchAddresses();
+        } catch (err: unknown) {
+          console.error('Failed to save address:', err);
+          toast.error(getApiErrorMessage(err, 'Failed to save address'));
+        }
+      }}
+      editAddress={addressModalMode === 'edit' && editingAddressModal ? editingAddressModal : null}
+      mode={addressModalMode}
+    />
 
     </>
   );

@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useUser } from '@/app/context/UserContext';
 import { motion } from 'motion/react';
 import { Plus, Edit2, Trash2, Home, Briefcase, MapPinned } from 'lucide-react';
 import { ResponsivePageHeader } from '@/app/components/ResponsivePageHeader';
@@ -28,11 +29,13 @@ function mapType(t: string): 'home' | 'work' | 'other' {
 
 export function AddressesPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, isLoading: userLoading } = useUser();
   const isMobile = useIsMobile();
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       setLoading(true);
       const list = await addressService.list();
@@ -54,11 +57,16 @@ export function AddressesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    if (userLoading) return;
+    if (!isAuthenticated) {
+      navigate('/login?redirect=' + encodeURIComponent(location.pathname), { replace: true });
+      return;
+    }
     load();
-  }, []);
+  }, [userLoading, isAuthenticated, navigate, location.pathname, load]);
 
   const getTypeIcon = (type: Address['type']) => {
     switch (type) {
@@ -92,6 +100,15 @@ export function AddressesPage() {
       toast.error(getApiErrorMessage(error, 'Failed to update default'));
     }
   };
+
+  if (userLoading) {
+    return (
+      <div className="min-h-screen w-full min-w-0 flex items-center justify-center bg-background pt-page-nav">
+        <p className="text-muted-foreground text-sm">Loading…</p>
+      </div>
+    );
+  }
+  if (!isAuthenticated) return null;
 
   const topPadding = isMobile ? 'pt-4' : 'pt-6';
   const bottomPadding = isMobile ? 'pb-mobile-nav' : 'pb-12';

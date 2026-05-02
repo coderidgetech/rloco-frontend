@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { MapPin, Loader2 } from 'lucide-react';
 import { PH } from '../lib/formPlaceholders';
 
@@ -159,18 +160,43 @@ export function AddressAutocompleteInput({
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading]         = useState(false);
   const [open, setOpen]               = useState(false);
+  const [menuRect, setMenuRect]       = useState<{ top: number; left: number; width: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdown on outside click
+  const updateMenuRect = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    setMenuRect({ top: r.bottom, left: r.left, width: r.width });
+  }, []);
+
+  // Close dropdown on outside click (include portaled menu)
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+      const t = e.target as Node;
+      if (containerRef.current?.contains(t)) return;
+      const menu = document.getElementById('address-autocomplete-menu');
+      if (menu?.contains(t)) return;
+      setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  useEffect(() => {
+    if (!open) {
+      setMenuRect(null);
+      return;
+    }
+    updateMenuRect();
+    const onScrollOrResize = () => updateMenuRect();
+    window.addEventListener('scroll', onScrollOrResize, true);
+    window.addEventListener('resize', onScrollOrResize);
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize, true);
+      window.removeEventListener('resize', onScrollOrResize);
+    };
+  }, [open, suggestions, updateMenuRect]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchSuggestions = useCallback(
@@ -235,26 +261,44 @@ export function AddressAutocompleteInput({
         </div>
       </div>
 
-      {open && suggestions.length > 0 && (
-        <ul className="absolute z-[100] top-full left-0 right-0 mt-1 bg-background border border-border rounded-lg shadow-xl max-h-64 overflow-y-auto">
-          {suggestions.map((s) => (
-            <li
-              key={s.id}
-              onMouseDown={(e) => { e.preventDefault(); handleSelect(s); }}
-              className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-muted/60 transition-colors border-b border-border/40 last:border-b-0"
-            >
-              <MapPin size={14} className="mt-0.5 shrink-0 text-muted-foreground" />
-              <div className="min-w-0">
-                <p className="text-sm font-medium truncate">{s.label}</p>
-                <p className="text-xs text-muted-foreground truncate">{s.sublabel}</p>
-              </div>
+      {open &&
+        suggestions.length > 0 &&
+        menuRect &&
+        createPortal(
+          <ul
+            id="address-autocomplete-menu"
+            role="listbox"
+            style={{
+              position: 'fixed',
+              top: menuRect.top + 4,
+              left: menuRect.left,
+              width: Math.max(menuRect.width, 200),
+              zIndex: 99999,
+            }}
+            className="bg-background border border-border rounded-lg shadow-xl max-h-64 overflow-y-auto"
+          >
+            {suggestions.map((s) => (
+              <li
+                key={s.id}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  handleSelect(s);
+                }}
+                className="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-muted/60 transition-colors border-b border-border/40 last:border-b-0"
+              >
+                <MapPin size={14} className="mt-0.5 shrink-0 text-muted-foreground" />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{s.label}</p>
+                  <p className="text-xs text-muted-foreground truncate">{s.sublabel}</p>
+                </div>
+              </li>
+            ))}
+            <li className="px-4 py-1.5 text-[10px] text-muted-foreground/50 text-right select-none">
+              Powered by {provider}
             </li>
-          ))}
-          <li className="px-4 py-1.5 text-[10px] text-muted-foreground/50 text-right select-none">
-            Powered by {provider}
-          </li>
-        </ul>
-      )}
+          </ul>,
+          document.body
+        )}
 
       {error && <p className="text-xs text-destructive mt-1">{error}</p>}
     </div>

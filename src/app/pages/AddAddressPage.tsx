@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import { useUser } from '../context/UserContext';
 import { Home, Briefcase, MapPin, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { addressService } from '../services/addressService';
@@ -49,6 +50,8 @@ function readCountryFromStorage(): FormData['country'] {
 
 export function AddAddressPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated, isLoading: userLoading } = useUser();
   const { country: storefrontCountry } = useCurrency();
   const [params] = useSearchParams();
   const editId = params.get('edit');
@@ -62,6 +65,15 @@ export function AddAddressPage() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEdit);
 
+  // Saved addresses are user-scoped; API returns 401 without a session (same as checkout).
+  useEffect(() => {
+    if (userLoading) return;
+    if (!isAuthenticated) {
+      const redirect = encodeURIComponent(location.pathname + location.search);
+      navigate(`/login?redirect=${redirect}`, { replace: true });
+    }
+  }, [userLoading, isAuthenticated, navigate, location.pathname, location.search]);
+
   // New address: follow selected storefront (India vs United States) like major marketplaces
   useEffect(() => {
     if (isEdit) return;
@@ -69,6 +81,7 @@ export function AddAddressPage() {
   }, [isEdit, storefrontCountry]);
 
   useEffect(() => {
+    if (userLoading || !isAuthenticated) return;
     if (!editId) return;
     setFetching(true);
     addressService
@@ -92,7 +105,7 @@ export function AddAddressPage() {
         navigate(-1);
       })
       .finally(() => setFetching(false));
-  }, [editId, navigate]);
+  }, [editId, navigate, userLoading, isAuthenticated]);
 
   const set = (field: keyof FormData, value: string | boolean) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -191,6 +204,15 @@ export function AddAddressPage() {
       setLoading(false);
     }
   };
+
+  if (userLoading) {
+    return (
+      <div className="flex min-h-screen w-full min-w-0 items-center justify-center bg-background">
+        <Loader2 size={24} className="animate-spin text-foreground/40" />
+      </div>
+    );
+  }
+  if (!isAuthenticated) return null;
 
   if (fetching) {
     return (
