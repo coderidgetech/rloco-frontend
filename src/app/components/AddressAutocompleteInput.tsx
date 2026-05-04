@@ -6,6 +6,7 @@ import { useState, useEffect, useLayoutEffect, useRef, useCallback, useId } from
 import { createPortal } from 'react-dom';
 import { MapPin, Loader2 } from 'lucide-react';
 import { PH } from '../lib/formPlaceholders';
+import { getGoogleMapsBrowserKey } from '../lib/mapsBrowserKey';
 
 export interface AddressComponents {
   addressLine: string;
@@ -22,29 +23,34 @@ interface Suggestion {
   fill: () => Promise<AddressComponents> | AddressComponents;
 }
 
-const GOOGLE_KEY = (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined)?.trim() || undefined;
-
 // ─── Google Places ─────────────────────────────────────────────────────────────
 let googleScriptLoaded = false;
 let googleScriptLoading = false;
+let scriptKeyLoaded: string | undefined;
 const googleScriptCallbacks: Array<() => void> = [];
 
-function loadGoogleScript(): Promise<void> {
+function loadGoogleScript(apiKey: string): Promise<void> {
   return new Promise((resolve) => {
-    if (!GOOGLE_KEY) {
+    const key = apiKey.trim();
+    if (!key) {
       resolve();
       return;
     }
-    if (googleScriptLoaded) { resolve(); return; }
+    if (googleScriptLoaded && scriptKeyLoaded === key) {
+      resolve();
+      return;
+    }
     googleScriptCallbacks.push(resolve);
     if (googleScriptLoading) return;
     googleScriptLoading = true;
 
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_KEY}&libraries=places`;
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&libraries=places`;
     script.async = true;
     script.onload = () => {
       googleScriptLoaded = true;
+      scriptKeyLoaded = key;
+      googleScriptLoading = false;
       googleScriptCallbacks.forEach((cb) => cb());
       googleScriptCallbacks.length = 0;
     };
@@ -61,8 +67,9 @@ async function fetchGoogleSuggestions(
   query: string,
   countryCode: string | undefined
 ): Promise<Suggestion[]> {
-  if (!GOOGLE_KEY) return [];
-  await loadGoogleScript();
+  const apiKey = await getGoogleMapsBrowserKey();
+  if (!apiKey) return [];
+  await loadGoogleScript(apiKey);
   const g = (window as any).google;
   if (!g?.maps?.places) return [];
 
@@ -216,7 +223,8 @@ export function AddressAutocompleteInput({
     debounce(async (query: string) => {
       const q = query.trim();
       if (q.length < 2) { setSuggestions([]); setOpen(false); return; }
-      if (!GOOGLE_KEY) { setSuggestions([]); setOpen(false); return; }
+      const key = await getGoogleMapsBrowserKey();
+      if (!key) { setSuggestions([]); setOpen(false); return; }
 
       setLoading(true);
       try {
