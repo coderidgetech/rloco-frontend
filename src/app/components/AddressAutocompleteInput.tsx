@@ -2,7 +2,7 @@
  * AddressAutocompleteInput – street-line suggestions; ZIP lookup uses Zippopotam.
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { MapPin, Loader2 } from 'lucide-react';
 import { PH } from '../lib/formPlaceholders';
@@ -66,9 +66,9 @@ async function fetchGoogleSuggestions(
   const g = (window as any).google;
   if (!g?.maps?.places) return [];
 
-  const options: { input: string; types?: string[]; componentRestrictions?: { country: string } } = {
+  // Omit legacy `types: ['geocode']` — it often yields ZERO_RESULTS for street-level typing; optional country filter only.
+  const options: { input: string; componentRestrictions?: { country: string } } = {
     input: query,
-    types: ['geocode'],
   };
   if (countryCode && countryCode.trim()) {
     options.componentRestrictions = { country: countryCode.trim().toLowerCase() };
@@ -80,7 +80,19 @@ async function fetchGoogleSuggestions(
       options,
       (predictions: any[], status: string) => {
         const S = g.maps.places.PlacesServiceStatus;
-        if (status !== S.OK || !predictions) {
+        if (status === S.ZERO_RESULTS || !predictions) {
+          resolve([]);
+          return;
+        }
+        if (status !== S.OK) {
+          if (import.meta.env.DEV) {
+            console.warn('[AddressAutocomplete] Places getPlacePredictions:', status, {
+              hint:
+                status === S.REQUEST_DENIED
+                  ? 'Check API key, billing, and enable Maps JavaScript API + Places API in Google Cloud.'
+                  : undefined,
+            });
+          }
           resolve([]);
           return;
         }
@@ -157,11 +169,13 @@ export function AddressAutocompleteInput({
   className = '',
   countryCode,
 }: Props) {
+  const menuId = useId().replace(/:/g, '');
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading]         = useState(false);
   const [open, setOpen]               = useState(false);
   const [menuRect, setMenuRect]       = useState<{ top: number; left: number; width: number } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLUListElement | null>(null);
 
   const updateMenuRect = useCallback(() => {
     const el = containerRef.current;
@@ -170,20 +184,19 @@ export function AddressAutocompleteInput({
     setMenuRect({ top: r.bottom, left: r.left, width: r.width });
   }, []);
 
-  // Close dropdown on outside click (include portaled menu)
+  // Close dropdown on outside click (include portaled menu). Defer so mousedown on a suggestion runs first.
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const t = e.target as Node;
       if (containerRef.current?.contains(t)) return;
-      const menu = document.getElementById('address-autocomplete-menu');
-      if (menu?.contains(t)) return;
-      setOpen(false);
+      if (menuRef.current?.contains(t)) return;
+      queueMicrotask(() => setOpen(false));
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) {
       setMenuRect(null);
       return;
@@ -266,7 +279,8 @@ export function AddressAutocompleteInput({
         menuRect &&
         createPortal(
           <ul
-            id="address-autocomplete-menu"
+            id={menuId}
+            ref={menuRef}
             role="listbox"
             style={{
               position: 'fixed',
