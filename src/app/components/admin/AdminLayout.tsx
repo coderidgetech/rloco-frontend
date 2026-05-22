@@ -28,6 +28,7 @@ import {
   Sliders,
   Home,
   Building2,
+  ClipboardList,
 } from 'lucide-react';
 import { cn } from '../ui/utils';
 
@@ -79,6 +80,13 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       vendorOnly: true,
     },
     {
+      label: 'My Analytics',
+      icon: BarChart3,
+      path: '/admin/vendor-analytics',
+      permission: 'vendor',
+      vendorOnly: true,
+    },
+    {
       label: 'Categories',
       icon: FolderTree,
       path: '/admin/categories',
@@ -94,6 +102,12 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       label: 'Vendors',
       icon: Store,
       path: '/admin/vendors',
+      permission: 'admin',
+    },
+    {
+      label: 'Applications',
+      icon: ClipboardList,
+      path: '/admin/vendor-applications',
       permission: 'admin',
     },
     {

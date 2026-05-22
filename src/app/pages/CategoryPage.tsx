@@ -270,12 +270,12 @@ export function CategoryPage() {
   const pageTitle = !hasValidGender
     ? 'Collection'
     : giftOnly && routeGender === 'women'
-    ? 'Gift For Her'
+    ? 'Gifts for Her'
     : giftOnly && routeGender === 'men'
-    ? 'Gift For Him'
-    : category 
-    ? `${category.charAt(0).toUpperCase() + category.slice(1)} - ${routeGender?.charAt(0).toUpperCase() + routeGender?.slice(1)}`
-    : `${routeGender?.charAt(0).toUpperCase() + routeGender?.slice(1)}'s Collection`;
+    ? 'Gifts for Him'
+    : category && category.toLowerCase() !== routeGender?.toLowerCase()
+    ? category.charAt(0).toUpperCase() + category.slice(1)
+    : `${routeGender?.charAt(0).toUpperCase()}${routeGender?.slice(1)}'s Collection`;
 
   return (
     <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
@@ -304,83 +304,74 @@ export function CategoryPage() {
         </section>
       )}
 
-      {/* Breadcrumb */}
-      <div className="border-b border-foreground/5 bg-background">
-        <div className="page-container py-3">
-          <div className="flex items-center gap-2 text-xs text-foreground/50">
-            <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors uppercase">
-              Home
-            </button>
-            <ChevronRight size={12} />
+      {/* Page header */}
+      <div className="border-b border-foreground/5">
+        <div className="page-container">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-[11px] text-foreground/40 uppercase tracking-wide py-2 border-b border-foreground/5">
+            <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors">Home</button>
+            <ChevronRight size={11} />
             {isGiftRoute ? (
-              <span className="text-foreground uppercase">Gift for {isGiftHer ? 'Her' : 'Him'}</span>
+              <span className="text-foreground/60">Gift for {isGiftHer ? 'Her' : 'Him'}</span>
             ) : (
               <>
                 <button
                   type="button"
                   onClick={() => navigate(`/category/${routeGender}`)}
-                  className="hover:text-foreground transition-colors uppercase capitalize"
+                  className="hover:text-foreground transition-colors capitalize"
                 >
                   {routeGender}
                 </button>
-                {category && (
+                {category && category.toLowerCase() !== routeGender?.toLowerCase() && (
                   <>
-                    <ChevronRight size={12} />
-                    <span className="text-xs text-foreground uppercase capitalize">{category}</span>
+                    <ChevronRight size={11} />
+                    <span className="text-foreground/60 capitalize">{category}</span>
                   </>
                 )}
               </>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Header */}
-      <div className="page-container py-6 md:py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="mb-8"
-        >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl mb-2">{pageTitle}</h1>
-              <p className="text-foreground/70">
-                Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
-              </p>
+          {/* Title row */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex items-center justify-between gap-4 py-3"
+          >
+            <div className="flex items-baseline gap-3">
+              <h1 className="text-2xl md:text-3xl font-light tracking-tight">{pageTitle}</h1>
+              <span className="text-xs text-foreground/40 hidden sm:block">
+                {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
+              </span>
             </div>
-            
-            <div className="flex items-center gap-3">
+
+            <div className="flex items-center gap-2 shrink-0">
               {/* Mobile Filter Toggle */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="md:hidden px-4 py-2 border border-foreground/20 hover:border-foreground transition-colors flex items-center gap-2"
+                className="md:hidden px-3 py-1.5 border border-foreground/20 hover:border-foreground transition-colors flex items-center gap-1.5 text-xs"
               >
-                <SlidersHorizontal size={16} />
+                <SlidersHorizontal size={13} />
                 Filters
-                {hasActiveFilters && (
-                  <span className="w-2 h-2 rounded-full bg-primary"></span>
-                )}
+                {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
               </button>
-              
+
               {/* Sort Dropdown */}
-              <div className="flex flex-col gap-2">
-                <span className="text-xs uppercase tracking-wider text-foreground/60">Sort By</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] uppercase tracking-wider text-foreground/40 hidden sm:block">Sort by</span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-4 py-2 border border-foreground/20 bg-background focus:outline-none focus:border-foreground transition-colors cursor-pointer text-sm"
+                  className="px-3 py-1.5 border border-foreground/15 bg-background focus:outline-none focus:border-foreground transition-colors cursor-pointer text-xs"
                 >
                   {sortOptions.map(option => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
+                    <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Active Filters Display */}
           {hasActiveFilters && (
@@ -453,8 +444,10 @@ export function CategoryPage() {
               </button>
             </motion.div>
           )}
-        </motion.div>
+        </div>
+      </div>
 
+      <div className="page-container">
         <PromotionalOffers filterGender={routeGender as 'women' | 'men' | 'all'} selectedCategory={category} />
 
         {/* Main Content: Sidebar + Products */}

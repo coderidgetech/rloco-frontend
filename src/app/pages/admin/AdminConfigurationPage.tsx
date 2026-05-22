@@ -58,6 +58,10 @@ import { adminService } from '../../services/adminService';
 import { mergeSiteConfigFromApi } from '../../lib/siteConfigMerge';
 import { AdminSiteContentPanel } from '../../components/admin/AdminSiteContentPanel';
 import { getApiErrorMessage } from '../../lib/apiErrors';
+import {
+  DEFAULT_VENDOR_SUBSCRIPTION_PLANS,
+  type VendorSubscriptionPlanRow,
+} from '../../lib/vendorSubscriptionPlanDefaults';
 
 const CONFIG_TAB_IDS = [
   'site-content',
@@ -90,6 +94,11 @@ export const AdminConfigurationPage = () => {
         const data = await adminService.getConfiguration();
         if (cancelled || !data) return;
         importConfig(JSON.stringify(mergeSiteConfigFromApi(data as Record<string, unknown>)));
+        const apiPlans = (data as { vendorSubscriptions?: { plans?: VendorSubscriptionPlanRow[] } })
+          .vendorSubscriptions?.plans;
+        if (Array.isArray(apiPlans) && apiPlans.length > 0) {
+          setSubscriptionPlans(apiPlans);
+        }
       } catch (error: unknown) {
         console.error('Failed to fetch configuration:', error);
         toast.error(getApiErrorMessage(error, 'Failed to load configuration'));
@@ -105,7 +114,10 @@ export const AdminConfigurationPage = () => {
   const handleSave = async (section?: string) => {
     try {
       setSaving(true);
-      const configToSave = JSON.parse(JSON.stringify(config)) as Record<string, unknown>;
+      const configToSave = {
+        ...(JSON.parse(JSON.stringify(config)) as Record<string, unknown>),
+        vendorSubscriptions: { plans: subscriptionPlans },
+      };
       await adminService.updateConfiguration(configToSave);
       await refreshConfig();
       localStorage.setItem('rloco_config_updated', Date.now().toString());
@@ -126,196 +138,10 @@ export const AdminConfigurationPage = () => {
     { id: 4, name: 'Sale', color: '#E74C3C', icon: 'Percent', active: true },
   ]);
 
-  const [subscriptionPlans, setSubscriptionPlans] = useState([
-    {
-      id: 1,
-      configName: 'PLAN_STARTER',
-      name: 'Starter',
-      description: 'Perfect for new vendors just getting started',
-      monthlyPrice: 19,
-      yearlyPrice: 190,
-      commission: 20,
-      maxProducts: 50,
-      maxTeamMembers: 2,
-      maxOrders: 300,
-      features: {
-        basicDashboard: true,
-        productManagement: true,
-        orderManagement: true,
-        emailSupport: true,
-        basicAnalytics: false,
-        prioritySupport: false,
-        advancedAnalytics: false,
-        apiAccess: false,
-        whiteLabelBranding: false,
-        customReports: false,
-      },
-      active: true,
-      isDefault: false,
-      icon: 'Star',
-      color: '#10B981',
-    },
-    {
-      id: 2,
-      configName: 'PLAN_BASIC',
-      name: 'Basic',
-      description: 'Essential features for growing businesses',
-      monthlyPrice: 29,
-      yearlyPrice: 290,
-      commission: 15,
-      maxProducts: 100,
-      maxTeamMembers: 3,
-      maxOrders: 500,
-      features: {
-        basicDashboard: true,
-        productManagement: true,
-        orderManagement: true,
-        emailSupport: true,
-        basicAnalytics: true,
-        prioritySupport: false,
-        advancedAnalytics: false,
-        apiAccess: false,
-        whiteLabelBranding: false,
-        customReports: false,
-      },
-      active: true,
-      isDefault: true,
-      icon: 'Star',
-      color: '#6B7280',
-    },
-    {
-      id: 3,
-      configName: 'PLAN_PROFESSIONAL',
-      name: 'Professional',
-      description: 'For established vendors scaling their business',
-      monthlyPrice: 59,
-      yearlyPrice: 590,
-      commission: 12,
-      maxProducts: 500,
-      maxTeamMembers: 7,
-      maxOrders: 1500,
-      features: {
-        basicDashboard: true,
-        productManagement: true,
-        orderManagement: true,
-        emailSupport: true,
-        basicAnalytics: true,
-        prioritySupport: true,
-        advancedAnalytics: true,
-        apiAccess: false,
-        whiteLabelBranding: false,
-        customReports: true,
-      },
-      active: true,
-      isDefault: false,
-      icon: 'TrendingUp',
-      color: '#3B82F6',
-    },
-    {
-      id: 4,
-      configName: 'PLAN_PREMIUM',
-      name: 'Premium',
-      description: 'Advanced features and priority support',
-      monthlyPrice: 79,
-      yearlyPrice: 790,
-      commission: 10,
-      maxProducts: 1000,
-      maxTeamMembers: 10,
-      maxOrders: 2000,
-      features: {
-        basicDashboard: true,
-        productManagement: true,
-        orderManagement: true,
-        emailSupport: true,
-        basicAnalytics: true,
-        prioritySupport: true,
-        advancedAnalytics: true,
-        apiAccess: true,
-        whiteLabelBranding: false,
-        customReports: true,
-      },
-      active: true,
-      isDefault: false,
-      icon: 'Crown',
-      color: '#8B5CF6',
-    },
-    {
-      id: 5,
-      configName: 'PLAN_ENTERPRISE',
-      name: 'Enterprise',
-      description: 'Unlimited access with dedicated support',
-      monthlyPrice: 199,
-      yearlyPrice: 1990,
-      commission: 5,
-      maxProducts: 'unlimited',
-      maxTeamMembers: 'unlimited',
-      maxOrders: 'unlimited',
-      features: {
-        basicDashboard: true,
-        productManagement: true,
-        orderManagement: true,
-        emailSupport: true,
-        basicAnalytics: true,
-        prioritySupport: true,
-        advancedAnalytics: true,
-        apiAccess: true,
-        whiteLabelBranding: true,
-        customReports: true,
-      },
-      active: true,
-      isDefault: false,
-      icon: 'Zap',
-      color: '#A855F7',
-    },
-    {
-      id: 6,
-      configName: 'PLAN_CUSTOM_VIP',
-      name: 'Custom VIP',
-      description: 'Tailored plan for high-volume vendors',
-      monthlyPrice: 149,
-      yearlyPrice: 1490,
-      commission: 7,
-      maxProducts: 2000,
-      maxTeamMembers: 15,
-      maxOrders: 5000,
-      features: {
-        basicDashboard: true,
-        productManagement: true,
-        orderManagement: true,
-        emailSupport: true,
-        basicAnalytics: true,
-        prioritySupport: true,
-        advancedAnalytics: true,
-        apiAccess: true,
-        whiteLabelBranding: true,
-        customReports: true,
-      },
-      active: true,
-      isDefault: false,
-      icon: 'Award',
-      color: '#F59E0B',
-    },
-  ]);
+  const [subscriptionPlans, setSubscriptionPlans] =
+    useState<VendorSubscriptionPlanRow[]>(DEFAULT_VENDOR_SUBSCRIPTION_PLANS);
 
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('table');
-
-  // Load subscription plans from localStorage on mount
-  useEffect(() => {
-    const savedPlans = localStorage.getItem('subscriptionPlans');
-    if (savedPlans) {
-      try {
-        const plans = JSON.parse(savedPlans);
-        setSubscriptionPlans(plans);
-      } catch (error) {
-        console.error('Failed to load subscription plans:', error);
-      }
-    }
-  }, []);
-
-  // Save subscription plans to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('subscriptionPlans', JSON.stringify(subscriptionPlans));
-  }, [subscriptionPlans]);
 
   const handleAddPlan = () => {
     navigate('/admin/subscription-plans/builder');
@@ -393,8 +219,12 @@ export const AdminConfigurationPage = () => {
     }
     try {
       setSaving(true);
-      const payload = JSON.parse(JSON.stringify(defaultSiteConfig)) as Record<string, unknown>;
+      const payload = {
+        ...(JSON.parse(JSON.stringify(defaultSiteConfig)) as Record<string, unknown>),
+        vendorSubscriptions: { plans: DEFAULT_VENDOR_SUBSCRIPTION_PLANS },
+      };
       await adminService.updateConfiguration(payload);
+      setSubscriptionPlans(DEFAULT_VENDOR_SUBSCRIPTION_PLANS);
       await refreshConfig();
       localStorage.setItem('rloco_config_updated', Date.now().toString());
       window.dispatchEvent(new CustomEvent('rloco_config_updated'));

@@ -23,6 +23,94 @@ interface Suggestion {
   fill: () => Promise<AddressComponents> | AddressComponents;
 }
 
+type GPlaceComp = { long_name: string; short_name: string; types: string[] };
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Street / area line — US blocks + India/INTL (premise, sublocalities, POI). */
+function addressLineFromComponents(
+  comps: GPlaceComp[] | undefined,
+  formattedAddress: string | undefined,
+  predictionMainText: string
+): string {
+  if (!comps?.length) return predictionMainText.trim();
+
+  const byType = (t: string) => comps.find((c) => c.types.includes(t))?.long_name?.trim() || '';
+  const seen = new Set<string>();
+  const parts: string[] = [];
+  const add = (s: string) => {
+    const x = s.trim();
+    if (!x) return;
+    const k = x.toLowerCase();
+    if (seen.has(k)) return;
+    seen.add(k);
+    parts.push(x);
+  };
+
+  add(byType('subpremise'));
+  add(byType('premise'));
+  const sn = byType('street_number');
+  const route = byType('route');
+  if (sn || route) add([sn, route].filter(Boolean).join(' '));
+
+  for (const t of [
+    'neighborhood',
+    'sublocality_level_3',
+    'sublocality_level_2',
+    'sublocality_level_1',
+    'sublocality',
+  ]) {
+    add(byType(t));
+  }
+
+  const poi = byType('point_of_interest') || byType('establishment');
+  if (poi && parts.length === 0) {
+    add(poi);
+    add(byType('premise'));
+    if (sn || route) add([sn, route].filter(Boolean).join(' '));
+  }
+
+  if (parts.length > 0) return parts.join(', ');
+
+  if (formattedAddress) {
+    const locality =
+      byType('locality') ||
+      byType('sublocality_level_1') ||
+      byType('sublocality') ||
+      byType('administrative_area_level_3');
+    const state = byType('administrative_area_level_1');
+    const postal = byType('postal_code');
+    const country = byType('country');
+    let rest = formattedAddress.trim();
+    if (country) rest = rest.replace(new RegExp(`,?\\s*${escapeRegExp(country)}\\s*$`, 'i'), '').trim();
+    if (postal)
+      rest = rest.replace(new RegExp(`[,\\s]*\\b${escapeRegExp(postal)}\\b[,\\s]*`, 'gi'), ', ').trim();
+    if (state)
+      rest = rest.replace(new RegExp(`,?\\s*${escapeRegExp(state)}\\s*(\\d{4,}[-\\s]?[A-Z0-9]*)?\\s*$`, 'i'), '').trim();
+    if (locality) rest = rest.replace(new RegExp(`,?\\s*${escapeRegExp(locality)}\\s*$`, 'i'), '').trim();
+    rest = rest.replace(/,\s*,+/g, ',').replace(/^,+\s*/, '').replace(/,\s*$/, '').trim();
+    if (rest.length > 5) return rest;
+  }
+
+  return predictionMainText.trim();
+}
+
+function cityFromComponents(comps: GPlaceComp[] | undefined): string {
+  if (!comps?.length) return '';
+  const get = (t: string) => comps.find((c) => c.types.includes(t))?.long_name?.trim() || '';
+  return (
+    get('locality') ||
+    get('postal_town') ||
+    get('administrative_area_level_3') ||
+    get('administrative_area_level_2') ||
+    get('sublocality_level_1') ||
+    get('sublocality') ||
+    ''
+  );
+}
+
 // ─── Google Places ─────────────────────────────────────────────────────────────
 let googleScriptLoaded = false;
 let googleScriptLoading = false;
@@ -112,32 +200,40 @@ async function fetchGoogleSuggestions(
               new Promise<AddressComponents>((res) => {
                 const dummy = document.createElement('div');
                 const placesSvc = new g.maps.places.PlacesService(dummy);
+                const mainText = (p.structured_formatting?.main_text || p.description.split(',')[0] || '').trim();
                 placesSvc.getDetails(
-                  { placeId: p.place_id, fields: ['address_components'] },
+                  { placeId: p.place_id, fields: ['address_components', 'formatted_address'] },
                   (place: any, s: string) => {
                     if (s !== g.maps.places.PlacesServiceStatus.OK || !place) {
-                      res({ addressLine: p.description, city: '', state: '', pincode: '', country: '' });
+                      res({ addressLine: mainText, city: '', state: '', pincode: '', country: '' });
                       return;
                     }
+                    const comps: GPlaceComp[] = place.address_components || [];
                     const get = (type: string) =>
-                      place.address_components?.find((c: any) => c.types.includes(type))?.long_name || '';
+                      comps.find((c) => c.types.includes(type))?.long_name || '';
                     const getShort = (type: string) =>
-                      place.address_components?.find((c: any) => c.types.includes(type))?.short_name || '';
-                    const streetNum = get('street_number');
-                    const route     = get('route');
+                      comps.find((c) => c.types.includes(type))?.short_name || '';
                     const postalCode = get('postal_code');
                     const postalCodeSuffix = get('postal_code_suffix');
                     const cCode = getShort('country');
-                    const normalizedPostalCode =
+                    let pinStr =
                       cCode === 'US' && postalCode
                         ? (postalCodeSuffix ? `${postalCode}-${postalCodeSuffix}` : postalCode)
                         : [postalCode, postalCodeSuffix].filter(Boolean).join('-');
+                    if (cCode === 'IN' && postalCode) {
+                      const digits = pinStr.replace(/\D/g, '');
+                      if (digits.length >= 6) pinStr = digits.slice(0, 6);
+                    }
                     res({
-                      addressLine: [streetNum, route].filter(Boolean).join(' ') || p.description.split(',')[0],
-                      city:        get('locality') || get('sublocality') || get('administrative_area_level_2'),
-                      state:       get('administrative_area_level_1'),
-                      pincode:     normalizedPostalCode,
-                      country:     get('country') || cCode,
+                      addressLine: addressLineFromComponents(
+                        comps,
+                        place.formatted_address as string | undefined,
+                        mainText
+                      ),
+                      city: cityFromComponents(comps),
+                      state: get('administrative_area_level_1'),
+                      pincode: pinStr,
+                      country: get('country') || cCode,
                     });
                   }
                 );

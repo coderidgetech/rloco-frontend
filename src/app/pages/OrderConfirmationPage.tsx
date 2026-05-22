@@ -6,6 +6,7 @@ import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { orderService } from '../services/orderService';
 import { Order } from '../types/api';
 import { useCurrency } from '../context/CurrencyContext';
+import { toast } from 'sonner';
 
 interface OrderConfirmationPageProps {
   orderNumber?: string;
@@ -35,6 +36,7 @@ export function OrderConfirmationPage() {
   const [showContent, setShowContent] = useState(false);
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Get order data from route state
   const state = location.state as OrderConfirmationPageProps;
@@ -52,12 +54,16 @@ export function OrderConfirmationPage() {
   const fetchOrderDetails = async (num?: string, id?: string) => {
     try {
       setLoading(true);
+      setFetchError(null);
       const fetchedOrder = num ? await orderService.getByOrderNumber(num) : await orderService.getById(id!);
       setOrder(fetchedOrder);
       setShowContent(true);
     } catch (error) {
       console.error('Failed to fetch order details:', error);
-      // Fallback to state data if API fails
+      const msg =
+        'We could not load this order from the server. What you see may only reflect your last checkout step.';
+      setFetchError(msg);
+      toast.error(msg);
       setShowContent(true);
     } finally {
       setLoading(false);
@@ -151,6 +157,11 @@ export function OrderConfirmationPage() {
           animate={{ opacity: showContent ? 1 : 0, y: showContent ? 0 : 20 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         >
+          {fetchError && (
+            <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              {fetchError}
+            </div>
+          )}
           {/* Success Header */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}

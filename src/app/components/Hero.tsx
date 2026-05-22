@@ -7,7 +7,7 @@ import { useSiteConfig } from '../context/SiteConfigContext';
 import { useNavigate } from 'react-router-dom';
 
 const HERO_FALLBACK_IMAGE =
-  'https://images.unsplash.com/photo-1574288443562-5ccb5bdb46d8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx3b21hbiUyMGJsYWNrJTIwZHJlc3MlMjBlZGl0b3JpYWwlMjBwb3J0cmFpdHxlbnwxfHx8fDE3Njc0NDU5NTN8MA&ixlib=rb-4.1.0&q=85&w=1920';
+  'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1920&q=85';
 
 /** Typography + padding when vertical space is tight (matches “Final Design 2” density). */
 function getHeroLayout(vh: number) {
@@ -140,7 +140,7 @@ export function Hero() {
         >
           <img
             src={heroImg}
-            alt={config.homepage.hero.heading || 'Hero'}
+            alt=""
             className="absolute inset-0 h-full min-h-svh w-full object-cover object-[center_22%] sm:object-[center_28%] md:object-center"
             onError={() => setImgError(true)}
             {...({ fetchpriority: 'high' } as ImgHTMLAttributes<HTMLImageElement>)}
@@ -197,25 +197,29 @@ export function Hero() {
           <div className="mx-auto max-w-4xl text-center [text-rendering:optimizeLegibility]">
             {config.homepage.hero.enabled && (
               <>
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                  className={heroLayout.subheadingClass}
-                  style={{ textShadow: '1px 1px 8px rgba(0,0,0,0.5)' }}
-                >
-                  {config.homepage.hero.subheading || config.general.tagline}
-                </motion.p>
+                {config.homepage.hero.subheading && (
+                  <motion.p
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    className={heroLayout.subheadingClass}
+                    style={{ textShadow: '1px 1px 8px rgba(0,0,0,0.5)' }}
+                  >
+                    {config.homepage.hero.subheading}
+                  </motion.p>
+                )}
 
-                <motion.h2
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.8, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                  className={heroLayout.headlineClass}
-                  style={{ textShadow: '2px 2px 20px rgba(0,0,0,0.6)' }}
-                >
-                  {config.homepage.hero.heading || 'Timeless Elegance Redefined'}
-                </motion.h2>
+                {config.homepage.hero.heading && (
+                  <motion.h2
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                    className={heroLayout.headlineClass}
+                    style={{ textShadow: '2px 2px 20px rgba(0,0,0,0.6)' }}
+                  >
+                    {config.homepage.hero.heading}
+                  </motion.h2>
+                )}
               </>
             )}
 
@@ -225,24 +229,26 @@ export function Hero() {
               transition={{ duration: 0.8, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
               className={`flex flex-col items-stretch justify-center sm:flex-row sm:flex-wrap sm:items-center ${heroLayout.ctaGapClass}`}
             >
-              <Button
-                variant="white"
-                size="lg"
-                onClick={() =>
-                  navigate(config.homepage.hero.primaryButtonLink || '/all-products')
-                }
-                className="min-h-12 w-full uppercase tracking-[0.15em] shadow-lg shadow-black/20 sm:min-h-11 sm:w-auto sm:min-w-[200px] sm:px-10"
-              >
-                {config.homepage.hero.primaryButtonText || 'Shop Collection'}
-              </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={scrollToProducts}
-                className="min-h-12 w-full border-2 border-white/50 bg-white/15 uppercase tracking-[0.15em] text-white backdrop-blur-[8px] hover:bg-white/25 hover:text-white sm:min-h-11 sm:w-auto sm:min-w-[180px]"
-              >
-                Explore
-              </Button>
+              {config.homepage.hero.primaryButtonText && (
+                <Button
+                  variant="white"
+                  size="lg"
+                  onClick={() => navigate(config.homepage.hero.primaryButtonLink || '/all-products')}
+                  className="min-h-12 w-full uppercase tracking-[0.15em] shadow-lg shadow-black/20 sm:min-h-11 sm:w-auto sm:min-w-[200px] sm:px-10"
+                >
+                  {config.homepage.hero.primaryButtonText}
+                </Button>
+              )}
+              {config.homepage.hero.secondaryButtonText && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={scrollToProducts}
+                  className="min-h-12 w-full border-2 border-white/50 bg-white/15 uppercase tracking-[0.15em] text-white backdrop-blur-[8px] hover:bg-white/25 hover:text-white sm:min-h-11 sm:w-auto sm:min-w-[180px]"
+                >
+                  {config.homepage.hero.secondaryButtonText}
+                </Button>
+              )}
             </motion.div>
           </div>
         </div>

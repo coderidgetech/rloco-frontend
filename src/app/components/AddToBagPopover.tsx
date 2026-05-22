@@ -44,7 +44,7 @@ export function AddToBagPopover({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 10 }}
           transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72 bg-background border border-border rounded-lg shadow-2xl p-4 z-50"
+          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 sm:w-72 max-w-[calc(100vw-2rem)] bg-background border border-border rounded-lg shadow-2xl p-3 sm:p-4 z-[100]"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Arrow pointing down to the button */}

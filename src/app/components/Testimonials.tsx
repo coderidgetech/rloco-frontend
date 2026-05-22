@@ -136,25 +136,29 @@ export function Testimonials() {
             </div>
           </motion.div>
           
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl md:text-5xl lg:text-6xl mb-5 tracking-tight font-light"
-          >
-            What They Say
-          </motion.h2>
-          
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-foreground/60 text-lg"
-          >
-            Trusted by fashion enthusiasts worldwide
-          </motion.p>
+          {config.homepage.testimonials?.heading && (
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-4xl md:text-5xl lg:text-6xl mb-5 tracking-tight font-light"
+            >
+              {config.homepage.testimonials.heading}
+            </motion.h2>
+          )}
+
+          {config.homepage.testimonials?.subheading && (
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-foreground/60 text-lg"
+            >
+              {config.homepage.testimonials.subheading}
+            </motion.p>
+          )}
         </div>
 
         {/* Testimonials Grid */}

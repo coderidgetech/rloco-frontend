@@ -91,17 +91,18 @@ export function MegaMenu({ isOpen, gender, onClose, onCategoryClick }: MegaMenuP
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed z-40 hidden w-full min-w-0 md:block"
+            className="fixed z-40 hidden md:block overflow-hidden"
             style={{
-              top: '56px',
-              left: 0,
-              right: 0,
+              top: '68px',
+              left: '2rem',
+              right: '2rem',
               maxHeight: 'min(42vh, 520px)',
-              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+              backgroundColor: 'rgba(255, 255, 255, 0.97)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
-              borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.08)',
+              border: '1px solid rgba(0, 0, 0, 0.08)',
+              borderRadius: '1.25rem',
+              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.14), 0 4px 16px rgba(0, 0, 0, 0.06)',
               pointerEvents: 'auto',
             }}
             onMouseLeave={onClose}

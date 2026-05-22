@@ -6,25 +6,85 @@ import { MobileProductGrid } from '../components/mobile/MobileProductGrid';
 import { MobileInspirationVideos } from '../components/mobile/MobileInspirationVideos';
 import { MobileTestimonials } from '../components/mobile/MobileTestimonials';
 import { MobileNewsletter } from '../components/mobile/MobileNewsletter';
+import { VideoShowcase } from '../components/VideoShowcase';
 import { useFeaturedProducts, useNewArrivals, useOnSaleProducts } from '../hooks/useProducts';
+import { useSiteConfig } from '../context/SiteConfigContext';
 import { motion } from 'motion/react';
 import { TrendingUp, Zap, Tag, Truck, RotateCcw, Shield } from 'lucide-react';
 
+const DEFAULT_ORDER = [
+  'featuredProducts','shopByCategory','editorialFeatures',
+  'newArrivals','bestSellers','instagramFeed',
+  'testimonials','newsletterSignup','promotionalBanner',
+];
+
+const Divider = () => <div className="h-2 bg-foreground/5" />;
+
 export function MobileHomePage() {
+  const { config } = useSiteConfig();
+  const { sections, sectionOrder } = config.homepage;
+  const order = sectionOrder?.length ? sectionOrder : DEFAULT_ORDER;
+
   const { products: featuredProducts } = useFeaturedProducts(10);
   const { products: newArrivals } = useNewArrivals(10);
   const { products: saleProducts } = useOnSaleProducts(10);
+
+  const sectionMap: Record<string, React.ReactNode> = {
+    featuredProducts: sections.featuredProducts && featuredProducts.length > 0 && (
+      <>
+        <MobileProductGrid products={featuredProducts} title="Top Collection" />
+        <Divider />
+      </>
+    ),
+    shopByCategory: sections.shopByCategory && (
+      <>
+        <CategoryGrid />
+        <Divider />
+      </>
+    ),
+    bestSellers: sections.bestSellers && (
+      <>
+        <MobileGiftSection />
+        <Divider />
+      </>
+    ),
+    newArrivals: sections.newArrivals && newArrivals.length > 0 && (
+      <>
+        <MobileProductGrid products={newArrivals} title="🆕 New Arrivals" />
+        <Divider />
+      </>
+    ),
+    promotionalBanner: sections.promotionalBanner && saleProducts.length > 0 && (
+      <>
+        <MobileProductGrid products={saleProducts} title="🔥 On Sale" />
+        <Divider />
+      </>
+    ),
+    instagramFeed: sections.instagramFeed && (
+      <>
+        <MobileInspirationVideos />
+        <Divider />
+      </>
+    ),
+    testimonials: sections.testimonials && <MobileTestimonials />,
+    newsletterSignup: sections.newsletterSignup && <MobileNewsletter />,
+    editorialFeatures: sections.editorialFeatures && (
+      <>
+        <VideoShowcase />
+        <Divider />
+      </>
+    ),
+    brandStory: null,
+  };
 
   return (
     <div className="min-h-screen w-full min-w-0 bg-background pb-20">
       <MobileHomeHeader />
 
-      {/* Main Content - pt for header + delivery bar + safe area */}
       <div className="pt-[110px]">
-        {/* Hero Carousel */}
-        <MobileHero />
+        {config.homepage.hero.enabled && <MobileHero />}
 
-        {/* Quick Stats Banner - ref: py-3 px-4 mt-3 */}
+        {/* Quick stats bar */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -32,78 +92,27 @@ export function MobileHomePage() {
           className="bg-primary/5 py-3 px-4 mt-3"
         >
           <div className="flex items-center justify-around">
-            <div className="flex flex-col items-center">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1.5">
-                <TrendingUp size={18} className="text-primary" />
+            {[
+              { Icon: TrendingUp, label: 'Trending' },
+              { Icon: Zap, label: 'New In' },
+              { Icon: Tag, label: 'Sale' },
+            ].map(({ Icon, label }) => (
+              <div key={label} className="flex flex-col items-center">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1.5">
+                  <Icon size={18} className="text-primary" />
+                </div>
+                <span className="text-xs font-medium">{label}</span>
               </div>
-              <span className="text-xs font-medium">Trending</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1.5">
-                <Zap size={18} className="text-primary" />
-              </div>
-              <span className="text-xs font-medium">New In</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1.5">
-                <Tag size={18} className="text-primary" />
-              </div>
-              <span className="text-xs font-medium">Sale</span>
-            </div>
+            ))}
           </div>
         </motion.div>
 
-        {featuredProducts.length > 0 && (
-          <>
-            <MobileProductGrid
-              products={featuredProducts}
-              title="Top Collection"
-            />
-            <div className="h-2 bg-foreground/5" />
-          </>
-        )}
+        {order.map((key) => {
+          const node = sectionMap[key];
+          return node ? <div key={key}>{node}</div> : null;
+        })}
 
-        <CategoryGrid />
-
-        <div className="h-2 bg-foreground/5" />
-
-        <MobileGiftSection />
-
-        <div className="h-2 bg-foreground/5" />
-
-        {/* New Arrivals */}
-        {newArrivals.length > 0 && (
-          <>
-            <MobileProductGrid
-              products={newArrivals}
-              title="🆕 New Arrivals"
-            />
-            <div className="h-2 bg-foreground/5" />
-          </>
-        )}
-
-        {/* Sale Products */}
-        {saleProducts.length > 0 && (
-          <>
-            <MobileProductGrid
-              products={saleProducts}
-              title="🔥 On Sale"
-            />
-            <div className="h-2 bg-foreground/5" />
-          </>
-        )}
-
-        {/* Inspiration Videos - ref: after product sections */}
-        <MobileInspirationVideos />
-        <div className="h-2 bg-foreground/5" />
-
-        {/* Testimonials - ref */}
-        <MobileTestimonials />
-
-        {/* Newsletter - ref */}
-        <MobileNewsletter />
-
-        {/* Promo Banner - ref: mx-4 my-4, p-5, mb-1.5, mb-3 */}
+        {/* App download banner */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -119,36 +128,25 @@ export function MobileHomePage() {
           </button>
         </motion.div>
 
-        {/* Trust Badges - ref: Truck, RotateCcw, Shield in w-12 h-12 circles, py-4 */}
+        {/* Trust badges */}
         <div className="grid grid-cols-3 gap-4 px-4 py-4 border-t border-border/30">
-          <div className="text-center">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-              <Truck size={20} className="text-primary" />
+          {[
+            { Icon: Truck, label: 'Free Shipping', sub: 'On orders $50+' },
+            { Icon: RotateCcw, label: 'Easy Returns', sub: '30-day policy' },
+            { Icon: Shield, label: 'Secure Pay', sub: '100% protected' },
+          ].map(({ Icon, label, sub }) => (
+            <div key={label} className="text-center">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
+                <Icon size={20} className="text-primary" />
+              </div>
+              <p className="text-xs font-medium">{label}</p>
+              <p className="text-[10px] text-foreground/50">{sub}</p>
             </div>
-            <p className="text-xs font-medium">Free Shipping</p>
-            <p className="text-[10px] text-foreground/50">On orders $50+</p>
-          </div>
-          <div className="text-center">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-              <RotateCcw size={20} className="text-primary" />
-            </div>
-            <p className="text-xs font-medium">Easy Returns</p>
-            <p className="text-[10px] text-foreground/50">30-day policy</p>
-          </div>
-          <div className="text-center">
-            <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-              <Shield size={20} className="text-primary" />
-            </div>
-            <p className="text-xs font-medium">Secure Pay</p>
-            <p className="text-[10px] text-foreground/50">100% protected</p>
-          </div>
+          ))}
         </div>
 
-        {/* Footer - ref: py-6 */}
         <div className="px-4 py-6 text-center border-t border-border/30">
-          <p className="text-sm text-foreground/60 mb-2">
-            © 2026 Rloco. All rights reserved.
-          </p>
+          <p className="text-sm text-foreground/60 mb-2">© 2026 Rloco. All rights reserved.</p>
           <div className="flex items-center justify-center gap-4 text-xs text-foreground/50">
             <button>Privacy</button>
             <span>•</span>
@@ -158,9 +156,6 @@ export function MobileHomePage() {
           </div>
         </div>
       </div>
-
-      {/* Quick Actions - Only show on scroll */}
-      {/* <QuickActions /> */}
     </div>
   );
 }

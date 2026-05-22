@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select';
-import { Mail, Save, Upload } from 'lucide-react';
+import { GripVertical, Mail, Save, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { adminService } from '../../services/adminService';
 import { PH } from '../../lib/formPlaceholders';
@@ -25,12 +25,10 @@ const SECTION_LABELS: Record<keyof SiteConfig['homepage']['sections'], string> =
   featuredProducts: 'Featured products',
   newArrivals: 'New arrivals',
   shopByCategory: 'Shop by category',
-  bestSellers: 'Best sellers',
+  bestSellers: 'Best sellers / Gift section',
   editorialFeatures: 'Editorial features',
-  promotionalBanner: 'Promotional banner',
+  instagramFeed: 'Inspiration videos',
   testimonials: 'Testimonials',
-  brandStory: 'Brand story',
-  instagramFeed: 'Instagram feed',
   newsletterSignup: 'Newsletter signup',
 };
 
@@ -198,6 +196,22 @@ export function AdminSiteContentPanel() {
                     </div>
                   </div>
                   <div className="space-y-2 max-w-xs">
+                    <Label>Secondary button text</Label>
+                    <Input
+                      value={hero.secondaryButtonText ?? ''}
+                      onChange={(e) =>
+                        setSiteConfig((c) => ({
+                          ...c,
+                          homepage: {
+                            ...c.homepage,
+                            hero: { ...c.homepage.hero, secondaryButtonText: e.target.value },
+                          },
+                        }))
+                      }
+                      placeholder="Explore"
+                    />
+                  </div>
+                  <div className="space-y-2 max-w-xs">
                     <Label>Hero layout</Label>
                     <Select
                       value={hero.style}
@@ -225,32 +239,262 @@ export function AdminSiteContentPanel() {
                 </CardContent>
               </Card>
 
+              <SectionOrderCard
+                sections={sections}
+                sectionOrder={config.homepage.sectionOrder}
+                setSiteConfig={setSiteConfig}
+                saving={saving}
+                persist={persist}
+              />
+
+              {/* Gift Section editor */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Homepage sections</CardTitle>
-                  <CardDescription>Toggle which blocks appear on the home page.</CardDescription>
+                  <CardTitle>Gift section</CardTitle>
+                  <CardDescription>Heading, subheading and up to 4 gift cards shown in the "Best Sellers" block.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  {(Object.keys(sections) as Array<keyof typeof sections>).map((key) => (
-                    <div key={key} className="flex items-center justify-between gap-4 border rounded-lg px-3 py-2">
-                      <Label className="cursor-pointer">{SECTION_LABELS[key]}</Label>
-                      <Switch
-                        checked={sections[key]}
-                        onCheckedChange={(v) =>
+                <CardContent className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label>Heading</Label>
+                      <Input
+                        value={config.homepage.giftSection?.heading ?? ''}
+                        onChange={(e) =>
                           setSiteConfig((c) => ({
                             ...c,
-                            homepage: {
-                              ...c.homepage,
-                              sections: { ...c.homepage.sections, [key]: v },
-                            },
+                            homepage: { ...c.homepage, giftSection: { ...c.homepage.giftSection, heading: e.target.value } },
                           }))
                         }
                       />
                     </div>
+                    <div className="space-y-1.5">
+                      <Label>Subheading</Label>
+                      <Input
+                        value={config.homepage.giftSection?.subheading ?? ''}
+                        onChange={(e) =>
+                          setSiteConfig((c) => ({
+                            ...c,
+                            homepage: { ...c.homepage, giftSection: { ...c.homepage.giftSection, subheading: e.target.value } },
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  {(config.homepage.giftSection?.items ?? []).map((item, idx) => (
+                    <div key={idx} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-muted-foreground">Card {idx + 1}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-600 h-7 px-2 text-xs"
+                          onClick={() =>
+                            setSiteConfig((c) => {
+                              const items = [...(c.homepage.giftSection?.items ?? [])];
+                              items.splice(idx, 1);
+                              return { ...c, homepage: { ...c.homepage, giftSection: { ...c.homepage.giftSection, items } } };
+                            })
+                          }
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label>Title</Label>
+                          <Input
+                            value={item.title}
+                            onChange={(e) =>
+                              setSiteConfig((c) => {
+                                const items = [...(c.homepage.giftSection?.items ?? [])];
+                                items[idx] = { ...items[idx], title: e.target.value };
+                                return { ...c, homepage: { ...c.homepage, giftSection: { ...c.homepage.giftSection, items } } };
+                              })
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Subtitle</Label>
+                          <Input
+                            value={item.subtitle}
+                            onChange={(e) =>
+                              setSiteConfig((c) => {
+                                const items = [...(c.homepage.giftSection?.items ?? [])];
+                                items[idx] = { ...items[idx], subtitle: e.target.value };
+                                return { ...c, homepage: { ...c.homepage, giftSection: { ...c.homepage.giftSection, items } } };
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Description</Label>
+                        <Input
+                          value={item.description}
+                          onChange={(e) =>
+                            setSiteConfig((c) => {
+                              const items = [...(c.homepage.giftSection?.items ?? [])];
+                              items[idx] = { ...items[idx], description: e.target.value };
+                              return { ...c, homepage: { ...c.homepage, giftSection: { ...c.homepage.giftSection, items } } };
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="space-y-1.5 sm:col-span-2">
+                          <Label>Image URL</Label>
+                          <Input
+                            value={item.image}
+                            onChange={(e) =>
+                              setSiteConfig((c) => {
+                                const items = [...(c.homepage.giftSection?.items ?? [])];
+                                items[idx] = { ...items[idx], image: e.target.value };
+                                return { ...c, homepage: { ...c.homepage, giftSection: { ...c.homepage.giftSection, items } } };
+                              })
+                            }
+                            placeholder="https://..."
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Item count</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={item.itemCount}
+                            onChange={(e) =>
+                              setSiteConfig((c) => {
+                                const items = [...(c.homepage.giftSection?.items ?? [])];
+                                items[idx] = { ...items[idx], itemCount: Number(e.target.value) };
+                                return { ...c, homepage: { ...c.homepage, giftSection: { ...c.homepage.giftSection, items } } };
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Link</Label>
+                        <Input
+                          value={item.link}
+                          onChange={(e) =>
+                            setSiteConfig((c) => {
+                              const items = [...(c.homepage.giftSection?.items ?? [])];
+                              items[idx] = { ...items[idx], link: e.target.value };
+                              return { ...c, homepage: { ...c.homepage, giftSection: { ...c.homepage.giftSection, items } } };
+                            })
+                          }
+                          placeholder="/category/gifts"
+                        />
+                      </div>
+                    </div>
                   ))}
-                  <Button onClick={() => void persist('Homepage sections')} disabled={saving} className="mt-2">
+
+                  {(config.homepage.giftSection?.items?.length ?? 0) < 4 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setSiteConfig((c) => {
+                          const items = [...(c.homepage.giftSection?.items ?? [])];
+                          items.push({ title: 'New Gift Card', subtitle: '', description: '', image: '', link: '/', itemCount: 0 });
+                          return { ...c, homepage: { ...c.homepage, giftSection: { ...c.homepage.giftSection, items } } };
+                        })
+                      }
+                    >
+                      + Add card
+                    </Button>
+                  )}
+
+                  <Button onClick={() => void persist('Gift section')} disabled={saving}>
                     <Save className="h-4 w-4 mr-2" />
-                    {saving ? 'Saving…' : 'Save sections'}
+                    {saving ? 'Saving…' : 'Save gift section'}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Newsletter section</CardTitle>
+                  <CardDescription>Heading and body copy shown in the newsletter signup block.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Heading</Label>
+                    <Input
+                      value={config.homepage.newsletter?.heading ?? ''}
+                      onChange={(e) =>
+                        setSiteConfig((c) => ({
+                          ...c,
+                          homepage: {
+                            ...c.homepage,
+                            newsletter: { ...c.homepage.newsletter, heading: e.target.value },
+                          },
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Subheading</Label>
+                    <Textarea
+                      rows={2}
+                      value={config.homepage.newsletter?.subheading ?? ''}
+                      onChange={(e) =>
+                        setSiteConfig((c) => ({
+                          ...c,
+                          homepage: {
+                            ...c.homepage,
+                            newsletter: { ...c.homepage.newsletter, subheading: e.target.value },
+                          },
+                        }))
+                      }
+                    />
+                  </div>
+                  <Button onClick={() => void persist('Newsletter section')} disabled={saving}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {saving ? 'Saving…' : 'Save newsletter'}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Testimonials section</CardTitle>
+                  <CardDescription>Heading and subheading for the customer reviews block.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Heading</Label>
+                    <Input
+                      value={config.homepage.testimonials?.heading ?? ''}
+                      onChange={(e) =>
+                        setSiteConfig((c) => ({
+                          ...c,
+                          homepage: {
+                            ...c.homepage,
+                            testimonials: { ...c.homepage.testimonials, heading: e.target.value },
+                          },
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Subheading</Label>
+                    <Input
+                      value={config.homepage.testimonials?.subheading ?? ''}
+                      onChange={(e) =>
+                        setSiteConfig((c) => ({
+                          ...c,
+                          homepage: {
+                            ...c.homepage,
+                            testimonials: { ...c.homepage.testimonials, subheading: e.target.value },
+                          },
+                        }))
+                      }
+                    />
+                  </div>
+                  <Button onClick={() => void persist('Testimonials section')} disabled={saving}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {saving ? 'Saving…' : 'Save testimonials'}
                   </Button>
                 </CardContent>
               </Card>
@@ -950,5 +1194,77 @@ export function AdminSiteContentPanel() {
             </TabsContent>
           </Tabs>
     </div>
+  );
+}
+
+type SiteConfigSetter = React.Dispatch<React.SetStateAction<import('../../context/SiteConfigContext').SiteConfig>>;
+
+function SectionOrderCard({
+  sections,
+  sectionOrder,
+  setSiteConfig,
+  saving,
+  persist,
+}: {
+  sections: Record<string, boolean>;
+  sectionOrder: string[];
+  setSiteConfig: SiteConfigSetter;
+  saving: boolean;
+  persist: (label: string) => Promise<void>;
+}) {
+  const defaultOrder = Object.keys(sections);
+  const order = sectionOrder?.length ? sectionOrder : defaultOrder;
+  const dragIndex = useRef<number | null>(null);
+
+  const reorder = useCallback((from: number, to: number) => {
+    const next = [...order];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    setSiteConfig((c) => ({ ...c, homepage: { ...c.homepage, sectionOrder: next } }));
+  }, [order, setSiteConfig]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Homepage sections</CardTitle>
+        <CardDescription>Drag rows to reorder. Toggle to show or hide each block.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-1.5">
+        {order.map((key, idx) => (
+          <div
+            key={key}
+            draggable
+            onDragStart={() => { dragIndex.current = idx; }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={() => {
+              if (dragIndex.current !== null && dragIndex.current !== idx) {
+                reorder(dragIndex.current, idx);
+              }
+              dragIndex.current = null;
+            }}
+            onDragEnd={() => { dragIndex.current = null; }}
+            className="flex items-center gap-3 border rounded-lg px-2 py-2 cursor-grab active:cursor-grabbing hover:bg-muted/40 transition-colors select-none"
+          >
+            <GripVertical className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="flex-1 text-sm font-medium">
+              {SECTION_LABELS[key as keyof typeof SECTION_LABELS] ?? key}
+            </span>
+            <Switch
+              checked={!!sections[key]}
+              onCheckedChange={(v) =>
+                setSiteConfig((c) => ({
+                  ...c,
+                  homepage: { ...c.homepage, sections: { ...c.homepage.sections, [key]: v } },
+                }))
+              }
+            />
+          </div>
+        ))}
+        <Button onClick={() => void persist('Homepage sections')} disabled={saving} className="mt-3">
+          <Save className="h-4 w-4 mr-2" />
+          {saving ? 'Saving…' : 'Save sections'}
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

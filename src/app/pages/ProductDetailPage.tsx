@@ -9,7 +9,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Footer } from '../components/Footer';
 import { ProductRecommendationSection } from '../components/ProductRecommendationSection';
 import { CompleteTheLookSection } from '../components/CompleteTheLookSection';
-import { useProduct } from '../hooks/useProducts';
+import { useProduct, useProductVariants } from '../hooks/useProducts';
 import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
 import { shippingService } from '../services/shippingService';
@@ -17,6 +17,7 @@ import { DEFAULT_ITEM_WEIGHT_LB } from '../constants/shipping';
 import { ProductReview } from '../types/api';
 import { useUser } from '../context/UserContext';
 import { useCurrency } from '../context/CurrencyContext';
+import { useSiteConfig } from '../context/SiteConfigContext';
 import { PLACEHOLDER_IMAGE } from '../constants';
 import { PH } from '../lib/formPlaceholders';
 import { getApiErrorMessage } from '../lib/apiErrors';
@@ -80,6 +81,7 @@ export function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { product, loading: productLoading, error: productError } = useProduct(id || '');
+  const { variants } = useProductVariants(product?.id ? String(product.id) : undefined);
   const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(true);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -112,6 +114,8 @@ export function ProductDetailPage() {
   const { addToCart, items } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { formatPrice, convertPrice, currency, market, country } = useCurrency();
+  const { config } = useSiteConfig();
+  const storeName = config.store?.name || 'RLOCO';
 
   // Fetch all products for recommendations
   useEffect(() => {
@@ -231,12 +235,13 @@ export function ProductDetailPage() {
     }
     
     addToCart({
-      id: product.id, // Use product.id directly (MongoDB ObjectID string)
+      id: product.id,
       name: product.name,
       price: product.price,
       priceINR: product.price_inr,
       image: product.images[0] || '',
       size: selectedSize || (product.sizes && product.sizes[0]) || 'One Size',
+      color: selectedColor || undefined,
       quantity: quantity,
     });
     toast.success('Added to bag');
@@ -351,8 +356,10 @@ export function ProductDetailPage() {
     ? product.images.filter(img => img && typeof img === 'string' && img.trim() !== '') // Filter out empty/invalid strings
     : [PLACEHOLDER_IMAGE]; // Fallback placeholder
   
-  const averageRating = product.rating || 0;
-  const ratingCount = product.reviews || reviews.length;
+  const ratingCount = reviewsLoading ? (product.reviews ?? 0) : reviews.length;
+  const averageRating = !reviewsLoading && reviews.length > 0
+    ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) * 10) / 10
+    : product.rating || 0;
 
   // Calculate estimated delivery date (5-7 business days from today)
   const getEstimatedDelivery = () => {
@@ -379,11 +386,7 @@ export function ProductDetailPage() {
     if (!product) return;
     setPincodeLoading(true);
     setPincodeResult(null);
-    const usdToInr = 75;
-    const lineSubtotalUsd =
-      currency === 'INR' && product.price_inr != null
-        ? (product.price_inr * quantity) / usdToInr
-        : product.price * quantity;
+    const lineSubtotalUsd = product.price * quantity;
     try {
       const methods = await shippingService.calculate({
         country,
@@ -394,7 +397,7 @@ export function ProductDetailPage() {
         first_name: 'Guest',
         last_name: 'Estimate',
         email: 'estimate@example.com',
-        phone: country === 'India' ? '+91 99999 99999' : '+1 213 200 2000',
+        phone: user?.phone || '',
         subtotal: lineSubtotalUsd,
         weight: quantity * DEFAULT_ITEM_WEIGHT_LB,
       });
@@ -550,8 +553,7 @@ export function ProductDetailPage() {
                     className="w-full h-full object-cover" 
                     style={{ filter: 'brightness(1.05) contrast(1.05) saturate(1.1)' }}
                     onError={(e) => {
-                      // If image fails to load, hide the thumbnail
-                      (e.target as HTMLImageElement).style.display = 'none';
+                      (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
                     }}
                   />
                 </motion.button>
@@ -626,21 +628,35 @@ export function ProductDetailPage() {
               transition={{ duration: 0.6 }}
               className="mb-6"
             >
-              <h2 className="text-xs uppercase text-foreground/60 mb-2 tracking-widest">RLOCO</h2>
-              <h1 className="text-2xl md:text-3xl mb-3">{product.name}</h1>
-              
+              <h2 className="text-xs uppercase text-foreground/60 mb-2 tracking-widest">{storeName}</h2>
+              <div className="flex items-center gap-2 mb-2">
+                <h1 className="text-2xl md:text-3xl">{product.name}</h1>
+                {product.badge && (
+                  <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 bg-primary text-primary-foreground rounded-full">
+                    {product.badge}
+                  </span>
+                )}
+              </div>
+
               {/* Rating */}
               <div className="flex items-center gap-2">
-                <div className="flex gap-1">
-                  {[...Array(5)].map((_, i) => (
+                <div className="flex gap-0.5">
+                  {[1, 2, 3, 4, 5].map((i) => (
                     <Star
                       key={i}
                       size={14}
-                      className={i < Math.floor(averageRating) ? 'fill-foreground text-foreground' : 'fill-foreground/20 text-foreground/20'}
+                      className={
+                        i <= Math.floor(averageRating)
+                          ? 'fill-foreground text-foreground'
+                          : i - 0.5 <= averageRating
+                            ? 'fill-foreground/50 text-foreground/50'
+                            : 'fill-foreground/20 text-foreground/20'
+                      }
                     />
                   ))}
                 </div>
-                <span className="text-sm text-foreground/60">({ratingCount} reviews)</span>
+                <span className="text-sm font-medium">{averageRating > 0 ? averageRating : ''}</span>
+                <span className="text-sm text-foreground/50">({ratingCount} {ratingCount === 1 ? 'review' : 'reviews'})</span>
               </div>
             </motion.div>
 
@@ -669,45 +685,103 @@ export function ProductDetailPage() {
               <p className="text-xs text-foreground/50 uppercase tracking-wide">Tax Included • Free Shipping</p>
             </motion.div>
 
-            {/* Available Colors - Slider */}
-            {colorVariants.length > 0 && (
+            {/* Color / Variant swatches */}
+            {variants.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="py-6 border-b border-foreground/10"
               >
-                <span className="text-xs font-medium uppercase tracking-widest text-foreground/60 block mb-4">Available Colors</span>
-                <div className="relative overflow-hidden">
-                  <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                    {colorVariants.map((variant) => (
-                      <motion.button
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xs font-medium uppercase tracking-widest text-foreground/60">Color</span>
+                  {product.color && (
+                    <span className="text-xs text-foreground/50 capitalize">{product.color}</span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {variants.map((variant) => {
+                    const isCurrent = String(variant.id) === String(product.id);
+                    const isSoldOut = variant.stock
+                      ? Object.values(variant.stock).every((q) => q === 0)
+                      : false;
+                    const colorHex = getColorHex(variant.color || variant.colors?.[0] || '');
+                    return (
+                      <button
                         key={variant.id}
+                        type="button"
+                        title={variant.color || variant.name}
+                        disabled={isCurrent}
                         onClick={() => navigate(`/product/${variant.id}`)}
-                        whileHover={{ scale: 1.05, y: -2 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="group relative flex-shrink-0 snap-start"
-                        title={variant.name}
+                        className={`relative w-8 h-8 rounded-full border-2 transition-all ${
+                          isCurrent
+                            ? 'border-foreground scale-110 cursor-default'
+                            : 'border-transparent hover:border-foreground/50 hover:scale-105'
+                        } ${isSoldOut ? 'opacity-40' : ''}`}
+                        style={{ backgroundColor: colorHex }}
                       >
-                        <div className="w-14 h-16 border border-foreground/10 overflow-hidden hover:border-foreground transition-all">
-                          <img 
-                            src={variant.images && variant.images.length > 0 ? variant.images[0] : PLACEHOLDER_IMAGE} 
-                            alt={variant.name} 
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            style={{ filter: 'brightness(1.05) contrast(1.05) saturate(1.1)' }}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
-                            }}
+                        {isSoldOut && (
+                          <span className="absolute inset-0 flex items-center justify-center">
+                            <span className="block w-full h-px bg-foreground/60 rotate-45" />
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* Variant image thumbnails */}
+                {variants.length > 1 && (
+                  <div className="flex gap-2 mt-4 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+                    {variants.map((variant) => {
+                      const isCurrent = String(variant.id) === String(product.id);
+                      return (
+                        <motion.button
+                          key={variant.id}
+                          type="button"
+                          whileHover={{ scale: 1.04, y: -2 }}
+                          whileTap={{ scale: 0.96 }}
+                          onClick={() => !isCurrent && navigate(`/product/${variant.id}`)}
+                          className={`flex-shrink-0 w-14 h-16 overflow-hidden border-2 transition-all ${
+                            isCurrent ? 'border-foreground cursor-default' : 'border-foreground/10 hover:border-foreground/50 cursor-pointer'
+                          }`}
+                          title={variant.color || variant.name}
+                        >
+                          <img
+                            src={variant.images?.[0] || PLACEHOLDER_IMAGE}
+                            alt={variant.color || variant.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).src = PLACEHOLDER_IMAGE; }}
                           />
-                        </div>
-                      </motion.button>
-                    ))}
-                    {colorVariants.length > 4 && (
-                      <div className="w-14 h-16 border border-foreground/10 flex items-center justify-center text-[10px] uppercase tracking-wider bg-foreground/5 flex-shrink-0">
-                        +{colorVariants.length - 4}
-                      </div>
-                    )}
+                        </motion.button>
+                      );
+                    })}
                   </div>
+                )}
+              </motion.div>
+            )}
+            {/* Fallback: product has colors[] but no variant group yet */}
+            {variants.length === 0 && product.colors?.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="py-6 border-b border-foreground/10"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="text-xs font-medium uppercase tracking-widest text-foreground/60">Color</span>
+                  {selectedColor && <span className="text-xs text-foreground/50 capitalize">{selectedColor}</span>}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {product.colors.map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setSelectedColor(color)}
+                      title={color}
+                      className={`w-7 h-7 rounded-full border-2 transition-all ${selectedColor === color ? 'border-foreground scale-110' : 'border-transparent hover:border-foreground/40'}`}
+                      style={{ backgroundColor: getColorHex(color) }}
+                    />
+                  ))}
                 </div>
               </motion.div>
             )}
@@ -730,7 +804,7 @@ export function ProductDetailPage() {
                     Size Guide
                   </button>
                 </div>
-                <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                   {product.sizes.map((size) => {
                     const available = product.stock?.[size] ?? 0;
                     const outOfStock = available === 0;
@@ -788,13 +862,22 @@ export function ProductDetailPage() {
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={() => setQuantity(Math.min(10, quantity + 1))}
+                    onClick={() => {
+                      const maxStock = selectedSize && product.stock?.[selectedSize] != null
+                        ? product.stock[selectedSize]
+                        : 10;
+                      setQuantity(Math.min(maxStock, quantity + 1));
+                    }}
                     className="w-12 h-12 flex items-center justify-center hover:bg-foreground/5 transition-colors"
                   >
                     <Plus size={16} />
                   </motion.button>
                 </div>
-                <span className="text-xs text-foreground/50 uppercase tracking-wide">Max 10 per order</span>
+                {selectedSize && product.stock?.[selectedSize] != null && product.stock[selectedSize] <= 10 ? (
+                  <span className="text-xs text-foreground/50 uppercase tracking-wide">{product.stock[selectedSize]} in stock</span>
+                ) : (
+                  <span className="text-xs text-foreground/50 uppercase tracking-wide">Max 10 per order</span>
+                )}
               </div>
             </motion.div>
 
@@ -860,7 +943,7 @@ export function ProductDetailPage() {
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-wide mb-1">Premium Quality</p>
-                    <p className="text-xs text-foreground/50">Finest materials</p>
+                    <p className="text-xs text-foreground/50">{product.material || 'Finest materials'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -881,15 +964,37 @@ export function ProductDetailPage() {
                     <p className="text-xs text-foreground/50">2-5 business days</p>
                   </div>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 border border-foreground/10 flex items-center justify-center flex-shrink-0">
-                    <Sparkles size={16} className="text-foreground/60" />
+                {product.featured ? (
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 border border-foreground/10 flex items-center justify-center flex-shrink-0">
+                      <Sparkles size={16} className="text-foreground/60" />
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide mb-1">{product.badge || 'Featured'}</p>
+                      <p className="text-xs text-foreground/50">Curated selection</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wide mb-1">Limited Edition</p>
-                    <p className="text-xs text-foreground/50">Exclusive design</p>
+                ) : product.new_arrival ? (
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 border border-foreground/10 flex items-center justify-center flex-shrink-0">
+                      <Sparkles size={16} className="text-foreground/60" />
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide mb-1">New Arrival</p>
+                      <p className="text-xs text-foreground/50">Just landed</p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 border border-foreground/10 flex items-center justify-center flex-shrink-0">
+                      <Sparkles size={16} className="text-foreground/60" />
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide mb-1">Easy Returns</p>
+                      <p className="text-xs text-foreground/50">30-day policy</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
 
@@ -1004,10 +1109,16 @@ export function ProductDetailPage() {
                     >
                       <div className="px-4 md:px-5 py-4 text-sm text-foreground/60 space-y-4 tracking-wide leading-relaxed">{/* Content stays same */}
                         <p>{product.description || 'Crafted with meticulous attention to detail, this piece embodies timeless elegance and modern sophistication.'}</p>
+                        {product.details && product.details.length > 0 && (
+                          <ul className="space-y-1 pt-1">
+                            {product.details.map((d, i) => <li key={i}>• {d}</li>)}
+                          </ul>
+                        )}
                         <div className="space-y-2 pt-2">
                           <p><span className="text-foreground uppercase text-xs tracking-wider">Category:</span> <span className="capitalize ml-2">{product.category}</span></p>
-                          <p><span className="text-foreground uppercase text-xs tracking-wider">Material:</span> <span className="ml-2">Premium Cotton Blend</span></p>
-                          <p><span className="text-foreground uppercase text-xs tracking-wider">Fit:</span> <span className="ml-2">Regular</span></p>
+                          {product.subcategory && <p><span className="text-foreground uppercase text-xs tracking-wider">Subcategory:</span> <span className="capitalize ml-2">{product.subcategory}</span></p>}
+                          {product.material && <p><span className="text-foreground uppercase text-xs tracking-wider">Material:</span> <span className="ml-2">{product.material}</span></p>}
+                          {product.sku && <p><span className="text-foreground uppercase text-xs tracking-wider">SKU:</span> <span className="ml-2 font-mono text-xs">{product.sku}</span></p>}
                         </div>
                       </div>
                     </motion.div>
@@ -1043,9 +1154,16 @@ export function ProductDetailPage() {
                       className="overflow-hidden border-t border-foreground/10"
                     >
                       <div className="px-4 md:px-5 py-4 text-sm text-foreground/60 space-y-2 tracking-wide">
-                        <p>• Model height 5'8", wearing size S</p>
-                        <p>• Regular fit</p>
-                        <p>• True to size</p>
+                        {product.details && product.details.length > 0 ? (
+                          product.details.map((detail, i) => (
+                            <p key={i}>• {detail}</p>
+                          ))
+                        ) : (
+                          <>
+                            <p>• True to size</p>
+                            <p>• See size guide for measurements</p>
+                          </>
+                        )}
                       </div>
                     </motion.div>
                   )}
@@ -1080,10 +1198,18 @@ export function ProductDetailPage() {
                       className="overflow-hidden border-t border-foreground/10"
                     >
                       <div className="px-4 md:px-5 py-4 text-sm text-foreground/60 space-y-2 tracking-wide">
-                        <p>• 100% Premium Cotton</p>
-                        <p>• Machine wash cold</p>
-                        <p>• Do not bleach</p>
-                        <p>• Tumble dry low</p>
+                        {product.material && <p>• {product.material}</p>}
+                        {product.care ? (
+                          product.care.split(/[,;.\n]+/).filter(Boolean).map((line, i) => (
+                            <p key={i}>• {line.trim()}</p>
+                          ))
+                        ) : (
+                          <>
+                            <p>• Machine wash cold</p>
+                            <p>• Do not bleach</p>
+                            <p>• Tumble dry low</p>
+                          </>
+                        )}
                       </div>
                     </motion.div>
                   )}
@@ -1119,21 +1245,53 @@ export function ProductDetailPage() {
                     >
                       <div className="px-4 md:px-5 py-4">{/* Reviews content stays same */}
                         {/* Rating Summary */}
-                        <div className="flex items-center gap-4 mb-6 pb-6 border-b border-foreground/5">
-                          <div className="flex items-center gap-3">
-                            <span className="text-3xl">{averageRating}</span>
-                            <div className="flex gap-1">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  size={14}
-                                  className={i < Math.floor(averageRating) ? 'fill-foreground text-foreground' : 'fill-foreground/20 text-foreground/20'}
-                                />
-                              ))}
+                        {!reviewsLoading && reviews.length > 0 && (() => {
+                          const dist = [5, 4, 3, 2, 1].map((star) => ({
+                            star,
+                            count: reviews.filter((r) => r.rating === star).length,
+                            pct: Math.round((reviews.filter((r) => r.rating === star).length / reviews.length) * 100),
+                          }));
+                          return (
+                            <div className="flex gap-6 mb-6 pb-6 border-b border-foreground/5">
+                              {/* Left: score */}
+                              <div className="flex flex-col items-center justify-center min-w-[72px]">
+                                <span className="text-4xl font-light">{averageRating}</span>
+                                <div className="flex gap-0.5 my-1">
+                                  {[1, 2, 3, 4, 5].map((i) => (
+                                    <Star
+                                      key={i}
+                                      size={12}
+                                      className={
+                                        i <= Math.floor(averageRating)
+                                          ? 'fill-foreground text-foreground'
+                                          : i - 0.5 <= averageRating
+                                            ? 'fill-foreground/50 text-foreground/50'
+                                            : 'fill-foreground/20 text-foreground/20'
+                                      }
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-[11px] text-foreground/50">{ratingCount} reviews</span>
+                              </div>
+                              {/* Right: distribution bars */}
+                              <div className="flex-1 space-y-1.5">
+                                {dist.map(({ star, count, pct }) => (
+                                  <div key={star} className="flex items-center gap-2 text-xs">
+                                    <span className="w-3 text-right text-foreground/60 shrink-0">{star}</span>
+                                    <Star size={10} className="fill-foreground/40 text-foreground/40 shrink-0" />
+                                    <div className="flex-1 h-1.5 bg-foreground/10 rounded-full overflow-hidden">
+                                      <div
+                                        className="h-full bg-foreground/60 rounded-full transition-all duration-500"
+                                        style={{ width: `${pct}%` }}
+                                      />
+                                    </div>
+                                    <span className="w-6 text-right text-foreground/40 shrink-0">{count}</span>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                          <span className="text-xs text-foreground/50 tracking-wide">{ratingCount} reviews</span>
-                        </div>
+                          );
+                        })()}
 
                         {/* Reviews */}
                         <div className="space-y-6">
@@ -1299,10 +1457,11 @@ export function ProductDetailPage() {
                                           <button
                                             onClick={async () => {
                                               if (markingHelpful.has(review.id)) return;
-                                              
+
                                               setMarkingHelpful(new Set([...markingHelpful, review.id]));
                                               try {
                                                 await reviewService.markHelpful(id!, review.id);
+                                                setReviews(prev => prev.map(r => r.id === review.id ? { ...r, helpful: (r.helpful || 0) + 1 } : r));
                                                 toast.success('Thank you for your feedback!');
                                               } catch (error: unknown) {
                                                 console.error('Failed to mark review as helpful:', error);
@@ -1316,7 +1475,7 @@ export function ProductDetailPage() {
                                             className="flex items-center gap-1 px-2 py-1 text-xs text-foreground/60 hover:text-foreground hover:bg-foreground/5 rounded transition-colors disabled:opacity-50"
                                           >
                                             <ThumbsUp size={12} className={markingHelpful.has(review.id) ? 'fill-foreground' : ''} />
-                                            Helpful
+                                            Helpful{review.helpful > 0 ? ` (${review.helpful})` : ''}
                                           </button>
                                         )}
                                       </div>

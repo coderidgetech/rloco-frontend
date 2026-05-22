@@ -13,7 +13,15 @@ import {
   SelectValue,
 } from '../../components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { ArrowLeft, Image as ImageIcon, Save, X, Plus } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '../../components/ui/dialog';
+import { ArrowLeft, Image as ImageIcon, Save, X, Plus, Link2, Link2Off, Palette } from 'lucide-react';
 import { toast } from 'sonner';
 import { productService } from '../../services/productService';
 import { Product } from '../../types/api';
@@ -21,6 +29,24 @@ import { PH } from '../../lib/formPlaceholders';
 import { useEffect } from 'react';
 import { isAxiosError } from 'axios';
 import { getApiErrorMessage } from '../../lib/apiErrors';
+import { useProductVariants } from '../../hooks/useProducts';
+
+const COMMON_COLORS = [
+  { name: 'Black',  hex: '#000000' },
+  { name: 'White',  hex: '#FFFFFF' },
+  { name: 'Gray',   hex: '#808080' },
+  { name: 'Navy',   hex: '#000080' },
+  { name: 'Beige',  hex: '#F5F5DC' },
+  { name: 'Brown',  hex: '#8B4513' },
+  { name: 'Red',    hex: '#FF0000' },
+  { name: 'Blue',   hex: '#0000FF' },
+  { name: 'Green',  hex: '#008000' },
+  { name: 'Yellow', hex: '#FFFF00' },
+  { name: 'Pink',   hex: '#FFC0CB' },
+  { name: 'Purple', hex: '#800080' },
+  { name: 'Orange', hex: '#FFA500' },
+  { name: 'Teal',   hex: '#008080' },
+];
 
 export const AdminAddEditProductPage = () => {
   const navigate = useNavigate();
@@ -29,6 +55,99 @@ export const AdminAddEditProductPage = () => {
   const isEdit = !!productId;
   const [loading, setLoading] = useState(isEdit);
   const [uploadingImages, setUploadingImages] = useState(false);
+  const [variantGroupInput, setVariantGroupInput] = useState('');
+  const [variantColor, setVariantColor] = useState('');
+  const [variantSaving, setVariantSaving] = useState(false);
+  const { variants, loading: variantsLoading, refetch: refetchVariants } = useProductVariants(isEdit ? productId! : undefined);
+
+  // Add Color Variant modal
+  const [showAddVariantModal, setShowAddVariantModal] = useState(false);
+  const [addVariantForm, setAddVariantForm] = useState({
+    parentColor: '',
+    newColor: '',
+    priceOverride: '',
+    stock: {} as Record<string, number>,
+  });
+  const [addVariantSaving, setAddVariantSaving] = useState(false);
+
+  const openAddVariantModal = () => {
+    setAddVariantForm({
+      parentColor: '',
+      newColor: '',
+      priceOverride: '',
+      stock: Object.fromEntries(formData.sizes.map((s) => [s, 0])),
+    });
+    setShowAddVariantModal(true);
+  };
+
+  const handleAddVariant = async () => {
+    const newColor = addVariantForm.newColor.trim();
+    if (!newColor) {
+      toast.error('Enter a color name for the new variant');
+      return;
+    }
+    const parentHasGroup = variants.length > 1;
+    const parentColor = addVariantForm.parentColor.trim();
+    if (!parentHasGroup && !parentColor) {
+      toast.error('Enter the color name for this (current) product first');
+      return;
+    }
+
+    setAddVariantSaving(true);
+    try {
+      // 1. Clone current product with new color
+      const newProduct = await productService.create({
+        name: formData.name,
+        description: formData.description,
+        category: formData.category,
+        subcategory: formData.subcategory,
+        gender: formData.gender,
+        price: addVariantForm.priceOverride ? parseFloat(addVariantForm.priceOverride) : parseFloat(formData.price),
+        original_price: formData.originalPrice ? parseFloat(formData.originalPrice) : undefined,
+        sizes: formData.sizes,
+        colors: [newColor],
+        material: formData.material,
+        care: formData.care,
+        images: [],
+        stock: addVariantForm.stock,
+        details: formData.details,
+        featured: formData.featured,
+        on_sale: formData.onSale,
+        new_arrival: formData.newArrival,
+        is_gift: formData.isGift,
+        available_markets: formData.availableMarkets,
+      });
+      const newProductId = String(newProduct.id);
+
+      // 2. Determine or create the variant group
+      let groupId: string | undefined;
+      if (parentHasGroup) {
+        groupId = String(variants[0]?.variant_group_id);
+      } else {
+        const result = await productService.setVariantGroup(productId!, {
+          color: parentColor,
+          is_main_variant: true,
+        });
+        groupId = result.variant_group_id;
+      }
+
+      // 3. Link the new product to the group
+      await productService.setVariantGroup(newProductId, {
+        variant_group_id: groupId,
+        color: newColor,
+        is_main_variant: false,
+      });
+
+      toast.success(`"${newColor}" variant created — upload its images now`);
+      setShowAddVariantModal(false);
+      refetchVariants?.();
+      navigate(`/admin/products/edit?id=${newProductId}`);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Failed to create variant'));
+    } finally {
+      setAddVariantSaving(false);
+    }
+  };
   
   // Form state
   const [formData, setFormData] = useState({
@@ -339,12 +458,14 @@ export const AdminAddEditProductPage = () => {
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files?.length || !isEdit || !productId) return;
+    const fileList = e.target.files;
+    if (!fileList?.length || !isEdit || !productId) return;
+    // Snapshot before clearing input — FileList is live and empties when value is reset.
+    const filesToUpload = Array.from(fileList);
     e.target.value = '';
     try {
       setUploadingImages(true);
-      const updated = await productService.uploadImages(productId, Array.from(files));
+      const updated = await productService.uploadImages(productId, filesToUpload);
       setFormData((prev) => ({ ...prev, images: updated?.images || prev.images }));
       toast.success('Images uploaded');
     } catch (error: unknown) {
@@ -691,35 +812,25 @@ export const AdminAddEditProductPage = () => {
                 )}
 
                 {/* Colors */}
-                <div className="space-y-3">
-                  <Label>Available Colors</Label>
-                  
-                  {/* Quick Select Common Colors */}
-                  <div className="space-y-2">
-                    <p className="text-xs text-gray-500">Quick Select:</p>
+                {isEdit && variants.length > 1 ? (
+                  <div className="rounded-md bg-muted px-3 py-2.5 text-xs text-muted-foreground flex items-start gap-2">
+                    <Palette className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                    <span>Color display is managed by your variant group. Each variant has its own color shown as a dot on product cards.</span>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div>
+                      <Label>Display Colors</Label>
+                      <p className="text-xs text-muted-foreground mt-1">Shown as dots on product cards. Click to toggle.</p>
+                    </div>
+
+                    {/* Color dot grid */}
                     <div className="flex flex-wrap gap-2">
-                      {[
-                        { name: 'Black', value: '#000000' },
-                        { name: 'White', value: '#FFFFFF' },
-                        { name: 'Gray', value: '#808080' },
-                        { name: 'Navy', value: '#000080' },
-                        { name: 'Beige', value: '#F5F5DC' },
-                        { name: 'Brown', value: '#8B4513' },
-                        { name: 'Red', value: '#FF0000' },
-                        { name: 'Blue', value: '#0000FF' },
-                        { name: 'Green', value: '#008000' },
-                        { name: 'Yellow', value: '#FFFF00' },
-                        { name: 'Pink', value: '#FFC0CB' },
-                        { name: 'Purple', value: '#800080' },
-                        { name: 'Orange', value: '#FFA500' },
-                        { name: 'Teal', value: '#008080' },
-                      ].map((color) => (
-                        <Button
+                      {COMMON_COLORS.map((color) => (
+                        <button
                           key={color.name}
                           type="button"
-                          variant={formData.colors.includes(color.name) ? 'default' : 'outline'}
-                          size="sm"
-                          className="gap-2"
+                          title={color.name}
                           onClick={() => {
                             setFormData({
                               ...formData,
@@ -728,78 +839,63 @@ export const AdminAddEditProductPage = () => {
                                 : [...formData.colors, color.name],
                             });
                           }}
-                        >
-                          <div
-                            className="w-4 h-4 rounded-full border border-gray-300"
-                            style={{ backgroundColor: color.value }}
-                          />
-                          {color.name}
-                        </Button>
+                          className={`w-7 h-7 rounded-full border-2 transition-all ${
+                            formData.colors.includes(color.name)
+                              ? 'border-foreground scale-110 ring-2 ring-foreground/20'
+                              : 'border-transparent hover:border-foreground/40'
+                          } ${color.hex === '#FFFFFF' ? 'ring-1 ring-gray-200' : ''}`}
+                          style={{ backgroundColor: color.hex }}
+                        />
                       ))}
                     </div>
-                  </div>
 
-                  {/* Custom Color Input */}
-                  <div className="border-t pt-3 space-y-3">
-                    <p className="text-xs text-gray-500">Add Custom Color:</p>
+                    {/* Custom color row */}
                     <div className="flex gap-2">
-                      <div className="flex-1">
-                        <Input
-                          placeholder={PH.colorName}
-                          value={customColorName}
-                          onChange={(e) => setCustomColorName(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleAddCustomColor();
-                            }
-                          }}
-                        />
-                      </div>
-                      <div className="w-24">
-                        <input
-                          type="color"
-                          value={customColorValue}
-                          onChange={(e) => handleColorPickerChange(e.target.value)}
-                          className="w-full h-10 rounded-md border border-gray-300 cursor-pointer"
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        onClick={handleAddCustomColor}
-                        size="sm"
-                        className="flex-shrink-0"
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add
+                      <Input
+                        placeholder="Custom color name"
+                        value={customColorName}
+                        onChange={(e) => setCustomColorName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomColor(); } }}
+                        className="flex-1"
+                      />
+                      <input
+                        type="color"
+                        value={customColorValue}
+                        onChange={(e) => handleColorPickerChange(e.target.value)}
+                        title="Pick custom color"
+                        className="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+                      />
+                      <Button type="button" size="sm" onClick={handleAddCustomColor}>
+                        <Plus className="h-4 w-4" />
                       </Button>
                     </div>
-                  </div>
 
-                  {/* Selected Colors Display */}
-                  {formData.colors.length > 0 && (
-                    <div className="border-t pt-3 space-y-2">
-                      <p className="text-xs font-medium text-gray-700">Selected Colors ({formData.colors.length}):</p>
-                      <div className="flex flex-wrap gap-2">
-                        {formData.colors.map((colorName) => (
-                          <div
-                            key={colorName}
-                            className="flex items-center gap-2 bg-gray-100 border border-gray-300 rounded-md px-3 py-1.5 text-sm"
-                          >
-                            <span>{colorName}</span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveColor(colorName)}
-                              className="text-gray-500 hover:text-red-600 transition-colors"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </div>
-                        ))}
+                    {/* Selected chips */}
+                    {formData.colors.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {formData.colors.map((colorName) => {
+                          const preset = COMMON_COLORS.find((c) => c.name === colorName);
+                          return (
+                            <div key={colorName} className="flex items-center gap-1.5 bg-muted rounded-full pl-1 pr-2 py-0.5 text-xs">
+                              <span
+                                className="w-3.5 h-3.5 rounded-full border border-foreground/15 shrink-0"
+                                style={{ backgroundColor: preset?.hex || '#9CA3AF' }}
+                              />
+                              {colorName}
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveColor(colorName)}
+                                className="text-muted-foreground hover:text-destructive ml-0.5"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          );
+                        })}
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -915,6 +1011,119 @@ export const AdminAddEditProductPage = () => {
               </CardContent>
             </Card>
 
+            {/* Variant Group */}
+            {isEdit && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Palette className="h-4 w-4" /> Color Variants
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {variantsLoading ? (
+                    <p className="text-xs text-muted-foreground">Loading…</p>
+                  ) : variants.length > 1 ? (
+                    <div className="space-y-2">
+                      <p className="text-xs text-muted-foreground font-medium">
+                        {variants.length} colors in this group:
+                      </p>
+                      {variants.map((v) => (
+                        <div key={v.id} className={`flex items-center gap-2 text-xs p-2 rounded-md border ${String(v.id) === productId ? 'bg-muted border-muted-foreground/20 font-medium' : 'border-transparent'}`}>
+                          <span className="w-3 h-3 rounded-full border border-foreground/20 shrink-0" style={{ backgroundColor: v.color ? '#888' : '#ccc' }} />
+                          <span className="truncate flex-1">{v.color || '—'}</span>
+                          {String(v.id) === productId
+                            ? <span className="text-[9px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded">current</span>
+                            : <button type="button" className="text-muted-foreground hover:text-foreground text-[10px] underline" onClick={() => navigate(`/admin/products/edit?id=${v.id}`)}>edit</button>
+                          }
+                        </div>
+                      ))}
+                      <Button
+                        size="sm"
+                        className="w-full mt-1"
+                        onClick={openAddVariantModal}
+                      >
+                        <Plus className="h-3.5 w-3.5 mr-1.5" /> Add another color
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-destructive border-destructive/30 hover:bg-destructive/5"
+                        onClick={async () => {
+                          setVariantSaving(true);
+                          try {
+                            await productService.unsetVariantGroup(productId!);
+                            toast.success('Removed from variant group');
+                            refetchVariants?.();
+                          } catch {
+                            toast.error('Failed to remove from group');
+                          } finally {
+                            setVariantSaving(false);
+                          }
+                        }}
+                        disabled={variantSaving}
+                      >
+                        <Link2Off className="h-3.5 w-3.5 mr-1.5" /> Remove from group
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-xs text-muted-foreground">
+                        This product has no color variants yet. Add one to let customers switch between colors on the product page.
+                      </p>
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        onClick={openAddVariantModal}
+                      >
+                        <Plus className="h-3.5 w-3.5 mr-1.5" /> Add color variant
+                      </Button>
+                      <div className="border-t pt-3 space-y-2">
+                        <p className="text-[10px] text-muted-foreground">Advanced: join an existing group</p>
+                        <Label className="text-xs">Color for this product</Label>
+                        <Input
+                          placeholder="e.g. Navy"
+                          value={variantColor}
+                          onChange={(e) => setVariantColor(e.target.value)}
+                        />
+                        <Label className="text-xs">Existing group ID</Label>
+                        <Input
+                          placeholder="24-char ObjectID"
+                          value={variantGroupInput}
+                          onChange={(e) => setVariantGroupInput(e.target.value)}
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full"
+                          disabled={!variantColor || !variantGroupInput || variantSaving}
+                          onClick={async () => {
+                            setVariantSaving(true);
+                            try {
+                              await productService.setVariantGroup(productId!, {
+                                variant_group_id: variantGroupInput,
+                                color: variantColor,
+                                is_main_variant: false,
+                              });
+                              toast.success('Joined variant group');
+                              setVariantGroupInput('');
+                              setVariantColor('');
+                              refetchVariants?.();
+                            } catch {
+                              toast.error('Failed to join group');
+                            } finally {
+                              setVariantSaving(false);
+                            }
+                          }}
+                        >
+                          <Link2 className="h-3.5 w-3.5 mr-1.5" /> Join group
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Quick Actions */}
             <Card>
               <CardHeader>
@@ -934,6 +1143,138 @@ export const AdminAddEditProductPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Add Color Variant Modal */}
+      <Dialog open={showAddVariantModal} onOpenChange={setShowAddVariantModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add Color Variant</DialogTitle>
+            <DialogDescription>
+              Creates a copy of <strong>{formData.name}</strong> with a different color. All product details are pre-filled — you'll just need to upload images after.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Parent color — only needed if not already in a group */}
+            {variants.length <= 1 && (
+              <div className="space-y-2">
+                <Label>
+                  Color of <em>this</em> product <span className="text-destructive">*</span>
+                </Label>
+                <p className="text-[11px] text-muted-foreground">What color is the product you're currently editing?</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {COMMON_COLORS.map((c) => (
+                    <button
+                      key={c.name}
+                      type="button"
+                      title={c.name}
+                      onClick={() => setAddVariantForm((f) => ({ ...f, parentColor: c.name }))}
+                      className={`w-6 h-6 rounded-full border-2 transition-all ${
+                        addVariantForm.parentColor === c.name
+                          ? 'border-foreground scale-110 ring-2 ring-foreground/20'
+                          : 'border-transparent hover:border-foreground/40'
+                      } ${c.hex === '#FFFFFF' ? 'ring-1 ring-gray-200' : ''}`}
+                      style={{ backgroundColor: c.hex }}
+                    />
+                  ))}
+                </div>
+                <div className="flex items-center gap-2">
+                  {addVariantForm.parentColor && (
+                    <span
+                      className="w-5 h-5 rounded-full border border-foreground/20 shrink-0"
+                      style={{ backgroundColor: COMMON_COLORS.find((c) => c.name === addVariantForm.parentColor)?.hex || '#9CA3AF' }}
+                    />
+                  )}
+                  <Input
+                    placeholder="e.g. Red, Navy, Beige"
+                    value={addVariantForm.parentColor}
+                    onChange={(e) => setAddVariantForm((f) => ({ ...f, parentColor: e.target.value }))}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label>
+                New variant color <span className="text-destructive">*</span>
+              </Label>
+              <div className="flex flex-wrap gap-1.5">
+                {COMMON_COLORS.map((c) => (
+                  <button
+                    key={c.name}
+                    type="button"
+                    title={c.name}
+                    onClick={() => setAddVariantForm((f) => ({ ...f, newColor: c.name }))}
+                    className={`w-6 h-6 rounded-full border-2 transition-all ${
+                      addVariantForm.newColor === c.name
+                        ? 'border-foreground scale-110 ring-2 ring-foreground/20'
+                        : 'border-transparent hover:border-foreground/40'
+                    } ${c.hex === '#FFFFFF' ? 'ring-1 ring-gray-200' : ''}`}
+                    style={{ backgroundColor: c.hex }}
+                  />
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                {addVariantForm.newColor && (
+                  <span
+                    className="w-5 h-5 rounded-full border border-foreground/20 shrink-0"
+                    style={{ backgroundColor: COMMON_COLORS.find((c) => c.name === addVariantForm.newColor)?.hex || '#9CA3AF' }}
+                  />
+                )}
+                <Input
+                  placeholder="e.g. Blue, Black, White"
+                  value={addVariantForm.newColor}
+                  onChange={(e) => setAddVariantForm((f) => ({ ...f, newColor: e.target.value }))}
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Price override <span className="text-muted-foreground text-xs">(optional)</span></Label>
+              <Input
+                type="number"
+                placeholder={formData.price || '0.00'}
+                value={addVariantForm.priceOverride}
+                onChange={(e) => setAddVariantForm((f) => ({ ...f, priceOverride: e.target.value }))}
+              />
+              <p className="text-[11px] text-muted-foreground">Leave blank to use same price ({formData.price ? `$${formData.price}` : '—'})</p>
+            </div>
+
+            {formData.sizes.length > 0 && (
+              <div className="space-y-2">
+                <Label>Stock per size</Label>
+                <div className="flex flex-wrap gap-3">
+                  {formData.sizes.map((size) => (
+                    <div key={size} className="flex items-center gap-1.5">
+                      <span className="text-sm w-8 text-muted-foreground">{size}</span>
+                      <Input
+                        type="number"
+                        min={0}
+                        className="w-20"
+                        value={addVariantForm.stock[size] ?? 0}
+                        onChange={(e) => {
+                          const v = parseInt(e.target.value, 10) || 0;
+                          setAddVariantForm((f) => ({ ...f, stock: { ...f.stock, [size]: Math.max(0, v) } }));
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddVariantModal(false)} disabled={addVariantSaving}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddVariant} disabled={addVariantSaving}>
+              {addVariantSaving ? 'Creating…' : 'Create variant'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };

@@ -74,6 +74,7 @@ export interface SiteConfig {
       subheading: string;
       primaryButtonText: string;
       primaryButtonLink: string;
+      secondaryButtonText: string;
       backgroundImage: string;
       style: string;
     };
@@ -83,13 +84,32 @@ export interface SiteConfig {
       shopByCategory: boolean;
       bestSellers: boolean;
       editorialFeatures: boolean;
-      promotionalBanner: boolean;
-      testimonials: boolean;
-      brandStory: boolean;
       instagramFeed: boolean;
+      testimonials: boolean;
       newsletterSignup: boolean;
     };
+    sectionOrder: string[];
     featuredCollections: string[];
+    newsletter: {
+      heading: string;
+      subheading: string;
+    };
+    testimonials: {
+      heading: string;
+      subheading: string;
+    };
+    giftSection: {
+      heading: string;
+      subheading: string;
+      items: Array<{
+        title: string;
+        subtitle: string;
+        description: string;
+        image: string;
+        link: string;
+        itemCount: number;
+      }>;
+    };
   };
   navigation: {
     header: {
@@ -199,6 +219,10 @@ export interface SiteConfig {
       maxBadges: string;
     };
   };
+  /** Vendor SaaS plans; stored in Mongo via admin API, omitted from public GET /config. */
+  vendorSubscriptions?: {
+    plans: Record<string, unknown>[];
+  };
   /** Optional marketing copy; stored in site config when set from admin. */
   emailTemplates?: {
     orderConfirmation: { subject: string; body: string };
@@ -263,10 +287,11 @@ const defaultConfig: SiteConfig = {
   homepage: {
     hero: {
       enabled: true,
-      heading: 'Timeless Elegance Redefined',
-      subheading: 'Discover our curated collection of luxury fashion pieces',
+      heading: '',
+      subheading: '',
       primaryButtonText: 'Shop Collection',
       primaryButtonLink: '/shop',
+      secondaryButtonText: 'Explore',
       backgroundImage: '',
       style: 'fullscreen',
     },
@@ -276,13 +301,45 @@ const defaultConfig: SiteConfig = {
       shopByCategory: true,
       bestSellers: true,
       editorialFeatures: true,
-      promotionalBanner: true,
-      testimonials: true,
-      brandStory: false,
       instagramFeed: false,
+      testimonials: true,
       newsletterSignup: true,
     },
+    sectionOrder: [
+      'featuredProducts','newArrivals','shopByCategory','bestSellers',
+      'editorialFeatures','instagramFeed','testimonials','newsletterSignup',
+    ],
     featuredCollections: ['new', 'women', 'accessories'],
+    newsletter: {
+      heading: 'Stay in Style',
+      subheading: 'Subscribe to our newsletter for exclusive access to new collections, styling tips, and special offers.',
+    },
+    testimonials: {
+      heading: 'What They Say',
+      subheading: 'Trusted by fashion enthusiasts worldwide',
+    },
+    giftSection: {
+      heading: 'Perfect Gifts',
+      subheading: 'Discover handpicked gifts that make every moment special',
+      items: [
+        {
+          title: 'Gift For Her',
+          subtitle: "Thoughtful presents she'll treasure",
+          description: 'Curated collection of elegant gifts for every special woman',
+          image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=800&q=80',
+          link: '/gift-for-her',
+          itemCount: 127,
+        },
+        {
+          title: 'Gift For Him',
+          subtitle: "Perfect gifts for every gentleman",
+          description: "Sophisticated selection of premium gifts he'll love",
+          image: 'https://images.unsplash.com/photo-1549298240-0d8e60513026?w=800&q=80',
+          link: '/gift-for-him',
+          itemCount: 94,
+        },
+      ],
+    },
   },
   navigation: {
     header: {
@@ -349,14 +406,14 @@ const defaultConfig: SiteConfig = {
   },
   analytics: {
     googleAnalytics: {
-      enabled: true,
-      measurementId: 'G-XXXXXXXXXX',
+      enabled: false,
+      measurementId: '',
       enhancedEcommerce: true,
       trackUserId: true,
     },
     facebookPixel: {
-      enabled: true,
-      pixelId: '1234567890123456',
+      enabled: false,
+      pixelId: '',
       events: {
         pageView: true,
         viewContent: true,
@@ -381,6 +438,9 @@ const defaultConfig: SiteConfig = {
       allowMultiple: true,
       maxBadges: '2',
     },
+  },
+  vendorSubscriptions: {
+    plans: [],
   },
   emailTemplates: {
     orderConfirmation: {

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, ShoppingCart } from 'lucide-react';
+import { Heart, ShoppingBag, Check, ArrowRight } from 'lucide-react';
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -11,6 +11,7 @@ import { BackgroundDecor } from './BackgroundDecor';
 import { useFeaturedProducts } from '../hooks/useProducts';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { AddToBagPopover } from './AddToBagPopover';
+import { colorMap } from '../utils/filterConfig';
 
 const TOP_COLLECTION_LIMIT = 16;
 
@@ -111,25 +112,33 @@ export function ProductsGrid() {
         
         {!loading && !error && displayProducts.length > 0 && (
           <>
-            {/* Header - matches reference: decorative line + Top Collection + handpicked subtitle */}
+            {/* Header */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="mb-8 text-center md:mb-10"
+              transition={{ duration: 0.5 }}
+              className="flex items-end justify-between gap-4 mb-8 md:mb-10"
             >
-              <motion.div
-                initial={{ width: 0 }}
-                whileInView={{ width: '3rem' }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="h-0.5 bg-foreground mx-auto mb-6"
-              />
-              <h2 className="text-3xl md:text-4xl lg:text-5xl mb-3 tracking-tight">Top Collection</h2>
-              <p className="text-foreground/70">
-                Discover our handpicked selection of {displayProducts.length} featured products
-              </p>
+              <div>
+                <motion.div
+                  initial={{ width: 0 }}
+                  whileInView={{ width: '2.5rem' }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                  className="h-0.5 bg-foreground mb-4"
+                />
+                <h2 className="text-3xl md:text-4xl lg:text-5xl tracking-tight">Top Collection</h2>
+                <p className="text-sm text-foreground/60 mt-1.5">{displayProducts.length} handpicked pieces</p>
+              </div>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => navigate('/all-products')}
+                className="group shrink-0 flex items-center gap-2 border border-foreground/20 hover:border-foreground hover:bg-foreground hover:text-background px-4 py-2 text-[11px] uppercase tracking-widest font-medium transition-all duration-200"
+              >
+                View all
+                <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform duration-200" />
+              </motion.button>
             </motion.div>
 
         {/* Products Grid - 4 columns with smaller cards */}
@@ -197,26 +206,7 @@ export function ProductsGrid() {
                     <Heart size={14} fill={isInWishlist(String(product.id)) ? 'currentColor' : 'none'} />
                   </motion.button>
 
-                  <motion.div
-                    className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  />
-
-                  {/* Quick View */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileHover={{ opacity: 1, y: 0 }}
-                    className="absolute bottom-2 left-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/product/${product.id}`);
-                      }}
-                      className="w-full py-1.5 bg-white text-foreground hover:bg-white/90 transition-colors text-xs font-medium"
-                    >
-                      Quick View
-                    </button>
-                  </motion.div>
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
                 </div>
 
                 <motion.div
@@ -230,42 +220,49 @@ export function ProductsGrid() {
                     {product.category}
                   </div>
                   <h3
-                    className="text-xs mb-1.5 h-4 overflow-hidden text-ellipsis whitespace-nowrap group-hover:text-foreground/70 transition-colors cursor-pointer leading-tight"
+                    className="text-xs mb-1 h-4 overflow-hidden text-ellipsis whitespace-nowrap group-hover:text-foreground/70 transition-colors cursor-pointer leading-tight"
                     title={product.name}
                     onClick={() => navigate(`/product/${product.id}`)}
                   >
                     {product.name}
                   </h3>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="text-sm font-medium">{formatPrice(product.price)}</span>
-                    {product.original_price && (
-                      <span className="text-[10px] text-foreground/40 line-through">
-                        {formatPrice(product.original_price)}
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="relative overflow-visible">
+                  {product.colors && product.colors.length > 0 && (
+                    <div className="flex items-center gap-1 mb-1.5">
+                      {product.colors.slice(0, 5).map((color) => (
+                        <span
+                          key={color}
+                          title={color}
+                          className="w-2.5 h-2.5 rounded-full border border-foreground/10 shrink-0"
+                          style={{ backgroundColor: colorMap[color.toLowerCase()] || '#9CA3AF' }}
+                        />
+                      ))}
+                      {product.colors.length > 5 && (
+                        <span className="text-[9px] text-foreground/40">+{product.colors.length - 5}</span>
+                      )}
+                    </div>
+                  )}
+                  <div className="relative flex items-center justify-between gap-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="text-sm font-medium">{formatPrice(product.price)}</span>
+                      {product.original_price && (
+                        <span className="text-[10px] text-foreground/40 line-through shrink-0">
+                          {formatPrice(product.original_price)}
+                        </span>
+                      )}
+                    </div>
                     <motion.button
-                      onClick={() => openAddToBagDialog(product)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`w-full py-2.5 md:py-3 transition-all duration-300 relative overflow-hidden text-sm font-medium flex items-center justify-center gap-2 ${
+                      whileTap={{ scale: 0.85 }}
+                      onClick={(e) => { e.stopPropagation(); openAddToBagDialog(product); }}
+                      className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center shadow-sm transition-colors ${
                         items.some(item => String(item.id) === String(product.id))
-                          ? 'bg-green-600 text-white hover:bg-green-700'
-                          : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                          ? 'bg-green-500 text-white'
+                          : 'bg-foreground text-background hover:opacity-80'
                       }`}
                     >
-                      <motion.div
-                        className="absolute inset-0 bg-foreground/10"
-                        initial={{ x: '-100%' }}
-                        whileHover={{ x: 0 }}
-                        transition={{ duration: 0.3 }}
-                      />
-                      <ShoppingCart size={18} className="relative z-10" />
-                      <span className="relative z-10">
-                        {items.some(item => String(item.id) === String(product.id)) ? 'Go to Cart' : 'Add to Bag'}
-                      </span>
+                      {items.some(item => String(item.id) === String(product.id))
+                        ? <Check size={12} strokeWidth={2.5} />
+                        : <ShoppingBag size={12} />
+                      }
                     </motion.button>
                     <AddToBagPopover
                       isOpen={addToBagProduct?.id === product.id}
@@ -284,22 +281,6 @@ export function ProductsGrid() {
           </AnimatePresence>
         </div>
 
-        {/* View All Button - reference: px-12 py-4 text-sm font-medium uppercase tracking-widest */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mt-12"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/all-products')}
-            className="px-12 py-4 bg-foreground text-background hover:bg-foreground/90 transition-colors text-sm font-medium uppercase tracking-widest"
-          >
-            View All Products
-          </motion.button>
-        </motion.div>
           </>
         )}
       </div>

@@ -109,7 +109,7 @@ export function Footer() {
 
       {/* Main Footer Content */}
       <div className="page-container py-16 md:py-20">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 md:gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-8 mb-12 md:mb-16">
           {/* Brand & Contact */}
           <div className="md:col-span-4">
             <div className="mb-8">
@@ -134,7 +134,7 @@ export function Footer() {
           </div>
 
           {/* Links Grid */}
-          <div className="md:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="md:col-span-8 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             {/* Shop */}
             <div>
               <h4 className="text-sm font-semibold mb-5 tracking-wide">SHOP</h4>
@@ -189,6 +189,7 @@ export function Footer() {
               <ul className="space-y-3">
                 {[
                   { name: 'Our Story', path: '/about' },
+                  { name: 'Sell with us', path: '/vendor/apply' },
                   { name: 'Careers', path: '/careers' },
                   { name: 'Sustainability', path: '/sustainability' },
                   { name: 'Press', path: '/press' },

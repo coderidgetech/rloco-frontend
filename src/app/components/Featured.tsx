@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { ShoppingCart, Heart, ArrowRight } from 'lucide-react';
+import { ShoppingBag, Check, Heart, ArrowRight } from 'lucide-react';
 import { Product } from '../types/api';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFeaturedProducts } from '../hooks/useProducts';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { AddToBagPopover } from './AddToBagPopover';
+import { colorMap } from '../utils/filterConfig';
 
 export function Featured() {
   const { config } = useSiteConfig();
@@ -79,25 +80,31 @@ export function Featured() {
     <section id="featured" className="py-10 md:py-12 bg-accent/20 relative" style={{ position: 'relative' }}>
       <div className="w-full" style={{ position: 'relative' }}>
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="text-center mb-8 md:mb-10"
+          transition={{ duration: 0.5 }}
+          className="flex items-end justify-between gap-4 mb-8 md:mb-10 px-2 md:px-4"
         >
-          <motion.div
-            initial={{ width: 0 }}
-            whileInView={{ width: '3rem' }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="h-0.5 bg-foreground mx-auto mb-6"
-          />
-          <h2 className="text-3xl md:text-4xl lg:text-5xl mb-3 tracking-tight">
-            Featured Collection
-          </h2>
-          <p className="text-lg md:text-xl text-foreground/70">
-            Handpicked pieces for the season
-          </p>
+          <div>
+            <motion.div
+              initial={{ width: 0 }}
+              whileInView={{ width: '2.5rem' }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="h-0.5 bg-foreground mb-4"
+            />
+            <h2 className="text-3xl md:text-4xl lg:text-5xl tracking-tight">Featured Collection</h2>
+            <p className="text-sm text-foreground/60 mt-1.5">Handpicked pieces for the season</p>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.97 }}
+            onClick={() => navigate('/all-products')}
+            className="group shrink-0 flex items-center gap-2 border border-foreground/20 hover:border-foreground hover:bg-foreground hover:text-background px-4 py-2 text-[11px] uppercase tracking-widest font-medium transition-all duration-200"
+          >
+            View all
+            <ArrowRight size={12} className="group-hover:translate-x-0.5 transition-transform duration-200" />
+          </motion.button>
         </motion.div>
 
         {loading && (
@@ -150,62 +157,64 @@ export function Featured() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={(e) => toggleWishlist(product, e)}
-                  className={`absolute z-10 top-3 right-3 w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all shadow-lg backdrop-blur-sm ${
+                  className={`absolute z-10 top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-md backdrop-blur-sm ${
                     isInWishlist(String(product.id))
                       ? 'bg-red-500 text-white'
                       : 'bg-white/90 text-foreground hover:bg-white'
                   }`}
                 >
-                  <Heart size={18} className="md:w-5 md:h-5" fill={isInWishlist(String(product.id)) ? 'currentColor' : 'none'} />
+                  <Heart size={14} fill={isInWishlist(String(product.id)) ? 'currentColor' : 'none'} />
                 </motion.button>
 
-                <motion.div
-                  className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"
-                  initial={{ opacity: 0 }}
-                  whileHover={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
               </div>
 
               <div className="text-xs md:text-sm text-foreground/50 mb-1 md:mb-2 tracking-wider uppercase">
                 {product.category}
               </div>
-              <h3 
-                className="text-sm md:text-base mb-2 md:mb-3 group-hover:text-foreground/70 transition-colors line-clamp-1 cursor-pointer"
+              <h3
+                className="text-sm md:text-base mb-1.5 group-hover:text-foreground/70 transition-colors line-clamp-1 cursor-pointer"
                 onClick={() => navigate(`/product/${product.id}`)}
               >
                 {product.name}
               </h3>
-              <div className="flex items-center gap-2 mb-3 md:mb-4">
-                <span className="text-base md:text-lg">{formatPrice(product.price)}</span>
-                {product.original_price && (
-                  <span className="text-xs md:text-sm text-foreground/40 line-through">
-                    {formatPrice(product.original_price)}
-                  </span>
-                )}
-              </div>
-
-              <div className="relative overflow-visible">
+              {product.colors && product.colors.length > 0 && (
+                <div className="flex items-center gap-1 mb-2">
+                  {product.colors.slice(0, 5).map((color) => (
+                    <span
+                      key={color}
+                      title={color}
+                      className="w-2.5 h-2.5 rounded-full border border-foreground/10 shrink-0"
+                      style={{ backgroundColor: colorMap[color.toLowerCase()] || '#9CA3AF' }}
+                    />
+                  ))}
+                  {product.colors.length > 5 && (
+                    <span className="text-[9px] text-foreground/40">+{product.colors.length - 5}</span>
+                  )}
+                </div>
+              )}
+              <div className="relative flex items-center justify-between gap-1.5">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-sm font-medium">{formatPrice(product.price)}</span>
+                  {product.original_price && (
+                    <span className="text-xs text-foreground/40 line-through shrink-0">
+                      {formatPrice(product.original_price)}
+                    </span>
+                  )}
+                </div>
                 <motion.button
-                  onClick={(e) => openAddToBagDialog(product, e)}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`w-full py-2.5 md:py-3 text-sm font-medium transition-all duration-300 relative overflow-hidden group rounded-lg flex items-center justify-center gap-2 ${
+                  whileTap={{ scale: 0.85 }}
+                  onClick={(e) => { e.stopPropagation(); openAddToBagDialog(product, e); }}
+                  className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center shadow-sm transition-colors ${
                     items.some(item => String(item.id) === String(product.id))
-                      ? 'bg-green-600 text-white hover:bg-green-700'
-                      : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                      ? 'bg-green-500 text-white'
+                      : 'bg-foreground text-background hover:opacity-80'
                   }`}
                 >
-                  <motion.div
-                    className="absolute inset-0 bg-foreground/10"
-                    initial={{ x: '-100%' }}
-                    whileHover={{ x: 0 }}
-                    transition={{ duration: 0.3 }}
-                  />
-                  <ShoppingCart size={18} className="relative z-10" />
-                  <span className="relative z-10">
-                    {items.some(item => String(item.id) === String(product.id)) ? 'Go to Cart' : 'Add to Bag'}
-                  </span>
+                  {items.some(item => String(item.id) === String(product.id))
+                    ? <Check size={12} strokeWidth={2.5} />
+                    : <ShoppingBag size={12} />
+                  }
                 </motion.button>
                 <AddToBagPopover
                   isOpen={addToBagProduct?.id === product.id}
@@ -223,32 +232,6 @@ export function Featured() {
           </div>
         )}
 
-        {!loading && !error && (
-          <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center"
-        >
-          <motion.a
-            href="#products"
-            onClick={(e) => {
-              e.preventDefault();
-              document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="inline-flex items-center gap-2 px-6 md:px-8 py-3 md:py-4 text-sm md:text-base border border-border hover:bg-accent transition-colors group rounded-lg"
-          >
-            View Full Collection
-            <ArrowRight
-              size={20}
-              className="group-hover:translate-x-1 transition-transform"
-            />
-          </motion.a>
-        </motion.div>
-        )}
       </div>
     </section>
   );

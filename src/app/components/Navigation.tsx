@@ -145,6 +145,7 @@ export function Navigation() {
     // Navigation will be handled by AccountPageStandalone
   };
 
+  const isTransparent = location.pathname === '/' && !scrolled;
 
   return (
     <>
@@ -153,12 +154,12 @@ export function Navigation() {
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
           transform: visible ? 'translateY(0)' : 'translateY(-100%)',
-          transition: 'transform 0.3s ease-in-out, background-color 0.3s ease',
-          backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.8)' : 'rgba(255, 255, 255, 0.6)',
-          backdropFilter: scrolled ? 'blur(20px)' : 'blur(12px)',
-          WebkitBackdropFilter: scrolled ? 'blur(20px)' : 'blur(12px)',
-          borderBottom: scrolled ? '1px solid rgba(255, 255, 255, 0.2)' : 'none',
-          boxShadow: scrolled ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : 'none',
+          transition: 'transform 0.3s ease-in-out, background-color 0.4s ease, backdrop-filter 0.4s ease, box-shadow 0.4s ease',
+          backgroundColor: (location.pathname === '/' && !scrolled) ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
+          backdropFilter: (location.pathname === '/' && !scrolled) ? 'none' : 'blur(20px)',
+          WebkitBackdropFilter: (location.pathname === '/' && !scrolled) ? 'none' : 'blur(20px)',
+          borderBottom: (location.pathname === '/' && !scrolled) ? 'none' : '1px solid rgba(0, 0, 0, 0.06)',
+          boxShadow: (location.pathname === '/' && !scrolled) ? 'none' : '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
         }}
       >
         <div className="mx-auto flex h-14 w-full min-w-0 max-w-[100%] items-center gap-1.5 px-3 sm:gap-2 sm:px-4 md:px-6 lg:px-10 xl:px-14 2xl:px-20">
@@ -166,7 +167,7 @@ export function Navigation() {
             <motion.button
               whileTap={{ scale: 0.94 }}
               onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden flex h-10 w-10 shrink-0 items-center justify-center rounded-lg p-2 text-foreground -ml-2"
+              className={`md:hidden flex h-10 w-10 shrink-0 items-center justify-center rounded-lg p-2 -ml-2 transition-colors ${isTransparent ? 'text-white' : 'text-foreground'}`}
               aria-label={isOpen ? 'Close menu' : 'Open menu'}
               type="button"
             >
@@ -182,21 +183,21 @@ export function Navigation() {
               <button
                 type="button"
                 onClick={() => navigate('/new-arrivals')}
-                className="shrink-0 text-foreground/70 transition-colors hover:text-foreground relative group text-xs lg:text-sm"
+                className={`shrink-0 transition-colors relative group text-xs lg:text-sm ${isTransparent ? 'text-white/80 hover:text-white' : 'text-foreground/70 hover:text-foreground'}`}
               >
                 New Arrivals
-                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-foreground transition-all duration-300 group-hover:w-full" />
+                <span className={`absolute -bottom-1 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full ${isTransparent ? 'bg-white' : 'bg-foreground'}`} />
               </button>
               <motion.div className="relative" onMouseEnter={() => setActiveDropdown('women')}>
                 <button
                   type="button"
-                  className="shrink-0 flex items-center gap-1 text-foreground/70 transition-colors hover:text-foreground relative group text-xs lg:text-sm"
+                  className={`shrink-0 flex items-center gap-1 transition-colors relative group text-xs lg:text-sm ${isTransparent ? 'text-white/80 hover:text-white' : 'text-foreground/70 hover:text-foreground'}`}
                   onClick={() => handleCategoryClick('women')}
                 >
                   Women
                   <ChevronDown size={16} className={`transition-transform duration-300 ${activeDropdown === 'women' ? 'rotate-180' : ''}`} />
                   <span
-                    className={`absolute -bottom-1 left-0 h-0.5 bg-foreground transition-all duration-300 ${
+                    className={`absolute -bottom-1 left-0 h-0.5 transition-all duration-300 ${isTransparent ? 'bg-white' : 'bg-foreground'} ${
                       activeDropdown === 'women' ? 'w-full' : 'w-0 group-hover:w-full'
                     }`}
                   />
@@ -205,13 +206,13 @@ export function Navigation() {
               <motion.div className="relative" onMouseEnter={() => setActiveDropdown('men')}>
                 <button
                   type="button"
-                  className="shrink-0 flex items-center gap-1 text-foreground/70 transition-colors hover:text-foreground relative group text-xs lg:text-sm"
+                  className={`shrink-0 flex items-center gap-1 transition-colors relative group text-xs lg:text-sm ${isTransparent ? 'text-white/80 hover:text-white' : 'text-foreground/70 hover:text-foreground'}`}
                   onClick={() => handleCategoryClick('men')}
                 >
                   Men
                   <ChevronDown size={16} className={`transition-transform duration-300 ${activeDropdown === 'men' ? 'rotate-180' : ''}`} />
                   <span
-                    className={`absolute -bottom-1 left-0 h-0.5 bg-foreground transition-all duration-300 ${
+                    className={`absolute -bottom-1 left-0 h-0.5 transition-all duration-300 ${isTransparent ? 'bg-white' : 'bg-foreground'} ${
                       activeDropdown === 'men' ? 'w-full' : 'w-0 group-hover:w-full'
                     }`}
                   />
@@ -220,10 +221,10 @@ export function Navigation() {
               <button
                 type="button"
                 onClick={() => navigate('/sale')}
-                className="shrink-0 text-foreground/70 transition-colors hover:text-foreground relative group text-xs lg:text-sm"
+                className={`shrink-0 transition-colors relative group text-xs lg:text-sm ${isTransparent ? 'text-white/80 hover:text-white' : 'text-foreground/70 hover:text-foreground'}`}
               >
                 Sale
-                <span className="absolute -bottom-1 left-0 h-0.5 w-0 bg-foreground transition-all duration-300 group-hover:w-full" />
+                <span className={`absolute -bottom-1 left-0 h-0.5 w-0 transition-all duration-300 group-hover:w-full ${isTransparent ? 'bg-white' : 'bg-foreground'}`} />
               </button>
             </motion.div>
 
@@ -252,10 +253,11 @@ export function Navigation() {
               >
                 <Search
                   size={14}
-                  className="pointer-events-none absolute left-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-foreground/30 md:left-0.5 md:h-[15px] md:w-[15px]"
+                  className={`pointer-events-none absolute left-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 md:left-0.5 md:h-[15px] md:w-[15px] ${isTransparent ? 'text-white/40' : 'text-foreground/30'}`}
                 />
-                <span className="block w-full border-0 border-b border-foreground/10 py-1.5 pl-7 pr-2 text-xs text-foreground/40 md:pl-8 md:text-sm">
-                  Search
+                <span className={`flex w-full items-center justify-between border-0 border-b py-1.5 pl-7 pr-2 text-xs md:pl-8 md:text-sm ${isTransparent ? 'border-white/20 text-white/40' : 'border-foreground/10 text-foreground/40'}`}>
+                  <span>Search</span>
+                  <kbd className={`hidden lg:inline-flex items-center gap-0.5 text-[10px] font-mono ${isTransparent ? 'text-white/25' : 'text-foreground/25'}`}>⌘K</kbd>
                 </span>
               </button>
 
@@ -263,7 +265,7 @@ export function Navigation() {
                 whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={() => openSearch()}
-                className="sm:hidden flex h-10 w-10 shrink-0 items-center justify-center text-foreground/70"
+                className={`sm:hidden flex h-10 w-10 shrink-0 items-center justify-center transition-colors ${isTransparent ? 'text-white/80' : 'text-foreground/70'}`}
                 aria-label="Search"
               >
                 <Search size={20} />
@@ -271,7 +273,7 @@ export function Navigation() {
 
               {!isMarketSwitchInteractive ? (
                 <div
-                  className="hidden md:flex items-center gap-1.5 text-sm text-foreground/50 cursor-not-allowed"
+                  className={`hidden md:flex items-center gap-1.5 text-sm cursor-not-allowed ${isTransparent ? 'text-white/50' : 'text-foreground/50'}`}
                   title={
                     isCheckoutFunnel
                       ? 'Market is locked during checkout'
@@ -285,7 +287,7 @@ export function Navigation() {
                 <div className="relative group hidden md:block">
                   <button
                     type="button"
-                    className="flex items-center gap-1.5 px-2 text-sm text-foreground/70 transition-colors hover:text-foreground"
+                    className={`flex items-center gap-1.5 px-2 text-sm transition-colors ${isTransparent ? 'text-white/70 hover:text-white' : 'text-foreground/70 hover:text-foreground'}`}
                     aria-label="Select country"
                   >
                     <span>{country === 'India' ? '🇮🇳' : '🇺🇸'}</span>
@@ -335,7 +337,7 @@ export function Navigation() {
                       : `/login?redirect=${encodeURIComponent(ACCOUNT_DEFAULT_PATH)}`
                   )
                 }
-                className="hidden md:flex text-foreground/70 transition-colors hover:text-foreground"
+                className={`hidden md:flex transition-colors ${isTransparent ? 'text-white/80 hover:text-white' : 'text-foreground/70 hover:text-foreground'}`}
                 aria-label="Account"
               >
                 <User size={20} />
@@ -345,7 +347,7 @@ export function Navigation() {
                 whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={() => navigate('/wishlist')}
-                className="relative text-foreground/70 transition-colors hover:text-foreground"
+                className={`relative transition-colors ${isTransparent ? 'text-white/80 hover:text-white' : 'text-foreground/70 hover:text-foreground'}`}
                 aria-label="Wishlist"
               >
                 <Heart size={20} />
@@ -367,7 +369,7 @@ export function Navigation() {
                 whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={() => navigate('/cart')}
-                className="relative text-foreground/70 transition-colors hover:text-foreground"
+                className={`relative transition-colors ${isTransparent ? 'text-white/80 hover:text-white' : 'text-foreground/70 hover:text-foreground'}`}
                 aria-label="Cart"
               >
                 <ShoppingBag size={20} />

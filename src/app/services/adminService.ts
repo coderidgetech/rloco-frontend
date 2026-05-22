@@ -268,4 +268,20 @@ export const adminService = {
     const response = await api.put(`/admin/support/tickets/${ticketId}/assign`, { assigned_to: assignedTo });
     return response.data;
   },
+
+  // Advanced analytics
+  async getCohortAnalytics(params?: { months?: number }): Promise<any> {
+    const response = await api.get('/admin/analytics/cohort', { params });
+    return response.data;
+  },
+
+  async getFunnelAnalytics(params?: { start_date?: string; end_date?: string }): Promise<any> {
+    const response = await api.get('/admin/analytics/funnel', { params });
+    return response.data;
+  },
+
+  async getProductRecommendations(): Promise<any> {
+    const response = await api.get('/admin/analytics/recommendations');
+    return response.data;
+  },
 };

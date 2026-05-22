@@ -100,7 +100,7 @@ export function MobileFilterPanel({
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="absolute left-0 top-0 bottom-0 w-80 bg-background overflow-y-auto p-6 space-y-6"
+            className="absolute left-0 top-0 bottom-0 w-[min(100vw-3rem,20rem)] bg-background overflow-y-auto p-6 space-y-6"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">

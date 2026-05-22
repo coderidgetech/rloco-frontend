@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { SearchModal } from '../components/SearchModal';
 
 type SearchOverlayContextValue = {
@@ -22,6 +22,19 @@ export function SearchOverlayProvider({ children }: { children: ReactNode }) {
     setIsOpen(false);
     setInitialQuery('');
   }, []);
+
+  // Cmd+K / Ctrl+K global shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        if (isOpen) closeSearch();
+        else openSearch();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [isOpen, openSearch, closeSearch]);
 
   const value = useMemo(
     () => ({ openSearch, closeSearch, isSearchOpen: isOpen }),

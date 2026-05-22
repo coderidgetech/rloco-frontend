@@ -7,6 +7,7 @@ import { EmptyState } from '@/app/components/mobile/EmptyState';
 import { orderService } from '@/app/services/orderService';
 import type { Order as APIOrder } from '@/app/types/api';
 import { useIsMobile } from '@/app/hooks/useIsMobile';
+import { toast } from 'sonner';
 
 type OrderStatus = 'delivered' | 'in-transit' | 'processing' | 'cancelled';
 
@@ -71,7 +72,10 @@ export function OrdersPage() {
         });
         if (!cancelled) setOrders(list);
       } catch {
-        if (!cancelled) setOrders([]);
+        if (!cancelled) {
+          setOrders([]);
+          toast.error('Could not load orders. Try again in a moment.');
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

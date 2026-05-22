@@ -23,8 +23,11 @@ export function AllProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { openSearch } = useSearchOverlay();
   const [products, setProducts] = useState<Product[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
-  
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 48;
+
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
@@ -61,22 +64,41 @@ export function AllProductsPage() {
     setSearchParams(next, { replace: true });
   }, [searchParams, openSearch, setSearchParams]);
 
-  // Fetch all products
+  // Reset to page 1 whenever filters change
+  useEffect(() => { setPage(1); }, [searchQuery, selectedCategory, selectedGender, priceRange, sortBy, selectedColors, selectedSizes, selectedMaterials, selectedSubcategories, minRating, showOnSale, showNewArrivals, showFeatured, selectedBadges, market]);
+
+  // Fetch products server-side with active filters
   useEffect(() => {
+    let cancelled = false;
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await productService.list({ limit: 1000, market });
-        setProducts(response.products || []);
+        const params: Parameters<typeof productService.list>[0] = {
+          limit: PAGE_SIZE,
+          skip: (page - 1) * PAGE_SIZE,
+          market,
+        };
+        if (searchQuery.trim()) params.search = searchQuery.trim();
+        if (selectedCategory !== 'All') params.category = selectedCategory;
+        if (selectedGender !== 'all') params.gender = selectedGender;
+        if (showOnSale) params.on_sale = true;
+        if (showNewArrivals) params.new_arrival = true;
+        if (showFeatured) params.featured = true;
+        const response = await productService.list(params);
+        if (!cancelled) {
+          setProducts(response.products || []);
+          setTotalCount(response.total ?? response.products?.length ?? 0);
+        }
       } catch (error) {
         console.error('Failed to fetch products:', error);
-        setProducts([]);
+        if (!cancelled) { setProducts([]); setTotalCount(0); }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchProducts();
-  }, [market]);
+    return () => { cancelled = true; };
+  }, [page, market, searchQuery, selectedCategory, selectedGender, showOnSale, showNewArrivals, showFeatured]);
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -106,78 +128,28 @@ export function AllProductsPage() {
     [products, selectedCategory, selectedGender]
   );
 
-  // Filter and sort products
+  // Client-side filtering for attributes the API doesn't filter (price range, colors, sizes, materials, rating, badges)
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
 
-    if (searchQuery.trim()) {
-      filtered = filtered.filter((p) => productMatchesSearchQuery(p, searchQuery));
-    }
-
-    // Category filter
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(p => p.category === selectedCategory);
-    }
-
-    // Gender filter
-    if (selectedGender !== 'all') {
-      filtered = filtered.filter(p => p.gender === selectedGender || p.gender === 'unisex');
-    }
-
-    // Price range filter
     filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
 
-    // Advanced filters
-    if (selectedColors.length > 0) {
-      filtered = filtered.filter(p => p.colors.some(c => selectedColors.includes(c)));
-    }
-    if (selectedSizes.length > 0) {
-      filtered = filtered.filter(p => p.sizes.some(s => selectedSizes.includes(s)));
-    }
-    if (selectedMaterials.length > 0) {
-      filtered = filtered.filter(p => selectedMaterials.includes(p.material));
-    }
-    if (selectedSubcategories.length > 0) {
-      filtered = filtered.filter(p => selectedSubcategories.includes(p.subcategory));
-    }
-    if (minRating > 0) {
-      filtered = filtered.filter(p => p.rating >= minRating);
-    }
-    if (showOnSale) {
-      filtered = filtered.filter(p => p.on_sale || p.onSale);
-    }
-    if (showNewArrivals) {
-      filtered = filtered.filter(p => p.new_arrival || p.newArrival);
-    }
-    if (showFeatured) {
-      filtered = filtered.filter(p => p.featured);
-    }
-    if (selectedBadges.length > 0) {
-      filtered = filtered.filter(p => p.badge && selectedBadges.includes(p.badge));
-    }
+    if (selectedColors.length > 0) filtered = filtered.filter(p => p.colors?.some(c => selectedColors.includes(c)));
+    if (selectedSizes.length > 0) filtered = filtered.filter(p => p.sizes?.some(s => selectedSizes.includes(s)));
+    if (selectedMaterials.length > 0) filtered = filtered.filter(p => selectedMaterials.includes(p.material));
+    if (selectedSubcategories.length > 0) filtered = filtered.filter(p => selectedSubcategories.includes(p.subcategory));
+    if (minRating > 0) filtered = filtered.filter(p => p.rating >= minRating);
+    if (selectedBadges.length > 0) filtered = filtered.filter(p => p.badge && selectedBadges.includes(p.badge));
 
-    // Sort
     switch (sortBy) {
-      case 'price-asc':
-        filtered.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-desc':
-        filtered.sort((a, b) => b.price - a.price);
-        break;
-      case 'newest':
-        filtered.sort((a, b) => ((b.new_arrival || b.newArrival) ? 1 : 0) - ((a.new_arrival || a.newArrival) ? 1 : 0));
-        break;
-      case 'rating':
-        filtered.sort((a, b) => b.rating - a.rating);
-        break;
-      case 'featured':
-      default:
-        filtered.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
-        break;
+      case 'price-asc': filtered.sort((a, b) => a.price - b.price); break;
+      case 'price-desc': filtered.sort((a, b) => b.price - a.price); break;
+      case 'newest': filtered.sort((a, b) => ((b.new_arrival || b.newArrival) ? 1 : 0) - ((a.new_arrival || a.newArrival) ? 1 : 0)); break;
+      case 'rating': filtered.sort((a, b) => b.rating - a.rating); break;
+      default: filtered.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)); break;
     }
-
     return filtered;
-  }, [products, searchQuery, selectedCategory, selectedGender, priceRange, sortBy, selectedColors, selectedSizes, selectedMaterials, selectedSubcategories, minRating, showOnSale, showNewArrivals, showFeatured, selectedBadges]);
+  }, [products, priceRange, sortBy, selectedColors, selectedSizes, selectedMaterials, selectedSubcategories, minRating, selectedBadges]);
 
   // Check if any filters are active
   const hasActiveFilters = 
@@ -229,12 +201,12 @@ export function AllProductsPage() {
       </div>
 
       {/* Header */}
-      <div className="page-container py-6 md:py-8">
+      <div className="page-container py-3 md:py-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-8"
+          className="mb-4"
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -450,18 +422,42 @@ export function AllProductsPage() {
                 <p className="mt-4 text-gray-600">Loading products...</p>
               </div>
             ) : filteredProducts.length > 0 ? (
-              <div className="grid min-w-0 grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                {filteredProducts.map((product, index) => (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.02 }}
-                  >
-                    <ProductCard product={product} />
-                  </motion.div>
-                ))}
-              </div>
+              <>
+                <div className="grid min-w-0 grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                  {filteredProducts.map((product, index) => (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: index * 0.02 }}
+                    >
+                      <ProductCard product={product} />
+                    </motion.div>
+                  ))}
+                </div>
+                {/* Pagination */}
+                {totalCount > PAGE_SIZE && (
+                  <div className="flex items-center justify-center gap-2 mt-10">
+                    <button
+                      onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      disabled={page === 1}
+                      className="px-4 py-2 border border-foreground/20 text-sm hover:border-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-sm text-foreground/60 px-3">
+                      Page {page} of {Math.ceil(totalCount / PAGE_SIZE)}
+                    </span>
+                    <button
+                      onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      disabled={page >= Math.ceil(totalCount / PAGE_SIZE)}
+                      className="px-4 py-2 border border-foreground/20 text-sm hover:border-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </>
             ) : (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}

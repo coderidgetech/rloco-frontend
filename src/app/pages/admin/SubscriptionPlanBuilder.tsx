@@ -8,6 +8,166 @@ import { Textarea } from '@/app/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { toast } from 'sonner';
 import { PH } from '@/app/lib/formPlaceholders';
+import { adminService } from '@/app/services/adminService';
+import { getApiErrorMessage } from '@/app/lib/apiErrors';
+import {
+  DEFAULT_VENDOR_SUBSCRIPTION_PLANS,
+  type VendorSubscriptionPlanRow,
+} from '@/app/lib/vendorSubscriptionPlanDefaults';
+
+type BuilderFormData = {
+  id: number;
+  configName: string;
+  name: string;
+  description: string;
+  color: string;
+  price: string;
+  period: string;
+  isPopular: boolean;
+  isDefault: boolean;
+  isActive: boolean;
+  icon: string;
+  commissionRate: number;
+  payoutFrequency: string;
+  minimumPayout: number;
+  maxProducts: number;
+  maxOrders: number;
+  storageLimit: string;
+  bandwidthLimit: string;
+  features: string[];
+  billingCycle: string;
+  trialPeriod: number;
+  setupFee: number;
+  currency: string;
+  paymentMethods: string[];
+  autoRenew: boolean;
+  allowDowngrade: boolean;
+  allowUpgrade: boolean;
+  prorationEnabled: boolean;
+  annualDiscount: number;
+  bulkDiscount: number;
+  emailNotifications: {
+    welcome: boolean;
+    renewal: boolean;
+    paymentFailed: boolean;
+    upgrade: boolean;
+    downgrade: boolean;
+  };
+};
+
+const defaultBuilderForm = (): BuilderFormData => ({
+  id: 0,
+  configName: '',
+  name: '',
+  description: '',
+  color: '#6B7280',
+  price: '$299',
+  period: '/month',
+  isPopular: false,
+  isDefault: false,
+  isActive: true,
+  icon: 'Star',
+  commissionRate: 5,
+  payoutFrequency: 'Weekly',
+  minimumPayout: 50,
+  maxProducts: 500,
+  maxOrders: 1000,
+  storageLimit: '10 GB',
+  bandwidthLimit: '100 GB',
+  features: [
+    'Product Management',
+    'Order Processing',
+    'Analytics Dashboard',
+    'Email Notifications',
+    'Customer Support',
+  ],
+  billingCycle: 'monthly',
+  trialPeriod: 0,
+  setupFee: 0,
+  currency: 'USD',
+  paymentMethods: ['credit_card', 'bank_transfer'],
+  autoRenew: true,
+  allowDowngrade: true,
+  allowUpgrade: true,
+  prorationEnabled: true,
+  annualDiscount: 20,
+  bulkDiscount: 0,
+  emailNotifications: {
+    welcome: true,
+    renewal: true,
+    paymentFailed: true,
+    upgrade: true,
+    downgrade: true,
+  },
+});
+
+function parseUsdFromField(s: string): number {
+  const n = parseFloat(String(s).replace(/[^0-9.]/g, ''));
+  return Number.isFinite(n) ? n : 0;
+}
+
+function rowToBuilderForm(row: VendorSubscriptionPlanRow, clone: boolean): BuilderFormData {
+  const featLabels = Object.entries(row.features)
+    .filter(([, v]) => v)
+    .map(([k]) =>
+      k
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, (c) => c.toUpperCase())
+        .trim()
+    );
+  return {
+    ...defaultBuilderForm(),
+    id: clone ? 0 : row.id,
+    configName: clone ? `${row.configName}_COPY` : row.configName,
+    name: clone ? `${row.name} (Copy)` : row.name,
+    description: row.description,
+    color: row.color,
+    price: `$${row.monthlyPrice}`,
+    period: '/month',
+    isPopular: false,
+    isDefault: clone ? false : row.isDefault,
+    isActive: row.active,
+    icon: row.icon,
+    commissionRate: row.commission,
+    maxProducts: row.maxProducts === 'unlimited' ? 1_000_000 : row.maxProducts,
+    maxOrders: row.maxOrders === 'unlimited' ? 1_000_000 : row.maxOrders,
+    features: featLabels.length > 0 ? featLabels : defaultBuilderForm().features,
+  };
+}
+
+function builderFormToRow(form: BuilderFormData, id: number): VendorSubscriptionPlanRow {
+  const monthlyPrice = parseUsdFromField(form.price);
+  const yearlyPrice = Math.max(
+    0,
+    Math.round(monthlyPrice * 12 * (1 - (form.annualDiscount || 0) / 100))
+  );
+  const features: Record<string, boolean> = {};
+  for (const line of form.features) {
+    const slug = line
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+    if (slug) features[slug] = true;
+  }
+  return {
+    id,
+    configName: form.configName.trim(),
+    name: form.name.trim(),
+    description: form.description.trim(),
+    monthlyPrice,
+    yearlyPrice,
+    commission: form.commissionRate,
+    maxProducts: form.maxProducts >= 999_999 ? 'unlimited' : form.maxProducts,
+    maxTeamMembers: 3,
+    maxOrders: form.maxOrders >= 999_999 ? 'unlimited' : form.maxOrders,
+    features,
+    active: form.isActive,
+    isDefault: form.isDefault,
+    icon: form.icon,
+    color: form.color,
+  };
+}
 
 export default function SubscriptionPlanBuilder() {
   const navigate = useNavigate();
@@ -15,97 +175,35 @@ export default function SubscriptionPlanBuilder() {
   const planId = searchParams.get('id');
   const isClone = searchParams.get('clone') === 'true';
 
-  // Form state
-  const [formData, setFormData] = useState({
-    id: 0,
-    configName: '',
-    name: '',
-    description: '',
-    color: '#6B7280',
-    price: '$299',
-    period: '/month',
-    isPopular: false,
-    isDefault: false,
-    isActive: true,
-    icon: 'Star',
-    
-    // Commission & Earnings
-    commissionRate: 5,
-    payoutFrequency: 'Weekly',
-    minimumPayout: 50,
-    
-    // Usage Limits
-    maxProducts: 500,
-    maxOrders: 1000,
-    storageLimit: '10 GB',
-    bandwidthLimit: '100 GB',
-    
-    // Features
-    features: [
-      'Product Management',
-      'Order Processing',
-      'Analytics Dashboard',
-      'Email Notifications',
-      'Customer Support',
-    ],
-    
-    // Billing Configuration
-    billingCycle: 'monthly',
-    trialPeriod: 0,
-    setupFee: 0,
-    currency: 'USD',
-    
-    // Payment Methods
-    paymentMethods: ['credit_card', 'bank_transfer'],
-    
-    // Advanced Settings
-    autoRenew: true,
-    allowDowngrade: true,
-    allowUpgrade: true,
-    prorationEnabled: true,
-    
-    // Discounts
-    annualDiscount: 20,
-    bulkDiscount: 0,
-    
-    // Email Notifications
-    emailNotifications: {
-      welcome: true,
-      renewal: true,
-      paymentFailed: true,
-      upgrade: true,
-      downgrade: true,
-    },
-  });
+  const [formData, setFormData] = useState<BuilderFormData>(() => defaultBuilderForm());
 
   const [newFeature, setNewFeature] = useState('');
 
   useEffect(() => {
-    if (planId) {
-      // Load existing plan data from localStorage or API
-      const savedPlans = localStorage.getItem('subscriptionPlans');
-      if (savedPlans) {
-        const plans = JSON.parse(savedPlans);
-        const plan = plans.find((p: any) => p.id === parseInt(planId));
-        if (plan) {
-          if (isClone) {
-            setFormData({
-              ...plan,
-              id: 0,
-              configName: `${plan.configName}_COPY`,
-              name: `${plan.name} (Copy)`,
-              isDefault: false,
-            });
-          } else {
-            setFormData(plan);
-          }
+    if (!planId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const full = await adminService.getConfiguration();
+        if (cancelled) return;
+        const raw = (full as { vendorSubscriptions?: { plans?: VendorSubscriptionPlanRow[] } })
+          .vendorSubscriptions?.plans;
+        const plans =
+          Array.isArray(raw) && raw.length > 0 ? raw : DEFAULT_VENDOR_SUBSCRIPTION_PLANS;
+        const row = plans.find((p) => p.id === parseInt(planId, 10));
+        if (row) {
+          setFormData(rowToBuilderForm(row, isClone));
         }
+      } catch (e: unknown) {
+        toast.error(getApiErrorMessage(e, 'Failed to load plan'));
       }
-    }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [planId, isClone]);
 
-  const handleSave = () => {
-    // Validation
+  const handleSave = async () => {
     if (!formData.configName.trim()) {
       toast.error('Config Name is required');
       return;
@@ -115,27 +213,45 @@ export default function SubscriptionPlanBuilder() {
       return;
     }
 
-    // Load existing plans
-    const savedPlans = localStorage.getItem('subscriptionPlans');
-    let plans = savedPlans ? JSON.parse(savedPlans) : [];
+    try {
+      const full = await adminService.getConfiguration();
+      const raw = (full as { vendorSubscriptions?: { plans?: VendorSubscriptionPlanRow[] } })
+        .vendorSubscriptions?.plans;
+      let plans: VendorSubscriptionPlanRow[] =
+        Array.isArray(raw) && raw.length > 0 ? [...raw] : [...DEFAULT_VENDOR_SUBSCRIPTION_PLANS];
 
-    if (formData.id === 0) {
-      // Create new plan
-      const newId = plans.length > 0 ? Math.max(...plans.map((p: any) => p.id)) + 1 : 1;
-      const newPlan = { ...formData, id: newId };
-      plans.push(newPlan);
-      toast.success('Subscription plan created successfully');
-    } else {
-      // Update existing plan
-      plans = plans.map((p: any) => (p.id === formData.id ? formData : p));
-      toast.success('Subscription plan updated successfully');
+      const nextId =
+        formData.id === 0
+          ? (plans.length > 0 ? Math.max(...plans.map((p) => p.id)) + 1 : 1)
+          : formData.id;
+      const row = builderFormToRow(formData, nextId);
+
+      if (formData.id === 0) {
+        if (row.isDefault) {
+          plans = plans.map((p) => ({ ...p, isDefault: false }));
+        }
+        plans.push(row);
+        toast.success('Subscription plan created successfully');
+      } else {
+        if (row.isDefault) {
+          plans = plans.map((p) => (p.id === row.id ? row : { ...p, isDefault: false }));
+        } else {
+          plans = plans.map((p) => (p.id === row.id ? row : p));
+        }
+        toast.success('Subscription plan updated successfully');
+      }
+
+      const configToSave = {
+        ...(full as Record<string, unknown>),
+        vendorSubscriptions: { plans },
+      };
+      await adminService.updateConfiguration(configToSave);
+      localStorage.setItem('rloco_config_updated', Date.now().toString());
+      window.dispatchEvent(new CustomEvent('rloco_config_updated'));
+      navigate('/admin/configuration?tab=subscriptions');
+    } catch (e: unknown) {
+      toast.error(getApiErrorMessage(e, 'Failed to save subscription plan'));
     }
-
-    // Save to localStorage
-    localStorage.setItem('subscriptionPlans', JSON.stringify(plans));
-
-    // Navigate back
-    navigate('/admin/configuration?tab=subscriptions');
   };
 
   const handleAddFeature = () => {

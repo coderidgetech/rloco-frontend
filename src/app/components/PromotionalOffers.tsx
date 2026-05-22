@@ -173,7 +173,7 @@ export function PromotionalOffers({ filterGender = 'all', selectedCategory }: Pr
   };
 
   return (
-    <section className="py-4 bg-[#f5f3e8] relative overflow-hidden mb-6">
+    <section className="py-3 bg-[#f5f3e8] relative overflow-hidden mb-4">
       <div className="page-container">
         {/* Horizontal Scrollable Offers */}
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">

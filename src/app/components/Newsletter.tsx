@@ -54,12 +54,16 @@ export function Newsletter() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="h-0.5 bg-foreground mx-auto mb-8"
           />
-          <h2 className="text-5xl md:text-6xl mb-6 tracking-tighter">
-            Stay in Style
-          </h2>
-          <p className="text-xl text-foreground/70 mb-12 max-w-2xl mx-auto">
-            Subscribe to our newsletter for exclusive access to new collections, styling tips, and special offers.
-          </p>
+          {config.homepage.newsletter?.heading && (
+            <h2 className="text-5xl md:text-6xl mb-6 tracking-tighter">
+              {config.homepage.newsletter.heading}
+            </h2>
+          )}
+          {config.homepage.newsletter?.subheading && (
+            <p className="text-xl text-foreground/70 mb-12 max-w-2xl mx-auto">
+              {config.homepage.newsletter.subheading}
+            </p>
+          )}
 
           <motion.form
             initial={{ opacity: 0, y: 20 }}

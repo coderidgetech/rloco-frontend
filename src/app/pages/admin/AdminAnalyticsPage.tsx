@@ -22,6 +22,10 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  FunnelChart,
+  Funnel,
+  LabelList,
+  Cell,
 } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Users, Eye } from 'lucide-react';
 import { adminService } from '../../services/adminService';
@@ -40,6 +44,8 @@ export const AdminAnalyticsPage = () => {
   const [categoryData, setCategoryData] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [trafficSources, setTrafficSources] = useState<any[]>([]);
+  const [funnelData, setFunnelData] = useState<any[]>([]);
+  const [cohortData, setCohortData] = useState<any[]>([]);
 
   // Calculate date range
   const getDateRange = () => {
@@ -69,12 +75,14 @@ export const AdminAnalyticsPage = () => {
         setLoading(true);
         const dateRange = getDateRange();
         
-        const [revenue, orders, products, customers, traffic] = await Promise.all([
+        const [revenue, orders, products, customers, traffic, funnel, cohort] = await Promise.all([
           adminService.getRevenueAnalytics(dateRange),
           adminService.getOrderAnalytics(dateRange),
           adminService.getProductAnalytics(dateRange),
           adminService.getCustomerAnalytics(dateRange),
           adminService.getTrafficAnalytics(dateRange),
+          adminService.getFunnelAnalytics(dateRange).catch(() => null),
+          adminService.getCohortAnalytics({ months: 6 }).catch(() => null),
         ]);
 
         setRevenueData(revenue);
@@ -142,6 +150,20 @@ export const AdminAnalyticsPage = () => {
           percentage: traffic?.total_visitors ? Math.round((item.visitors / traffic.total_visitors) * 100) : 0,
         })) || [];
         setTrafficSources(formattedTrafficSources);
+
+        // Format funnel data
+        if (funnel) {
+          setFunnelData([
+            { name: 'Add to Cart', value: funnel.add_to_cart ?? 0, fill: '#000' },
+            { name: 'Checkout Started', value: funnel.checkout_started ?? 0, fill: '#444' },
+            { name: 'Purchase', value: funnel.purchase ?? 0, fill: '#888' },
+          ]);
+        }
+
+        // Cohort data
+        if (cohort) {
+          setCohortData(Array.isArray(cohort) ? cohort : []);
+        }
       } catch (error) {
         console.error('Failed to fetch analytics:', error);
         toast.error('Failed to load analytics data');
@@ -385,6 +407,66 @@ export const AdminAnalyticsPage = () => {
             </CardContent>
           </Card>
         </div>
+            {/* Conversion Funnel */}
+            {funnelData.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Conversion Funnel</CardTitle>
+                  <CardDescription>Add to cart → Checkout → Purchase</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <FunnelChart>
+                      <Tooltip />
+                      <Funnel dataKey="value" data={funnelData} isAnimationActive>
+                        {funnelData.map((entry, idx) => (
+                          <Cell key={idx} fill={entry.fill} />
+                        ))}
+                        <LabelList dataKey="name" position="center" fill="#fff" style={{ fontSize: 13 }} />
+                      </Funnel>
+                    </FunnelChart>
+                  </ResponsiveContainer>
+                  <div className="flex justify-around mt-4 text-center">
+                    {funnelData.map((step) => (
+                      <div key={step.name}>
+                        <p className="text-xl font-bold">{step.value.toLocaleString()}</p>
+                        <p className="text-xs text-gray-500">{step.name}</p>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Cohort retention */}
+            {cohortData.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>User Cohort Retention</CardTitle>
+                  <CardDescription>Signup month cohorts — users who placed an order</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2 pr-4">Cohort</th>
+                          <th className="text-right py-2 px-3">Size</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cohortData.map((row: any, i: number) => (
+                          <tr key={i} className="border-b last:border-0">
+                            <td className="py-2 pr-4">{row.cohort_year}/{String(row.cohort_month).padStart(2, '0')}</td>
+                            <td className="text-right py-2 px-3">{row.cohort_size}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </>
         )}
       </div>

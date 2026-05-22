@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getApiErrorMessage } from '../../lib/apiErrors';
 import { AdminLayout } from '../../components/admin/AdminLayout';
@@ -39,6 +39,11 @@ import { VendorTier, VendorRole, VendorPermissions, ROLE_PERMISSIONS, VENDOR_TIE
 import { adminService, type VendorCreateResponse } from '../../services/adminService';
 import { PH } from '../../lib/formPlaceholders';
 import {
+  DEFAULT_VENDOR_SUBSCRIPTION_PLANS,
+  type VendorSubscriptionPlanRow,
+} from '../../lib/vendorSubscriptionPlanDefaults';
+import { getApiErrorMessage } from '../../lib/apiErrors';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -50,94 +55,30 @@ import {
 export const AddVendorPage = () => {
   const navigate = useNavigate();
 
-  // Available subscription plans (in a real app, fetch from API or context)
-  const subscriptionPlans = [
-    {
-      id: 1,
-      name: 'Starter',
-      description: 'Perfect for new vendors',
-      monthlyPrice: 19,
-      yearlyPrice: 190,
-      commission: 20,
-      maxProducts: 50,
-      maxTeamMembers: 2,
-      maxOrders: 300,
-      active: true,
-      isDefault: false,
-      color: '#10B981',
-    },
-    {
-      id: 2,
-      name: 'Basic',
-      description: 'Essential features',
-      monthlyPrice: 29,
-      yearlyPrice: 290,
-      commission: 15,
-      maxProducts: 100,
-      maxTeamMembers: 3,
-      maxOrders: 500,
-      active: true,
-      isDefault: true,
-      color: '#6B7280',
-    },
-    {
-      id: 3,
-      name: 'Professional',
-      description: 'For growing businesses',
-      monthlyPrice: 59,
-      yearlyPrice: 590,
-      commission: 12,
-      maxProducts: 500,
-      maxTeamMembers: 7,
-      maxOrders: 1500,
-      active: true,
-      isDefault: false,
-      color: '#3B82F6',
-    },
-    {
-      id: 4,
-      name: 'Premium',
-      description: 'Advanced features',
-      monthlyPrice: 79,
-      yearlyPrice: 790,
-      commission: 10,
-      maxProducts: 1000,
-      maxTeamMembers: 10,
-      maxOrders: 2000,
-      active: true,
-      isDefault: false,
-      color: '#8B5CF6',
-    },
-    {
-      id: 5,
-      name: 'Enterprise',
-      description: 'Unlimited access',
-      monthlyPrice: 199,
-      yearlyPrice: 1990,
-      commission: 5,
-      maxProducts: 'unlimited',
-      maxTeamMembers: 'unlimited',
-      maxOrders: 'unlimited',
-      active: true,
-      isDefault: false,
-      color: '#A855F7',
-    },
-    {
-      id: 6,
-      name: 'Custom VIP',
-      description: 'Tailored for high-volume',
-      monthlyPrice: 149,
-      yearlyPrice: 1490,
-      commission: 7,
-      maxProducts: 2000,
-      maxTeamMembers: 15,
-      maxOrders: 5000,
-      active: true,
-      isDefault: false,
-      color: '#F59E0B',
-    },
-  ];
-  
+  const [subscriptionPlans, setSubscriptionPlans] =
+    useState<VendorSubscriptionPlanRow[]>(DEFAULT_VENDOR_SUBSCRIPTION_PLANS);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const full = await adminService.getConfiguration();
+        if (cancelled) return;
+        const raw = (full as { vendorSubscriptions?: { plans?: VendorSubscriptionPlanRow[] } })
+          .vendorSubscriptions?.plans;
+        if (Array.isArray(raw) && raw.length > 0) {
+          setSubscriptionPlans(raw);
+        }
+      } catch (e: unknown) {
+        console.error(e);
+        toast.error(getApiErrorMessage(e, 'Could not load subscription plans; using defaults'));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Basic Information
   const [vendorName, setVendorName] = useState('');
   const [storeName, setStoreName] = useState('');
@@ -222,6 +163,7 @@ export const AddVendorPage = () => {
         email: email,
         phone: phone,
         role: 'vendor',
+        subscription_plan: selectedPlan?.configName ?? '',
         metadata: {
           storeName,
           website,
@@ -239,6 +181,7 @@ export const AddVendorPage = () => {
           accountHolderName,
           subscriptionPlan: selectedPlan,
           subscriptionPlanId: selectedPlanId,
+          subscriptionPlanCode: selectedPlan?.configName ?? '',
           vendorRole: selectedRole,
           permissions: customPermissions,
         },

@@ -1,5 +1,6 @@
 import { Toaster } from 'sonner';
 import { BrowserRouter, HashRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { ScrollProgress } from './components/ScrollProgress';
 import { ScrollToTop } from './components/ScrollToTop';
 import { Navigation } from './components/Navigation';
@@ -15,7 +16,7 @@ import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { AdminProvider } from './context/AdminContext';
 import { CurrencyProvider } from './context/CurrencyContext';
-import { SiteConfigProvider } from './context/SiteConfigContext';
+import { SiteConfigProvider, useSiteConfig } from './context/SiteConfigContext';
 import { OrderProvider } from './context/OrderContext';
 import { MobileOnboardingRedirect } from './components/MobileOnboardingRedirect';
 import { ResponsiveHomePage } from './components/ResponsiveHomePage';
@@ -66,6 +67,8 @@ import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
 import { AdminAddUserPage } from './pages/admin/AdminAddUserPage';
 import { AdminVendorsPage } from './pages/admin/AdminVendorsPage';
 import { AddVendorPage } from './pages/admin/AddVendorPage';
+import AdminVendorApplicationsPage from './pages/admin/AdminVendorApplicationsPage';
+import VendorApplyPage from './pages/VendorApplyPage';
 import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
 import { AdminContentPage } from './pages/admin/AdminContentPage';
 import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
@@ -78,7 +81,21 @@ import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
 import { AdminWishlistPage } from './pages/admin/AdminWishlistPage';
 import { AdminBadgesPage } from './pages/admin/AdminBadgesPage';
 import { VendorSettingsPage } from './pages/admin/VendorSettingsPage';
+import { VendorAnalyticsPage } from './pages/admin/VendorAnalyticsPage';
+import { RewardsPage } from './pages/RewardsPage';
 import { SupportPage } from './pages/SupportPage';
+import { pushNotificationService } from './services/pushNotificationService';
+import { useUser } from './context/UserContext';
+
+function PushNotificationInitializer() {
+  const { isAuthenticated } = useUser();
+  useEffect(() => {
+    if (isAuthenticated) {
+      pushNotificationService.registerToken().catch(() => {});
+    }
+  }, [isAuthenticated]);
+  return null;
+}
 
 /** In Capacitor native app, use hash routing so the WebView never does a full reload on navigation. */
 function isCapacitorNative(): boolean {
@@ -95,7 +112,19 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const isMobile = useIsMobile();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const { config, loading: siteConfigLoading } = useSiteConfig();
   const showMobileBottomNav = isMobile && !isAdminRoute && !MOBILE_HIDE_NAV_PATHS.some((p) => location.pathname === p || location.pathname.startsWith(p + '/'));
+
+  if (!isAdminRoute && !siteConfigLoading && config.general.maintenanceMode) {
+    return (
+      <SearchOverlayProvider>
+        <div className="min-h-screen min-h-svh flex flex-col items-center justify-center p-8 bg-background text-foreground text-center">
+          <h1 className="text-2xl font-semibold mb-3">We&apos;ll be back soon</h1>
+          <p className="text-muted-foreground max-w-md whitespace-pre-wrap">{config.general.maintenanceMessage}</p>
+        </div>
+      </SearchOverlayProvider>
+    );
+  }
 
   return (
     <SearchOverlayProvider>
@@ -129,6 +158,7 @@ function App() {
                 <AdminProvider>
                   <SiteConfigProvider>
                     <OrderProvider>
+                      <PushNotificationInitializer />
                       <Toaster position="top-right" richColors closeButton duration={1500} />
                       <AppLayout>
                         <MobileOnboardingRedirect>
@@ -153,7 +183,7 @@ function App() {
                             <Route path="/help" element={<SupportPage />} />
                             <Route path="/support" element={<SupportPage />} />
                             <Route path="/reviews" element={<Navigate to="/account/profile" replace />} />
-                            <Route path="/rewards" element={<Navigate to="/account/profile" replace />} />
+                            <Route path="/rewards" element={<RewardsPage />} />
                             <Route path="/coupons" element={<Navigate to="/account/profile" replace />} />
                             <Route path="/settings" element={<Navigate to="/account/settings" replace />} />
                             <Route path="/change-password" element={<Navigate to="/account/settings" replace />} />
@@ -187,6 +217,7 @@ function App() {
                             <Route path="/featured-collection" element={<FeaturedCollectionPage />} />
                             <Route path="/about" element={<ResponsiveAboutPage />} />
                             <Route path="/contact" element={<ResponsiveContactPage />} />
+                            <Route path="/vendor/apply" element={<VendorApplyPage />} />
                             <Route path="/terms" element={<ResponsiveTermsPage />} />
                             <Route path="/privacy" element={<ResponsivePrivacyPage />} />
                             <Route path="/size-guide" element={<ResponsiveSizeGuidePage />} />
@@ -209,6 +240,7 @@ function App() {
                             <Route path="/admin/customers/add" element={<ProtectedRoute requiredRole="admin"><AdminAddUserPage /></ProtectedRoute>} />
                             <Route path="/admin/vendors" element={<ProtectedRoute requiredRole="admin"><AdminVendorsPage /></ProtectedRoute>} />
                             <Route path="/admin/vendors/add" element={<ProtectedRoute requiredRole="admin"><AddVendorPage /></ProtectedRoute>} />
+                            <Route path="/admin/vendor-applications" element={<ProtectedRoute requiredRole="admin"><AdminVendorApplicationsPage /></ProtectedRoute>} />
                             <Route path="/admin/categories" element={<ProtectedRoute><AdminCategoriesPage /></ProtectedRoute>} />
                             <Route path="/admin/content" element={<ProtectedRoute requiredRole="admin"><AdminContentPage /></ProtectedRoute>} />
                             <Route path="/admin/analytics" element={<ProtectedRoute><AdminAnalyticsPage /></ProtectedRoute>} />
@@ -221,6 +253,7 @@ function App() {
                             <Route path="/admin/wishlist" element={<ProtectedRoute><AdminWishlistPage /></ProtectedRoute>} />
                             <Route path="/admin/badges" element={<ProtectedRoute requiredRole="admin"><AdminBadgesPage /></ProtectedRoute>} />
                             <Route path="/admin/vendor-settings" element={<ProtectedRoute requiredRole="vendor"><VendorSettingsPage /></ProtectedRoute>} />
+                            <Route path="/admin/vendor-analytics" element={<ProtectedRoute requiredRole="vendor"><VendorAnalyticsPage /></ProtectedRoute>} />
                             <Route path="/configuration" element={<Navigate to="/admin/configuration" replace />} />
                             <Route path="*" element={<ResponsiveNotFoundPage />} />
                           </Routes>

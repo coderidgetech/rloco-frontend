@@ -39,9 +39,20 @@ function requestHasAuthorizationHeader(config: InternalAxiosRequestConfig): bool
   return typeof raw === 'string' && raw.length > 0;
 }
 
+const apiBase =
+  import.meta.env.PROD
+    ? (() => {
+        const u = import.meta.env.VITE_API_URL?.trim();
+        if (!u) {
+          throw new Error('VITE_API_URL must be set for production builds.');
+        }
+        return u;
+      })()
+    : import.meta.env.VITE_API_URL?.trim() || 'http://localhost:8080/api';
+
 // Create axios instance with base configuration
 const api: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+  baseURL: apiBase,
   timeout: 30000, // 30 seconds
   withCredentials: true, // Important for HttpOnly cookies
   headers: {
@@ -52,6 +63,16 @@ const api: AxiosInstance = axios.create({
 // Request interceptor
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Let the browser set Content-Type (including the boundary) for multipart uploads.
+    if (config.data instanceof FormData) {
+      const h = config.headers;
+      if (typeof (h as any).delete === 'function') {
+        (h as any).delete('Content-Type');
+      } else {
+        delete (h as any)['Content-Type'];
+      }
+    }
+
     // Prefer cookie auth; if cookie is unavailable cross-site, send stored bearer token.
     const token = getStoredAuthToken();
     if (token && !requestHasAuthorizationHeader(config)) {

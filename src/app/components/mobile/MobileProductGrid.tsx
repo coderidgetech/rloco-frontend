@@ -1,18 +1,22 @@
 import { motion } from 'motion/react';
-import { Heart, Star } from 'lucide-react';
+import { Heart, ShoppingBag, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
+import { useCurrency } from '../../context/CurrencyContext';
 import { PLACEHOLDER_IMAGE } from '../../constants';
+import { toast } from 'sonner';
 
-/** Supports both API Product (id: string, images, on_sale, new_arrival) and data Product (id: number, sale, isNew) */
 interface ProductLike {
   id: string | number;
   name: string;
   price: number;
+  price_inr?: number;
   images: string[];
   category?: string;
   originalPrice?: number;
   original_price?: number;
+  sizes?: string[];
   rating?: number;
   reviews?: number;
   sale?: boolean;
@@ -26,11 +30,11 @@ interface MobileProductGridProps {
   title?: string;
 }
 
-const placeholder = PLACEHOLDER_IMAGE;
-
 export function MobileProductGrid({ products = [], title = 'Featured Products' }: MobileProductGridProps) {
   const navigate = useNavigate();
+  const { addToCart, items } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { formatPrice } = useCurrency();
 
   const handleWishlistToggle = (e: React.MouseEvent, product: ProductLike) => {
     e.stopPropagation();
@@ -38,141 +42,150 @@ export function MobileProductGrid({ products = [], title = 'Featured Products' }
     if (isInWishlist(id)) {
       removeFromWishlist(id);
     } else {
-      const img = product.images?.[0] ?? placeholder;
       addToWishlist({
         id,
         name: product.name,
         price: product.price,
-        image: img,
+        image: product.images?.[0] ?? PLACEHOLDER_IMAGE,
         category: product.category ?? '',
         gender: 'unisex',
       });
     }
   };
 
+  const handleAddToCart = (e: React.MouseEvent, product: ProductLike) => {
+    e.stopPropagation();
+    const id = String(product.id);
+    if (items.some(item => String(item.id) === id)) {
+      navigate('/cart');
+      return;
+    }
+    addToCart({
+      id,
+      name: product.name,
+      price: product.price,
+      priceINR: product.price_inr,
+      image: product.images?.[0] ?? PLACEHOLDER_IMAGE,
+      size: product.sizes?.[0] ?? 'M',
+    });
+    toast.success('Added to bag');
+  };
+
   return (
     <div className="w-full bg-white py-6">
-      {/* Section Header */}
       {(title || products.length > 0) && (
         <div className="px-4 mb-4">
           {title && <h2 className="text-xl font-medium tracking-wide">{title}</h2>}
-          <p className="text-sm text-foreground/60 mt-1">
-            {(products || []).length} items
-          </p>
+          <p className="text-sm text-foreground/60 mt-1">{products.length} items</p>
         </div>
       )}
 
-      {/* 2-Column Grid */}
       <div className="grid grid-cols-2 gap-3 px-4">
-        {(products || []).map((product, index) => (
-          <motion.div
-            key={`${product.id}-${index}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05, duration: 0.3 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate(`/product/${product.id}`)}
-            className="bg-white rounded-2xl overflow-hidden active:bg-foreground/5 transition-colors"
-          >
-            {/* Product Image */}
-            <div className="relative aspect-[3/4] bg-muted overflow-hidden">
-              <img
-                src={product.images?.[0] ?? placeholder}
-                alt={product.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
+        {products.map((product, index) => {
+          const inCart = items.some(item => String(item.id) === String(product.id));
+          const img = product.images?.[0] ?? PLACEHOLDER_IMAGE;
+          const isOnSale = product.sale ?? product.on_sale;
+          const isNew = (product.isNew ?? product.new_arrival) && !isOnSale;
 
-              {/* Wishlist Button */}
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={(e) => handleWishlistToggle(e, product)}
-                className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-sm active:bg-white transition-colors z-10"
-              >
-                <Heart
-                  size={16}
-                  className={`transition-colors ${
-                    isInWishlist(product.id)
-                      ? 'text-primary fill-primary'
-                      : 'text-foreground/60'
-                  }`}
+          return (
+            <motion.div
+              key={`${product.id}-${index}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05, duration: 0.3 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => navigate(`/product/${product.id}`)}
+              className="bg-white rounded-2xl overflow-hidden shadow-sm active:shadow-none transition-shadow"
+            >
+              {/* Image */}
+              <div className="relative aspect-[3/4] bg-muted overflow-hidden">
+                <img
+                  src={img}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
                 />
-              </motion.button>
 
-              {/* Sale Badge */}
-              {(product.sale ?? product.on_sale) && (
-                <div className="absolute top-2 left-2 bg-primary text-white text-[10px] font-bold px-2 py-1 rounded-full">
-                  SALE
-                </div>
-              )}
+                {/* Wishlist */}
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={(e) => handleWishlistToggle(e, product)}
+                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-sm z-10"
+                >
+                  <Heart
+                    size={13}
+                    className={isInWishlist(product.id) ? 'text-red-500 fill-red-500' : 'text-foreground/60'}
+                  />
+                </motion.button>
 
-              {/* New Badge */}
-              {(product.isNew ?? product.new_arrival) && !(product.sale ?? product.on_sale) && (
-                <div className="absolute top-2 left-2 bg-foreground text-white text-[10px] font-bold px-2 py-1 rounded-full">
-                  NEW
-                </div>
-              )}
-
-              {/* Quick View Overlay */}
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent p-3 opacity-0 hover:opacity-100 transition-opacity">
-                <button className="w-full bg-white text-foreground text-xs font-medium py-2 rounded-full">
-                  Quick View
-                </button>
-              </div>
-            </div>
-
-            {/* Product Info */}
-            <div className="p-3">
-              {/* Rating */}
-              {product.rating && (
-                <div className="flex items-center gap-1 mb-1.5">
-                  <Star size={12} className="text-primary fill-primary" />
-                  <span className="text-[11px] font-medium text-foreground/80">
-                    {product.rating}
+                {/* Badges */}
+                {isOnSale && (
+                  <span className="absolute top-2 left-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">
+                    Sale
                   </span>
-                  <span className="text-[10px] text-foreground/40">
-                    ({product.reviews || 0})
-                  </span>
-                </div>
-              )}
-
-              {/* Product Name */}
-              <h3 className="text-sm font-medium text-foreground line-clamp-2 mb-1.5 leading-snug">
-                {product.name}
-              </h3>
-
-              {/* Category */}
-              <p className="text-[11px] text-foreground/50 mb-2 uppercase tracking-wide">
-                {product.category}
-              </p>
-
-              {/* Price */}
-              <div className="flex items-center gap-2">
-                <span className="text-base font-semibold text-primary">
-                  ${product.price}
-                </span>
-                {(product.originalPrice ?? product.original_price) != null && (
-                  <span className="text-xs text-foreground/40 line-through">
-                    ${product.originalPrice ?? product.original_price}
+                )}
+                {isNew && (
+                  <span className="absolute top-2 left-2 bg-foreground text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide">
+                    New
                   </span>
                 )}
               </div>
-            </div>
-          </motion.div>
-        ))}
+
+              {/* Info */}
+              <div className="p-2.5">
+                <h3 className="text-xs font-medium text-foreground line-clamp-2 leading-snug mb-1">
+                  {product.name}
+                </h3>
+                {product.category && (
+                  <p className="text-[10px] text-foreground/45 uppercase tracking-wide mb-2">
+                    {product.category}
+                  </p>
+                )}
+
+                {/* Price row + cart icon */}
+                <div className="flex items-center justify-between gap-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-sm font-semibold text-foreground truncate">
+                      {formatPrice(product.price, product.price_inr)}
+                    </span>
+                    {(product.originalPrice ?? product.original_price) != null && (
+                      <span className="text-[10px] text-foreground/40 line-through shrink-0">
+                        {formatPrice(product.originalPrice ?? product.original_price ?? 0, undefined)}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Cart icon button */}
+                  <motion.button
+                    whileTap={{ scale: 0.85 }}
+                    onClick={(e) => handleAddToCart(e, product)}
+                    className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center shadow-sm transition-colors ${
+                      inCart
+                        ? 'bg-green-500 text-white'
+                        : 'bg-foreground text-background'
+                    }`}
+                  >
+                    {inCart
+                      ? <Check size={12} strokeWidth={2.5} />
+                      : <ShoppingBag size={12} />
+                    }
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
 
-      {/* Load More Button */}
       {products.length >= 10 && (
         <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
           whileTap={{ scale: 0.98 }}
-          className="w-full mt-6 mx-4 py-3.5 border-2 border-foreground/10 rounded-full font-medium text-sm active:border-foreground/20 transition-colors"
-          style={{ width: 'calc(100% - 32px)' }}
+          className="mt-6 mx-4 w-[calc(100%-2rem)] block py-3 border border-foreground/15 rounded-full text-sm font-medium active:bg-foreground/5 transition-colors"
         >
-          Load More Products
+          Load More
         </motion.button>
       )}
     </div>

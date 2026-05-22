@@ -21,4 +21,24 @@ export const vendorService = {
     const { data } = await api.put<VendorProfile>('/vendor/me', patch);
     return data;
   },
+
+  async getAnalyticsSummary(): Promise<any> {
+    const { data } = await api.get('/vendor/analytics/summary');
+    return data;
+  },
+
+  async getAnalyticsRevenue(): Promise<any> {
+    const { data } = await api.get('/vendor/analytics/revenue');
+    return data;
+  },
+
+  async getAnalyticsProducts(): Promise<any> {
+    const { data } = await api.get('/vendor/analytics/products');
+    return data;
+  },
+
+  async getAnalyticsOrders(): Promise<any> {
+    const { data } = await api.get('/vendor/analytics/orders');
+    return data;
+  },
 };

@@ -174,3 +174,29 @@ export const useProduct = (id: string) => {
 
   return { product, loading, error };
 };
+
+export const useProductVariants = (productId: string | undefined) => {
+  const [variants, setVariants] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchVariants = useCallback(async () => {
+    if (!productId || !/^[0-9a-fA-F]{24}$/.test(productId)) {
+      setVariants([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const data = await productService.getVariants(productId);
+      setVariants(data);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load variants');
+    } finally {
+      setLoading(false);
+    }
+  }, [productId]);
+
+  useEffect(() => { fetchVariants(); }, [fetchVariants]);
+
+  return { variants, loading, error, refetch: fetchVariants };
+};

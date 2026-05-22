@@ -44,6 +44,10 @@ export interface Product {
   /** Markets where the product is sold: IN, US, or both */
   available_markets?: string[];
   vendor_id?: string;
+  /** Variant fields */
+  variant_group_id?: string;
+  color?: string;
+  is_main_variant?: boolean;
   created_at: string;
   updated_at: string;
 }

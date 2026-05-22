@@ -16,6 +16,7 @@ export const productService = {
     max_price?: number;
     sort?: string;
     market?: 'IN' | 'US';
+    deduplicate?: boolean;
   }): Promise<PaginatedResponse<Product>> {
     const response = await api.get<PaginatedResponse<Product>>('/products', { params });
     return response.data;
@@ -67,16 +68,16 @@ export const productService = {
     await api.delete(`/products/${id}`);
   },
 
-  async uploadImages(id: string, images: File[]): Promise<Product> {
+  async uploadImages(
+    id: string,
+    images: File[]
+  ): Promise<{ message?: string; images: string[] }> {
     const formData = new FormData();
-    images.forEach((image) => {
-      formData.append('images', image);
-    });
-    const response = await api.post<Product>(`/products/${id}/images`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    images.forEach((image) => formData.append('images', image));
+    const response = await api.post<{ message?: string; images: string[] }>(
+      `/products/${id}/images`,
+      formData
+    );
     return response.data;
   },
 
@@ -101,6 +102,35 @@ export const productService = {
 
   async markReviewHelpful(productId: string, reviewId: string): Promise<ProductReview> {
     const response = await api.post<ProductReview>(`/products/${productId}/reviews/${reviewId}/helpful`);
+    return response.data;
+  },
+
+  // Variant group methods
+  async getVariants(productId: string): Promise<Product[]> {
+    const response = await api.get<{ variants: Product[] }>(`/products/${productId}/variants`);
+    return response.data.variants ?? [];
+  },
+
+  async setVariantGroup(productId: string, body: {
+    variant_group_id?: string;
+    color: string;
+    is_main_variant?: boolean;
+  }): Promise<{ variant_group_id?: string; ok?: boolean }> {
+    const response = await api.put<{ variant_group_id?: string; ok?: boolean }>(
+      `/products/${productId}/variant-group`,
+      body,
+    );
+    return response.data;
+  },
+
+  async unsetVariantGroup(productId: string): Promise<void> {
+    await api.delete(`/products/${productId}/variant-group`);
+  },
+
+  async migrateVariants(): Promise<{ groups_created: number; variants_created: number }> {
+    const response = await api.post<{ groups_created: number; variants_created: number }>(
+      '/admin/products/migrate-variants',
+    );
     return response.data;
   },
 };
