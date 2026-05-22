@@ -80,7 +80,7 @@ export function ProductsGrid() {
   };
 
   return (
-    <section id="products" className="pt-8 pb-10 px-4 md:pt-10 md:pb-12 md:px-6 bg-background relative overflow-hidden">
+    <section id="products" className="pt-8 pb-10 px-4 md:pt-10 md:pb-12 md:px-6 bg-background relative">
       {/* Reusable Background Decoration */}
       <BackgroundDecor 
         variant="alternate"
@@ -141,8 +141,8 @@ export function ProductsGrid() {
               </motion.button>
             </motion.div>
 
-        {/* Products Grid - 4 columns with smaller cards */}
-        <div className="grid min-w-0 grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
+        {/* Products Grid - single scrollable row */}
+        <div className="flex gap-3 md:gap-4 overflow-x-auto pb-3 scrollbar-hide -mx-4 px-4 md:-mx-6 md:px-6">
           <AnimatePresence mode="popLayout">
             {displayProducts.map((product, index) => (
               <motion.div
@@ -153,7 +153,7 @@ export function ProductsGrid() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.4, delay: index * 0.05 }}
                 whileHover={{ y: -6 }}
-                className="group"
+                className="group shrink-0 w-[44vw] sm:w-[30vw] md:w-52 lg:w-56"
               >
                 <div 
                   className="relative aspect-[3/4] overflow-hidden mb-2 bg-accent cursor-pointer rounded shadow-sm hover:shadow-lg transition-all duration-500"
