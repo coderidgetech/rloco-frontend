@@ -189,7 +189,7 @@ export function GoogleSignInButton({
             }}
             className="w-full text-left"
           >
-            <div aria-hidden="true">{customContent}</div>
+            {customContent}
           </button>
         </div>
       ) : (
