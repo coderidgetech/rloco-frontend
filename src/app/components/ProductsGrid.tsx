@@ -13,7 +13,7 @@ import { useSiteConfig } from '../context/SiteConfigContext';
 import { AddToBagPopover } from './AddToBagPopover';
 import { colorMap } from '../utils/filterConfig';
 
-const TOP_COLLECTION_LIMIT = 16;
+const TOP_COLLECTION_LIMIT = 4;
 
 export function ProductsGrid() {
   const { config } = useSiteConfig();

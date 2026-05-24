@@ -22,7 +22,7 @@ export function Featured() {
   if (!config.homepage.sections.featuredProducts) {
     return null;
   }
-  const { products: featuredProducts, loading, error } = useFeaturedProducts(8);
+  const { products: featuredProducts, loading, error } = useFeaturedProducts(4);
   const { addToCart, items } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { formatPrice } = useCurrency();
@@ -127,7 +127,7 @@ export function Featured() {
 
         {!loading && !error && featuredProducts && featuredProducts.length > 0 && (
           <div className="flex gap-4 md:gap-6 overflow-x-auto pb-3 scrollbar-hide mb-8 md:mb-12 -mx-4 px-4 sm:-mx-6 sm:px-6 md:-mx-8 md:px-8">
-            {featuredProducts.slice(0, 8).map((product, index) => (
+            {featuredProducts.slice(0, 4).map((product, index) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 30 }}
