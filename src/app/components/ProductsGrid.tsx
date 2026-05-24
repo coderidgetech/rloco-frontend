@@ -141,8 +141,8 @@ export function ProductsGrid() {
               </motion.button>
             </motion.div>
 
-        {/* Products Grid - single scrollable row */}
-        <div className="flex gap-3 md:gap-4 overflow-x-auto pb-3 scrollbar-hide -mx-4 px-4 md:-mx-6 md:px-6">
+        {/* Products Grid - 4x1 grid */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 lg:gap-6 px-2 md:px-4">
           <AnimatePresence mode="popLayout">
             {displayProducts.map((product, index) => (
               <motion.div
@@ -153,7 +153,7 @@ export function ProductsGrid() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.4, delay: index * 0.05 }}
                 whileHover={{ y: -6 }}
-                className="group shrink-0 w-[55vw] sm:w-[38vw] md:w-64 lg:w-72"
+                className="group"
               >
                 <div 
                   className="relative aspect-[4/5] overflow-hidden mb-2 bg-accent cursor-pointer rounded shadow-sm hover:shadow-lg transition-all duration-500"
