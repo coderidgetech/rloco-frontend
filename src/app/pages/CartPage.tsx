@@ -216,6 +216,15 @@ export function CartPage() {
 
   const savingsOnMRP = Math.max(0, totalMRP - subtotal);
 
+  // Clear coupon when cart subtotal drops below the promotion's minimum purchase
+  useEffect(() => {
+    if (!appliedCoupon?.promotion?.min_purchase) return;
+    if (subtotal < appliedCoupon.promotion.min_purchase) {
+      setAppliedCoupon(null);
+      toast.error(`Coupon removed — cart total is below the minimum of ${appliedCoupon.promotion.min_purchase}`);
+    }
+  }, [subtotal, appliedCoupon]);
+
   const discount = Math.min(
     appliedCoupon && appliedCoupon.promotion
       ? appliedCoupon.promotion.type === 'percentage'
