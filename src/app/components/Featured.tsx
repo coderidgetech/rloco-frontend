@@ -22,7 +22,7 @@ export function Featured() {
   if (!config.homepage.sections.featuredProducts) {
     return null;
   }
-  const { products: featuredProducts, loading, error } = useFeaturedProducts(4);
+  const { products: featuredProducts, loading, error } = useFeaturedProducts(8);
   const { addToCart, items } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { formatPrice } = useCurrency();
@@ -126,8 +126,8 @@ export function Featured() {
         )}
 
         {!loading && !error && featuredProducts && featuredProducts.length > 0 && (
-          <div className="flex gap-4 md:gap-6 overflow-x-auto pb-3 scrollbar-hide mb-8 md:mb-12 -mx-4 px-4 sm:-mx-6 sm:px-6 md:-mx-8 md:px-8">
-            {featuredProducts.slice(0, 4).map((product, index) => (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 lg:gap-6 mb-8 md:mb-12 px-2 md:px-4">
+            {featuredProducts.slice(0, 8).map((product, index) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 30 }}
@@ -136,10 +136,10 @@ export function Featured() {
               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: index * 0.05 }}
               whileHover={{ scale: 1.05, rotateY: 5, rotateX: -2 }}
               style={{ perspective: 1000 }}
-              className="group shrink-0 w-[44vw] sm:w-[30vw] md:w-56 lg:w-60"
+              className="group"
             >
               <div 
-                className="relative aspect-[3/4] overflow-hidden mb-3 md:mb-4 bg-accent rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-500 cursor-pointer"
+                className="relative aspect-[4/5] overflow-hidden mb-3 md:mb-4 bg-accent rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-500 cursor-pointer"
                 onClick={() => navigate(`/product/${product.id}`)}
               >
                 <motion.img

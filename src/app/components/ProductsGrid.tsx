@@ -153,10 +153,10 @@ export function ProductsGrid() {
                 exit={{ opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.4, delay: index * 0.05 }}
                 whileHover={{ y: -6 }}
-                className="group shrink-0 w-[44vw] sm:w-[30vw] md:w-52 lg:w-56"
+                className="group shrink-0 w-[55vw] sm:w-[38vw] md:w-64 lg:w-72"
               >
                 <div 
-                  className="relative aspect-[3/4] overflow-hidden mb-2 bg-accent cursor-pointer rounded shadow-sm hover:shadow-lg transition-all duration-500"
+                  className="relative aspect-[4/5] overflow-hidden mb-2 bg-accent cursor-pointer rounded shadow-sm hover:shadow-lg transition-all duration-500"
                   onClick={() => navigate(`/product/${product.id}`)}
                 >
                   <motion.img
