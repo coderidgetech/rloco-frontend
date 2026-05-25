@@ -96,7 +96,7 @@ export function MegaMenu({ isOpen, gender, onClose, onCategoryClick }: MegaMenuP
               top: '68px',
               left: '2rem',
               right: '2rem',
-              maxHeight: 'min(42vh, 520px)',
+              maxHeight: 'min(80vh, 680px)',
               backgroundColor: 'rgba(255, 255, 255, 0.97)',
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
