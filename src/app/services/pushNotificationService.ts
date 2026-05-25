@@ -40,7 +40,7 @@ export const pushNotificationService = {
         },
       });
 
-      const { getMessaging, getToken } = await import('firebase/messaging');
+      const { getMessaging, getToken } = await import(/* @vite-ignore */ 'firebase/messaging');
       const { firebaseApp } = await import('../lib/firebase');
       const messaging = getMessaging(firebaseApp);
       const token = await getToken(messaging, {
@@ -59,7 +59,7 @@ export const pushNotificationService = {
   async unregister(): Promise<void> {
     if (!this.isSupported()) return;
     try {
-      const { getMessaging, getToken, deleteToken } = await import('firebase/messaging');
+      const { getMessaging, getToken, deleteToken } = await import(/* @vite-ignore */ 'firebase/messaging');
       const { firebaseApp } = await import('../lib/firebase');
       const messaging = getMessaging(firebaseApp);
       const swReg = await navigator.serviceWorker.ready;
