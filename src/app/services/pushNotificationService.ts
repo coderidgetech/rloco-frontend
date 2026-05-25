@@ -1,5 +1,4 @@
-import { getMessaging, getToken, deleteToken } from 'firebase/messaging';
-import { firebaseApp, isFirebaseConfigured } from '../lib/firebase';
+import { isFirebaseConfigured } from '../lib/firebase';
 import api from '../lib/api';
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY as string | undefined;
@@ -26,11 +25,9 @@ export const pushNotificationService = {
       const permission = await this.requestPermission();
       if (permission !== 'granted') return;
 
-      // Register sw.js and pass it to getToken so Firebase uses our existing SW
       const swReg = await navigator.serviceWorker.register('/sw.js');
       await navigator.serviceWorker.ready;
 
-      // Send Firebase config to the SW so it can handle background messages
       swReg.active?.postMessage({
         type: 'FIREBASE_CONFIG',
         config: {
@@ -43,6 +40,8 @@ export const pushNotificationService = {
         },
       });
 
+      const { getMessaging, getToken } = await import('firebase/messaging');
+      const { firebaseApp } = await import('../lib/firebase');
       const messaging = getMessaging(firebaseApp);
       const token = await getToken(messaging, {
         vapidKey: VAPID_KEY,
@@ -60,6 +59,8 @@ export const pushNotificationService = {
   async unregister(): Promise<void> {
     if (!this.isSupported()) return;
     try {
+      const { getMessaging, getToken, deleteToken } = await import('firebase/messaging');
+      const { firebaseApp } = await import('../lib/firebase');
       const messaging = getMessaging(firebaseApp);
       const swReg = await navigator.serviceWorker.ready;
       const token = await getToken(messaging, {
