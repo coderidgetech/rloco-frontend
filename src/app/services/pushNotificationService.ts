@@ -3,6 +3,11 @@ import api from '../lib/api';
 
 const VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY as string | undefined;
 
+// Completely opaque to Vite's static import analysis — only resolved at runtime
+// when push notifications are actually used (guarded by isSupported()).
+// eslint-disable-next-line no-new-func
+const runtimeImport = new Function('s', 'return import(s)') as <T>(s: string) => Promise<T>;
+
 export const pushNotificationService = {
   isSupported(): boolean {
     return (
@@ -40,7 +45,7 @@ export const pushNotificationService = {
         },
       });
 
-      const { getMessaging, getToken } = await import(/* @vite-ignore */ 'firebase/messaging');
+      const { getMessaging, getToken } = await runtimeImport<typeof import('firebase/messaging')>('firebase/messaging');
       const { firebaseApp } = await import('../lib/firebase');
       const messaging = getMessaging(firebaseApp);
       const token = await getToken(messaging, {
@@ -59,7 +64,7 @@ export const pushNotificationService = {
   async unregister(): Promise<void> {
     if (!this.isSupported()) return;
     try {
-      const { getMessaging, getToken, deleteToken } = await import(/* @vite-ignore */ 'firebase/messaging');
+      const { getMessaging, getToken, deleteToken } = await runtimeImport<typeof import('firebase/messaging')>('firebase/messaging');
       const { firebaseApp } = await import('../lib/firebase');
       const messaging = getMessaging(firebaseApp);
       const swReg = await navigator.serviceWorker.ready;
