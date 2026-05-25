@@ -42,7 +42,6 @@ import {
   DEFAULT_VENDOR_SUBSCRIPTION_PLANS,
   type VendorSubscriptionPlanRow,
 } from '../../lib/vendorSubscriptionPlanDefaults';
-import { getApiErrorMessage } from '../../lib/apiErrors';
 import {
   Dialog,
   DialogContent,
