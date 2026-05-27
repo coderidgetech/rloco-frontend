@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Star, ChevronRight, ChevronDown, Truck, RefreshCw, Check, Shield, Award, Package, Sparkles, Leaf, Users, Info, MessageCircle, Ruler, Shirt, HelpCircle, Plus, Minus, ShoppingBag, ChevronLeft, Edit2, Trash2, ThumbsUp } from 'lucide-react';
+import { Heart, Star, ChevronRight, ChevronDown, Truck, RefreshCw, Check, Shield, Award, Package, Sparkles, Leaf, Users, Info, MessageCircle, Ruler, Shirt, HelpCircle, Plus, Minus, ShoppingBag, ChevronLeft, Edit2, Trash2, ThumbsUp, Share2 } from 'lucide-react';
 import { Product } from '../types/api';
 import { useState, useEffect, useRef } from 'react';
 import { useCart } from '../context/CartContext';
@@ -228,12 +228,22 @@ export function ProductDetailPage() {
   // Check if current product is in cart
   const isInCart = items.some(item => String(item.id) === String(product.id));
 
+  const selectedSizeStock = selectedSize && product.stock?.[selectedSize];
+  const selectedSizeOOS = selectedSize != null
+    && product.stock != null
+    && Object.keys(product.stock).length > 0
+    && (product.stock[selectedSize] ?? 0) <= 0;
+
   const handleAddToCart = async () => {
     if (!selectedSize && product.sizes && product.sizes.length > 0) {
       toast.error('Please select a size');
       return;
     }
-    
+    if (selectedSizeOOS) {
+      toast.error('This size is out of stock');
+      return;
+    }
+
     addToCart({
       id: product.id,
       name: product.name,
@@ -245,6 +255,21 @@ export function ProductDetailPage() {
       quantity: quantity,
     });
     toast.success('Added to bag');
+  };
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const text = `Check out ${product.name} on Rloco`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: product.name, text, url });
+      } catch {
+        // user cancelled — do nothing
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied to clipboard');
+    }
   };
 
   const handleToggleWishlist = () => {
@@ -902,27 +927,43 @@ export function ProductDetailPage() {
                 ) : (
                   <motion.button
                     onClick={handleAddToCart}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full h-14 bg-foreground text-background font-medium hover:bg-foreground/90 transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                    whileHover={selectedSizeOOS ? undefined : { scale: 1.02 }}
+                    whileTap={selectedSizeOOS ? undefined : { scale: 0.98 }}
+                    disabled={selectedSizeOOS}
+                    className={`w-full h-14 font-medium transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2 ${
+                      selectedSizeOOS
+                        ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                        : 'bg-foreground text-background hover:bg-foreground/90'
+                    }`}
                   >
                     <ShoppingBag size={18} />
-                    Add to Bag
+                    {selectedSizeOOS ? 'Out of Stock' : 'Add to Bag'}
                   </motion.button>
                 )}
-                <motion.button
-                  onClick={handleToggleWishlist}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`w-full h-12 border transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs ${
-                    isWishlisted
-                      ? 'border-foreground bg-foreground text-background'
-                      : 'border-foreground/20 hover:border-foreground'
-                  }`}
-                >
-                  <Heart size={18} className={isWishlisted ? 'fill-current' : ''} />
-                  {isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}
-                </motion.button>
+                <div className="flex gap-2">
+                  <motion.button
+                    onClick={handleToggleWishlist}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`flex-1 h-12 border transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs ${
+                      isWishlisted
+                        ? 'border-foreground bg-foreground text-background'
+                        : 'border-foreground/20 hover:border-foreground'
+                    }`}
+                  >
+                    <Heart size={18} className={isWishlisted ? 'fill-current' : ''} />
+                    {isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}
+                  </motion.button>
+                  <motion.button
+                    onClick={handleShare}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    title="Share this product"
+                    className="h-12 w-12 border border-foreground/20 hover:border-foreground transition-all flex items-center justify-center shrink-0"
+                  >
+                    <Share2 size={18} />
+                  </motion.button>
+                </div>
               </div>
             </motion.div>
 

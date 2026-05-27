@@ -2,7 +2,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Package, MapPin, CreditCard, CheckCircle, Truck, Clock, Phone, Download } from 'lucide-react';
+import { Package, MapPin, CreditCard, CheckCircle, Truck, Clock, Phone, Download, XCircle, RotateCcw, Star } from 'lucide-react';
+import { returnService } from '@/app/services/returnService';
 import { ResponsivePageHeader } from '@/app/components/ResponsivePageHeader';
 import { orderService } from '@/app/services/orderService';
 import type { Order as APIOrder } from '@/app/types/api';
@@ -38,6 +39,11 @@ export function OrderDetailPage() {
   const [order, setOrder] = useState<APIOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [showReturnForm, setShowReturnForm] = useState(false);
+  const [returnReason, setReturnReason] = useState('');
+  const [returnDescription, setReturnDescription] = useState('');
+  const [submittingReturn, setSubmittingReturn] = useState(false);
 
   useEffect(() => {
     if (!id) {
@@ -115,6 +121,49 @@ export function OrderDetailPage() {
     }
   };
 
+  const handleCancel = async () => {
+    if (!order || !confirm('Cancel this order? This cannot be undone.')) return;
+    setCancelling(true);
+    try {
+      const updated = await orderService.cancel(order.id);
+      setOrder(updated);
+      toast.success('Order cancelled');
+    } catch {
+      toast.error('Could not cancel order. Please contact support.');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleSubmitReturn = async () => {
+    if (!order || !returnReason) return;
+    setSubmittingReturn(true);
+    try {
+      await returnService.create({
+        order_id: order.id,
+        items: (order.items || []).map((item) => ({
+          order_item_id: item.product_id,
+          product_id: item.product_id,
+          product_name: item.product_name,
+          image: item.image || '',
+          price: item.price,
+          size: item.size || '',
+          quantity: item.quantity,
+        })),
+        reason: returnReason,
+        description: returnDescription,
+      });
+      toast.success('Return request submitted');
+      setShowReturnForm(false);
+      setReturnReason('');
+      setReturnDescription('');
+    } catch {
+      toast.error('Could not submit return. Please try again.');
+    } finally {
+      setSubmittingReturn(false);
+    }
+  };
+
   const topPadding = isMobile ? 'pt-[100px]' : 'pt-6';
   const bottomPadding = isMobile ? 'pb-20' : 'pb-12';
   const containerClass = isMobile ? 'px-4 pb-6' : 'page-container-narrow-form';
@@ -136,6 +185,19 @@ export function OrderDetailPage() {
               <span className="capitalize">{status.replace('-', ' ')}</span>
             </div>
           </div>
+
+          {status === 'processing' && (
+            <div className="mt-3">
+              <button
+                onClick={handleCancel}
+                disabled={cancelling}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+              >
+                <XCircle size={16} />
+                {cancelling ? 'Cancelling…' : 'Cancel Order'}
+              </button>
+            </div>
+          )}
 
           {status === 'in-transit' && (
             <div className="bg-primary/5 rounded-xl p-3 border border-primary/20">
@@ -280,6 +342,119 @@ export function OrderDetailPage() {
             </div>
           </div>
         </motion.div>
+
+        {/* Write a Review - only for delivered orders */}
+        {status === 'delivered' && (order.items?.length ?? 0) > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.42 }}
+            className="bg-white rounded-2xl p-4 border border-border/30 shadow-sm"
+          >
+            <h2 className="font-medium mb-3 flex items-center gap-2">
+              <Star size={18} />
+              <span>Write a Review</span>
+            </h2>
+            <div className="space-y-2">
+              {(order.items || []).map((item, i) => (
+                <div key={`review-${item.product_id}-${i}`} className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-muted">
+                    {item.image
+                      ? <img src={item.image} alt={item.product_name} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center"><Package size={16} className="text-foreground/30" /></div>
+                    }
+                  </div>
+                  <p className="flex-1 text-sm line-clamp-1 min-w-0">{item.product_name}</p>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/product/${item.product_id}`)}
+                    className="text-xs font-medium text-primary border border-primary/30 rounded-full px-3 py-1 hover:bg-primary/5 transition-colors shrink-0"
+                  >
+                    Review
+                  </button>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Return Request - only for delivered orders */}
+        {status === 'delivered' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45 }}
+            className="bg-white rounded-2xl p-4 border border-border/30 shadow-sm"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-medium flex items-center gap-2">
+                <RotateCcw size={18} />
+                <span>Request Return</span>
+              </h2>
+              {!showReturnForm && (
+                <button
+                  type="button"
+                  onClick={() => setShowReturnForm(true)}
+                  className="text-xs text-primary hover:underline"
+                >
+                  Initiate return
+                </button>
+              )}
+            </div>
+
+            {showReturnForm ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-foreground/60 mb-1 block">Reason *</label>
+                  <select
+                    value={returnReason}
+                    onChange={(e) => setReturnReason(e.target.value)}
+                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary"
+                  >
+                    <option value="">Select a reason</option>
+                    <option value="wrong_item">Wrong item received</option>
+                    <option value="damaged">Item damaged or defective</option>
+                    <option value="not_as_described">Not as described</option>
+                    <option value="changed_mind">Changed my mind</option>
+                    <option value="size_issue">Size issue</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-foreground/60 mb-1 block">Additional details</label>
+                  <textarea
+                    value={returnDescription}
+                    onChange={(e) => setReturnDescription(e.target.value)}
+                    rows={3}
+                    placeholder="Describe the issue..."
+                    className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary resize-none"
+                  />
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleSubmitReturn}
+                    disabled={!returnReason || submittingReturn}
+                    className="flex-1 py-2.5 bg-foreground text-background text-sm rounded-lg disabled:opacity-50 hover:opacity-80 transition-opacity"
+                  >
+                    {submittingReturn ? 'Submitting…' : 'Submit Return Request'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowReturnForm(false)}
+                    className="px-4 py-2.5 border border-border rounded-lg text-sm hover:bg-muted transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-foreground/50">
+                Returns accepted within 30 days of delivery. Items must be unused and in original packaging.
+              </p>
+            )}
+          </motion.div>
+        )}
 
         {/* Action Buttons - ref: Contact Support + Download Invoice */}
         <motion.div

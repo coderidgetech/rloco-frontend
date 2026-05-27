@@ -80,9 +80,14 @@ import SubscriptionPlanBuilder from './pages/admin/SubscriptionPlanBuilder';
 import { AdminReviewsPage } from './pages/admin/AdminReviewsPage';
 import { AdminWishlistPage } from './pages/admin/AdminWishlistPage';
 import { AdminBadgesPage } from './pages/admin/AdminBadgesPage';
+import { AdminInventoryPage } from './pages/admin/AdminInventoryPage';
+import { AdminTaxShippingPage } from './pages/admin/AdminTaxShippingPage';
+import { AdminSupportPage } from './pages/admin/AdminSupportPage';
+import { AdminReturnsPage } from './pages/admin/AdminReturnsPage';
 import { VendorSettingsPage } from './pages/admin/VendorSettingsPage';
 import { VendorAnalyticsPage } from './pages/admin/VendorAnalyticsPage';
 import { RewardsPage } from './pages/RewardsPage';
+import { CouponsPage } from './pages/CouponsPage';
 import { SupportPage } from './pages/SupportPage';
 import { pushNotificationService } from './services/pushNotificationService';
 import { useUser } from './context/UserContext';
@@ -184,7 +189,7 @@ function App() {
                             <Route path="/support" element={<SupportPage />} />
                             <Route path="/reviews" element={<Navigate to="/account/profile" replace />} />
                             <Route path="/rewards" element={<RewardsPage />} />
-                            <Route path="/coupons" element={<Navigate to="/account/profile" replace />} />
+                            <Route path="/coupons" element={<CouponsPage />} />
                             <Route path="/settings" element={<Navigate to="/account/settings" replace />} />
                             <Route path="/change-password" element={<Navigate to="/account/settings" replace />} />
                             <Route path="/two-factor" element={<Navigate to="/account/settings" replace />} />
@@ -252,6 +257,10 @@ function App() {
                             <Route path="/admin/reviews" element={<ProtectedRoute><AdminReviewsPage /></ProtectedRoute>} />
                             <Route path="/admin/wishlist" element={<ProtectedRoute><AdminWishlistPage /></ProtectedRoute>} />
                             <Route path="/admin/badges" element={<ProtectedRoute requiredRole="admin"><AdminBadgesPage /></ProtectedRoute>} />
+                            <Route path="/admin/returns" element={<ProtectedRoute requiredRole="admin"><AdminReturnsPage /></ProtectedRoute>} />
+                            <Route path="/admin/inventory" element={<ProtectedRoute requiredRole="admin"><AdminInventoryPage /></ProtectedRoute>} />
+                            <Route path="/admin/tax-shipping" element={<ProtectedRoute requiredRole="admin"><AdminTaxShippingPage /></ProtectedRoute>} />
+                            <Route path="/admin/support" element={<ProtectedRoute><AdminSupportPage /></ProtectedRoute>} />
                             <Route path="/admin/vendor-settings" element={<ProtectedRoute requiredRole="vendor"><VendorSettingsPage /></ProtectedRoute>} />
                             <Route path="/admin/vendor-analytics" element={<ProtectedRoute requiredRole="vendor"><VendorAnalyticsPage /></ProtectedRoute>} />
                             <Route path="/configuration" element={<Navigate to="/admin/configuration" replace />} />
