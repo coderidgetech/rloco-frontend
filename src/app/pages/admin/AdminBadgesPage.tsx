@@ -1,609 +1,282 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { AdminLayout } from '@/app/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
-import { Badge } from '@/app/components/ui/badge';
 import { Input } from '@/app/components/ui/input';
-import { Label } from '@/app/components/ui/label';
-import { Textarea } from '@/app/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
-import { 
-  Plus, 
-  Edit,
-  Trash2,
-  Award,
-  Tag,
-  Zap,
-  Flame,
-  Star,
-  Clock,
-  Percent,
-  TrendingUp,
-  Eye,
-  EyeOff,
-} from 'lucide-react';
-import { PH } from '@/app/lib/formPlaceholders';
+import { Badge } from '@/app/components/ui/badge';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/app/components/ui/dialog';
-import { Switch } from '@/app/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/app/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/app/components/ui/table';
+import { Award, Search, Tag, X } from 'lucide-react';
+import { productService } from '@/app/services/productService';
+import { Product } from '@/app/types/api';
+import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/app/lib/apiErrors';
 
-interface ProductBadge {
-  id: string;
-  name: string;
-  label: string;
-  description: string;
-  type: 'new' | 'sale' | 'trending' | 'limited' | 'exclusive' | 'custom';
-  backgroundColor: string;
-  textColor: string;
-  icon: 'star' | 'flame' | 'zap' | 'clock' | 'percent' | 'trending-up' | 'award' | 'tag';
-  isActive: boolean;
-  priority: number;
-  productsCount: number;
-  createdAt: string;
-}
+const BADGE_OPTIONS = [
+  'New',
+  'Trending',
+  'Best Seller',
+  'Hot',
+  'Limited Edition',
+  'Sale',
+  'Exclusive',
+  'Featured',
+];
 
-const iconComponents = {
-  star: Star,
-  flame: Flame,
-  zap: Zap,
-  clock: Clock,
-  percent: Percent,
-  'trending-up': TrendingUp,
-  award: Award,
-  tag: Tag,
+const BADGE_COLORS: Record<string, string> = {
+  New: 'bg-blue-100 text-blue-700',
+  Trending: 'bg-purple-100 text-purple-700',
+  'Best Seller': 'bg-green-100 text-green-700',
+  Hot: 'bg-orange-100 text-orange-700',
+  'Limited Edition': 'bg-amber-100 text-amber-700',
+  Sale: 'bg-red-100 text-red-700',
+  Exclusive: 'bg-gray-800 text-white',
+  Featured: 'bg-indigo-100 text-indigo-700',
 };
 
 export function AdminBadgesPage() {
-  // NOTE: Badges are product-level attributes (product.badge field)
-  // Badges can be managed via the product edit page (AdminAddEditProductPage)
-  // This page is a UI helper for designing badges that can then be assigned to products
-  // If you need badge management as a separate entity, create backend endpoint: GET/POST/PUT/DELETE /admin/badges
-  
-  const [badges, setBadges] = useState<ProductBadge[]>([
-    {
-      id: '1',
-      name: 'new_arrival',
-      label: 'NEW',
-      description: 'Displays on products added in the last 30 days',
-      type: 'new',
-      backgroundColor: '#B4770E',
-      textColor: '#FFFFFF',
-      icon: 'star',
-      isActive: true,
-      priority: 1,
-      productsCount: 45,
-      createdAt: '2024-01-01',
-    },
-    {
-      id: '2',
-      name: 'on_sale',
-      label: 'SALE',
-      description: 'Shows discount percentage for products on sale',
-      type: 'sale',
-      backgroundColor: '#DC2626',
-      textColor: '#FFFFFF',
-      icon: 'percent',
-      isActive: true,
-      priority: 2,
-      productsCount: 128,
-      createdAt: '2024-01-01',
-    },
-    {
-      id: '3',
-      name: 'trending',
-      label: 'TRENDING',
-      description: 'Highlights products with high views and purchases',
-      type: 'trending',
-      backgroundColor: '#000000',
-      textColor: '#FFFFFF',
-      icon: 'trending-up',
-      isActive: true,
-      priority: 3,
-      productsCount: 32,
-      createdAt: '2024-01-01',
-    },
-    {
-      id: '4',
-      name: 'limited_edition',
-      label: 'LIMITED',
-      description: 'Shows for products with limited stock quantity',
-      type: 'limited',
-      backgroundColor: '#7C2D12',
-      textColor: '#FFFFFF',
-      icon: 'flame',
-      isActive: true,
-      priority: 4,
-      productsCount: 18,
-      createdAt: '2024-01-01',
-    },
-    {
-      id: '5',
-      name: 'exclusive',
-      label: 'EXCLUSIVE',
-      description: 'Premium or exclusive collection items',
-      type: 'exclusive',
-      backgroundColor: '#1F2937',
-      textColor: '#B4770E',
-      icon: 'award',
-      isActive: true,
-      priority: 5,
-      productsCount: 24,
-      createdAt: '2024-01-01',
-    },
-    {
-      id: '6',
-      name: 'best_seller',
-      label: 'BEST SELLER',
-      description: 'Top performing products by sales volume',
-      type: 'custom',
-      backgroundColor: '#059669',
-      textColor: '#FFFFFF',
-      icon: 'zap',
-      isActive: true,
-      priority: 6,
-      productsCount: 56,
-      createdAt: '2024-01-05',
-    },
-  ]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [filterBadge, setFilterBadge] = useState('all');
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [newBadge, setNewBadge] = useState('');
+  const [customBadge, setCustomBadge] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingBadge, setEditingBadge] = useState<ProductBadge | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    label: '',
-    description: '',
-    type: 'custom' as ProductBadge['type'],
-    backgroundColor: '#000000',
-    textColor: '#FFFFFF',
-    icon: 'tag' as ProductBadge['icon'],
-    priority: badges.length + 1,
+  const load = async () => {
+    try {
+      setLoading(true);
+      const res = await productService.list({ limit: 200, skip: 0 });
+      setProducts((res as any).products ?? res ?? []);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Failed to load products'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const openEdit = (p: Product) => {
+    setEditProduct(p);
+    setNewBadge(p.badge ?? '');
+    setCustomBadge('');
+  };
+
+  const saveBadge = async () => {
+    if (!editProduct) return;
+    const badge = newBadge === '__custom__' ? customBadge.trim() : newBadge;
+    try {
+      setSaving(true);
+      await productService.update(editProduct.id, { badge: badge || undefined });
+      setProducts((prev) =>
+        prev.map((p) => p.id === editProduct.id ? { ...p, badge: badge || undefined } : p)
+      );
+      toast.success(badge ? `Badge set to "${badge}"` : 'Badge removed');
+      setEditProduct(null);
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Failed to update badge'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeBadge = async (p: Product) => {
+    try {
+      await productService.update(p.id, { badge: undefined });
+      setProducts((prev) => prev.map((pp) => pp.id === p.id ? { ...pp, badge: undefined } : pp));
+      toast.success('Badge removed');
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Failed to remove badge'));
+    }
+  };
+
+  const badgeCounts = products.reduce<Record<string, number>>((acc, p) => {
+    if (p.badge) acc[p.badge] = (acc[p.badge] ?? 0) + 1;
+    return acc;
+  }, {});
+  const tagged = products.filter((p) => p.badge).length;
+
+  const filtered = products.filter((p) => {
+    const matchSearch = !search || p.name?.toLowerCase().includes(search.toLowerCase());
+    const matchBadge = filterBadge === 'all' ? true :
+      filterBadge === 'none' ? !p.badge :
+      p.badge === filterBadge;
+    return matchSearch && matchBadge;
   });
-
-  const handleCreate = () => {
-    const newBadge: ProductBadge = {
-      id: Date.now().toString(),
-      ...formData,
-      isActive: true,
-      productsCount: 0,
-      createdAt: new Date().toISOString(),
-    };
-    setBadges([...badges, newBadge]);
-    setIsCreateOpen(false);
-    resetForm();
-  };
-
-  const handleUpdate = () => {
-    if (!editingBadge) return;
-    setBadges(badges.map(badge => 
-      badge.id === editingBadge.id 
-        ? { ...badge, ...formData }
-        : badge
-    ));
-    setEditingBadge(null);
-    resetForm();
-  };
-
-  const handleDelete = (id: string) => {
-    setBadges(badges.filter(badge => badge.id !== id));
-  };
-
-  const toggleActive = (id: string) => {
-    setBadges(badges.map(badge => 
-      badge.id === id 
-        ? { ...badge, isActive: !badge.isActive }
-        : badge
-    ));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      label: '',
-      description: '',
-      type: 'custom',
-      backgroundColor: '#000000',
-      textColor: '#FFFFFF',
-      icon: 'tag',
-      priority: badges.length + 1,
-    });
-  };
-
-  const openEdit = (badge: ProductBadge) => {
-    setEditingBadge(badge);
-    setFormData({
-      name: badge.name,
-      label: badge.label,
-      description: badge.description,
-      type: badge.type,
-      backgroundColor: badge.backgroundColor,
-      textColor: badge.textColor,
-      icon: badge.icon,
-      priority: badge.priority,
-    });
-  };
-
-  const BadgePreview = ({ badge }: { badge: Partial<ProductBadge> }) => {
-    const IconComponent = iconComponents[badge.icon || 'tag'];
-    return (
-      <div
-        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium tracking-wider"
-        style={{
-          backgroundColor: badge.backgroundColor,
-          color: badge.textColor,
-        }}
-      >
-        <IconComponent size={12} />
-        {badge.label}
-      </div>
-    );
-  };
-
-  const totalActive = badges.filter(b => b.isActive).length;
-  const totalProducts = badges.reduce((sum, b) => sum + b.productsCount, 0);
 
   return (
     <AdminLayout>
-      <div className="page-container-lg p-6">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8 flex items-center justify-between"
-        >
-          <div>
-            <h1 className="text-3xl font-light tracking-wider mb-2">BADGE MANAGEMENT</h1>
-            <p className="text-muted-foreground">Create and manage product badges and labels</p>
-          </div>
-
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-2">
-                <Plus size={20} />
-                Create Badge
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Create New Badge</DialogTitle>
-                <DialogDescription>
-                  Design a custom badge to highlight special products
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Badge Name (Internal)</Label>
-                    <Input
-                      placeholder={PH.badgeInternalName}
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Display Label</Label>
-                    <Input
-                      placeholder={PH.badgeDisplayLabel}
-                      value={formData.label}
-                      onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Textarea
-                    placeholder={PH.badgeUsageDescription}
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Type</Label>
-                    <Select value={formData.type} onValueChange={(value: any) => setFormData({ ...formData, type: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="new">New Arrival</SelectItem>
-                        <SelectItem value="sale">On Sale</SelectItem>
-                        <SelectItem value="trending">Trending</SelectItem>
-                        <SelectItem value="limited">Limited Edition</SelectItem>
-                        <SelectItem value="exclusive">Exclusive</SelectItem>
-                        <SelectItem value="custom">Custom</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Icon</Label>
-                    <Select value={formData.icon} onValueChange={(value: any) => setFormData({ ...formData, icon: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="star">Star</SelectItem>
-                        <SelectItem value="flame">Flame</SelectItem>
-                        <SelectItem value="zap">Zap</SelectItem>
-                        <SelectItem value="clock">Clock</SelectItem>
-                        <SelectItem value="percent">Percent</SelectItem>
-                        <SelectItem value="trending-up">Trending Up</SelectItem>
-                        <SelectItem value="award">Award</SelectItem>
-                        <SelectItem value="tag">Tag</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label>Background Color</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="color"
-                        value={formData.backgroundColor}
-                        onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })}
-                        className="w-16 h-10 p-1"
-                      />
-                      <Input
-                        value={formData.backgroundColor}
-                        onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })}
-                        placeholder="#000000"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Text Color</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="color"
-                        value={formData.textColor}
-                        onChange={(e) => setFormData({ ...formData, textColor: e.target.value })}
-                        className="w-16 h-10 p-1"
-                      />
-                      <Input
-                        value={formData.textColor}
-                        onChange={(e) => setFormData({ ...formData, textColor: e.target.value })}
-                        placeholder="#FFFFFF"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Priority</Label>
-                    <Input
-                      type="number"
-                      value={formData.priority}
-                      onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) })}
-                      min="1"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Preview</Label>
-                  <div className="p-4 border rounded-lg bg-muted/30">
-                    <BadgePreview badge={formData} />
-                  </div>
-                </div>
-              </div>
-
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleCreate}>
-                  Create Badge
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </motion.div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Total Badges</p>
-                  <p className="text-2xl font-light">{badges.length}</p>
-                </div>
-                <Tag className="text-muted-foreground" size={24} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Active Badges</p>
-                  <p className="text-2xl font-light">{totalActive}</p>
-                </div>
-                <Eye className="text-green-500" size={24} />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Products Tagged</p>
-                  <p className="text-2xl font-light">{totalProducts}</p>
-                </div>
-                <Award className="text-[#B4770E]" size={24} />
-              </div>
-            </CardContent>
-          </Card>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Product Badges</h1>
+          <p className="text-gray-500 mt-1">Assign and manage badge labels on products</p>
         </div>
 
-        {/* Badges List */}
-        <div className="grid grid-cols-1 gap-4">
-          {badges.map((badge) => {
-            const IconComponent = iconComponents[badge.icon];
-            return (
-              <motion.div
-                key={badge.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                <Card className={!badge.isActive ? 'opacity-50' : ''}>
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-6">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <BadgePreview badge={badge} />
-                          {!badge.isActive && (
-                            <Badge variant="outline" className="text-muted-foreground">
-                              <EyeOff size={12} className="mr-1" />
-                              Inactive
-                            </Badge>
+        {/* Summary */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="pt-5">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 rounded-lg"><Award size={18} className="text-amber-600" /></div>
+                <div>
+                  <p className="text-xs text-gray-500">Badged Products</p>
+                  <p className="text-xl font-bold">{tagged}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          {Object.entries(badgeCounts).slice(0, 3).map(([badge, count]) => (
+            <Card key={badge}>
+              <CardContent className="pt-5">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-gray-100 rounded-lg"><Tag size={18} className="text-gray-600" /></div>
+                  <div>
+                    <p className="text-xs text-gray-500">{badge}</p>
+                    <p className="text-xl font-bold">{count}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Table */}
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+              <CardTitle className="text-base">All Products</CardTitle>
+              <div className="flex gap-2">
+                <div className="relative">
+                  <Search size={14} className="absolute left-2.5 top-2.5 text-gray-400" />
+                  <Input placeholder="Search…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 w-44" />
+                </div>
+                <Select value={filterBadge} onValueChange={setFilterBadge}>
+                  <SelectTrigger className="h-8 w-36"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All badges</SelectItem>
+                    <SelectItem value="none">No badge</SelectItem>
+                    {BADGE_OPTIONS.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="text-center py-10 text-gray-400">Loading…</div>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-10 text-gray-400 text-sm">No products match</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Badge</TableHead>
+                    <TableHead />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {(p.images?.[0] ?? p.image) && (
+                            <img src={p.images?.[0] ?? p.image} alt={p.name} className="w-8 h-8 rounded object-cover bg-gray-100 flex-shrink-0" />
                           )}
+                          <span className="font-medium text-sm line-clamp-1">{p.name}</span>
                         </div>
-                        <h3 className="font-medium tracking-wide mb-1">{badge.name}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">{badge.description}</p>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span className="capitalize">{badge.type} Badge</span>
-                          <span>•</span>
-                          <span>Priority: {badge.priority}</span>
-                          <span>•</span>
-                          <span>{badge.productsCount} Products</span>
-                          <span>•</span>
-                          <span>Created {new Date(badge.createdAt).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-2 pr-4 border-r">
-                          <Label className="text-sm">Active</Label>
-                          <Switch
-                            checked={badge.isActive}
-                            onCheckedChange={() => toggleActive(badge.id)}
-                          />
-                        </div>
-
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button variant="outline" size="sm" onClick={() => openEdit(badge)}>
-                              <Edit size={16} className="mr-2" />
-                              Edit
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle>Edit Badge</DialogTitle>
-                              <DialogDescription>
-                                Update badge settings and appearance
-                              </DialogDescription>
-                            </DialogHeader>
-
-                            <div className="space-y-4 py-4">
-                              {/* Same form as create */}
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                  <Label>Badge Name (Internal)</Label>
-                                  <Input
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                  />
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label>Display Label</Label>
-                                  <Input
-                                    value={formData.label}
-                                    onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label>Description</Label>
-                                <Textarea
-                                  value={formData.description}
-                                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                />
-                              </div>
-
-                              <div className="grid grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                  <Label>Background</Label>
-                                  <Input
-                                    type="color"
-                                    value={formData.backgroundColor}
-                                    onChange={(e) => setFormData({ ...formData, backgroundColor: e.target.value })}
-                                  />
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label>Text Color</Label>
-                                  <Input
-                                    type="color"
-                                    value={formData.textColor}
-                                    onChange={(e) => setFormData({ ...formData, textColor: e.target.value })}
-                                  />
-                                </div>
-
-                                <div className="space-y-2">
-                                  <Label>Priority</Label>
-                                  <Input
-                                    type="number"
-                                    value={formData.priority}
-                                    onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) })}
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label>Preview</Label>
-                                <div className="p-4 border rounded-lg bg-muted/30">
-                                  <BadgePreview badge={formData} />
-                                </div>
-                              </div>
-                            </div>
-
-                            <DialogFooter>
-                              <Button variant="outline" onClick={() => setEditingBadge(null)}>
-                                Cancel
-                              </Button>
-                              <Button onClick={handleUpdate}>
-                                Update Badge
-                              </Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDelete(badge.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 size={16} />
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">{p.category ?? '—'}</TableCell>
+                      <TableCell className="text-sm">${(p.price ?? 0).toFixed(2)}</TableCell>
+                      <TableCell>
+                        {p.badge ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${BADGE_COLORS[p.badge] ?? 'bg-gray-100 text-gray-700'}`}>
+                              {p.badge}
+                            </span>
+                            <button
+                              onClick={() => removeBadge(p)}
+                              className="text-gray-400 hover:text-red-500 transition-colors"
+                              title="Remove badge"
+                            >
+                              <X size={12} />
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-400">None</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => openEdit(p)}>
+                          {p.badge ? 'Change' : 'Add Badge'}
                         </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
-        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      <Dialog open={!!editProduct} onOpenChange={(o) => !o && setEditProduct(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Set Badge</DialogTitle>
+            <p className="text-sm text-gray-500 truncate">{editProduct?.name}</p>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <Select value={newBadge} onValueChange={setNewBadge}>
+              <SelectTrigger><SelectValue placeholder="Select badge…" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No badge</SelectItem>
+                {BADGE_OPTIONS.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                <SelectItem value="__custom__">Custom…</SelectItem>
+              </SelectContent>
+            </Select>
+            {newBadge === '__custom__' && (
+              <Input
+                placeholder="Enter custom badge text"
+                value={customBadge}
+                onChange={(e) => setCustomBadge(e.target.value)}
+                maxLength={30}
+              />
+            )}
+            {newBadge && newBadge !== '__custom__' && (
+              <div className="p-3 bg-gray-50 rounded-lg flex items-center justify-center">
+                <span className={`text-sm px-3 py-1 rounded-full font-medium ${BADGE_COLORS[newBadge] ?? 'bg-gray-100 text-gray-700'}`}>
+                  {newBadge}
+                </span>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditProduct(null)}>Cancel</Button>
+            <Button onClick={saveBadge} disabled={saving}>
+              {saving ? 'Saving…' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }

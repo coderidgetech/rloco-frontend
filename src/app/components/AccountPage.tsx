@@ -998,7 +998,6 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                           </motion.div>
                         )}
 
-                        {/* Payment tab: no saved-cards API yet — honest copy + checkout CTA */}
                         {activeTab === 'payment' && (
                           <motion.div
                             key="payment"
@@ -1007,34 +1006,80 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                             exit={{ opacity: 0, y: -20 }}
                             className="space-y-6"
                           >
-                            <h2 className="text-2xl mb-2">Payment</h2>
-                            <p className="text-sm text-muted-foreground max-w-xl">
-                              Saved payment methods are not stored in your account yet. Pay with a card at checkout using
-                              Stripe (secure); cash on delivery is available where offered.
-                            </p>
-                            <div className="bg-muted/30 rounded-xl p-8 flex flex-col items-center text-center gap-4">
-                              <CreditCard size={48} className="text-muted-foreground" />
-                              <p className="text-sm text-muted-foreground max-w-md">
-                                Use <span className="font-medium text-foreground">Checkout</span> to enter card details.
-                                Card data is handled by Stripe and is not typed into this account screen.
-                              </p>
-                              <motion.button
-                                type="button"
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => navigate('/cart')}
-                                className="px-6 py-3 bg-primary text-primary-foreground rounded-lg"
-                              >
-                                Go to cart
-                              </motion.button>
+                            <div className="flex items-center justify-between">
+                              <h2 className="text-2xl">Payment History</h2>
                             </div>
-                            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-6 flex items-start gap-3">
-                              <ShieldCheck size={24} className="text-blue-600 flex-shrink-0" />
+
+                            {/* Security note */}
+                            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 flex items-start gap-3">
+                              <ShieldCheck size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
                               <p className="text-sm text-blue-600/90">
-                                We never ask you to enter full card numbers on account pages. Only use the checkout payment
-                                step.
+                                Card payments are processed securely by Stripe. Card details are never stored in your account.
                               </p>
                             </div>
+
+                            {/* Transaction list */}
+                            {transactionsLoading ? (
+                              <div className="space-y-3">
+                                {[...Array(3)].map((_, i) => (
+                                  <div key={i} className="h-16 bg-muted/30 rounded-xl animate-pulse" />
+                                ))}
+                              </div>
+                            ) : transactions.length === 0 ? (
+                              <div className="bg-muted/30 rounded-xl p-8 flex flex-col items-center text-center gap-4">
+                                <CreditCard size={40} className="text-muted-foreground" />
+                                <p className="text-sm text-muted-foreground">No payment history yet. Complete an order to see it here.</p>
+                                <motion.button
+                                  type="button"
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                  onClick={() => navigate('/cart')}
+                                  className="px-5 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm"
+                                >
+                                  Shop now
+                                </motion.button>
+                              </div>
+                            ) : (
+                              <div className="space-y-3">
+                                {transactions.map((tx) => {
+                                  const statusColor = tx.status === 'succeeded'
+                                    ? 'bg-green-100 text-green-700'
+                                    : tx.status === 'pending'
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : 'bg-red-100 text-red-700';
+                                  const methodLabel = tx.gateway === 'cod' ? 'Cash on Delivery' :
+                                    tx.gateway === 'stripe' ? 'Card / UPI' : tx.gateway;
+                                  return (
+                                    <motion.div
+                                      key={tx.id}
+                                      initial={{ opacity: 0, y: 8 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      className="flex items-center justify-between p-4 bg-background border border-border rounded-xl"
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-muted rounded-lg">
+                                          <CreditCard size={16} className="text-muted-foreground" />
+                                        </div>
+                                        <div>
+                                          <p className="text-sm font-medium">Order #{tx.order_id?.slice(-8).toUpperCase()}</p>
+                                          <p className="text-xs text-muted-foreground">
+                                            {methodLabel} · {new Date(tx.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-3">
+                                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColor}`}>
+                                          {tx.status}
+                                        </span>
+                                        <span className="text-sm font-semibold">
+                                          {tx.currency === 'INR' ? '₹' : '$'}{tx.amount.toLocaleString()}
+                                        </span>
+                                      </div>
+                                    </motion.div>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </motion.div>
                         )}
 

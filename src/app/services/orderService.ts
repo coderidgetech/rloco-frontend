@@ -26,6 +26,11 @@ export const orderService = {
     return response.data;
   },
 
+  async cancel(id: string): Promise<Order> {
+    const response = await api.post<Order>(`/orders/${id}/cancel`);
+    return response.data;
+  },
+
   async updateStatus(id: string, status: string): Promise<Order> {
     const response = await api.put<Order>(`/orders/${id}/status`, { status });
     return response.data;

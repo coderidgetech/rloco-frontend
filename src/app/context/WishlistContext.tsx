@@ -14,6 +14,7 @@ interface WishlistItem {
   category: string;
   gender: 'women' | 'men' | 'unisex';
   colors?: string[];
+  sizes?: string[];
   onSale?: boolean;
   newArrival?: boolean;
   featured?: boolean;
@@ -30,13 +31,35 @@ interface WishlistContextType {
   itemCount: number;
 }
 
+const STORAGE_KEY = 'rloco_wishlist';
+
+const loadFromStorage = (): WishlistItem[] => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveToStorage = (items: WishlistItem[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  } catch {}
+};
+
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
   const { isAuthenticated } = useUser();
   const { market } = useCurrency();
-  const [items, setItems] = useState<WishlistItem[]>([]);
+  const [items, setItems] = useState<WishlistItem[]>(() => loadFromStorage());
   const [loading, setLoading] = useState(false);
+
+  // Persist to localStorage whenever items change
+  useEffect(() => {
+    saveToStorage(items);
+  }, [items]);
 
   // Sync wishlist with backend when authenticated
   useEffect(() => {
@@ -72,12 +95,22 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
           category: p.category,
           gender: p.gender,
           colors: p.colors,
+          sizes: p.sizes,
           onSale: p.on_sale,
           newArrival: p.new_arrival,
           featured: p.featured,
         }));
 
-      setItems(mappedItems);
+      // Merge: keep guest items not already on server, then upload them
+      setItems((prev) => {
+        const serverIds = new Set(mappedItems.map((i) => String(i.id)));
+        const guestOnly = prev.filter((i) => !serverIds.has(String(i.id)));
+        // Fire-and-forget: upload guest-only items to server
+        guestOnly.forEach((item) => {
+          wishlistService.addToWishlist(String(item.id)).catch(() => {});
+        });
+        return [...mappedItems, ...guestOnly];
+      });
     } catch (error) {
       if (!isUnauthorizedApiError(error)) {
         console.error('Failed to sync wishlist:', error);

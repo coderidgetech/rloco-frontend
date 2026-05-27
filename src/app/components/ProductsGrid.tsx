@@ -71,6 +71,7 @@ export function ProductsGrid() {
         category: product.category,
         gender: product.gender,
         colors: product.colors,
+        sizes: product.sizes,
         onSale: product.on_sale,
         newArrival: product.new_arrival,
         featured: product.featured,

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, ShoppingBag, Trash2, ArrowLeft, SlidersHorizontal, Grid3x3, List, X, ChevronDown } from 'lucide-react';
+import { Heart, ShoppingBag, Trash2, ArrowLeft, SlidersHorizontal, Grid3x3, List, X } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 import { useCart } from '../context/CartContext';
 import { toast } from 'sonner';
@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Footer } from '../components/Footer';
 import { PH } from '../lib/formPlaceholders';
+import { AddToBagPopover } from '../components/AddToBagPopover';
 
 type ViewMode = 'grid' | 'list';
 type SortOption = 'recent' | 'price-low' | 'price-high' | 'name';
@@ -72,15 +73,27 @@ export function WishlistPage() {
     }
   });
 
-  const handleAddToCart = (item: typeof items[0]) => {
+  const [popoverItemId, setPopoverItemId] = useState<string | number | null>(null);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
+
+  const openPopover = (item: typeof items[0]) => {
+    setSelectedSize(item.sizes?.[0] || 'M');
+    setSelectedColor(item.colors?.[0] || 'Default');
+    setPopoverItemId(item.id);
+  };
+
+  const handleConfirm = (item: typeof items[0]) => {
     addToCart({
       id: item.id,
       name: item.name,
       price: item.price,
       image: item.image,
-      size: 'M', // Default size
+      size: selectedSize || item.sizes?.[0] || 'M',
     });
-    toast.success('Added to cart');
+    removeFromWishlist(item.id);
+    toast.success('Added to bag');
+    setPopoverItemId(null);
   };
 
   const handleAddAllToCart = () => {
@@ -90,7 +103,7 @@ export function WishlistPage() {
         name: item.name,
         price: item.price,
         image: item.image,
-        size: 'M',
+        size: item.sizes?.[0] || 'M',
       });
     });
     toast.success(`${sortedItems.length} items added to cart!`);
@@ -526,15 +539,27 @@ export function WishlistPage() {
                             <p className="text-sm text-muted-foreground mb-3">{item.category}</p>
                             <div className="flex items-center justify-between">
                               <span className="font-semibold text-lg">₹{(item as any).priceINR || item.price * 75}</span>
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => handleAddToCart(item)}
-                                className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2"
-                              >
-                                <ShoppingBag size={16} />
-                                Add
-                              </motion.button>
+                              <div className="relative">
+                                <AddToBagPopover
+                                  isOpen={popoverItemId === item.id}
+                                  product={item as any}
+                                  selectedSize={selectedSize}
+                                  selectedColor={selectedColor}
+                                  onSizeChange={setSelectedSize}
+                                  onColorChange={setSelectedColor}
+                                  onConfirm={() => handleConfirm(item)}
+                                  onCancel={() => setPopoverItemId(null)}
+                                />
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => openPopover(item)}
+                                  className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2"
+                                >
+                                  <ShoppingBag size={16} />
+                                  Add
+                                </motion.button>
+                              </div>
                             </div>
                           </div>
                         </motion.div>
@@ -574,15 +599,27 @@ export function WishlistPage() {
                             <p className="font-semibold text-xl">₹{(item as any).priceINR || item.price * 75}</p>
                           </div>
                           <div className="flex flex-col gap-2 justify-center">
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => handleAddToCart(item)}
-                              className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 whitespace-nowrap"
-                            >
-                              <ShoppingBag size={16} />
-                              Add to Bag
-                            </motion.button>
+                            <div className="relative">
+                              <AddToBagPopover
+                                isOpen={popoverItemId === item.id}
+                                product={item as any}
+                                selectedSize={selectedSize}
+                                selectedColor={selectedColor}
+                                onSizeChange={setSelectedSize}
+                                onColorChange={setSelectedColor}
+                                onConfirm={() => handleConfirm(item)}
+                                onCancel={() => setPopoverItemId(null)}
+                              />
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => openPopover(item)}
+                                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 whitespace-nowrap"
+                              >
+                                <ShoppingBag size={16} />
+                                Add to Bag
+                              </motion.button>
+                            </div>
                             <motion.button
                               whileHover={{ scale: 1.05 }}
                               whileTap={{ scale: 0.95 }}

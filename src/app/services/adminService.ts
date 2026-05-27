@@ -284,4 +284,28 @@ export const adminService = {
     const response = await api.get('/admin/analytics/recommendations');
     return response.data;
   },
+
+  // Shipping Admin – read
+  async listShippingMethods(): Promise<ShippingMethod[]> {
+    const response = await api.get<ShippingMethod[]>('/admin/shipping/methods', { params: { active_only: false } });
+    return response.data ?? [];
+  },
+
+  // Tax Admin – read
+  async listTaxRates(): Promise<TaxRate[]> {
+    const response = await api.get<TaxRate[]>('/admin/tax/rates', { params: { active_only: false } });
+    return response.data ?? [];
+  },
+
+  // Support Admin – reply to a ticket
+  async addAdminMessage(ticketId: string, message: string): Promise<any> {
+    const response = await api.post(`/support/tickets/${ticketId}/messages`, { message });
+    return response.data;
+  },
+
+  // Support Admin – get full ticket (user-facing route, handler checks role for admin access)
+  async getSupportTicket(ticketId: string): Promise<any> {
+    const response = await api.get(`/support/tickets/${ticketId}`);
+    return response.data;
+  },
 };

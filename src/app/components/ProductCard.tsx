@@ -1,11 +1,13 @@
 import { motion } from 'motion/react';
 import { Heart, ShoppingBag, Check } from 'lucide-react';
+import { useState } from 'react';
 import { Product } from '../types/product';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { AddToBagPopover } from './AddToBagPopover';
 
 interface ProductCardProps {
   product: Product;
@@ -19,24 +21,39 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
   const { formatPrice } = useCurrency();
   const navigate = useNavigate();
 
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
+
   const isWishlisted = isInWishlist(product.id);
   const isInCart = items.some(item => item.id === product.id);
+  const isOutOfStock = product.stock != null
+    && Object.keys(product.stock).length > 0
+    && Object.values(product.stock).every(qty => qty <= 0);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isOutOfStock) return;
     if (isInCart) {
       navigate('/cart');
       return;
     }
+    setSelectedSize(product.sizes?.[0] || 'M');
+    setSelectedColor(product.colors?.[0] || 'Default');
+    setPopoverOpen(true);
+  };
+
+  const handleConfirm = () => {
     addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
       priceINR: product.price_inr || product.priceINR,
       image: product.images?.[0] || product.image || '',
-      size: product.sizes?.[0] || 'M',
+      size: selectedSize || product.sizes?.[0] || 'M',
     });
     toast.success('Added to bag');
+    setPopoverOpen(false);
   };
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
@@ -53,6 +70,7 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
         category: product.category,
         gender: product.gender,
         colors: product.colors,
+        sizes: product.sizes,
         onSale: product.on_sale || product.onSale,
         newArrival: product.new_arrival || product.newArrival,
         featured: product.featured,
@@ -91,15 +109,23 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
 
         {/* Badges */}
         <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
-          {(product.new_arrival || product.newArrival) && (
-            <span className="px-2 py-0.5 bg-primary text-primary-foreground text-[10px] tracking-wider uppercase rounded-sm">
-              New
+          {isOutOfStock ? (
+            <span className="px-2 py-0.5 bg-foreground/70 text-background text-[10px] tracking-wider uppercase rounded-sm">
+              Out of stock
             </span>
-          )}
-          {(product.on_sale || product.onSale) && (
-            <span className="px-2 py-0.5 bg-red-600 text-white text-[10px] tracking-wider uppercase rounded-sm">
-              Sale
-            </span>
+          ) : (
+            <>
+              {(product.new_arrival || product.newArrival) && (
+                <span className="px-2 py-0.5 bg-primary text-primary-foreground text-[10px] tracking-wider uppercase rounded-sm">
+                  New
+                </span>
+              )}
+              {(product.on_sale || product.onSale) && (
+                <span className="px-2 py-0.5 bg-red-600 text-white text-[10px] tracking-wider uppercase rounded-sm">
+                  Sale
+                </span>
+              )}
+            </>
           )}
         </div>
 
@@ -135,18 +161,33 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
               </span>
             )}
           </div>
-          <motion.button
-            type="button"
-            onClick={handleAddToCart}
-            whileTap={{ scale: 0.85 }}
-            className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center shadow-sm transition-colors ${
-              isInCart
-                ? 'bg-green-500 text-white'
-                : 'bg-foreground text-background hover:opacity-80'
-            }`}
-          >
-            {isInCart ? <Check size={12} strokeWidth={2.5} /> : <ShoppingBag size={12} />}
-          </motion.button>
+          <div className="relative shrink-0">
+            <AddToBagPopover
+              isOpen={popoverOpen}
+              product={product as any}
+              selectedSize={selectedSize}
+              selectedColor={selectedColor}
+              onSizeChange={setSelectedSize}
+              onColorChange={setSelectedColor}
+              onConfirm={handleConfirm}
+              onCancel={() => setPopoverOpen(false)}
+            />
+            <motion.button
+              type="button"
+              onClick={handleAddToCart}
+              whileTap={isOutOfStock ? undefined : { scale: 0.85 }}
+              disabled={isOutOfStock}
+              className={`w-7 h-7 rounded-full flex items-center justify-center shadow-sm transition-colors ${
+                isOutOfStock
+                  ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                  : isInCart
+                  ? 'bg-green-500 text-white'
+                  : 'bg-foreground text-background hover:opacity-80'
+              }`}
+            >
+              {isInCart ? <Check size={12} strokeWidth={2.5} /> : <ShoppingBag size={12} />}
+            </motion.button>
+          </div>
         </div>
       </div>
     </motion.div>

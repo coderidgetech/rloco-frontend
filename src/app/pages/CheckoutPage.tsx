@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Check, CreditCard, Truck, ArrowLeft, ShieldCheck, Smartphone, Wallet, Banknote, AlertCircle, MapPin, Plus, Home, Briefcase } from 'lucide-react';
+import { Check, CreditCard, Truck, ArrowLeft, ShieldCheck, Smartphone, Wallet, Banknote, AlertCircle, MapPin, Plus, Home, Briefcase, Tag, X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { useUser } from '../context/UserContext';
@@ -21,9 +21,10 @@ import { AddressAutocompleteInput, lookupZipCode } from '../components/AddressAu
 import { CreateOrderRequest } from '../types/api';
 import type { Order } from '../types/api';
 import { PH } from '../lib/formPlaceholders';
-import { expectedCurrencyForCountry, isCountryCurrencyMatch, normalizeCountry } from '../lib/market';
+import { normalizeCountry } from '../lib/market';
 import { getApiErrorMessage } from '../lib/apiErrors';
 import { checkoutIdempotencyKey } from '../lib/checkoutIdempotency';
+import { promotionService } from '../services/promotionService';
 
 interface ShippingInfo {
   firstName: string;
@@ -51,7 +52,7 @@ export function CheckoutPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAuthenticated, user } = useUser();
   const { items, total, clearCart, giftPackingCharge } = useCart();
-  const { formatAmount, formatPrice, convertPrice, currency, country: storefrontCountry } = useCurrency();
+  const { formatAmount, formatPrice, convertPrice, currency } = useCurrency();
   const giftPackingDisplay = currency === 'INR' ? giftPackingCharge : giftPackingCharge / 75;
   const [currentStep, setCurrentStep] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -120,9 +121,17 @@ export function CheckoutPage() {
   const [selectedWallet, setSelectedWallet] = useState('Paytm');
 
   // Cost calculation states
+  const [shippingMethods, setShippingMethods] = useState<import('../types/api').ShippingMethod[]>([]);
+  const [selectedShippingMethodId, setSelectedShippingMethodId] = useState<string | null>(null);
   const [shippingCost, setShippingCost] = useState(0);
   const [shippingCostCurrency, setShippingCostCurrency] = useState<'USD' | 'INR'>('USD');
   const [taxAmount, setTaxAmount] = useState(0);
+
+  // Coupon state
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountUSD: number } | null>(null);
+  const [couponError, setCouponError] = useState('');
+  const [couponLoading, setCouponLoading] = useState(false);
 
   // Error states
   const [shippingErrors, setShippingErrors] = useState<Partial<Record<keyof ShippingInfo, string>>>({});
@@ -238,7 +247,10 @@ export function CheckoutPage() {
   };
   const shippingDisplay = convertBetweenCurrencies(shippingCost, shippingCostCurrency, currency);
   const taxDisplay = currency === 'INR' ? taxAmount * USD_TO_INR : taxAmount;
-  const finalTotal = subtotal + shippingDisplay + taxDisplay + giftPackingDisplay;
+  const couponDiscountDisplay = appliedCoupon
+    ? convertBetweenCurrencies(appliedCoupon.discountUSD, 'USD', currency)
+    : 0;
+  const finalTotal = Math.max(0, subtotal + shippingDisplay + taxDisplay + giftPackingDisplay - couponDiscountDisplay);
 
   // USD subtotal for backend APIs (shipping/tax return USD amounts)
   const subtotalUSD = total;
@@ -263,9 +275,13 @@ export function CheckoutPage() {
             weight: cartWeightLb > 0 ? cartWeightLb : DEFAULT_ITEM_WEIGHT_LB,
           });
           if (shippingMethods.length > 0) {
-            setShippingCost(shippingMethods[0].base_cost || 0);
-            setShippingCostCurrency((shippingMethods[0].currency?.toUpperCase() as 'USD' | 'INR') || 'USD');
+            setShippingMethods(shippingMethods);
+            const first = shippingMethods[0];
+            setSelectedShippingMethodId((prev) => prev ?? first.id);
+            setShippingCost(first.base_cost || 0);
+            setShippingCostCurrency((first.currency?.toUpperCase() as 'USD' | 'INR') || 'USD');
           } else {
+            setShippingMethods([]);
             setShippingCostCurrency('USD');
           }
 
@@ -351,9 +367,6 @@ export function CheckoutPage() {
   const validateShipping = () => {
     const errors: Partial<Record<keyof ShippingInfo, string>> = {};
     const normalizedShippingCountry = normalizeCountry(shippingInfo.country);
-    const hasCountryMismatch =
-      !!normalizedShippingCountry &&
-      (!isCountryCurrencyMatch(normalizedShippingCountry, currency) || normalizedShippingCountry !== storefrontCountry);
 
     // When a saved address card is selected, only verify email (address data is trusted)
     if (selectedAddressId && !showNewAddressForm) {
@@ -364,8 +377,6 @@ export function CheckoutPage() {
       }
       if (!normalizedShippingCountry) {
         errors.country = 'Only India and United States are supported currently';
-      } else if (hasCountryMismatch) {
-        errors.country = `Address country (${normalizedShippingCountry}) must match selected market (${storefrontCountry})`;
       }
       setShippingErrors(errors);
       return Object.keys(errors).length === 0;
@@ -403,8 +414,6 @@ export function CheckoutPage() {
     } else {
       if (!normalizedShippingCountry) {
         errors.country = 'Only India and United States are supported currently';
-      } else if (hasCountryMismatch) {
-        errors.country = `Address country (${normalizedShippingCountry}) must match selected market (${storefrontCountry})`;
       }
     }
 
@@ -445,6 +454,27 @@ export function CheckoutPage() {
 
   const handleBack = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
+  };
+
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) return;
+    setCouponError('');
+    setCouponLoading(true);
+    try {
+      const result = await promotionService.validate(code, subtotalUSD);
+      if (result.valid && result.discount != null && result.discount > 0) {
+        setAppliedCoupon({ code, discountUSD: result.discount });
+        setCouponInput('');
+        toast.success(`Coupon applied — ${formatAmount(convertBetweenCurrencies(result.discount, 'USD', currency))} off`);
+      } else {
+        setCouponError('Invalid or expired coupon code');
+      }
+    } catch {
+      setCouponError('Could not validate coupon. Please try again.');
+    } finally {
+      setCouponLoading(false);
+    }
   };
 
   const handlePlaceOrder = async () => {
@@ -509,7 +539,8 @@ export function CheckoutPage() {
                        paymentMethod === 'upi' ? 'upi' : 
                        paymentMethod === 'wallet' ? 'wallet' : 
                        'cod',
-        ...(giftPackingCharge > 0 && { gift_packing_charge: giftPackingCharge }),
+        ...(giftPackingCharge > 0 && { gift_packing_charge: giftPackingDisplay }),
+        ...(appliedCoupon && { promotion_code: appliedCoupon.code }),
       };
 
       // Create order (gateway check already passed above — no dangling orders)
@@ -518,7 +549,7 @@ export function CheckoutPage() {
       // Card → Stripe Elements (secure card capture on next screen)
       if (usesStripe) {
         try {
-          const paymentCurrency = expectedCurrencyForCountry(shippingInfo.country) ?? currency;
+          const paymentCurrency = currency;
           const paymentIntent = await paymentService.createPaymentIntent({
             order_id: order.id,
             amount: order.total,
@@ -991,13 +1022,52 @@ export function CheckoutPage() {
                             </div>
                           )}
 
-                          <div className="bg-foreground/5 p-3 border border-foreground/10 mt-2">
-                            <div className="flex items-center gap-2 text-xs text-foreground/60 mb-1">
-                              <Truck size={14} />
-                              <span className="uppercase tracking-wider">Free Shipping</span>
+                          {shippingMethods.length > 0 ? (
+                            <div className="mt-2 space-y-2">
+                              <p className="text-xs uppercase tracking-wider text-foreground/60 flex items-center gap-1.5"><Truck size={13} /> Shipping Method</p>
+                              {shippingMethods.map((method) => {
+                                const cost = convertBetweenCurrencies(method.base_cost || 0, (method.currency?.toUpperCase() || 'USD') as 'USD' | 'INR', currency);
+                                const isSelected = selectedShippingMethodId === method.id;
+                                return (
+                                  <label
+                                    key={method.id}
+                                    className={`flex items-center justify-between gap-3 p-3 border cursor-pointer transition-colors ${
+                                      isSelected ? 'border-foreground bg-foreground/5' : 'border-foreground/10 hover:border-foreground/30'
+                                    }`}
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      <input
+                                        type="radio"
+                                        name="shippingMethod"
+                                        checked={isSelected}
+                                        onChange={() => {
+                                          setSelectedShippingMethodId(method.id);
+                                          setShippingCost(method.base_cost || 0);
+                                          setShippingCostCurrency((method.currency?.toUpperCase() as 'USD' | 'INR') || 'USD');
+                                        }}
+                                        className="shrink-0 accent-foreground"
+                                      />
+                                      <div className="min-w-0">
+                                        <p className="text-xs font-medium truncate">{method.name}</p>
+                                        <p className="text-[11px] text-foreground/50">{method.estimated_days} days · {method.carrier}</p>
+                                      </div>
+                                    </div>
+                                    <span className="text-xs font-medium shrink-0">
+                                      {cost > 0 ? formatAmount(cost) : <span className="text-green-600">FREE</span>}
+                                    </span>
+                                  </label>
+                                );
+                              })}
                             </div>
-                            <p className="text-xs text-foreground/50">Delivery in 5-7 business days</p>
-                          </div>
+                          ) : (
+                            <div className="bg-foreground/5 p-3 border border-foreground/10 mt-2">
+                              <div className="flex items-center gap-2 text-xs text-foreground/60 mb-1">
+                                <Truck size={14} />
+                                <span className="uppercase tracking-wider">Free Shipping</span>
+                              </div>
+                              <p className="text-xs text-foreground/50">Delivery in 5-7 business days</p>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -1351,6 +1421,39 @@ export function CheckoutPage() {
                 </div>
 
                 <div className="p-4 border-t border-foreground/10 bg-foreground/[0.02]">
+                  {/* Coupon input */}
+                  {!appliedCoupon ? (
+                    <div className="mb-3">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={couponInput}
+                          onChange={(e) => { setCouponInput(e.target.value.toUpperCase()); setCouponError(''); }}
+                          onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                          placeholder="Promo code"
+                          className="flex-1 px-3 py-1.5 text-xs border border-foreground/20 rounded bg-background focus:outline-none focus:border-primary"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleApplyCoupon}
+                          disabled={couponLoading || !couponInput.trim()}
+                          className="px-3 py-1.5 text-xs bg-foreground text-background rounded hover:opacity-80 disabled:opacity-40 transition-opacity flex items-center gap-1"
+                        >
+                          <Tag size={11} />
+                          {couponLoading ? '...' : 'Apply'}
+                        </button>
+                      </div>
+                      {couponError && <p className="text-xs text-red-500 mt-1">{couponError}</p>}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between mb-3 px-2 py-1.5 bg-green-500/10 rounded text-xs text-green-700 dark:text-green-400">
+                      <span className="flex items-center gap-1"><Tag size={11} /> <strong>{appliedCoupon.code}</strong> applied</span>
+                      <button type="button" onClick={() => setAppliedCoupon(null)} className="hover:opacity-70">
+                        <X size={13} />
+                      </button>
+                    </div>
+                  )}
+
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between text-foreground/60">
                       <span>Subtotal</span>
@@ -1370,6 +1473,12 @@ export function CheckoutPage() {
                       <span>Shipping</span>
                       <span>{shippingDisplay > 0 ? formatAmount(shippingDisplay) : <span className="text-green-600">FREE</span>}</span>
                     </div>
+                    {appliedCoupon && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Discount ({appliedCoupon.code})</span>
+                        <span>−{formatAmount(couponDiscountDisplay)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between pt-2 border-t border-foreground/10">
                       <span className="uppercase tracking-wider">Total</span>
                       <span className="text-lg">{formatAmount(finalTotal)}</span>

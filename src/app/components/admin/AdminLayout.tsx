@@ -29,6 +29,10 @@ import {
   Home,
   Building2,
   ClipboardList,
+  AlertTriangle,
+  Percent,
+  MessageSquare,
+  RotateCcw,
 } from 'lucide-react';
 import { cn } from '../ui/utils';
 
@@ -120,6 +124,30 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       label: 'Promotions',
       icon: Tag,
       path: '/admin/promotions',
+      permission: 'admin',
+    },
+    {
+      label: 'Support',
+      icon: MessageSquare,
+      path: '/admin/support',
+      permission: 'vendor',
+    },
+    {
+      label: 'Returns',
+      icon: RotateCcw,
+      path: '/admin/returns',
+      permission: 'admin',
+    },
+    {
+      label: 'Inventory',
+      icon: AlertTriangle,
+      path: '/admin/inventory',
+      permission: 'admin',
+    },
+    {
+      label: 'Tax & Shipping',
+      icon: Percent,
+      path: '/admin/tax-shipping',
       permission: 'admin',
     },
     {
