@@ -2,6 +2,30 @@ import api from '../lib/api';
 import { User, Product, Order, Category, Promotion, Return, ShippingMethod, TaxRate } from '../types/api';
 import { PaginatedResponse } from '../types/api';
 
+/** One product × size row from GET /admin/inventory/low-stock */
+export interface LowStockItem {
+  product_id: string;
+  name: string;
+  sku: string;
+  size: string;
+  stock: number;
+  price: number;
+  price_inr?: number;
+  category: string;
+  image: string;
+}
+
+/** One alert row from GET /admin/inventory/alerts */
+export interface StockAlert {
+  product_id: string;
+  product_name: string;
+  sku: string;
+  size: string;
+  stock: number;
+  alert_type: 'out_of_stock' | 'low';
+  created_at: string;
+}
+
 /** Response from POST /admin/vendors — vendor row plus portal login outcome. */
 export type VendorCreateResponse = {
   vendor: Record<string, unknown>;
@@ -243,14 +267,9 @@ export const adminService = {
   },
 
   // Inventory
-  async getLowStock(threshold?: number): Promise<any[]> {
-    const response = await api.get('/admin/inventory/low-stock', { params: { threshold } });
-    return response.data;
-  },
-
-  async getStockAlerts(): Promise<any[]> {
-    const response = await api.get('/admin/inventory/alerts');
-    return response.data;
+  async getLowStock(threshold?: number): Promise<LowStockItem[]> {
+    const response = await api.get<LowStockItem[]>('/admin/inventory/low-stock', { params: { threshold } });
+    return response.data ?? [];
   },
 
   // Support

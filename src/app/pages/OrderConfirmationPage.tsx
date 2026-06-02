@@ -20,9 +20,6 @@ interface OrderConfirmationPageProps {
   total?: number;
 }
 
-/** Backend stores order money fields in USD; match CurrencyContext INR fallback (×75). */
-const USD_TO_INR = 75;
-
 function orderItemInr(item: any): number | undefined {
   const v = item?.priceINR ?? item?.price_inr;
   return typeof v === 'number' && !Number.isNaN(v) ? v : undefined;
@@ -127,12 +124,12 @@ export function OrderConfirmationPage() {
     status: 'pending' as const,
   };
 
-  const usdOrderAmountToDisplay = (usd: number) =>
-    currency === 'INR' ? usd * USD_TO_INR : usd;
-  const displaySubtotal = usdOrderAmountToDisplay(orderData.subtotal);
-  const displayShipping = usdOrderAmountToDisplay(orderData.shippingCost);
-  const displayTax = usdOrderAmountToDisplay(orderData.tax);
-  const displayTotal = usdOrderAmountToDisplay(orderData.total);
+  // Backend stores order amounts in USD; use CurrencyContext.convertPrice so the
+  // exchange rate is consistent with the rest of the storefront and not duplicated.
+  const displaySubtotal = convertPrice(orderData.subtotal);
+  const displayShipping = convertPrice(orderData.shippingCost);
+  const displayTax = convertPrice(orderData.tax);
+  const displayTotal = convertPrice(orderData.total);
 
   const fullName = `${orderData.shippingInfo.firstName} ${orderData.shippingInfo.lastName}`;
 

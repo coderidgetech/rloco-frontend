@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -14,30 +14,14 @@ import {
   TableRow,
 } from '../../components/ui/table';
 import { AlertTriangle, Package, RefreshCw, Search } from 'lucide-react';
-import { adminService } from '../../services/adminService';
+import { adminService, LowStockItem } from '../../services/adminService';
+import { useCurrency } from '../../context/CurrencyContext';
 import { toast } from 'sonner';
 import { getApiErrorMessage } from '../../lib/apiErrors';
 
-interface LowStockItem {
-  id: string;
-  name: string;
-  sku?: string;
-  stock: number;
-  category?: string;
-  price?: number;
-  image?: string;
-}
-
-interface StockAlert {
-  product_id: string;
-  product_name: string;
-  stock: number;
-  alert_type: string;
-}
-
 export function AdminInventoryPage() {
+  const { formatPrice } = useCurrency();
   const [lowStock, setLowStock] = useState<LowStockItem[]>([]);
-  const [alerts, setAlerts] = useState<StockAlert[]>([]);
   const [threshold, setThreshold] = useState(10);
   const [thresholdInput, setThresholdInput] = useState('10');
   const [loading, setLoading] = useState(true);
@@ -46,12 +30,8 @@ export function AdminInventoryPage() {
   const load = useCallback(async () => {
     try {
       setLoading(true);
-      const [ls, al] = await Promise.all([
-        adminService.getLowStock(threshold),
-        adminService.getStockAlerts(),
-      ]);
-      setLowStock(ls ?? []);
-      setAlerts(al ?? []);
+      const items = await adminService.getLowStock(threshold);
+      setLowStock(items);
     } catch (err) {
       toast.error(getApiErrorMessage(err, 'Failed to load inventory data'));
     } finally {
@@ -66,15 +46,26 @@ export function AdminInventoryPage() {
     if (!isNaN(n) && n >= 0) setThreshold(n);
   };
 
-  const filtered = lowStock.filter((item) =>
-    !search || item.name?.toLowerCase().includes(search.toLowerCase())
+  // Derive alerts from the already-fetched low-stock list — no extra API call.
+  const alerts = useMemo(
+    () => lowStock.filter((item) => item.stock <= 3),
+    [lowStock],
   );
 
-  const stockLevel = (stock: number) => {
+  const filtered = useMemo(
+    () =>
+      !search
+        ? lowStock
+        : lowStock.filter((item) =>
+            item.name?.toLowerCase().includes(search.toLowerCase()),
+          ),
+    [lowStock, search],
+  );
+
+  const stockBadge = (stock: number) => {
     if (stock === 0) return <Badge variant="destructive">Out of stock</Badge>;
     if (stock <= 3) return <Badge className="bg-red-100 text-red-700">Critical</Badge>;
-    if (stock <= threshold) return <Badge className="bg-amber-100 text-amber-700">Low</Badge>;
-    return <Badge className="bg-green-100 text-green-700">OK</Badge>;
+    return <Badge className="bg-amber-100 text-amber-700">Low</Badge>;
   };
 
   return (
@@ -96,7 +87,9 @@ export function AdminInventoryPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg"><AlertTriangle size={20} className="text-amber-600" /></div>
+                <div className="p-2 bg-amber-100 rounded-lg">
+                  <AlertTriangle size={20} className="text-amber-600" />
+                </div>
                 <div>
                   <p className="text-sm text-gray-500">Low Stock Items</p>
                   <p className="text-2xl font-bold">{loading ? '—' : lowStock.length}</p>
@@ -107,10 +100,14 @@ export function AdminInventoryPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 rounded-lg"><Package size={20} className="text-red-600" /></div>
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <Package size={20} className="text-red-600" />
+                </div>
                 <div>
                   <p className="text-sm text-gray-500">Out of Stock</p>
-                  <p className="text-2xl font-bold">{loading ? '—' : lowStock.filter((i) => i.stock === 0).length}</p>
+                  <p className="text-2xl font-bold">
+                    {loading ? '—' : lowStock.filter((i) => i.stock === 0).length}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -118,9 +115,11 @@ export function AdminInventoryPage() {
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg"><AlertTriangle size={20} className="text-blue-600" /></div>
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <AlertTriangle size={20} className="text-blue-600" />
+                </div>
                 <div>
-                  <p className="text-sm text-gray-500">Active Alerts</p>
+                  <p className="text-sm text-gray-500">Critical Alerts (≤3)</p>
                   <p className="text-2xl font-bold">{loading ? '—' : alerts.length}</p>
                 </div>
               </div>
@@ -128,23 +127,30 @@ export function AdminInventoryPage() {
           </Card>
         </div>
 
-        {/* Active alerts */}
+        {/* Critical alerts */}
         {alerts.length > 0 && (
           <Card>
-            <CardHeader><CardTitle className="text-base">Stock Alerts</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-base">Critical Stock Alerts</CardTitle>
+            </CardHeader>
             <CardContent>
               <div className="space-y-2">
                 {alerts.map((a, i) => (
                   <motion.div
-                    key={i}
+                    key={`${a.product_id}-${a.size}`}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.04 }}
                     className="flex items-center justify-between p-3 bg-red-50 border border-red-100 rounded-lg"
                   >
-                    <span className="text-sm font-medium text-red-800">{a.product_name}</span>
+                    <div>
+                      <span className="text-sm font-medium text-red-800">{a.name}</span>
+                      {a.size && (
+                        <span className="ml-2 text-xs text-red-500">size {a.size}</span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-red-600">{a.alert_type}</span>
+                      {a.sku && <span className="text-xs text-red-400">{a.sku}</span>}
                       <Badge variant="destructive">{a.stock} left</Badge>
                     </div>
                   </motion.div>
@@ -186,7 +192,9 @@ export function AdminInventoryPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex items-center justify-center py-12 text-gray-400">Loading…</div>
+              <div className="flex items-center justify-center py-12 text-gray-400">
+                Loading…
+              </div>
             ) : filtered.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-gray-400 gap-2">
                 <Package size={32} />
@@ -197,6 +205,7 @@ export function AdminInventoryPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Product</TableHead>
+                    <TableHead>Size</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Price</TableHead>
                     <TableHead className="text-right">Stock</TableHead>
@@ -205,22 +214,39 @@ export function AdminInventoryPage() {
                 </TableHeader>
                 <TableBody>
                   {filtered.map((item) => (
-                    <TableRow key={item.id}>
+                    <TableRow key={`${item.product_id}-${item.size}`}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           {item.image && (
-                            <img src={item.image} alt={item.name} className="w-8 h-8 rounded object-cover bg-gray-100" />
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-8 h-8 rounded object-cover bg-gray-100"
+                            />
                           )}
                           <div>
                             <p className="font-medium text-sm">{item.name}</p>
-                            {item.sku && <p className="text-xs text-gray-400">{item.sku}</p>}
+                            {item.sku && (
+                              <p className="text-xs text-gray-400">{item.sku}</p>
+                            )}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-gray-500">{item.category ?? '—'}</TableCell>
-                      <TableCell className="text-sm">{item.price != null ? `$${item.price.toFixed(2)}` : '—'}</TableCell>
-                      <TableCell className="text-right font-mono text-sm">{item.stock}</TableCell>
-                      <TableCell className="text-right">{stockLevel(item.stock)}</TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {item.size || '—'}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-500">
+                        {item.category || '—'}
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {formatPrice(item.price, item.price_inr)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono text-sm">
+                        {item.stock}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {stockBadge(item.stock)}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

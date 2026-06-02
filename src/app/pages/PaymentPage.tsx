@@ -180,15 +180,17 @@ export function PaymentPage() {
   // Maximum discount configuration (from admin/vendor - default 70%)
   const MAX_DISCOUNT_PERCENTAGE = 70;
   const maxAllowedDiscount = (originalMRP * MAX_DISCOUNT_PERCENTAGE) / 100;
-  
+
   // Cap discount to maximum allowed
   const discount = Math.min(productDiscount, maxAllowedDiscount);
 
-  const platformFee = currency === 'USD' ? 23 : 1725;
-  
-  // Final total should never be negative
-  const calculatedTotal = originalMRP - discount + platformFee;
-  const finalTotal = Math.max(platformFee, calculatedTotal);
+  // Estimated pre-shipping total shown in sidebar.
+  // Shipping and tax are calculated server-side when the order is created.
+  // After order creation we show the confirmed server total instead.
+  const estimatedTotal = Math.max(0, originalMRP - discount);
+
+  // Once the order is created (Stripe flow) replace the estimate with the real total.
+  const confirmedTotal = pendingStripePayment?.order?.total ?? null;
 
   const handlePayment = async () => {
     if (!isAuthenticated) {
@@ -538,22 +540,34 @@ export function PaymentPage() {
                   <span className="text-muted-foreground">Total MRP</span>
                   <span>{formatAmount(originalMRP)}</span>
                 </div>
-                <div className="flex justify-between text-sm text-green-600">
-                  <span>Discount on MRP</span>
-                  <span>-{formatAmount(discount)}</span>
-                </div>
-                <div className="flex justify-between text-sm items-center">
-                  <span className="text-muted-foreground">Platform Fee</span>
-                  <div className="flex items-center gap-2">
-                    <button className="text-primary text-xs hover:underline">Know More</button>
-                    <span>{formatAmount(platformFee)}</span>
+                {discount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Discount on MRP</span>
+                    <span>-{formatAmount(discount)}</span>
                   </div>
+                )}
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Shipping &amp; taxes</span>
+                  <span className="italic">
+                    {confirmedTotal !== null
+                      ? formatAmount(confirmedTotal - estimatedTotal)
+                      : 'Calculated at order'}
+                  </span>
                 </div>
                 <div className="pt-3 border-t border-border">
                   <div className="flex justify-between items-center">
-                    <span className="font-bold text-sm">Total Amount</span>
-                    <span className="text-lg md:text-xl font-bold">{formatAmount(finalTotal)}</span>
+                    <span className="font-bold text-sm">
+                      {confirmedTotal !== null ? 'Confirmed Total' : 'Estimated Total'}
+                    </span>
+                    <span className="text-lg md:text-xl font-bold">
+                      {formatAmount(confirmedTotal ?? estimatedTotal)}
+                    </span>
                   </div>
+                  {confirmedTotal === null && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Final amount confirmed after placing order
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

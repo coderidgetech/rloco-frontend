@@ -793,12 +793,20 @@ export const AdminSettingsPage = () => {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>Two-Factor Authentication</Label>
-                    <p className="text-sm text-gray-500">Require 2FA for admin login</p>
+                    <Label className="flex items-center gap-2">
+                      Two-Factor Authentication
+                      <span className="text-xs font-normal bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+                        Not yet enforced
+                      </span>
+                    </Label>
+                    <p className="text-sm text-gray-500">
+                      Require 2FA for admin login — <span className="text-amber-600 font-medium">backend enforcement pending; enabling this flag has no effect yet.</span>
+                    </p>
                   </div>
                   <Switch
                     checked={settings?.security?.twoFactorAuth ?? false}
                     onCheckedChange={(v) => updateSetting(['security', 'twoFactorAuth'], v)}
+                    disabled
                   />
                 </div>
                 <div className="flex items-center justify-between">

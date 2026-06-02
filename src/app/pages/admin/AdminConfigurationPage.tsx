@@ -1500,26 +1500,39 @@ export const AdminConfigurationPage = () => {
                     <Label>Enable Google Analytics</Label>
                     <p className="text-sm text-gray-500">Track website traffic and user behavior</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={config.analytics.googleAnalytics.enabled}
+                    onCheckedChange={(v) => updateNestedConfig('analytics', 'googleAnalytics', { enabled: v })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Google Analytics Measurement ID</Label>
-                  <Input placeholder={PH.measurementId} defaultValue="G-XXXXXXXXXX" />
-                  <p className="text-xs text-gray-500">Find this in your GA4 property settings</p>
+                  <Input
+                    placeholder={PH.measurementId}
+                    value={config.analytics.googleAnalytics.measurementId}
+                    onChange={(e) => updateNestedConfig('analytics', 'googleAnalytics', { measurementId: e.target.value })}
+                  />
+                  <p className="text-xs text-gray-500">Find this in your GA4 property settings (e.g. G-XXXXXXXXXX)</p>
                 </div>
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="space-y-0.5">
                     <Label>Enable Enhanced Ecommerce</Label>
                     <p className="text-sm text-gray-500">Track product impressions, clicks, and purchases</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={config.analytics.googleAnalytics.enhancedEcommerce}
+                    onCheckedChange={(v) => updateNestedConfig('analytics', 'googleAnalytics', { enhancedEcommerce: v })}
+                  />
                 </div>
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="space-y-0.5">
                     <Label>Track User ID</Label>
                     <p className="text-sm text-gray-500">Associate sessions with user accounts</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={config.analytics.googleAnalytics.trackUserId}
+                    onCheckedChange={(v) => updateNestedConfig('analytics', 'googleAnalytics', { trackUserId: v })}
+                  />
                 </div>
                 <Button onClick={() => handleSave('Google Analytics')}>
                   <Save className="h-4 w-4 mr-2" />
@@ -1542,35 +1555,43 @@ export const AdminConfigurationPage = () => {
                     <Label>Enable Facebook Pixel</Label>
                     <p className="text-sm text-gray-500">Track conversions and build audiences</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch
+                    checked={config.analytics.facebookPixel.enabled}
+                    onCheckedChange={(v) => updateNestedConfig('analytics', 'facebookPixel', { enabled: v })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Facebook Pixel ID</Label>
-                  <Input placeholder={PH.facebookPixelId} defaultValue="1234567890123456" />
+                  <Input
+                    placeholder={PH.facebookPixelId}
+                    value={config.analytics.facebookPixel.pixelId}
+                    onChange={(e) => updateNestedConfig('analytics', 'facebookPixel', { pixelId: e.target.value })}
+                  />
                 </div>
                 <div className="space-y-4 pt-4 border-t">
                   <Label>Standard Events</Label>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <Label className="text-sm">PageView</Label>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <Label className="text-sm">ViewContent</Label>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <Label className="text-sm">AddToCart</Label>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <Label className="text-sm">InitiateCheckout</Label>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <Label className="text-sm">Purchase</Label>
-                      <Switch defaultChecked />
-                    </div>
+                    {(
+                      [
+                        ['pageView', 'PageView'],
+                        ['viewContent', 'ViewContent'],
+                        ['addToCart', 'AddToCart'],
+                        ['initiateCheckout', 'InitiateCheckout'],
+                        ['purchase', 'Purchase'],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
+                        <Label className="text-sm">{label}</Label>
+                        <Switch
+                          checked={config.analytics.facebookPixel.events[key]}
+                          onCheckedChange={(v) =>
+                            updateNestedConfig('analytics', 'facebookPixel', {
+                              events: { ...config.analytics.facebookPixel.events, [key]: v },
+                            })
+                          }
+                        />
+                      </div>
+                    ))}
                   </div>
                 </div>
                 <Button onClick={() => handleSave('Facebook Pixel')}>
