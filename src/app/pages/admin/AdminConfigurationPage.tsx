@@ -554,9 +554,30 @@ export const AdminConfigurationPage = () => {
                     <Label>Auto-detect Location</Label>
                     <p className="text-sm text-gray-500">Automatically detect customer location and set currency</p>
                   </div>
-                  <Switch 
+                  <Switch
                     checked={config.general.autoDetectLocation}
                     onCheckedChange={(checked) => updateConfig('general', { autoDetectLocation: checked })}
+                  />
+                </div>
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label>India Available</Label>
+                    <p className="text-sm text-gray-500">When off, India shows "Coming soon" and orders to India are blocked</p>
+                  </div>
+                  <Switch
+                    checked={config.general.regions?.IN?.enabled ?? false}
+                    onCheckedChange={(checked) => updateConfig('general', {
+                      regions: {
+                        ...config.general.regions,
+                        US: { ...config.general.regions?.US, enabled: true, status: 'live' },
+                        IN: {
+                          ...config.general.regions?.IN,
+                          enabled: checked,
+                          status: checked ? 'live' : 'coming_soon',
+                          comingSoonMessage: config.general.regions?.IN?.comingSoonMessage || "We're launching in India soon. Stay tuned!",
+                        },
+                      },
+                    })}
                   />
                 </div>
                 <Button onClick={() => handleSave('Regional Settings')}>

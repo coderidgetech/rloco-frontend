@@ -40,6 +40,18 @@ export function Navigation() {
     /^\/($|all-products$|sale$|new-arrivals$|featured-collection$|category\/|product\/)/.test(location.pathname);
   const isMarketSwitchInteractive = !isCheckoutFunnel && isCatalogRoute;
 
+  // Region availability — a region is open unless explicitly disabled in site config.
+  const regions = config?.general?.regions;
+  const indiaEnabled = regions?.IN?.enabled !== false;
+  const indiaComingSoonMessage = regions?.IN?.comingSoonMessage || 'Coming soon';
+
+  // If India is no longer available but was previously selected, fall back to US.
+  useEffect(() => {
+    if (!indiaEnabled && country === 'India') {
+      setCountry('United States');
+    }
+  }, [indiaEnabled, country, setCountry]);
+
   // Get configured categories or use defaults
   const womenCategories = config?.categories?.women || {
     clothing: ['Dresses', 'Tops', 'Bottoms', 'Outerwear', 'Knitwear'],
@@ -300,14 +312,25 @@ export function Navigation() {
                     <div className="min-w-[180px] overflow-hidden border border-foreground/10 bg-white shadow-2xl">
                       <button
                         type="button"
-                        onClick={() => setCountry('India')}
-                        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-foreground/5 ${country === 'India' ? 'bg-foreground/5' : ''}`}
+                        disabled={!indiaEnabled}
+                        title={!indiaEnabled ? indiaComingSoonMessage : undefined}
+                        onClick={() => indiaEnabled && setCountry('India')}
+                        className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
+                          indiaEnabled
+                            ? `hover:bg-foreground/5 ${country === 'India' ? 'bg-foreground/5' : ''}`
+                            : 'cursor-not-allowed opacity-50'
+                        }`}
                       >
                         <span className="text-xl">🇮🇳</span>
                         <div className="flex-1">
                           <div className="text-sm font-medium">India</div>
                           <div className="text-xs text-foreground/50">₹ INR</div>
                         </div>
+                        {!indiaEnabled && (
+                          <span className="rounded-full bg-foreground/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-foreground/60">
+                            Coming soon
+                          </span>
+                        )}
                       </button>
                       <div className="h-px bg-foreground/10" />
                       <button

@@ -13,6 +13,12 @@ import {
 import api from '../lib/api';
 
 // Configuration Types
+export interface RegionAvailability {
+  enabled: boolean;
+  status?: 'live' | 'coming_soon' | string;
+  comingSoonMessage?: string;
+}
+
 export interface SiteConfig {
   general: {
     siteName: string;
@@ -36,6 +42,8 @@ export interface SiteConfig {
     autoDetectLocation: boolean;
     maintenanceMode: boolean;
     maintenanceMessage: string;
+    /** Per-region availability. Absent on older configs — treat missing as enabled. */
+    regions?: Record<string, RegionAvailability>;
   };
   design: {
     colors: {
@@ -253,6 +261,10 @@ const defaultConfig: SiteConfig = {
     autoDetectLocation: true,
     maintenanceMode: false,
     maintenanceMessage: "We're currently performing scheduled maintenance. We'll be back soon!",
+    regions: {
+      US: { enabled: true, status: 'live' },
+      IN: { enabled: false, status: 'coming_soon', comingSoonMessage: "We're launching in India soon. Stay tuned!" },
+    },
   },
   design: {
     colors: {
@@ -515,6 +527,11 @@ export const SiteConfigProvider = ({ children }: { children: ReactNode }) => {
             socialMedia: {
               ...mergedConfig.general.socialMedia,
               ...(configResponse.data.general?.socialMedia || {}),
+            },
+            // Preserve default region gating when the API omits regions (pre-migration config).
+            regions: {
+              ...mergedConfig.general.regions,
+              ...(configResponse.data.general?.regions || {}),
             },
           },
           design: { 
