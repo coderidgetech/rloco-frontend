@@ -293,6 +293,9 @@ export interface CreateOrderRequest {
   payment_method: string;
   promotion_code?: string;
   gift_packing_charge?: number;
+  /** Customer-selected shipping rate so fulfillment buys that rate, not the cheapest. */
+  shipping_carrier?: string;
+  shipping_service?: string;
 }
 
 export interface CreatePaymentIntentRequest {

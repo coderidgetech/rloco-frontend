@@ -352,10 +352,10 @@ export function CartPage() {
       return;
     }
     if (!isAuthenticated) {
-      navigate('/login?redirect=/address-selection');
+      navigate('/login?redirect=/checkout');
       return;
     }
-    navigate('/address-selection');
+    navigate('/checkout');
   };
 
   const toggleSelectAll = () => {
@@ -531,7 +531,7 @@ export function CartPage() {
                   size="sm"
                   className="shrink-0 uppercase text-[11px] font-bold tracking-wide border-2 bg-white hover:bg-amber-50/50 dark:bg-transparent dark:hover:bg-transparent"
                   style={{ borderColor: GOLD, color: GOLD }}
-                  onClick={() => navigate('/address-selection')}
+                  onClick={() => navigate('/checkout')}
                 >
                   {selectedAddress ? 'CHANGE ADDRESS' : 'ADD ADDRESS'}
                 </Button>

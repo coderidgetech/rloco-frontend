@@ -17,7 +17,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   const handleCheckout = () => {
     onClose();
-    navigate('/address-selection');
+    navigate('/checkout');
   };
 
   return (

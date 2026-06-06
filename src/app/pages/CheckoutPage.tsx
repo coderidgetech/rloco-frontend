@@ -245,6 +245,7 @@ export function CheckoutPage() {
     if (from === 'INR' && to === 'USD') return amount / USD_TO_INR;
     return amount;
   };
+  const selectedShippingMethod = shippingMethods.find((m) => m.id === selectedShippingMethodId);
   const shippingDisplay = convertBetweenCurrencies(shippingCost, shippingCostCurrency, currency);
   const taxDisplay = currency === 'INR' ? taxAmount * USD_TO_INR : taxAmount;
   const couponDiscountDisplay = appliedCoupon
@@ -276,10 +277,14 @@ export function CheckoutPage() {
           });
           if (shippingMethods.length > 0) {
             setShippingMethods(shippingMethods);
-            const first = shippingMethods[0];
-            setSelectedShippingMethodId((prev) => prev ?? first.id);
-            setShippingCost(first.base_cost || 0);
-            setShippingCostCurrency((first.currency?.toUpperCase() as 'USD' | 'INR') || 'USD');
+            // Preserve the customer's existing selection on re-quote (e.g. when they
+            // edit the address); only default to the cheapest if nothing is chosen.
+            setSelectedShippingMethodId((prev) => {
+              const active = shippingMethods.find((m) => m.id === prev) ?? shippingMethods[0];
+              setShippingCost(active.base_cost || 0);
+              setShippingCostCurrency((active.currency?.toUpperCase() as 'USD' | 'INR') || 'USD');
+              return active.id;
+            });
           } else {
             setShippingMethods([]);
             setShippingCostCurrency('USD');
@@ -541,6 +546,10 @@ export function CheckoutPage() {
                        'cod',
         ...(giftPackingCharge > 0 && { gift_packing_charge: giftPackingDisplay }),
         ...(appliedCoupon && { promotion_code: appliedCoupon.code }),
+        ...(selectedShippingMethod && {
+          shipping_carrier: selectedShippingMethod.carrier,
+          shipping_service: selectedShippingMethod.name,
+        }),
       };
 
       // Create order (gateway check already passed above — no dangling orders)

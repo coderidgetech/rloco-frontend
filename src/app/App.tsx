@@ -30,8 +30,6 @@ import { ResponsiveNewArrivalsPage } from './components/ResponsiveNewArrivalsPag
 import { ResponsiveAllProductsPage } from './components/ResponsiveAllProductsPage';
 import { ResponsiveOrderConfirmationPage } from './components/ResponsiveOrderConfirmationPage';
 import { ResponsiveNotFoundPage } from './components/ResponsiveNotFoundPage';
-import { ResponsiveAddressSelectionPage } from './components/ResponsiveAddressSelectionPage';
-import { ResponsivePaymentPage } from './components/ResponsivePaymentPage';
 import { ResponsiveAboutPage } from './components/ResponsiveAboutPage';
 import { ResponsiveContactPage } from './components/ResponsiveContactPage';
 import { ResponsiveTermsPage } from './components/ResponsiveTermsPage';
@@ -208,10 +206,11 @@ function App() {
                             <Route path="/notifications" element={<Navigate to="/account/profile" replace />} />
                             <Route path="/category/:gender" element={<ResponsiveCategoryPage />} />
                             <Route path="/category/:gender/:category" element={<ResponsiveCategoryPage />} />
-                            <Route path="/address" element={<ResponsiveAddressSelectionPage />} />
-                            <Route path="/address-selection" element={<ResponsiveAddressSelectionPage />} />
+                            {/* Legacy thin checkout flow retired — consolidated into /checkout. */}
+                            <Route path="/address" element={<Navigate to="/checkout" replace />} />
+                            <Route path="/address-selection" element={<Navigate to="/checkout" replace />} />
                             <Route path="/add-address" element={<DesktopHeaderWrapper title="Add address" backPath="/addresses"><AddAddressPage /></DesktopHeaderWrapper>} />
-                            <Route path="/payment" element={<ResponsivePaymentPage />} />
+                            <Route path="/payment" element={<Navigate to="/checkout" replace />} />
                             <Route path="/order-confirmation" element={<ResponsiveOrderConfirmationPage />} />
                             <Route path="/order-confirmation/:id" element={<ResponsiveOrderConfirmationPage />} />
                             <Route path="/all-products" element={<ResponsiveAllProductsPage />} />
