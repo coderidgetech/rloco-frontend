@@ -7,7 +7,7 @@ export function MobileTermsPage() {
   const sections = [
     {
       title: '1. Acceptance of Terms',
-      content: 'By accessing and using Rloco\'s website and services, you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.',
+      content: 'By accessing and using Rloko\'s website and services, you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.',
     },
     {
       title: '2. Use of Service',
@@ -35,11 +35,11 @@ export function MobileTermsPage() {
     },
     {
       title: '8. Intellectual Property',
-      content: 'All content on this website, including text, graphics, logos, images, and software, is the property of Rloco and protected by copyright laws. You may not reproduce, distribute, or create derivative works without our express written permission.',
+      content: 'All content on this website, including text, graphics, logos, images, and software, is the property of Rloko and protected by copyright laws. You may not reproduce, distribute, or create derivative works without our express written permission.',
     },
     {
       title: '9. Limitation of Liability',
-      content: 'To the fullest extent permitted by law, Rloco shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of our services or products.',
+      content: 'To the fullest extent permitted by law, Rloko shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of our services or products.',
     },
     {
       title: '10. Changes to Terms',
@@ -90,7 +90,7 @@ export function MobileTermsPage() {
             <div className="text-sm text-foreground/70">
               <p className="font-medium text-foreground mb-1">Important Notice</p>
               <p className="text-xs leading-relaxed">
-                Please read these Terms of Service carefully before using our website or services. By using Rloco, you agree to these terms.
+                Please read these Terms of Service carefully before using our website or services. By using Rloko, you agree to these terms.
               </p>
             </div>
           </div>

@@ -23,7 +23,7 @@ export function MobileAboutPage() {
         {/* Hero Image */}
         <div className="relative h-48 bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
           <div className="text-center px-6">
-            <h2 className="text-3xl font-bold text-foreground mb-2">Rloco</h2>
+            <h2 className="text-3xl font-bold text-foreground mb-2">Rloko</h2>
             <p className="text-sm text-foreground/60">Luxury Fashion Since 2020</p>
           </div>
         </div>
@@ -55,7 +55,7 @@ export function MobileAboutPage() {
           >
             <h3 className="text-lg font-semibold mb-3">Our Story</h3>
             <p className="text-sm text-foreground/70 leading-relaxed mb-3">
-              Founded in 2020, Rloco has become a trusted destination for luxury fashion enthusiasts worldwide. We curate the finest collection of clothing, accessories, and jewelry for the modern individual.
+              Founded in 2020, Rloko has become a trusted destination for luxury fashion enthusiasts worldwide. We curate the finest collection of clothing, accessories, and jewelry for the modern individual.
             </p>
             <p className="text-sm text-foreground/70 leading-relaxed">
               Our mission is to deliver exceptional quality, timeless style, and an unparalleled shopping experience that celebrates individuality and elegance.

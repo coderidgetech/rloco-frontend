@@ -45,7 +45,7 @@ export function Loader({ onComplete }: { onComplete: () => void }) {
           }}
           className="mb-12 mx-auto flex justify-center"
         >
-          {/* Dual-color Rloco logo */}
+          {/* Dual-color Rloko logo */}
           <RlocoLogo size="3xl" />
         </motion.div>
         

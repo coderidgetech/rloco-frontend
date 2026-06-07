@@ -105,7 +105,7 @@ export function CustomerGuideButton() {
                   </div>
                   <div>
                     <h2 className="text-2xl font-light tracking-wider">RLOCO SHOPPING GUIDE</h2>
-                    <p className="text-sm text-white/80 tracking-wide">Complete guide to shopping on Rloco</p>
+                    <p className="text-sm text-white/80 tracking-wide">Complete guide to shopping on Rloko</p>
                   </div>
                 </div>
                 <button
@@ -187,13 +187,13 @@ export function CustomerGuideButton() {
 function GettingStartedGuide() {
   return (
     <div className="prose prose-sm max-w-none">
-      <h1 className="text-4xl font-light tracking-wider text-gray-900 mb-2">🎉 Welcome to Rloco!</h1>
+      <h1 className="text-4xl font-light tracking-wider text-gray-900 mb-2">🎉 Welcome to Rloko!</h1>
       <p className="text-gray-600 mb-8">Your complete guide to luxury fashion shopping</p>
 
       <div className="bg-gradient-to-r from-[#B4770E]/10 to-transparent border-l-4 border-[#B4770E] p-6 rounded-r-lg mb-8">
-        <h2 className="text-xl font-light tracking-wide text-gray-900 mb-2">What is Rloco?</h2>
+        <h2 className="text-xl font-light tracking-wide text-gray-900 mb-2">What is Rloko?</h2>
         <p className="text-gray-700">
-          Rloco is your premier destination for luxury fashion, cosmetics, and jewelry. We curate the finest collections from top designers and emerging brands, bringing you exclusive pieces for every occasion.
+          Rloko is your premier destination for luxury fashion, cosmetics, and jewelry. We curate the finest collections from top designers and emerging brands, bringing you exclusive pieces for every occasion.
         </p>
       </div>
 

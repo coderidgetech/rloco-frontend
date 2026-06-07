@@ -137,7 +137,7 @@ export function DesktopForgotPasswordPage() {
           >
             <h2 className="text-5xl mb-6 drop-shadow-lg">Account Recovery</h2>
             <p className="text-xl text-white/90 drop-shadow-md leading-relaxed">
-              We'll help you get back to your Rloco account securely.
+              We'll help you get back to your Rloko account securely.
             </p>
           </motion.div>
         </div>

@@ -95,7 +95,7 @@ function Group3() {
 
 export default function RlocoLogo() {
   return (
-    <div className="relative size-full" data-name="Rloco logo 2">
+    <div className="relative size-full" data-name="Rloko logo 2">
       <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 1280 1024">
         <g id="background-logo">
           <path d="M1280 0H0V1024H1280V0Z" fill="var(--fill-0, #FEFBF6)" id="Vector" />

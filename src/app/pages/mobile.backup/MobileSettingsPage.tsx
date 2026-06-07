@@ -261,7 +261,7 @@ export function MobileSettingsPage() {
         {/* App Version */}
         <div className="px-4 pb-4">
           <div className="text-center">
-            <p className="text-xs text-foreground/40">Rloco Fashion</p>
+            <p className="text-xs text-foreground/40">Rloko Fashion</p>
             <p className="text-xs text-foreground/40">Version 1.0.0</p>
           </div>
         </div>

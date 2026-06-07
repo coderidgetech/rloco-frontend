@@ -240,9 +240,9 @@ export interface SiteConfig {
 
 const defaultConfig: SiteConfig = {
   general: {
-    siteName: 'Rloco',
+    siteName: 'Rloko',
     tagline: 'Modern Luxury Fashion',
-    description: 'Rloco is a premium fashion retailer offering curated collections of luxury apparel, accessories, and beauty products.',
+    description: 'Rloko is a premium fashion retailer offering curated collections of luxury apparel, accessories, and beauty products.',
     email: 'hello@rloco.com',
     phone: '+1 (555) 123-4567',
     supportEmail: 'support@rloco.com',
@@ -369,7 +369,7 @@ const defaultConfig: SiteConfig = {
       showNewsletter: true,
       showSocial: true,
       showPaymentIcons: true,
-      copyrightText: '© 2026 Rloco. All rights reserved.',
+      copyrightText: '© 2026 Rloko. All rights reserved.',
     },
   },
   email: {
@@ -379,7 +379,7 @@ const defaultConfig: SiteConfig = {
       username: 'apikey',
       password: '',
       fromEmail: 'noreply@rloco.com',
-      fromName: 'Rloco',
+      fromName: 'Rloko',
     },
     sms: {
       enabled: false,
@@ -396,14 +396,14 @@ const defaultConfig: SiteConfig = {
   },
   seo: {
     meta: {
-      title: 'Rloco - Modern Luxury Fashion',
-      description: 'Shop curated luxury fashion at Rloco. Discover timeless pieces from the world\'s finest designers. Free shipping on orders over $100.',
+      title: 'Rloko - Modern Luxury Fashion',
+      description: 'Shop curated luxury fashion at Rloko. Discover timeless pieces from the world\'s finest designers. Free shipping on orders over $100.',
       keywords: 'luxury fashion, designer clothing, high-end fashion, premium accessories',
       canonicalUrl: 'https://rloco.com',
     },
     openGraph: {
-      title: 'Rloco - Modern Luxury Fashion',
-      description: 'Discover curated luxury fashion collections at Rloco.',
+      title: 'Rloko - Modern Luxury Fashion',
+      description: 'Discover curated luxury fashion collections at Rloko.',
       image: '',
       twitterCardType: 'summary_large',
     },

@@ -68,7 +68,7 @@ export function PrivacyPage() {
           <section>
             <h2 className="text-2xl uppercase tracking-[0.15em] mb-4">Introduction</h2>
             <p className="text-foreground/70 leading-relaxed">
-              At Rloco, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or make a purchase. Please read this policy carefully.
+              At Rloko, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website or make a purchase. Please read this policy carefully.
             </p>
           </section>
 

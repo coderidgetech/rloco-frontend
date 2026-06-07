@@ -376,7 +376,7 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
                         <RlocoLogo size="md" />
                       </div>
                       <h2 className="text-3xl mb-2">Create Account</h2>
-                      <p className="text-foreground/60">Join Rloco today</p>
+                      <p className="text-foreground/60">Join Rloko today</p>
                     </div>
 
                     <form onSubmit={handleSendSignupOTP} className="space-y-3">

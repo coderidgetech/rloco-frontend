@@ -146,7 +146,7 @@ export function MobileHomePage() {
         </div>
 
         <div className="px-4 py-6 text-center border-t border-border/30">
-          <p className="text-sm text-foreground/60 mb-2">© 2026 Rloco. All rights reserved.</p>
+          <p className="text-sm text-foreground/60 mb-2">© 2026 Rloko. All rights reserved.</p>
           <div className="flex items-center justify-center gap-4 text-xs text-foreground/50">
             <button>Privacy</button>
             <span>•</span>

@@ -41,7 +41,7 @@ export function AboutPage() {
             </h2>
             <div className="space-y-4 text-foreground/70 leading-relaxed">
               <p>
-                Founded in 2020, Rloco emerged from a simple idea: fashion should be effortless, elegant, and accessible. We create pieces that transcend seasonal trends, focusing on timeless design and exceptional quality.
+                Founded in 2020, Rloko emerged from a simple idea: fashion should be effortless, elegant, and accessible. We create pieces that transcend seasonal trends, focusing on timeless design and exceptional quality.
               </p>
               <p>
                 Our collections are thoughtfully curated to offer versatile wardrobe essentials that work seamlessly from day to night, season to season. Each piece is designed with meticulous attention to detail and crafted from premium materials.

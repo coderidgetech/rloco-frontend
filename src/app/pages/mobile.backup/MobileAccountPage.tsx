@@ -69,7 +69,7 @@ export function MobileAccountPage() {
           <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <User size={40} className="text-primary" />
           </div>
-          <h2 className="text-xl font-medium mb-2">Welcome to Rloco</h2>
+          <h2 className="text-xl font-medium mb-2">Welcome to Rloko</h2>
           <p className="text-sm text-foreground/60 mb-6 text-center max-w-xs">
             Sign in to access your orders, wishlist, and personalized recommendations
           </p>
@@ -245,7 +245,7 @@ export function MobileAccountPage() {
           <div className="space-y-1">
             <MenuButton
               icon={<Gift size={20} />}
-              label="Rloco Rewards"
+              label="Rloko Rewards"
               badge="450 pts"
               highlight
               onClick={() => navigate('/rewards')}
@@ -292,7 +292,7 @@ export function MobileAccountPage() {
             />
             <MenuButton
               icon={<Users size={20} />}
-              label="About Rloco"
+              label="About Rloko"
               onClick={() => navigate('/about')}
             />
             <MenuButton

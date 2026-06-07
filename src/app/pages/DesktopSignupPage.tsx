@@ -129,7 +129,7 @@ export function DesktopSignupPage() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-center max-w-md"
           >
-            <h2 className="text-5xl mb-6 drop-shadow-lg">Join Rloco</h2>
+            <RlocoLogo size="3xl" className="mx-auto mb-8 brightness-0 invert drop-shadow-lg" />
             <p className="text-xl text-white/90 drop-shadow-md leading-relaxed">
               Start your journey with exclusive access to luxury fashion and personalized style experiences.
             </p>
@@ -153,7 +153,7 @@ export function DesktopSignupPage() {
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-4xl mb-2 sm:mb-3">Create Account</h1>
-            <p className="text-foreground/60">Join Rloco today</p>
+            <p className="text-foreground/60">Join Rloko today</p>
           </div>
 
           {/* Google Sign In — same as login page */}

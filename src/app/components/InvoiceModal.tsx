@@ -309,14 +309,14 @@ export function InvoiceModal({ order, isOpen, onClose }: InvoiceModalProps) {
             {/* Notes */}
             <div className="text-sm text-muted-foreground space-y-2">
               <p className="font-medium text-foreground">Notes:</p>
-              <p>Thank you for shopping with Rloco! We appreciate your business.</p>
+              <p>Thank you for shopping with Rloko! We appreciate your business.</p>
               <p>If you have any questions about this invoice, please contact our customer service team.</p>
             </div>
 
             {/* Footer */}
             <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
               <p>This is a computer-generated invoice and does not require a signature.</p>
-              <p className="mt-2">© 2025 Rloco. All rights reserved.</p>
+              <p className="mt-2">© 2025 Rloko. All rights reserved.</p>
             </div>
           </div>
         </div>

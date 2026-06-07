@@ -233,7 +233,7 @@ function QuickStartGuide() {
       <h1 className="text-4xl font-light tracking-wider text-gray-900 mb-2">🚀 Quick Start Guide</h1>
       <p className="text-gray-600 mb-8">Get up and running in 5 minutes</p>
 
-      <AlertBox type="success" title="Welcome to Rloco Portal!">
+      <AlertBox type="success" title="Welcome to Rloko Portal!">
         This comprehensive guide will help you master the admin portal. Choose your role below to get started.
       </AlertBox>
 

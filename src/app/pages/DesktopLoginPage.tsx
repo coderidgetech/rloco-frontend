@@ -90,7 +90,7 @@ export function DesktopLoginPage() {
           {/* Header */}
           <div className="text-center mb-6 sm:mb-8">
             <h1 className="text-2xl sm:text-4xl mb-2 sm:mb-3">Welcome Back</h1>
-            <p className="text-foreground/60">Sign in to your Rloco account</p>
+            <p className="text-foreground/60">Sign in to your Rloko account</p>
           </div>
 
           {/* Google Sign In - Primary Option */}
@@ -213,7 +213,7 @@ export function DesktopLoginPage() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-center max-w-md"
           >
-            <h2 className="text-5xl mb-6 drop-shadow-lg">Welcome to Rloco</h2>
+            <RlocoLogo size="3xl" className="mx-auto mb-8 brightness-0 invert drop-shadow-lg" />
             <p className="text-xl text-white/90 drop-shadow-md leading-relaxed">
               Discover luxury fashion, timeless elegance, and curated collections just for you.
             </p>

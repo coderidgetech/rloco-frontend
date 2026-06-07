@@ -10,25 +10,25 @@ export function PressPage() {
   const pressReleases = [
     {
       date: 'January 10, 2026',
-      title: 'Rloco Launches Spring/Summer 2026 Collection',
+      title: 'Rloko Launches Spring/Summer 2026 Collection',
       excerpt: 'Introducing our most sustainable collection yet, featuring innovative fabrics and timeless designs inspired by contemporary art.',
       category: 'Product Launch',
     },
     {
       date: 'December 15, 2025',
-      title: 'Rloco Achieves Carbon Neutral Milestone',
+      title: 'Rloko Achieves Carbon Neutral Milestone',
       excerpt: 'We\'re proud to announce that 100% of our shipping operations are now carbon neutral through verified offset programs.',
       category: 'Sustainability',
     },
     {
       date: 'November 5, 2025',
       title: 'New Flagship Store Opening in Los Angeles',
-      excerpt: 'Experience Rloco\'s immersive retail concept at our new 5,000 square foot flagship location on Rodeo Drive.',
+      excerpt: 'Experience Rloko\'s immersive retail concept at our new 5,000 square foot flagship location on Rodeo Drive.',
       category: 'Retail',
     },
     {
       date: 'October 20, 2025',
-      title: 'Rloco Partners with Leading Sustainable Fabric Innovators',
+      title: 'Rloko Partners with Leading Sustainable Fabric Innovators',
       excerpt: 'Strategic partnership to develop next-generation eco-friendly materials for luxury fashion.',
       category: 'Partnership',
     },
@@ -68,23 +68,23 @@ export function PressPage() {
       publication: 'Vogue',
       title: 'The Future of Sustainable Luxury Fashion',
       date: 'December 2025',
-      quote: '"Rloco is setting a new standard for what luxury fashion can be - beautiful, timeless, and responsible."',
+      quote: '"Rloko is setting a new standard for what luxury fashion can be - beautiful, timeless, and responsible."',
     },
     {
       publication: 'Elle',
       title: '10 Brands Redefining Modern Elegance',
       date: 'November 2025',
-      quote: '"With impeccable craftsmanship and a commitment to sustainability, Rloco is the brand to watch."',
+      quote: '"With impeccable craftsmanship and a commitment to sustainability, Rloko is the brand to watch."',
     },
     {
       publication: 'GQ',
       title: 'Best New Menswear Brands of 2025',
       date: 'October 2025',
-      quote: '"Rloco\'s menswear collection combines classic tailoring with contemporary sensibility."',
+      quote: '"Rloko\'s menswear collection combines classic tailoring with contemporary sensibility."',
     },
     {
       publication: 'Business of Fashion',
-      title: 'How Rloco Built a Sustainable Supply Chain',
+      title: 'How Rloko Built a Sustainable Supply Chain',
       date: 'September 2025',
       quote: '"A case study in how luxury brands can scale sustainably without sacrificing quality or ethics."',
     },
@@ -111,7 +111,7 @@ export function PressPage() {
           >
             <h1 className="text-4xl md:text-6xl mb-6">Press & Media</h1>
             <p className="text-lg md:text-xl text-foreground/70 leading-relaxed mb-8">
-              Get the latest news, press releases, and media resources from Rloco. 
+              Get the latest news, press releases, and media resources from Rloko. 
               For press inquiries, please contact our media relations team.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -200,7 +200,7 @@ export function PressPage() {
             >
               <h2 className="text-3xl md:text-4xl mb-4">Featured In</h2>
               <p className="text-lg text-foreground/60">
-                What the media is saying about Rloco
+                What the media is saying about Rloko
               </p>
             </motion.div>
 

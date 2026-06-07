@@ -38,7 +38,7 @@ function getHeroLayout(vh: number) {
   return { hideDiscoverHint, bottomWrapClass, headlineClass, subheadingClass, ctaGapClass };
 }
 
-/** Rloco Final Design 2: scroll-linked logo; remount when scale range changes (breakpoint). */
+/** Rloko Final Design 2: scroll-linked logo; remount when scale range changes (breakpoint). */
 function HeroCenterMark({
   scrollYProgress,
   scaleMax,

@@ -114,7 +114,7 @@ function TaglineD3F01C9A824C4986A818082838C18832Logo() {
 
 export default function RlocoLogo() {
   return (
-    <div className="relative size-full" data-name="Rloco logo 1">
+    <div className="relative size-full" data-name="Rloko logo 1">
       <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 1280 1024">
         <g id="background-logo">
           <path d="M1280 0H0V1024H1280V0Z" fill="var(--fill-0, #FEFBF6)" id="Vector" />

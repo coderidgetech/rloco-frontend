@@ -54,7 +54,7 @@ export function MobileOrderConfirmationPage() {
           transition={{ delay: 0.3 }}
           className="text-sm text-foreground/60 mb-2"
         >
-          Thank you for shopping with Rloco
+          Thank you for shopping with Rloko
         </motion.p>
 
         <motion.p

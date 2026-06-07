@@ -97,7 +97,7 @@ export function CookiesPage() {
           >
             <h1 className="text-4xl md:text-6xl mb-6">Cookie Policy</h1>
             <p className="text-lg md:text-xl text-foreground/70 leading-relaxed">
-              This Cookie Policy explains how Rloco uses cookies and similar technologies 
+              This Cookie Policy explains how Rloko uses cookies and similar technologies 
               to recognize you when you visit our website. It explains what these technologies 
               are and why we use them, as well as your rights to control our use of them.
             </p>
@@ -126,7 +126,7 @@ export function CookiesPage() {
                   provide a better user experience, and provide information to website owners.
                 </p>
                 <p>
-                  Cookies set by the website owner (in this case, Rloco) are called "first party cookies". 
+                  Cookies set by the website owner (in this case, Rloko) are called "first party cookies". 
                   Cookies set by parties other than the website owner are called "third party cookies". 
                   Third party cookies enable third party features or functionality to be provided on or 
                   through the website (e.g., advertising, interactive content, and analytics).

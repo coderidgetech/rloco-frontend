@@ -78,7 +78,7 @@ export function CareersPage() {
   const benefits = [
     'Competitive salary and performance bonuses',
     'Comprehensive health, dental, and vision insurance',
-    'Generous employee discount on all Rloco products',
+    'Generous employee discount on all Rloko products',
     '401(k) retirement plan with company match',
     'Flexible work arrangements and remote options',
     'Professional development and training programs',
@@ -128,7 +128,7 @@ export function CareersPage() {
             >
               <h2 className="text-3xl md:text-4xl mb-4">Our Values</h2>
               <p className="text-lg text-foreground/60">
-                What makes Rloco a great place to work
+                What makes Rloko a great place to work
               </p>
             </motion.div>
 

@@ -259,7 +259,7 @@ export function ProductDetailPage() {
 
   const handleShare = async () => {
     const url = window.location.href;
-    const text = `Check out ${product.name} on Rloco`;
+    const text = `Check out ${product.name} on Rloko`;
     if (navigator.share) {
       try {
         await navigator.share({ title: product.name, text, url });

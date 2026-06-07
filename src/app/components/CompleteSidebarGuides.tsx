@@ -589,7 +589,7 @@ export function CompleteAdminSidebarGuide() {
                   <div className="ml-8 space-y-1 text-gray-700">
                     <div><strong>Meta Title:</strong> 50-60 characters</div>
                     <div className="ml-3 text-gray-600">Appears in Google search results</div>
-                    <div className="ml-3 text-gray-600">Example: "Premium Leather Jacket - Men's Fashion | Rloco"</div>
+                    <div className="ml-3 text-gray-600">Example: "Premium Leather Jacket - Men's Fashion | Rloko"</div>
                     <div className="ml-3 text-gray-600">Character counter shows remaining</div>
                     
                     <div className="mt-2"><strong>Meta Description:</strong> 150-160 characters</div>

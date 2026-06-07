@@ -37,7 +37,7 @@ export const AdminSettingsPage = () => {
   const [changingPassword, setChangingPassword] = useState(false);
   const [settings, setSettings] = useState<any>({
     general: {
-      storeName: 'Rloco',
+      storeName: 'Rloko',
       storeUrl: 'https://rloco.com',
       storeDescription: 'Modern fashion retailer offering curated collections',
       contactEmail: 'contact@rloco.com',

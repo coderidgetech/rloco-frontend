@@ -35,7 +35,7 @@ export function TermsPage() {
             <section>
               <h2 className="text-2xl uppercase tracking-[0.15em] mb-4">1. Introduction</h2>
               <p className="text-foreground/70 leading-relaxed mb-4">
-                Welcome to Rloco. These Terms and Conditions ("Terms") govern your use of our website and the purchase of products from Rloco. By accessing our website or making a purchase, you agree to be bound by these Terms.
+                Welcome to Rloko. These Terms and Conditions ("Terms") govern your use of our website and the purchase of products from Rloko. By accessing our website or making a purchase, you agree to be bound by these Terms.
               </p>
               <p className="text-foreground/70 leading-relaxed">
                 Please read these Terms carefully before using our services. If you do not agree with any part of these Terms, you should not use our website or services.
@@ -46,11 +46,11 @@ export function TermsPage() {
             <section>
               <h2 className="text-2xl uppercase tracking-[0.15em] mb-4">2. Definitions</h2>
               <ul className="space-y-2 text-foreground/70">
-                <li><strong>"We," "Us," "Our"</strong> refers to Rloco</li>
+                <li><strong>"We," "Us," "Our"</strong> refers to Rloko</li>
                 <li><strong>"You," "Your"</strong> refers to the user or customer</li>
                 <li><strong>"Website"</strong> refers to rloco.com</li>
                 <li><strong>"Products"</strong> refers to all items available for purchase</li>
-                <li><strong>"Services"</strong> refers to all services provided by Rloco</li>
+                <li><strong>"Services"</strong> refers to all services provided by Rloko</li>
               </ul>
             </section>
 
@@ -119,7 +119,7 @@ export function TermsPage() {
             <section>
               <h2 className="text-2xl uppercase tracking-[0.15em] mb-4">7. Intellectual Property</h2>
               <p className="text-foreground/70 leading-relaxed">
-                All content on this website, including text, images, logos, and designs, is the property of Rloco and protected by copyright and trademark laws. You may not use, reproduce, or distribute any content without our written permission.
+                All content on this website, including text, images, logos, and designs, is the property of Rloko and protected by copyright and trademark laws. You may not use, reproduce, or distribute any content without our written permission.
               </p>
             </section>
 
@@ -142,7 +142,7 @@ export function TermsPage() {
             <section>
               <h2 className="text-2xl uppercase tracking-[0.15em] mb-4">9. Limitation of Liability</h2>
               <p className="text-foreground/70 leading-relaxed">
-                To the maximum extent permitted by law, Rloco shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of our website or products. Our total liability shall not exceed the amount paid by you for the product in question.
+                To the maximum extent permitted by law, Rloko shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of our website or products. Our total liability shall not exceed the amount paid by you for the product in question.
               </p>
             </section>
 
@@ -158,7 +158,7 @@ export function TermsPage() {
             <section>
               <h2 className="text-2xl uppercase tracking-[0.15em] mb-4">11. Indemnification</h2>
               <p className="text-foreground/70 leading-relaxed">
-                You agree to indemnify and hold harmless Rloco and its officers, directors, employees, and agents from any claims, damages, losses, or expenses arising from your violation of these Terms or your use of the website.
+                You agree to indemnify and hold harmless Rloko and its officers, directors, employees, and agents from any claims, damages, losses, or expenses arising from your violation of these Terms or your use of the website.
               </p>
             </section>
 

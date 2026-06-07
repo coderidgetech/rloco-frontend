@@ -212,7 +212,7 @@ export function MobileSignupPage() {
                 <RlocoLogo size="md" />
               </div>
               <h1 className="text-3xl mb-2">Create Account</h1>
-              <p className="text-foreground/60">Join Rloco today</p>
+              <p className="text-foreground/60">Join Rloko today</p>
             </motion.div>
 
             {/* Form */}

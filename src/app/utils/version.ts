@@ -27,7 +27,7 @@ export const getCacheBuster = () => {
 
 // Log version info in development
 if (import.meta.env.DEV) {
-  console.log(`🚀 Rloco App Version: ${APP_VERSION}`);
+  console.log(`🚀 Rloko App Version: ${APP_VERSION}`);
   console.log(`📦 Filter System: ${FILTER_SYSTEM_VERSION}`);
   console.log(`⏰ Build: ${BUILD_TIMESTAMP}`);
 }
