@@ -2,7 +2,7 @@ import { motion } from 'motion/react';
 import { ProductCard } from '../components/ProductCard';
 import { useState, useMemo, useEffect } from 'react';
 import { Footer } from '../components/Footer';
-import { Tag, SlidersHorizontal, X, ChevronRight } from 'lucide-react';
+import { Tag, SlidersHorizontal, X, ChevronRight, AlertCircle } from 'lucide-react';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { MobileFilterPanel } from '../components/MobileFilterPanel';
 import { sortOptions, productMatchesSearchQuery } from '../utils/filterConfig';
@@ -16,26 +16,27 @@ export function SalePage() {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  const [error, setError] = useState<string | null>(null);
+
   // All filter states
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedGender, setSelectedGender] = useState<'all' | 'women' | 'men'>('all');
-  const [priceRange, setPriceRange] = useState([0, 1000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 0]);
   const [sortBy, setSortBy] = useState('discount');
   const [showFilters, setShowFilters] = useState(false);
-  
+
   // Advanced filters
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
   const [selectedSubcategories, setSelectedSubcategories] = useState<string[]>([]);
   const [minRating, setMinRating] = useState(0);
-  const [showOnSale, setShowOnSale] = useState(true); // Default to true for Sale page
+  const [showOnSale, setShowOnSale] = useState(true);
   const [showNewArrivals, setShowNewArrivals] = useState(false);
   const [showFeatured, setShowFeatured] = useState(false);
   const [selectedBadges, setSelectedBadges] = useState<string[]>([]);
-  
+
   // Filter panel sections
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
@@ -44,10 +45,18 @@ export function SalePage() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
+        setError(null);
         const response = await productService.list({ on_sale: true, limit: 1000, market });
-        setProducts(response.products || []);
-      } catch (error) {
-        console.error('Failed to fetch products:', error);
+        const fetched = response.products || [];
+        setProducts(fetched);
+        // Initialise price range to actual product max on first load
+        if (fetched.length > 0) {
+          const max = Math.ceil(Math.max(...fetched.map(p => p.price || 0)) / 100) * 100;
+          setPriceRange([0, max]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch products:', err);
+        setError('Failed to load sale products. Please check your connection and try again.');
         setProducts([]);
       } finally {
         setLoading(false);
@@ -56,49 +65,82 @@ export function SalePage() {
     fetchProducts();
   }, [market]);
 
+  // ─── Derived values ──────────────────────────────────────────────────────────
+
+  /** Actual maximum price across all fetched products. */
+  const maxPrice = useMemo(() => {
+    if (products.length === 0) return 1000;
+    return Math.ceil(Math.max(...products.map(p => p.price || 0)) / 100) * 100;
+  }, [products]);
+
+  /** Maximum discount % across all sale products — shown in hero. */
+  const maxDiscountPct = useMemo(() => {
+    if (products.length === 0) return 0;
+    return Math.round(
+      Math.max(
+        ...products.map(p => {
+          const orig = p.original_price || p.originalPrice || 0;
+          return orig > p.price ? ((orig - p.price) / orig) * 100 : 0;
+        })
+      )
+    );
+  }, [products]);
+
+  /** Filter options derived from the full product set. */
+  const availableColors = useMemo(
+    () => [...new Set(products.flatMap(p => p.colors || []))].sort(),
+    [products]
+  );
+  const availableSizes = useMemo(
+    () => [...new Set(products.flatMap(p => p.sizes || []))],
+    [products]
+  );
+  const availableMaterials = useMemo(
+    () => [...new Set(products.map(p => p.material).filter(Boolean))].sort(),
+    [products]
+  );
+  const availableSubcategories = useMemo(
+    () => [...new Set(products.map(p => p.subcategory).filter(Boolean))].sort(),
+    [products]
+  );
+
+  // ─── Helpers ─────────────────────────────────────────────────────────────────
+
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
-    if (newExpanded.has(section)) {
-      newExpanded.delete(section);
-    } else {
-      newExpanded.add(section);
-    }
+    if (newExpanded.has(section)) newExpanded.delete(section);
+    else newExpanded.add(section);
     setExpandedSections(newExpanded);
   };
 
   const toggleArrayFilter = (array: string[], setter: (arr: string[]) => void, value: string) => {
-    if (array.includes(value)) {
-      setter(array.filter(v => v !== value));
-    } else {
-      setter([...array, value]);
-    }
+    setter(array.includes(value) ? array.filter(v => v !== value) : [...array, value]);
   };
 
-  // Filter and sort products
+  // ─── Filter + sort ───────────────────────────────────────────────────────────
+
   const filteredProducts = useMemo(() => {
-    let filtered = products.filter(p => p.on_sale || p.onSale); // Start with sale items
+    let filtered = products.filter(p => p.on_sale || p.onSale);
 
     if (searchQuery.trim()) {
-      filtered = filtered.filter((p) => productMatchesSearchQuery(p, searchQuery));
+      filtered = filtered.filter(p => productMatchesSearchQuery(p, searchQuery));
     }
 
-    // Category filter
     if (selectedCategory !== 'All') {
       filtered = filtered.filter(p => p.category === selectedCategory);
     }
 
-    // Gender filter
     if (selectedGender !== 'all') {
       filtered = filtered.filter(p => p.gender === selectedGender || p.gender === 'unisex');
     }
 
-    // Price range filter (convert to USD if needed)
+    // Price range — only apply if user has changed from defaults
+    const priceMax = priceRange[1] || maxPrice;
     filtered = filtered.filter(p => {
       const price = p.price || 0;
-      return price >= priceRange[0] && price <= priceRange[1];
+      return price >= priceRange[0] && price <= priceMax;
     });
 
-    // Advanced filters
     if (selectedColors.length > 0) {
       filtered = filtered.filter(p => p.colors.some(c => selectedColors.includes(c)));
     }
@@ -121,10 +163,16 @@ export function SalePage() {
       filtered = filtered.filter(p => p.featured);
     }
 
+    // Badge filter — product.badge is a single string field
+    if (selectedBadges.length > 0) {
+      filtered = filtered.filter(p =>
+        p.badge && selectedBadges.some(b => b.toLowerCase() === p.badge!.toLowerCase())
+      );
+    }
+
     // Sort
     switch (sortBy) {
       case 'discount':
-        // Sort by discount percentage (higher discount first)
         filtered.sort((a, b) => {
           const origA = a.original_price || a.originalPrice || a.price;
           const origB = b.original_price || b.originalPrice || b.price;
@@ -140,7 +188,9 @@ export function SalePage() {
         filtered.sort((a, b) => b.price - a.price);
         break;
       case 'newest':
-        filtered.sort((a, b) => ((b.new_arrival || b.newArrival) ? 1 : 0) - ((a.new_arrival || a.newArrival) ? 1 : 0));
+        filtered.sort((a, b) =>
+          ((b.new_arrival || b.newArrival) ? 1 : 0) - ((a.new_arrival || a.newArrival) ? 1 : 0)
+        );
         break;
       case 'rating':
         filtered.sort((a, b) => b.rating - a.rating);
@@ -152,20 +202,20 @@ export function SalePage() {
     }
 
     return filtered;
-  }, [products, searchQuery, selectedCategory, selectedGender, priceRange, sortBy, selectedColors, selectedSizes, selectedMaterials, selectedSubcategories, minRating, showNewArrivals, showFeatured]);
+  }, [products, searchQuery, selectedCategory, selectedGender, priceRange, maxPrice, sortBy, selectedColors, selectedSizes, selectedMaterials, selectedSubcategories, minRating, showNewArrivals, showFeatured, selectedBadges]);
 
-  // Check if any filters are active
-  const hasActiveFilters = 
-    searchQuery !== '' || 
-    selectedCategory !== 'All' || 
-    selectedGender !== 'all' || 
-    priceRange[0] !== 0 || 
-    priceRange[1] !== 1000 ||
+  const hasActiveFilters =
+    searchQuery !== '' ||
+    selectedCategory !== 'All' ||
+    selectedGender !== 'all' ||
+    priceRange[0] !== 0 ||
+    priceRange[1] !== maxPrice ||
     selectedColors.length > 0 ||
     selectedSizes.length > 0 ||
     selectedMaterials.length > 0 ||
     selectedSubcategories.length > 0 ||
     minRating > 0 ||
+    selectedBadges.length > 0 ||
     showNewArrivals ||
     showFeatured;
 
@@ -173,7 +223,7 @@ export function SalePage() {
     setSearchQuery('');
     setSelectedCategory('All');
     setSelectedGender('all');
-    setPriceRange([0, 1000]);
+    setPriceRange([0, maxPrice]);
     setSortBy('discount');
     setSelectedColors([]);
     setSelectedSizes([]);
@@ -183,6 +233,7 @@ export function SalePage() {
     setShowOnSale(true);
     setShowNewArrivals(false);
     setShowFeatured(false);
+    setSelectedBadges([]);
   };
 
   return (
@@ -213,7 +264,7 @@ export function SalePage() {
               <span className="text-xs uppercase tracking-[0.3em] text-red-600">Sale</span>
             </div>
             <h1 className="text-4xl md:text-6xl uppercase tracking-[0.2em] mb-6">
-              Up to 50% Off
+              {maxDiscountPct > 0 ? `Up to ${maxDiscountPct}% Off` : 'Sale'}
             </h1>
             <p className="text-lg text-foreground/60 max-w-2xl mx-auto">
               Discover incredible deals on premium fashion. Limited time offers.
@@ -221,7 +272,7 @@ export function SalePage() {
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4 text-sm text-foreground/60">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-600"></div>
-                <span>{filteredProducts.length} Items</span>
+                <span>{loading ? '...' : `${products.length} Items`}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-blue-600"></div>
@@ -250,7 +301,7 @@ export function SalePage() {
                 Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
               </p>
             </div>
-            
+
             <div className="flex items-center gap-3">
               {/* Mobile Filter Toggle */}
               <button
@@ -263,13 +314,13 @@ export function SalePage() {
                   <span className="w-2 h-2 rounded-full bg-primary"></span>
                 )}
               </button>
-              
+
               {/* Sort Dropdown */}
               <div className="flex flex-col gap-2">
                 <span className="text-xs uppercase tracking-wider text-foreground/60">Sort By</span>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={e => setSortBy(e.target.value)}
                   className="px-4 py-2 border border-foreground/20 bg-background focus:outline-none focus:border-foreground transition-colors cursor-pointer text-sm"
                 >
                   <option value="discount">Highest Discount</option>
@@ -291,65 +342,50 @@ export function SalePage() {
               className="mt-4 flex flex-wrap items-center gap-2"
             >
               <span className="text-xs text-foreground/60">Active filters:</span>
-              
+
               {selectedGender !== 'all' && (
                 <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
                   {selectedGender}
-                  <button onClick={() => setSelectedGender('all')} className="hover:opacity-70">
-                    <X size={12} />
-                  </button>
-                </span>
-              )}
-              
-              {selectedCategory !== 'All' && (
-                <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
-                  {selectedCategory}
-                  <button onClick={() => setSelectedCategory('All')} className="hover:opacity-70">
-                    <X size={12} />
-                  </button>
-                </span>
-              )}
-              
-              {selectedColors.map(color => (
-                <span key={color} className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
-                  {color}
-                  <button onClick={() => toggleArrayFilter(selectedColors, setSelectedColors, color)} className="hover:opacity-70">
-                    <X size={12} />
-                  </button>
-                </span>
-              ))}
-              
-              {selectedSizes.map(size => (
-                <span key={size} className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
-                  Size: {size}
-                  <button onClick={() => toggleArrayFilter(selectedSizes, setSelectedSizes, size)} className="hover:opacity-70">
-                    <X size={12} />
-                  </button>
-                </span>
-              ))}
-              
-              {selectedBadges.map(badge => (
-                <span key={badge} className="px-3 py-1 bg-[#B4770E] text-background text-xs flex items-center gap-2">
-                  {badge}
-                  <button onClick={() => toggleArrayFilter(selectedBadges, setSelectedBadges, badge)} className="hover:opacity-70">
-                    <X size={12} />
-                  </button>
-                </span>
-              ))}
-              
-              {(priceRange[0] !== 0 || priceRange[1] !== 1000) && (
-                <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
-                  ₹{(priceRange[0] * 75).toLocaleString()} - ₹{(priceRange[1] * 75).toLocaleString()}
-                  <button onClick={() => setPriceRange([0, 1000])} className="hover:opacity-70">
-                    <X size={12} />
-                  </button>
+                  <button onClick={() => setSelectedGender('all')} className="hover:opacity-70"><X size={12} /></button>
                 </span>
               )}
 
-              <button
-                onClick={clearAllFilters}
-                className="text-xs text-foreground/60 hover:text-foreground underline ml-2"
-              >
+              {selectedCategory !== 'All' && (
+                <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
+                  {selectedCategory}
+                  <button onClick={() => setSelectedCategory('All')} className="hover:opacity-70"><X size={12} /></button>
+                </span>
+              )}
+
+              {selectedColors.map(color => (
+                <span key={color} className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
+                  {color}
+                  <button onClick={() => toggleArrayFilter(selectedColors, setSelectedColors, color)} className="hover:opacity-70"><X size={12} /></button>
+                </span>
+              ))}
+
+              {selectedSizes.map(size => (
+                <span key={size} className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
+                  Size: {size}
+                  <button onClick={() => toggleArrayFilter(selectedSizes, setSelectedSizes, size)} className="hover:opacity-70"><X size={12} /></button>
+                </span>
+              ))}
+
+              {selectedBadges.map(badge => (
+                <span key={badge} className="px-3 py-1 bg-[#B4770E] text-background text-xs flex items-center gap-2">
+                  {badge}
+                  <button onClick={() => toggleArrayFilter(selectedBadges, setSelectedBadges, badge)} className="hover:opacity-70"><X size={12} /></button>
+                </span>
+              ))}
+
+              {(priceRange[0] !== 0 || priceRange[1] !== maxPrice) && (
+                <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
+                  ₹{(priceRange[0] * 75).toLocaleString()} – ₹{(priceRange[1] * 75).toLocaleString()}
+                  <button onClick={() => setPriceRange([0, maxPrice])} className="hover:opacity-70"><X size={12} /></button>
+                </span>
+              )}
+
+              <button onClick={clearAllFilters} className="text-xs text-foreground/60 hover:text-foreground underline ml-2">
                 Clear all
               </button>
             </motion.div>
@@ -374,6 +410,10 @@ export function SalePage() {
             showFeatured={showFeatured}
             selectedBadges={selectedBadges}
             setSelectedBadges={setSelectedBadges}
+            availableColors={availableColors}
+            availableSizes={availableSizes}
+            availableMaterials={availableMaterials}
+            availableSubcategories={availableSubcategories}
             expandedSections={expandedSections}
             setSearchQuery={setSearchQuery}
             setSelectedCategory={setSelectedCategory}
@@ -426,9 +466,24 @@ export function SalePage() {
           <div className="flex-1">
             {loading ? (
               <div className="text-center py-16">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-                <p className="mt-4 text-gray-600">Loading products...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground mx-auto"></div>
+                <p className="mt-4 text-foreground/60">Loading sale products…</p>
               </div>
+            ) : error ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-16"
+              >
+                <AlertCircle size={40} className="text-red-500 mx-auto mb-4" />
+                <p className="text-foreground/70 mb-6">{error}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-6 py-3 bg-foreground text-background hover:bg-foreground/90 transition-all uppercase tracking-widest text-xs"
+                >
+                  Try Again
+                </button>
+              </motion.div>
             ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {filteredProducts.map((product, index) => (

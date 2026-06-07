@@ -31,6 +31,13 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
     && Object.keys(product.stock).length > 0
     && Object.values(product.stock).every(qty => qty <= 0);
 
+  // Normalise original price — API returns snake_case; legacy data uses camelCase.
+  const originalPrice = product.original_price || product.originalPrice;
+  const originalPriceInr = product.original_price_inr || (product as any).originalPriceINR;
+  const discountPct = originalPrice && originalPrice > product.price
+    ? Math.round(((originalPrice - product.price) / originalPrice) * 100)
+    : 0;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (isOutOfStock) return;
@@ -122,7 +129,7 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
               )}
               {(product.on_sale || product.onSale) && (
                 <span className="px-2 py-0.5 bg-red-600 text-white text-[10px] tracking-wider uppercase rounded-sm">
-                  Sale
+                  {discountPct > 0 ? `-${discountPct}%` : 'Sale'}
                 </span>
               )}
             </>
@@ -154,10 +161,10 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
         </h3>
         <div className="flex items-center justify-between gap-1.5 pt-0.5">
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-sm font-medium">{formatPrice(product.price, (product as any).priceINR)}</span>
-            {product.originalPrice && (
+            <span className="text-sm font-medium">{formatPrice(product.price, product.price_inr || (product as any).priceINR)}</span>
+            {originalPrice && originalPrice > product.price && (
               <span className="text-xs text-muted-foreground line-through shrink-0">
-                {formatPrice(product.originalPrice, (product as any).originalPriceINR)}
+                {formatPrice(originalPrice, originalPriceInr)}
               </span>
             )}
           </div>
