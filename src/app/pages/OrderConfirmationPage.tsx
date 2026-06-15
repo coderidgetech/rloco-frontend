@@ -381,7 +381,7 @@ export function OrderConfirmationPage() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => navigate(`/account/orders/${order?.id || routeOrderId || ''}`)}
+              onClick={() => navigate(`/orders/${order?.id || routeOrderId || ''}`)}
               className="py-4 border border-foreground text-foreground uppercase tracking-widest text-sm font-medium transition-colors hover:bg-foreground hover:text-background"
             >
               Track Order

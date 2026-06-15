@@ -178,6 +178,9 @@ function App() {
                             <Route path="/orders" element={<OrdersPage />} />
                             <Route path="/orders/:id" element={<OrderDetailPage />} />
                             <Route path="/order/:id" element={<OrderDetailPage />} />
+                            {/* Aliases: keep already-shared /account/orders links working */}
+                            <Route path="/account/orders" element={<OrdersPage />} />
+                            <Route path="/account/orders/:id" element={<OrderDetailPage />} />
                             <Route path="/addresses" element={<AddressesPage />} />
                             <Route path="/addresses/add" element={<DesktopHeaderWrapper title="Add address" backPath="/addresses"><AddAddressPage /></DesktopHeaderWrapper>} />
                             <Route path="/profile/edit" element={<Navigate to="/account/profile" replace />} />
