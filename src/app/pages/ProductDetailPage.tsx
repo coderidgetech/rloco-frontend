@@ -229,10 +229,15 @@ export function ProductDetailPage() {
   const isInCart = items.some(item => String(item.id) === String(product.id));
 
   const selectedSizeStock = selectedSize && product.stock?.[selectedSize];
-  const selectedSizeOOS = selectedSize != null
+  const hasSizes = !!(product.sizes && product.sizes.length > 0);
+  const needsSizeSelection = hasSizes && !selectedSize;
+  // Only "out of stock" once a real size is chosen — an empty selection must not
+  // read product.stock[''] (undefined → 0) and falsely disable the CTA.
+  const selectedSizeOOS = !!selectedSize
     && product.stock != null
     && Object.keys(product.stock).length > 0
     && (product.stock[selectedSize] ?? 0) <= 0;
+  const ctaDisabled = selectedSizeOOS || needsSizeSelection;
 
   const handleAddToCart = async () => {
     if (!selectedSize && product.sizes && product.sizes.length > 0) {
@@ -665,23 +670,29 @@ export function ProductDetailPage() {
 
               {/* Rating */}
               <div className="flex items-center gap-2">
-                <div className="flex gap-0.5">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <Star
-                      key={i}
-                      size={14}
-                      className={
-                        i <= Math.floor(averageRating)
-                          ? 'fill-foreground text-foreground'
-                          : i - 0.5 <= averageRating
-                            ? 'fill-foreground/50 text-foreground/50'
-                            : 'fill-foreground/20 text-foreground/20'
-                      }
-                    />
-                  ))}
-                </div>
-                <span className="text-sm font-medium">{averageRating > 0 ? averageRating : ''}</span>
-                <span className="text-sm text-foreground/50">({ratingCount} {ratingCount === 1 ? 'review' : 'reviews'})</span>
+                {ratingCount > 0 ? (
+                  <>
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Star
+                          key={i}
+                          size={14}
+                          className={
+                            i <= Math.floor(averageRating)
+                              ? 'fill-foreground text-foreground'
+                              : i - 0.5 <= averageRating
+                                ? 'fill-foreground/50 text-foreground/50'
+                                : 'fill-foreground/20 text-foreground/20'
+                          }
+                        />
+                      ))}
+                    </div>
+                    <span className="text-sm font-medium">{averageRating}</span>
+                    <span className="text-sm text-foreground/50">({ratingCount} {ratingCount === 1 ? 'review' : 'reviews'})</span>
+                  </>
+                ) : (
+                  <span className="text-sm text-foreground/50">No reviews yet</span>
+                )}
               </div>
             </motion.div>
 
@@ -927,17 +938,17 @@ export function ProductDetailPage() {
                 ) : (
                   <motion.button
                     onClick={handleAddToCart}
-                    whileHover={selectedSizeOOS ? undefined : { scale: 1.02 }}
-                    whileTap={selectedSizeOOS ? undefined : { scale: 0.98 }}
-                    disabled={selectedSizeOOS}
+                    whileHover={ctaDisabled ? undefined : { scale: 1.02 }}
+                    whileTap={ctaDisabled ? undefined : { scale: 0.98 }}
+                    disabled={ctaDisabled}
                     className={`w-full h-14 font-medium transition-all uppercase tracking-widest text-xs flex items-center justify-center gap-2 ${
-                      selectedSizeOOS
+                      ctaDisabled
                         ? 'bg-muted text-muted-foreground cursor-not-allowed'
                         : 'bg-foreground text-background hover:bg-foreground/90'
                     }`}
                   >
                     <ShoppingBag size={18} />
-                    {selectedSizeOOS ? 'Out of Stock' : 'Add to Bag'}
+                    {selectedSizeOOS ? 'Out of Stock' : needsSizeSelection ? 'Select a Size' : 'Add to Bag'}
                   </motion.button>
                 )}
                 <div className="flex gap-2">
