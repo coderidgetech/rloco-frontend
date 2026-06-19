@@ -10,6 +10,7 @@ export interface User {
   phone?: string;
   birthday?: string;
   active?: boolean;
+  must_reset_password?: boolean;
   created_at: string;
   updated_at: string;
 }

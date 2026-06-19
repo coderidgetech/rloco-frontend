@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAdmin } from '../../context/AdminContext';
+import { ForcePasswordReset } from './ForcePasswordReset';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -26,6 +27,11 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   // Storefront customer session cannot access staff portal (shared JWT would otherwise pass auth)
   if (user?.role === 'customer') {
     return <Navigate to="/" replace />;
+  }
+
+  // A vendor issued a temporary password must replace it before anything else.
+  if (user?.must_reset_password) {
+    return <ForcePasswordReset />;
   }
 
   if (requiredRole && !hasPermission(requiredRole)) {
