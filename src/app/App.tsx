@@ -64,6 +64,7 @@ import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
 import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
 import { AdminAddUserPage } from './pages/admin/AdminAddUserPage';
 import { AdminVendorsPage } from './pages/admin/AdminVendorsPage';
+import { AdminStaffPage } from './pages/admin/AdminStaffPage';
 import { AddVendorPage } from './pages/admin/AddVendorPage';
 import AdminVendorApplicationsPage from './pages/admin/AdminVendorApplicationsPage';
 import VendorApplyPage from './pages/VendorApplyPage';
@@ -247,6 +248,7 @@ function App() {
                             <Route path="/admin/customers/add" element={<ProtectedRoute requiredRole="admin"><AdminAddUserPage /></ProtectedRoute>} />
                             <Route path="/admin/vendors" element={<ProtectedRoute requiredRole="admin"><AdminVendorsPage /></ProtectedRoute>} />
                             <Route path="/admin/vendors/add" element={<ProtectedRoute requiredRole="admin"><AddVendorPage /></ProtectedRoute>} />
+                            <Route path="/admin/staff" element={<ProtectedRoute requiredRole="admin"><AdminStaffPage /></ProtectedRoute>} />
                             <Route path="/admin/vendor-applications" element={<ProtectedRoute requiredRole="admin"><AdminVendorApplicationsPage /></ProtectedRoute>} />
                             <Route path="/admin/categories" element={<ProtectedRoute><AdminCategoriesPage /></ProtectedRoute>} />
                             <Route path="/admin/content" element={<ProtectedRoute requiredRole="admin"><AdminContentPage /></ProtectedRoute>} />
