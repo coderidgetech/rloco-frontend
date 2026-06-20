@@ -317,15 +317,15 @@ export function CategoryPage() {
               <>
                 <button
                   type="button"
-                  onClick={() => navigate(`/category/${routeGender}`)}
+                  onClick={() => { setSelectedCategory('All'); navigate(`/category/${selectedGender}`); }}
                   className="hover:text-foreground transition-colors capitalize"
                 >
-                  {routeGender}
+                  {selectedGender === 'all' ? 'All' : selectedGender}
                 </button>
-                {category && category.toLowerCase() !== routeGender?.toLowerCase() && (
+                {selectedCategory !== 'All' && (
                   <>
                     <ChevronRight size={11} />
-                    <span className="text-foreground/60 capitalize">{category}</span>
+                    <span className="text-foreground/60 capitalize">{selectedCategory}</span>
                   </>
                 )}
               </>
