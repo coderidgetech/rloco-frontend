@@ -19,7 +19,7 @@ import { Product } from '../types/product';
 import { useCurrency } from '../context/CurrencyContext';
 
 export function CategoryPage() {
-  const { market } = useCurrency();
+  const { market, formatPrice } = useCurrency();
   const location = useLocation();
   const isGiftHer = location.pathname === '/gift-for-her';
   const isGiftHim = location.pathname === '/gift-for-him';
@@ -54,7 +54,7 @@ export function CategoryPage() {
   const [selectedGender, setSelectedGender] = useState<'all' | 'women' | 'men'>(
     (isGiftHer ? 'women' : isGiftHim ? 'men' : (gender as 'all' | 'women' | 'men')) || 'all'
   );
-  const [priceRange, setPriceRange] = useState([0, 10000]); // Increased max to accommodate all products
+  const [priceRange, setPriceRange] = useState([0, 1000]); // synced to catalog max once products load
   const [sortBy, setSortBy] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
   
@@ -148,6 +148,18 @@ export function CategoryPage() {
     [products, selectedCategory, selectedGender]
   );
 
+  // Price-slider upper bound derived from the catalog (USD, rounded up to 100), so
+  // the slider range always covers the products instead of a fixed 1000/10000.
+  const maxPrice = useMemo(() => {
+    const m = products.reduce((acc, p) => Math.max(acc, p.price), 0);
+    return m > 0 ? Math.ceil(m / 100) * 100 : 1000;
+  }, [products]);
+
+  // Re-sync the price range to the catalog max whenever the product set changes.
+  useEffect(() => {
+    setPriceRange([0, maxPrice]);
+  }, [maxPrice]);
+
   // Filter and sort products
   const filteredProducts = useMemo(() => {
     // products is already gender-scoped by the fetch (selectedGender), so we only
@@ -191,6 +203,12 @@ export function CategoryPage() {
     if (showFeatured) {
       filtered = filtered.filter(p => p.featured);
     }
+    if (selectedBadges.length > 0) {
+      filtered = filtered.filter(p => {
+        const tags = Array.isArray(p.badges) ? p.badges : (p.badge ? [p.badge] : []);
+        return tags.some(b => selectedBadges.includes(b));
+      });
+    }
 
     // Sort
     switch (sortBy) {
@@ -230,6 +248,7 @@ export function CategoryPage() {
     showOnSale,
     showNewArrivals,
     showFeatured,
+    selectedBadges,
   ]);
 
   // Check if any filters are active
@@ -239,7 +258,7 @@ export function CategoryPage() {
     selectedCategory !== 'All' ||
     selectedGender !== urlGender ||
     priceRange[0] !== 0 ||
-    priceRange[1] !== 10000 ||
+    priceRange[1] !== maxPrice ||
     selectedColors.length > 0 ||
     selectedSizes.length > 0 ||
     selectedMaterials.length > 0 ||
@@ -247,13 +266,14 @@ export function CategoryPage() {
     minRating > 0 ||
     showOnSale ||
     showNewArrivals ||
-    showFeatured;
+    showFeatured ||
+    selectedBadges.length > 0;
 
   const clearAllFilters = () => {
     setSearchQuery('');
     setSelectedCategory(canonicalUrlCategory);
     setSelectedGender(urlGender);
-    setPriceRange([0, 10000]);
+    setPriceRange([0, maxPrice]);
     setSortBy('featured');
     setSelectedColors([]);
     setSelectedSizes([]);
@@ -263,6 +283,7 @@ export function CategoryPage() {
     setShowOnSale(false);
     setShowNewArrivals(false);
     setShowFeatured(false);
+    setSelectedBadges([]);
   };
 
   const pageTitle = !hasValidGender
@@ -472,6 +493,8 @@ export function CategoryPage() {
             setSelectedCategory={setSelectedCategory}
             setSelectedGender={setSelectedGender}
             setPriceRange={setPriceRange}
+            maxPrice={maxPrice}
+            formatPrice={formatPrice}
             setSelectedColors={setSelectedColors}
             setSelectedSizes={setSelectedSizes}
             setSelectedMaterials={setSelectedMaterials}
@@ -509,6 +532,8 @@ export function CategoryPage() {
             setSelectedCategory={setSelectedCategory}
             setSelectedGender={setSelectedGender}
             setPriceRange={setPriceRange}
+            maxPrice={maxPrice}
+            formatPrice={formatPrice}
             toggleArrayFilter={toggleArrayFilter}
             setSelectedColors={setSelectedColors}
             setSelectedSizes={setSelectedSizes}

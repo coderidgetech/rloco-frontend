@@ -40,6 +40,8 @@ interface MobileFilterPanelProps {
   setSelectedBadges: (value: string[]) => void;
   availableColors?: string[];
   availableSizes?: string[];
+  maxPrice?: number;
+  formatPrice?: (usdPrice: number) => string;
   expandedSections?: Set<string>;
   toggleSection?: (section: string) => void;
   clearAllFilters: () => void;
@@ -80,6 +82,8 @@ export function MobileFilterPanel({
   setSelectedBadges,
   availableColors = [],
   availableSizes = [],
+  maxPrice = 1000,
+  formatPrice = (n: number) => `$${n}`,
   expandedSections = new Set(),
   toggleSection = () => {},
   clearAllFilters,
@@ -173,15 +177,15 @@ export function MobileFilterPanel({
                 <input
                   type="range"
                   min="0"
-                  max="1000"
+                  max={maxPrice}
                   step="10"
                   value={priceRange[1]}
                   onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
                   className="w-full accent-foreground"
                 />
                 <div className="flex items-center justify-between text-sm text-foreground/70 mt-2">
-                  <span>₹0</span>
-                  <span className="font-medium text-foreground">₹{(priceRange[1] * 75).toLocaleString()}</span>
+                  <span>{formatPrice(0)}</span>
+                  <span className="font-medium text-foreground">{formatPrice(priceRange[1])}</span>
                 </div>
               </div>
 
