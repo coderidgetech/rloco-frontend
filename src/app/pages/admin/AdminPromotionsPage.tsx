@@ -36,6 +36,23 @@ import { Promotion } from '../../types/api';
 import { toast } from 'sonner';
 import { getApiErrorMessage } from '../../lib/apiErrors';
 
+/** YYYY-MM-DD for <input type="date">, or '' for empty/invalid dates. Guards against
+ * Go's zero time.Time ("0001-01-01T00:00:00Z"), which otherwise shows year 0001. */
+function toDateInputValue(value?: string): string {
+  if (!value) return '';
+  const d = new Date(value);
+  if (isNaN(d.getTime()) || d.getFullYear() < 1970) return '';
+  return d.toISOString().split('T')[0];
+}
+
+/** Human date, or "—" for empty/invalid/zero dates. */
+function formatDateDisplay(value?: string): string {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (isNaN(d.getTime()) || d.getFullYear() < 1970) return '—';
+  return d.toLocaleDateString();
+}
+
 export const AdminPromotionsPage = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -86,8 +103,8 @@ export const AdminPromotionsPage = () => {
       min_purchase: promotion.min_purchase?.toString() || '',
       max_discount: promotion.max_discount?.toString() || '',
       usage_limit: promotion.usage_limit?.toString() || '',
-      start_date: promotion.start_date ? new Date(promotion.start_date).toISOString().split('T')[0] : '',
-      end_date: promotion.end_date ? new Date(promotion.end_date).toISOString().split('T')[0] : '',
+      start_date: toDateInputValue(promotion.start_date),
+      end_date: toDateInputValue(promotion.end_date),
       is_active: promotion.is_active,
     });
     setShowEditDialog(true);
@@ -364,8 +381,8 @@ export const AdminPromotionsPage = () => {
                   </TableCell>
                   <TableCell>
                     <div className="text-sm">
-                      <p>{new Date(promotion.start_date).toLocaleDateString()}</p>
-                      <p className="text-gray-500">to {new Date(promotion.end_date).toLocaleDateString()}</p>
+                      <p>{formatDateDisplay(promotion.start_date)}</p>
+                      <p className="text-gray-500">to {formatDateDisplay(promotion.end_date)}</p>
                     </div>
                   </TableCell>
                   <TableCell>
