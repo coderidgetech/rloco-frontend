@@ -57,6 +57,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     path: string;
     permission: 'admin' | 'vendor';
     vendorOnly?: boolean;
+    staffAllowed?: boolean;
   }> = [
     {
       label: 'Dashboard',
@@ -69,12 +70,14 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       icon: Package,
       path: '/admin/products',
       permission: 'vendor',
+      staffAllowed: true,
     },
     {
       label: 'Orders',
       icon: ShoppingCart,
       path: '/admin/orders',
       permission: 'vendor',
+      staffAllowed: true,
     },
     {
       label: 'My store',
@@ -106,6 +109,12 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       label: 'Vendors',
       icon: Store,
       path: '/admin/vendors',
+      permission: 'admin',
+    },
+    {
+      label: 'Staff',
+      icon: Users,
+      path: '/admin/staff',
       permission: 'admin',
     },
     {
@@ -165,6 +174,8 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   ];
 
   const filteredMenuItems = menuItems.filter((item) => {
+    // Staff see only their explicitly-allowed pages (house catalog + orders).
+    if (user?.role === 'staff') return item.staffAllowed === true;
     if (!hasPermission(item.permission)) return false;
     if (item.vendorOnly && user?.role !== 'vendor') return false;
     return true;
@@ -188,7 +199,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                 <RlocoLogo size="sm" className="justify-start" />
               </div>
               <span className="font-bold text-xs md:text-sm text-gray-600 ml-1 truncate">
-                {user?.role === 'admin' ? 'Admin' : 'Vendor'}
+                {user?.role === 'admin' ? 'Admin' : user?.role === 'staff' ? 'Staff' : 'Vendor'}
               </span>
             </Link>
           </div>

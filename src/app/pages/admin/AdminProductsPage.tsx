@@ -102,7 +102,7 @@ export const AdminProductsPage = () => {
           params.search = searchQuery.trim();
         }
 
-        const response = await productService.list(params);
+        const response = await productService.listManaged(params);
         setProducts(response?.products || []);
         setTotal(response?.total || 0);
       } catch (error: unknown) {
@@ -141,7 +141,7 @@ export const AdminProductsPage = () => {
       setShowDeleteDialog(false);
       setSelectedProduct(null);
       // Refresh products list
-      const response = await productService.list({ limit, skip: page * limit });
+      const response = await productService.listManaged({ limit, skip: page * limit });
       setProducts(response.products || []);
       setTotal(response.total || 0);
     } catch (error: unknown) {
@@ -181,7 +181,7 @@ export const AdminProductsPage = () => {
       await productService.create(duplicateData);
       toast.success(`Product "${product.name}" duplicated successfully`);
       // Refresh products list
-      const response = await productService.list({ limit, skip: page * limit });
+      const response = await productService.listManaged({ limit, skip: page * limit });
       setProducts(response.products || []);
       setTotal(response.total || 0);
     } catch (error: unknown) {
@@ -192,7 +192,7 @@ export const AdminProductsPage = () => {
 
   const handleExport = async () => {
     try {
-      const response = await productService.list({ limit: 10000 });
+      const response = await productService.listManaged({ limit: 10000 });
       const list = response?.products || [];
       const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -231,7 +231,7 @@ export const AdminProductsPage = () => {
         created++;
       }
       toast.success(`Imported ${created} product(s)`);
-      const response = await productService.list({ limit, skip: page * limit });
+      const response = await productService.listManaged({ limit, skip: page * limit });
       setProducts(response?.products || []);
       setTotal(response?.total ?? total);
     } catch (error: unknown) {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { getApiErrorMessage } from '../../lib/apiErrors';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { Button } from '../../components/ui/button';
@@ -37,6 +37,7 @@ import {
 import { toast } from 'sonner';
 import { VendorTier, VendorRole, VendorPermissions, ROLE_PERMISSIONS, VENDOR_TIERS } from '../../types/vendor-permissions';
 import { adminService, type VendorCreateResponse } from '../../services/adminService';
+import type { User } from '../../types/api';
 import { PH } from '../../lib/formPlaceholders';
 import {
   DEFAULT_VENDOR_SUBSCRIPTION_PLANS,
@@ -53,6 +54,12 @@ import {
 
 export const AddVendorPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  // "Edit" routes here with the vendor row in navigation state. Without this the
+  // page silently opened a blank create form and a save created a duplicate vendor.
+  const editingVendor = (location.state as { vendor?: User } | null)?.vendor ?? null;
+  const editingVendorId = editingVendor?.id ?? null;
+  const isEditing = Boolean(editingVendorId);
 
   const [subscriptionPlans, setSubscriptionPlans] =
     useState<VendorSubscriptionPlanRow[]>(DEFAULT_VENDOR_SUBSCRIPTION_PLANS);
@@ -115,6 +122,17 @@ export const AddVendorPage = () => {
 
   const selectedPlan = subscriptionPlans.find((p) => p.id === selectedPlanId);
   const rolePermissions = ROLE_PERMISSIONS[selectedRole];
+
+  // Prefill from the vendor row when editing. Only identity fields round-trip
+  // through the backend vendor model today; permissions are managed via the
+  // dedicated privilege dialog, so we don't touch them here.
+  useEffect(() => {
+    if (!editingVendor) return;
+    setVendorName(editingVendor.name ?? '');
+    setStoreName(editingVendor.name ?? '');
+    setEmail(editingVendor.email ?? '');
+    setPhone(editingVendor.phone ?? '');
+  }, [editingVendor]);
 
   const handleRoleChange = (role: VendorRole) => {
     setSelectedRole(role);
@@ -189,12 +207,19 @@ export const AddVendorPage = () => {
         vendorData.initial_password = initialPassword.trim();
       }
 
+      if (isEditing && editingVendorId) {
+        await adminService.updateVendor(editingVendorId, vendorData);
+        toast.success('Vendor updated');
+        navigate('/admin/vendors');
+        return;
+      }
+
       const result = await adminService.createVendor(vendorData);
       setCreateResult(result);
       toast.success('Vendor created. Review portal login details.');
     } catch (error: unknown) {
-      console.error('Failed to create vendor:', error);
-      toast.error(getApiErrorMessage(error, 'Failed to create vendor'));
+      console.error(isEditing ? 'Failed to update vendor:' : 'Failed to create vendor:', error);
+      toast.error(getApiErrorMessage(error, isEditing ? 'Failed to update vendor' : 'Failed to create vendor'));
     }
   };
 
@@ -213,9 +238,11 @@ export const AddVendorPage = () => {
               Back to Vendors
             </Button>
             <div>
-              <h1 className="text-3xl font-bold">Add New Vendor</h1>
+              <h1 className="text-3xl font-bold">{isEditing ? 'Edit Vendor' : 'Add New Vendor'}</h1>
               <p className="text-gray-600 mt-1">
-                Create a new vendor account with complete details and privilege settings
+                {isEditing
+                  ? 'Update this vendor account. Permissions are managed from the vendor list.'
+                  : 'Create a new vendor account with complete details and privilege settings'}
               </p>
             </div>
           </div>
@@ -225,7 +252,7 @@ export const AddVendorPage = () => {
             </Button>
             <Button onClick={handleSubmit} className="bg-[#B4770E] hover:bg-[#8B5A0B]">
               <Save className="h-4 w-4 mr-2" />
-              Create Vendor
+              {isEditing ? 'Save Changes' : 'Create Vendor'}
             </Button>
           </div>
         </div>

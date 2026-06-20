@@ -4,12 +4,13 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'customer' | 'admin' | 'vendor';
+  role: 'customer' | 'admin' | 'vendor' | 'staff';
   vendor_id?: string;
   avatar?: string;
   phone?: string;
   birthday?: string;
   active?: boolean;
+  must_reset_password?: boolean;
   created_at: string;
   updated_at: string;
 }

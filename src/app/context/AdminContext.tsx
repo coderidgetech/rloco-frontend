@@ -3,7 +3,7 @@ import { clearAuthToken } from '../lib/api';
 import { authService } from '../services/authService';
 import { User } from '../types/api';
 
-export type UserRole = 'admin' | 'vendor' | 'customer' | null;
+export type UserRole = 'admin' | 'vendor' | 'customer' | 'staff' | null;
 
 interface AdminContextType {
   user: User | null;

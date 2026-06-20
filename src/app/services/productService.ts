@@ -22,6 +22,28 @@ export const productService = {
     return response.data;
   },
 
+  // Authenticated management list — backend scopes by role (admin: all,
+  // vendor: own, staff: house/first-party). Use this in the admin app, not list().
+  async listManaged(params?: {
+    limit?: number;
+    skip?: number;
+    category?: string;
+    gender?: string;
+    on_sale?: boolean;
+    featured?: boolean;
+    new_arrival?: boolean;
+    gift?: boolean;
+    search?: string;
+    min_price?: number;
+    max_price?: number;
+    sort?: string;
+    market?: 'IN' | 'US';
+    deduplicate?: boolean;
+  }): Promise<PaginatedResponse<Product>> {
+    const response = await api.get<PaginatedResponse<Product>>('/products/manage', { params });
+    return response.data;
+  },
+
   async getById(id: string, opts?: { market?: 'IN' | 'US' }): Promise<Product> {
     const trimmed = (id || '').trim();
     if (!/^[0-9a-fA-F]{24}$/.test(trimmed)) {

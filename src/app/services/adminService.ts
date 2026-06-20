@@ -130,6 +130,17 @@ export const adminService = {
     await api.put(`/admin/vendors/${id}/permissions`, { permissions });
   },
 
+  // Internal staff (first-party operations)
+  async listStaff(): Promise<User[]> {
+    const response = await api.get<{ staff: User[]; total: number }>('/admin/staff');
+    return response.data.staff ?? [];
+  },
+
+  async createStaff(payload: { name: string; email: string; password?: string }): Promise<{ user: User; temporary_password?: string }> {
+    const response = await api.post<{ user: User; temporary_password?: string }>('/admin/staff', payload);
+    return response.data;
+  },
+
   // Promotions
   async listPromotions(): Promise<Promotion[]> {
     const response = await api.get<Promotion[]>('/admin/promotions');
