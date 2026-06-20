@@ -127,41 +127,42 @@ export function MobileFilterPanel({
                 </div>
               </div>
 
-              {/* Gender + nested categories */}
+              {/* Gender */}
               <div>
                 <label className="block text-sm font-medium mb-3">Shop For</label>
                 <div className="space-y-2">
                   {(['all', 'women', 'men'] as const).map((gender) => (
-                    <div key={gender}>
-                      <button
-                        onClick={() => { setSelectedGender(gender); setSelectedCategory('All'); }}
-                        className={`w-full text-left px-4 py-2 text-sm transition-all ${
-                          selectedGender === gender
-                            ? 'bg-foreground text-background'
-                            : 'bg-transparent hover:bg-foreground/5 border border-foreground/10'
-                        }`}
-                      >
-                        {gender === 'all' ? 'All Products' : gender.charAt(0).toUpperCase() + gender.slice(1)}
-                      </button>
+                    <button
+                      key={gender}
+                      onClick={() => setSelectedGender(gender)}
+                      className={`w-full text-left px-4 py-2 text-sm transition-all ${
+                        selectedGender === gender
+                          ? 'bg-foreground text-background'
+                          : 'bg-transparent hover:bg-foreground/5 border border-foreground/10'
+                      }`}
+                    >
+                      {gender === 'all' ? 'All Products' : gender.charAt(0).toUpperCase() + gender.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                      {selectedGender === gender && (
-                        <div className="mt-1.5 ml-2 pl-3 border-l border-foreground/10 space-y-0.5">
-                          {(categoriesByGender[gender] || categoriesByGender.all).map((cat) => (
-                            <button
-                              key={cat}
-                              onClick={() => setSelectedCategory(cat)}
-                              className={`w-full text-left px-3 py-1.5 text-sm transition-all ${
-                                selectedCategory === cat
-                                  ? 'text-foreground font-medium bg-foreground/10'
-                                  : 'text-foreground/55 hover:text-foreground hover:bg-foreground/5'
-                              }`}
-                            >
-                              {cat}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+              {/* Category */}
+              <div>
+                <label className="block text-sm font-medium mb-3">Category</label>
+                <div className="space-y-1">
+                  {(categoriesByGender[selectedGender] || categoriesByGender.all).map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`w-full text-left px-3 py-2 text-sm transition-all ${
+                        selectedCategory === category
+                          ? 'text-foreground font-medium'
+                          : 'text-foreground/60 hover:text-foreground hover:bg-foreground/5'
+                      }`}
+                    >
+                      {category}
+                    </button>
                   ))}
                 </div>
               </div>
