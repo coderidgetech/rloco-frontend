@@ -211,35 +211,29 @@ export function AllProductsPage() {
               Home
             </button>
             <ChevronRight size={12} />
-            {genderLabel || selectedCategory !== 'All' ? (
-              <button
-                onClick={() => { setSelectedGender('all'); setSelectedCategory('All'); }}
-                className="hover:text-foreground transition-colors uppercase"
-              >
-                All Products
-              </button>
-            ) : (
+            {!genderLabel && selectedCategory === 'All' ? (
+              // No filter applied → All Products is the current page
               <span className="text-foreground uppercase">All Products</span>
-            )}
-            {genderLabel && (
+            ) : (
               <>
-                <ChevronRight size={12} />
-                {selectedCategory !== 'All' ? (
-                  <button
-                    onClick={() => setSelectedCategory('All')}
-                    className="hover:text-foreground transition-colors uppercase capitalize"
-                  >
-                    {genderLabel}
-                  </button>
-                ) : (
-                  <span className="text-foreground uppercase capitalize">{genderLabel}</span>
+                {genderLabel && (
+                  selectedCategory !== 'All' ? (
+                    <>
+                      <button
+                        onClick={() => setSelectedCategory('All')}
+                        className="hover:text-foreground transition-colors uppercase capitalize"
+                      >
+                        {genderLabel}
+                      </button>
+                      <ChevronRight size={12} />
+                    </>
+                  ) : (
+                    <span className="text-foreground uppercase capitalize">{genderLabel}</span>
+                  )
                 )}
-              </>
-            )}
-            {selectedCategory !== 'All' && (
-              <>
-                <ChevronRight size={12} />
-                <span className="text-foreground uppercase">{selectedCategory}</span>
+                {selectedCategory !== 'All' && (
+                  <span className="text-foreground uppercase">{selectedCategory}</span>
+                )}
               </>
             )}
           </div>
