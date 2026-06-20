@@ -171,6 +171,30 @@ export const AdminAddEditProductPage = () => {
     stock: {} as Record<string, number>,
     details: [] as string[],
     availableMarkets: ['IN', 'US'] as ('IN' | 'US')[],
+    // Publishing
+    status: 'active' as 'active' | 'draft',
+    badge: '',
+    videoUrl: '',
+    // Catalog / identity
+    brand: '',
+    barcode: '',
+    countryOfOrigin: '',
+    tags: [] as string[],
+    // Pricing extras
+    priceInr: '',
+    costPrice: '',
+    // Shipping
+    weight: '',
+    lengthCm: '',
+    widthCm: '',
+    heightCm: '',
+    // Tax
+    hsnCode: '',
+    taxCode: '',
+    gstPercent: '',
+    // SEO
+    metaTitle: '',
+    metaDescription: '',
   });
 
   // Fetch product data if editing
@@ -208,6 +232,24 @@ export const AdminAddEditProductPage = () => {
             }
             return ['IN', 'US'] as ('IN' | 'US')[];
           })(),
+          status: (product.status === 'draft' ? 'draft' : 'active') as 'active' | 'draft',
+          badge: product.badge || '',
+          videoUrl: product.video_url || '',
+          brand: product.brand || '',
+          barcode: product.barcode || '',
+          countryOfOrigin: product.country_of_origin || '',
+          tags: product.tags || [],
+          priceInr: product.price_inr?.toString() || '',
+          costPrice: product.cost_price?.toString() || '',
+          weight: product.weight?.toString() || '',
+          lengthCm: product.length_cm?.toString() || '',
+          widthCm: product.width_cm?.toString() || '',
+          heightCm: product.height_cm?.toString() || '',
+          hsnCode: product.hsn_code || '',
+          taxCode: product.tax_code || '',
+          gstPercent: product.gst_percent?.toString() || '',
+          metaTitle: product.meta_title || '',
+          metaDescription: product.meta_description || '',
         });
       } catch (error: unknown) {
         console.error('Failed to fetch product:', error);
@@ -436,6 +478,24 @@ export const AdminAddEditProductPage = () => {
         new_arrival: formData.newArrival,
         is_gift: formData.isGift,
         available_markets: formData.availableMarkets,
+        status: formData.status,
+        badge: formData.badge || undefined,
+        video_url: formData.videoUrl || undefined,
+        brand: formData.brand || undefined,
+        barcode: formData.barcode || undefined,
+        country_of_origin: formData.countryOfOrigin || undefined,
+        tags: formData.tags,
+        price_inr: formData.priceInr ? parseFloat(formData.priceInr) : undefined,
+        cost_price: formData.costPrice ? parseFloat(formData.costPrice) : undefined,
+        weight: formData.weight ? parseFloat(formData.weight) : undefined,
+        length_cm: formData.lengthCm ? parseFloat(formData.lengthCm) : undefined,
+        width_cm: formData.widthCm ? parseFloat(formData.widthCm) : undefined,
+        height_cm: formData.heightCm ? parseFloat(formData.heightCm) : undefined,
+        hsn_code: formData.hsnCode || undefined,
+        tax_code: formData.taxCode || undefined,
+        gst_percent: formData.gstPercent ? parseFloat(formData.gstPercent) : undefined,
+        meta_title: formData.metaTitle || undefined,
+        meta_description: formData.metaDescription || undefined,
       };
 
       if (isEdit && productId) {
@@ -746,6 +806,168 @@ export const AdminAddEditProductPage = () => {
                     />
                     <p className="text-xs text-gray-500">Leave empty if not on sale</p>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="priceInr">Price (INR)</Label>
+                    <Input
+                      id="priceInr"
+                      type="number"
+                      placeholder="0"
+                      value={formData.priceInr}
+                      onChange={(e) => setFormData({ ...formData, priceInr: e.target.value })}
+                    />
+                    <p className="text-xs text-gray-500">India price. Leave empty to convert from USD.</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="costPrice">Cost Price (Optional)</Label>
+                    <Input
+                      id="costPrice"
+                      type="number"
+                      placeholder="0"
+                      value={formData.costPrice}
+                      onChange={(e) => setFormData({ ...formData, costPrice: e.target.value })}
+                    />
+                    <p className="text-xs text-gray-500">Your cost — used for margin/commission.</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Shipping & Dimensions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Shipping &amp; Dimensions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="weight">Weight (kg)</Label>
+                    <Input id="weight" type="number" step="0.01" placeholder="0.5"
+                      value={formData.weight}
+                      onChange={(e) => setFormData({ ...formData, weight: e.target.value })} />
+                    <p className="text-xs text-gray-500">Used for live shipping rates. Defaults if empty.</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="lengthCm">L (cm)</Label>
+                      <Input id="lengthCm" type="number" placeholder="0" value={formData.lengthCm}
+                        onChange={(e) => setFormData({ ...formData, lengthCm: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="widthCm">W (cm)</Label>
+                      <Input id="widthCm" type="number" placeholder="0" value={formData.widthCm}
+                        onChange={(e) => setFormData({ ...formData, widthCm: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="heightCm">H (cm)</Label>
+                      <Input id="heightCm" type="number" placeholder="0" value={formData.heightCm}
+                        onChange={(e) => setFormData({ ...formData, heightCm: e.target.value })} />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Tax & Compliance */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Tax &amp; Compliance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="hsnCode">HSN Code (India)</Label>
+                    <Input id="hsnCode" placeholder="e.g. 6109" value={formData.hsnCode}
+                      onChange={(e) => setFormData({ ...formData, hsnCode: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gstPercent">GST % (India)</Label>
+                    <Input id="gstPercent" type="number" placeholder="e.g. 12" value={formData.gstPercent}
+                      onChange={(e) => setFormData({ ...formData, gstPercent: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="taxCode">Stripe Tax Code (US)</Label>
+                    <Input id="taxCode" placeholder="txcd_30011000" value={formData.taxCode}
+                      onChange={(e) => setFormData({ ...formData, taxCode: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="countryOfOrigin">Country of Origin</Label>
+                    <Input id="countryOfOrigin" placeholder="e.g. India" value={formData.countryOfOrigin}
+                      onChange={(e) => setFormData({ ...formData, countryOfOrigin: e.target.value })} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Organization & Publishing */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Organization &amp; Publishing</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="brand">Brand</Label>
+                    <Input id="brand" placeholder="Brand name" value={formData.brand}
+                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="barcode">Barcode / UPC</Label>
+                    <Input id="barcode" placeholder="Barcode" value={formData.barcode}
+                      onChange={(e) => setFormData({ ...formData, barcode: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <select id="status" className="w-full h-10 px-3 border rounded-md bg-background text-sm"
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'draft' })}>
+                      <option value="active">Active (visible in store)</option>
+                      <option value="draft">Draft (hidden from store)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="badge">Badge / Tag</Label>
+                    <select id="badge" className="w-full h-10 px-3 border rounded-md bg-background text-sm"
+                      value={formData.badge}
+                      onChange={(e) => setFormData({ ...formData, badge: e.target.value })}>
+                      <option value="">None</option>
+                      {['Best Seller', 'Trending', 'Most Ordered', 'New', 'Limited Edition', 'Exclusive', 'Hot', 'Popular'].map((b) => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label htmlFor="tags">Tags / Keywords (comma-separated)</Label>
+                    <Input id="tags" placeholder="summer, cotton, casual"
+                      value={formData.tags.join(', ')}
+                      onChange={(e) => setFormData({ ...formData, tags: e.target.value.split(',').map((t) => t.trim()).filter(Boolean) })} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Media & SEO */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Media &amp; SEO</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="videoUrl">Product Video URL</Label>
+                  <Input id="videoUrl" placeholder="https://…/video.mp4" value={formData.videoUrl}
+                    onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="metaTitle">Meta Title (SEO)</Label>
+                  <Input id="metaTitle" placeholder="Shown in search results / browser tab" value={formData.metaTitle}
+                    onChange={(e) => setFormData({ ...formData, metaTitle: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="metaDescription">Meta Description (SEO)</Label>
+                  <Textarea id="metaDescription" rows={2} placeholder="Short description for search engines"
+                    value={formData.metaDescription}
+                    onChange={(e) => setFormData({ ...formData, metaDescription: e.target.value })} />
                 </div>
               </CardContent>
             </Card>

@@ -50,6 +50,27 @@ export interface Product {
   variant_group_id?: string;
   color?: string;
   is_main_variant?: boolean;
+  /** Publishing: "draft" hides from storefront; empty/"active" is live */
+  status?: 'active' | 'draft' | string;
+  /** Catalog / identity */
+  brand?: string;
+  barcode?: string;
+  country_of_origin?: string;
+  tags?: string[];
+  /** Pricing extras */
+  cost_price?: number;
+  /** Shipping (weight kg, dimensions cm) */
+  weight?: number;
+  length_cm?: number;
+  width_cm?: number;
+  height_cm?: number;
+  /** Tax */
+  hsn_code?: string;
+  tax_code?: string;
+  gst_percent?: number;
+  /** SEO */
+  meta_title?: string;
+  meta_description?: string;
   created_at: string;
   updated_at: string;
 }
