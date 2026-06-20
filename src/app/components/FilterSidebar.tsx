@@ -186,22 +186,42 @@ export function FilterSidebar({
         </div>
       </div>
 
-      {/* Gender - Always Visible */}
+      {/* Gender + nested categories - Always Visible */}
       <div className="border border-foreground/10 bg-background p-4">
         <label className="block text-xs uppercase tracking-wider text-foreground/60 mb-3">Shop For</label>
         <div className="space-y-2">
           {(['all', 'women', 'men'] as const).map((gender) => (
-            <button
-              key={gender}
-              onClick={() => setSelectedGender(gender)}
-              className={`w-full text-left px-4 py-2.5 text-sm transition-all ${
-                selectedGender === gender
-                  ? 'bg-foreground text-background'
-                  : 'bg-transparent hover:bg-foreground/5 border border-foreground/10'
-              }`}
-            >
-              {gender === 'all' ? 'All Products' : gender.charAt(0).toUpperCase() + gender.slice(1)}
-            </button>
+            <div key={gender}>
+              <button
+                onClick={() => { setSelectedGender(gender); setSelectedCategory('All'); }}
+                className={`w-full text-left px-4 py-2.5 text-sm transition-all ${
+                  selectedGender === gender
+                    ? 'bg-foreground text-background'
+                    : 'bg-transparent hover:bg-foreground/5 border border-foreground/10'
+                }`}
+              >
+                {gender === 'all' ? 'All Products' : gender.charAt(0).toUpperCase() + gender.slice(1)}
+              </button>
+
+              {/* When this gender is selected, list its categories to drill into */}
+              {selectedGender === gender && (
+                <div className="mt-1.5 ml-2 pl-3 border-l border-foreground/10 space-y-0.5">
+                  {(categoriesByGender[gender] || categoriesByGender.all).map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedCategory(cat)}
+                      className={`w-full text-left px-3 py-1.5 text-sm transition-all ${
+                        selectedCategory === cat
+                          ? 'text-foreground font-medium bg-foreground/10'
+                          : 'text-foreground/55 hover:text-foreground hover:bg-foreground/5'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>
@@ -246,30 +266,6 @@ export function FilterSidebar({
           <span>Featured</span>
         </button>
       </div>
-
-      {/* Category - Accordion */}
-      <AccordionSection 
-        title="Category" 
-        isExpanded={expandedSections.has('category')}
-        onToggle={() => toggleSection('category')}
-        count={selectedCategory !== 'All' ? 1 : 0}
-      >
-        <div className="space-y-1 max-h-64 overflow-y-auto pr-2">
-          {(categoriesByGender[selectedGender] || categoriesByGender.all).map((category) => (
-            <button
-              key={category}
-              onClick={() => setSelectedCategory(category)}
-              className={`w-full text-left px-3 py-2 text-sm transition-all ${
-                selectedCategory === category
-                  ? 'text-foreground font-medium bg-foreground/10'
-                  : 'text-foreground/60 hover:text-foreground hover:bg-foreground/5'
-              }`}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
-      </AccordionSection>
 
       {/* Price Range - Accordion */}
       <AccordionSection 
