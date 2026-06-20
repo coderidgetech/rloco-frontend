@@ -42,6 +42,8 @@ interface FilterSidebarProps {
   availableSizes?: string[];
   availableMaterials?: string[];
   availableSubcategories?: string[];
+  maxPrice?: number;
+  formatPrice?: (usdPrice: number) => string;
 
   // Functions
   toggleSection: (section: string) => void;
@@ -142,6 +144,8 @@ export function FilterSidebar({
   availableSizes = [],
   availableMaterials = [],
   availableSubcategories = [],
+  maxPrice = 1000,
+  formatPrice = (n: number) => `$${n}`,
 }: FilterSidebarProps) {
   return (
     <motion.aside
@@ -276,22 +280,22 @@ export function FilterSidebar({
         title="Price Range" 
         isExpanded={expandedSections.has('price')}
         onToggle={() => toggleSection('price')}
-        count={(priceRange[0] !== 0 || priceRange[1] !== 1000) ? 1 : 0}
+        count={(priceRange[0] !== 0 || priceRange[1] !== maxPrice) ? 1 : 0}
       >
         <div className="space-y-3">
           <input
             type="range"
             min="0"
-            max="1000"
+            max={maxPrice}
             step="10"
             value={priceRange[1]}
             onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
             className="w-full accent-foreground h-2"
           />
           <div className="flex items-center justify-between">
-            <span className="text-sm text-foreground/60">₹0</span>
+            <span className="text-sm text-foreground/60">{formatPrice(0)}</span>
             <span className="text-sm font-medium text-foreground px-3 py-1 bg-foreground/5">
-              ₹{(priceRange[1] * 75).toLocaleString()}
+              {formatPrice(priceRange[1])}
             </span>
           </div>
         </div>

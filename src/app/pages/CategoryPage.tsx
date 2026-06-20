@@ -11,6 +11,7 @@ import {
   extractFilterOptions,
   getSubcategoriesForCategory,
   productMatchesSearchQuery,
+  categoriesByGender,
 } from '../utils/filterConfig';
 import { PromotionalOffers } from '../components/PromotionalOffers';
 import { productService } from '../services/productService';
@@ -18,7 +19,7 @@ import { Product } from '../types/product';
 import { useCurrency } from '../context/CurrencyContext';
 
 export function CategoryPage() {
-  const { market } = useCurrency();
+  const { market, formatPrice } = useCurrency();
   const location = useLocation();
   const isGiftHer = location.pathname === '/gift-for-her';
   const isGiftHim = location.pathname === '/gift-for-him';
@@ -32,16 +33,28 @@ export function CategoryPage() {
   const normalizedGender = routeGender?.toLowerCase();
   const hasValidGender = isGiftRoute || (!!normalizedGender && validGenders.has(normalizedGender));
   const looksLikeObjectId = !!gender && /^[a-f0-9]{24}$/i.test(gender);
+
+  // Canonicalize the URL category against the known list, so a bad slug (e.g.
+  // /category/women/women, where the gender word lands in the category slot)
+  // doesn't filter the catalog down to a non-existent category.
+  const canonicalUrlCategory = useMemo(() => {
+    if (!category) return 'All';
+    const match = categoriesByGender.all.find(
+      (c) => c.toLowerCase() === category.toLowerCase(),
+    );
+    return match && match !== 'All' ? match : 'All';
+  }, [category]);
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   // All filter states
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(category ? category.charAt(0).toUpperCase() + category.slice(1) : 'All');
+  const [selectedCategory, setSelectedCategory] = useState(canonicalUrlCategory);
   const [selectedGender, setSelectedGender] = useState<'all' | 'women' | 'men'>(
     (isGiftHer ? 'women' : isGiftHim ? 'men' : (gender as 'all' | 'women' | 'men')) || 'all'
   );
-  const [priceRange, setPriceRange] = useState([0, 10000]); // Increased max to accommodate all products
+  const [priceRange, setPriceRange] = useState([0, 1000]); // synced to catalog max once products load
   const [sortBy, setSortBy] = useState('featured');
   const [showFilters, setShowFilters] = useState(false);
   
@@ -74,18 +87,17 @@ export function CategoryPage() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const params: any = { limit: 1000 };
-        if (routeGender && routeGender !== 'all') {
-          params.gender = routeGender;
-        }
-        if (category) {
-          // Capitalize category to match database format (e.g., "dresses" -> "Dresses")
-          params.category = category.charAt(0).toUpperCase() + category.slice(1).toLowerCase();
+        // Fetch by GENDER only (driven by the filter, not the URL category) and do
+        // all category/subcategory filtering client-side. This lets the sidebar
+        // category and gender filters actually switch the result set.
+        const params: any = { limit: 1000, market };
+        if (selectedGender && selectedGender !== 'all') {
+          params.gender = selectedGender;
         }
         if (giftOnly) {
           params.gift = true;
         }
-        const response = await productService.list({ ...params, market });
+        const response = await productService.list(params);
         setProducts(response.products || []);
       } catch (error) {
         console.error('Failed to fetch products:', error);
@@ -95,18 +107,18 @@ export function CategoryPage() {
       }
     };
     fetchProducts();
-  }, [routeGender, category, giftOnly, hasValidGender, looksLikeObjectId, navigate, market, gender, isGiftRoute]);
+  }, [selectedGender, giftOnly, hasValidGender, looksLikeObjectId, navigate, market, gender, isGiftRoute]);
 
   // Reset filters when URL parameters change
   useEffect(() => {
     if (!hasValidGender && !isGiftRoute) return;
-    setSelectedCategory(category ? category.charAt(0).toUpperCase() + category.slice(1) : 'All');
+    setSelectedCategory(canonicalUrlCategory);
     if (routeGender && routeGender !== 'all') {
       setSelectedGender(routeGender as 'all' | 'women' | 'men');
     } else if (isGiftRoute) {
       setSelectedGender(isGiftHer ? 'women' : 'men');
     }
-  }, [gender, category, hasValidGender, isGiftRoute, routeGender, isGiftHer]);
+  }, [gender, category, hasValidGender, isGiftRoute, routeGender, isGiftHer, canonicalUrlCategory]);
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -136,34 +148,31 @@ export function CategoryPage() {
     [products, selectedCategory, selectedGender]
   );
 
+  // Price-slider upper bound derived from the catalog (USD, rounded up to 100), so
+  // the slider range always covers the products instead of a fixed 1000/10000.
+  const maxPrice = useMemo(() => {
+    const m = products.reduce((acc, p) => Math.max(acc, p.price), 0);
+    return m > 0 ? Math.ceil(m / 100) * 100 : 1000;
+  }, [products]);
+
+  // Re-sync the price range to the catalog max whenever the product set changes.
+  useEffect(() => {
+    setPriceRange([0, maxPrice]);
+  }, [maxPrice]);
+
   // Filter and sort products
   const filteredProducts = useMemo(() => {
+    // products is already gender-scoped by the fetch (selectedGender), so we only
+    // apply category + the advanced filters client-side here.
     let filtered = [...products];
-
-    // Base filter by gender from URL
-    if (routeGender) {
-      filtered = filtered.filter(
-        p => p.gender.toLowerCase() === routeGender.toLowerCase() || p.gender === 'unisex'
-      );
-    }
-
-    // Base filter by category from URL
-    if (category) {
-      filtered = filtered.filter(p => p.category.toLowerCase() === category.toLowerCase());
-    }
 
     if (searchQuery.trim()) {
       filtered = filtered.filter((p) => productMatchesSearchQuery(p, searchQuery));
     }
 
-    // Category filter from sidebar (if different from URL)
-    if (selectedCategory !== 'All' && (!category || selectedCategory.toLowerCase() !== category.toLowerCase())) {
-      filtered = filtered.filter(p => p.category === selectedCategory);
-    }
-
-    // Gender filter from sidebar (if different from URL)
-    if (selectedGender !== 'all' && (!routeGender || selectedGender.toLowerCase() !== routeGender.toLowerCase())) {
-      filtered = filtered.filter(p => p.gender === selectedGender || p.gender === 'unisex');
+    // Category filter (seeded from the URL, switchable via the sidebar)
+    if (selectedCategory !== 'All') {
+      filtered = filtered.filter(p => p.category.toLowerCase() === selectedCategory.toLowerCase());
     }
 
     // Price range filter
@@ -193,6 +202,12 @@ export function CategoryPage() {
     }
     if (showFeatured) {
       filtered = filtered.filter(p => p.featured);
+    }
+    if (selectedBadges.length > 0) {
+      filtered = filtered.filter(p => {
+        const tags = Array.isArray(p.badges) ? p.badges : (p.badge ? [p.badge] : []);
+        return tags.some(b => selectedBadges.includes(b));
+      });
     }
 
     // Sort
@@ -233,15 +248,17 @@ export function CategoryPage() {
     showOnSale,
     showNewArrivals,
     showFeatured,
+    selectedBadges,
   ]);
 
   // Check if any filters are active
-  const hasActiveFilters = 
-    searchQuery !== '' || 
-    (selectedCategory !== 'All' && (!category || selectedCategory.toLowerCase() !== category.toLowerCase())) || 
-    (selectedGender !== 'all' && (!routeGender || selectedGender.toLowerCase() !== routeGender.toLowerCase())) || 
-    priceRange[0] !== 0 || 
-    priceRange[1] !== 10000 ||
+  const urlGender = (routeGender as 'all' | 'women' | 'men') || 'all';
+  const hasActiveFilters =
+    searchQuery !== '' ||
+    selectedCategory !== 'All' ||
+    selectedGender !== urlGender ||
+    priceRange[0] !== 0 ||
+    priceRange[1] !== maxPrice ||
     selectedColors.length > 0 ||
     selectedSizes.length > 0 ||
     selectedMaterials.length > 0 ||
@@ -249,13 +266,14 @@ export function CategoryPage() {
     minRating > 0 ||
     showOnSale ||
     showNewArrivals ||
-    showFeatured;
+    showFeatured ||
+    selectedBadges.length > 0;
 
   const clearAllFilters = () => {
     setSearchQuery('');
-    setSelectedCategory(category ? category.charAt(0).toUpperCase() + category.slice(1) : 'All');
-    setSelectedGender((routeGender as 'all' | 'women' | 'men') || 'all');
-    setPriceRange([0, 10000]);
+    setSelectedCategory(canonicalUrlCategory);
+    setSelectedGender(urlGender);
+    setPriceRange([0, maxPrice]);
     setSortBy('featured');
     setSelectedColors([]);
     setSelectedSizes([]);
@@ -265,17 +283,20 @@ export function CategoryPage() {
     setShowOnSale(false);
     setShowNewArrivals(false);
     setShowFeatured(false);
+    setSelectedBadges([]);
   };
 
   const pageTitle = !hasValidGender
     ? 'Collection'
-    : giftOnly && routeGender === 'women'
+    : giftOnly && selectedGender === 'women'
     ? 'Gifts for Her'
-    : giftOnly && routeGender === 'men'
+    : giftOnly && selectedGender === 'men'
     ? 'Gifts for Him'
-    : category && category.toLowerCase() !== routeGender?.toLowerCase()
-    ? category.charAt(0).toUpperCase() + category.slice(1)
-    : `${routeGender?.charAt(0).toUpperCase()}${routeGender?.slice(1)}'s Collection`;
+    : selectedCategory !== 'All'
+    ? selectedCategory
+    : selectedGender === 'all'
+    ? 'All Products'
+    : `${selectedGender.charAt(0).toUpperCase()}${selectedGender.slice(1)}'s Collection`;
 
   return (
     <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
@@ -317,15 +338,15 @@ export function CategoryPage() {
               <>
                 <button
                   type="button"
-                  onClick={() => navigate(`/category/${routeGender}`)}
+                  onClick={() => { setSelectedCategory('All'); navigate(`/category/${selectedGender}`); }}
                   className="hover:text-foreground transition-colors capitalize"
                 >
-                  {routeGender}
+                  {selectedGender === 'all' ? 'All' : selectedGender}
                 </button>
-                {category && category.toLowerCase() !== routeGender?.toLowerCase() && (
+                {selectedCategory !== 'All' && (
                   <>
                     <ChevronRight size={11} />
-                    <span className="text-foreground/60 capitalize">{category}</span>
+                    <span className="text-foreground/60 capitalize">{selectedCategory}</span>
                   </>
                 )}
               </>
@@ -382,16 +403,16 @@ export function CategoryPage() {
             >
               <span className="text-xs text-foreground/60">Active filters:</span>
               
-              {selectedGender !== 'all' && selectedGender !== routeGender && (
+              {selectedGender !== urlGender && (
                 <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
                   {selectedGender}
-                  <button onClick={() => setSelectedGender((routeGender as any) || 'all')} className="hover:opacity-70">
+                  <button onClick={() => setSelectedGender(urlGender)} className="hover:opacity-70">
                     <X size={12} />
                   </button>
                 </span>
               )}
-              
-              {selectedCategory !== 'All' && (!category || selectedCategory.toLowerCase() !== category.toLowerCase()) && (
+
+              {selectedCategory !== 'All' && (
                 <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
                   {selectedCategory}
                   <button onClick={() => setSelectedCategory('All')} className="hover:opacity-70">
@@ -472,6 +493,8 @@ export function CategoryPage() {
             setSelectedCategory={setSelectedCategory}
             setSelectedGender={setSelectedGender}
             setPriceRange={setPriceRange}
+            maxPrice={maxPrice}
+            formatPrice={formatPrice}
             setSelectedColors={setSelectedColors}
             setSelectedSizes={setSelectedSizes}
             setSelectedMaterials={setSelectedMaterials}
@@ -509,6 +532,8 @@ export function CategoryPage() {
             setSelectedCategory={setSelectedCategory}
             setSelectedGender={setSelectedGender}
             setPriceRange={setPriceRange}
+            maxPrice={maxPrice}
+            formatPrice={formatPrice}
             toggleArrayFilter={toggleArrayFilter}
             setSelectedColors={setSelectedColors}
             setSelectedSizes={setSelectedSizes}

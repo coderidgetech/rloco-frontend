@@ -40,6 +40,7 @@ export interface Product {
   rating: number;
   reviews: number;
   badge?: string;
+  badges?: string[];
   video_url?: string;
   stock: Record<string, number>; // size -> quantity
   /** Markets where the product is sold: IN, US, or both */

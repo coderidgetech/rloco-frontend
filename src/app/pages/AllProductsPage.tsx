@@ -18,7 +18,7 @@ import { useCurrency } from '../context/CurrencyContext';
 import { useSearchOverlay } from '../context/SearchOverlayContext';
 
 export function AllProductsPage() {
-  const { market } = useCurrency();
+  const { market, formatPrice } = useCurrency();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { openSearch } = useSearchOverlay();
@@ -128,6 +128,13 @@ export function AllProductsPage() {
     [products, selectedCategory, selectedGender]
   );
 
+  // Price-slider upper bound derived from the catalog (USD, rounded up to 100).
+  const maxPrice = useMemo(() => {
+    const m = products.reduce((acc, p) => Math.max(acc, p.price), 0);
+    return m > 0 ? Math.ceil(m / 100) * 100 : 1000;
+  }, [products]);
+  useEffect(() => { setPriceRange([0, maxPrice]); }, [maxPrice]);
+
   // Client-side filtering for attributes the API doesn't filter (price range, colors, sizes, materials, rating, badges)
   const filteredProducts = useMemo(() => {
     let filtered = [...products];
@@ -157,7 +164,7 @@ export function AllProductsPage() {
     selectedCategory !== 'All' || 
     selectedGender !== 'all' || 
     priceRange[0] !== 0 || 
-    priceRange[1] !== 1000 ||
+    priceRange[1] !== maxPrice ||
     selectedColors.length > 0 ||
     selectedSizes.length > 0 ||
     selectedMaterials.length > 0 ||
@@ -172,7 +179,7 @@ export function AllProductsPage() {
     setSearchQuery('');
     setSelectedCategory('All');
     setSelectedGender('all');
-    setPriceRange([0, 1000]);
+    setPriceRange([0, maxPrice]);
     setSortBy('featured');
     setSelectedColors([]);
     setSelectedSizes([]);
@@ -185,6 +192,15 @@ export function AllProductsPage() {
     setSelectedBadges([]);
   };
 
+  // Reflect the active gender/category in the header instead of a static title.
+  const genderLabel = selectedGender === 'all' ? '' : selectedGender.charAt(0).toUpperCase() + selectedGender.slice(1);
+  const pageTitle =
+    selectedCategory !== 'All'
+      ? selectedCategory
+      : genderLabel
+        ? `${genderLabel}'s Collection`
+        : 'All Products';
+
   return (
     <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Breadcrumb */}
@@ -195,7 +211,31 @@ export function AllProductsPage() {
               Home
             </button>
             <ChevronRight size={12} />
-            <span className="text-foreground uppercase">All Products</span>
+            {!genderLabel && selectedCategory === 'All' ? (
+              // No filter applied → All Products is the current page
+              <span className="text-foreground uppercase">All Products</span>
+            ) : (
+              <>
+                {genderLabel && (
+                  selectedCategory !== 'All' ? (
+                    <>
+                      <button
+                        onClick={() => setSelectedCategory('All')}
+                        className="hover:text-foreground transition-colors uppercase capitalize"
+                      >
+                        {genderLabel}
+                      </button>
+                      <ChevronRight size={12} />
+                    </>
+                  ) : (
+                    <span className="text-foreground uppercase capitalize">{genderLabel}</span>
+                  )
+                )}
+                {selectedCategory !== 'All' && (
+                  <span className="text-foreground uppercase">{selectedCategory}</span>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -210,7 +250,7 @@ export function AllProductsPage() {
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-3xl md:text-4xl mb-2">All Products</h1>
+              <h1 className="text-3xl md:text-4xl mb-2">{pageTitle}</h1>
               <p className="text-foreground/70">
                 Showing {filteredProducts.length} of {products.length} {filteredProducts.length === 1 ? 'product' : 'products'}
               </p>
@@ -301,10 +341,10 @@ export function AllProductsPage() {
                 </span>
               ))}
               
-              {(priceRange[0] !== 0 || priceRange[1] !== 1000) && (
+              {(priceRange[0] !== 0 || priceRange[1] !== maxPrice) && (
                 <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
                   ₹{(priceRange[0] * 75).toLocaleString()} - ₹{(priceRange[1] * 75).toLocaleString()}
-                  <button onClick={() => setPriceRange([0, 1000])} className="hover:opacity-70">
+                  <button onClick={() => setPriceRange([0, maxPrice])} className="hover:opacity-70">
                     <X size={12} />
                   </button>
                 </span>
@@ -343,6 +383,8 @@ export function AllProductsPage() {
               setSelectedGender={setSelectedGender}
               priceRange={priceRange}
               setPriceRange={setPriceRange}
+              maxPrice={maxPrice}
+              formatPrice={formatPrice}
               selectedColors={selectedColors}
               setSelectedColors={setSelectedColors}
               selectedSizes={selectedSizes}
@@ -385,6 +427,8 @@ export function AllProductsPage() {
             setSelectedGender={setSelectedGender}
             priceRange={priceRange}
             setPriceRange={setPriceRange}
+            maxPrice={maxPrice}
+            formatPrice={formatPrice}
             sortBy={sortBy}
             setSortBy={setSortBy}
             selectedColors={selectedColors}
