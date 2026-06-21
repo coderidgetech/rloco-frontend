@@ -55,6 +55,9 @@ export const AdminAddEditProductPage = () => {
   const isEdit = !!productId;
   const [loading, setLoading] = useState(isEdit);
   const [uploadingImages, setUploadingImages] = useState(false);
+  // Images chosen before the product exists (create flow) — uploaded right after create.
+  const [pendingImages, setPendingImages] = useState<File[]>([]);
+  const [pendingPreviews, setPendingPreviews] = useState<string[]>([]);
   const [variantGroupInput, setVariantGroupInput] = useState('');
   const [variantColor, setVariantColor] = useState('');
   const [variantSaving, setVariantSaving] = useState(false);
@@ -502,7 +505,15 @@ export const AdminAddEditProductPage = () => {
         await productService.update(productId, productData);
         toast.success('Product updated successfully');
       } else {
-        await productService.create(productData);
+        const created = await productService.create(productData);
+        // Upload any images chosen during creation, now that the product has an id.
+        if (pendingImages.length > 0 && created?.id) {
+          try {
+            await productService.uploadImages(created.id, pendingImages);
+          } catch {
+            toast.error('Product created, but image upload failed — add them from Edit.');
+          }
+        }
         toast.success('Product created successfully');
       }
       
@@ -519,10 +530,17 @@ export const AdminAddEditProductPage = () => {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
-    if (!fileList?.length || !isEdit || !productId) return;
+    if (!fileList?.length) return;
     // Snapshot before clearing input — FileList is live and empties when value is reset.
     const filesToUpload = Array.from(fileList);
     e.target.value = '';
+    // Create flow: hold the files + show local previews; they upload after the product
+    // is created (the upload endpoint needs a product id).
+    if (!isEdit || !productId) {
+      setPendingImages((prev) => [...prev, ...filesToUpload]);
+      setPendingPreviews((prev) => [...prev, ...filesToUpload.map((f) => URL.createObjectURL(f))]);
+      return;
+    }
     try {
       setUploadingImages(true);
       const updated = await productService.uploadImages(productId, filesToUpload);
@@ -588,15 +606,30 @@ export const AdminAddEditProductPage = () => {
                 <CardTitle>Product Images</CardTitle>
               </CardHeader>
               <CardContent>
-                {formData.images.length > 0 && (
+                {(formData.images.length > 0 || pendingPreviews.length > 0) && (
                   <div className="flex flex-wrap gap-2 mb-4">
                     {formData.images.map((url, i) => (
                       <img
-                        key={i}
+                        key={`u-${i}`}
                         src={url}
                         alt=""
                         className="w-20 h-20 object-cover rounded border"
                       />
+                    ))}
+                    {pendingPreviews.map((url, i) => (
+                      <div key={`p-${i}`} className="relative">
+                        <img src={url} alt="" className="w-20 h-20 object-cover rounded border" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPendingImages((prev) => prev.filter((_, j) => j !== i));
+                            setPendingPreviews((prev) => prev.filter((_, j) => j !== i));
+                          }}
+                          className="absolute -top-1 -right-1 bg-foreground text-background rounded-full w-5 h-5 text-xs leading-none"
+                        >
+                          ×
+                        </button>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -607,27 +640,25 @@ export const AdminAddEditProductPage = () => {
                   className="hidden"
                   id="admin-product-images"
                   onChange={handleImageUpload}
-                  disabled={!isEdit || uploadingImages}
+                  disabled={uploadingImages}
                 />
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-primary transition-colors">
                   <ImageIcon className="h-16 w-16 mx-auto text-gray-400 mb-3" />
                   <p className="text-sm text-gray-600 mb-1 font-medium">
-                    {isEdit ? 'Click to upload or drag and drop' : 'Save product first to upload images'}
+                    {isEdit ? 'Click to upload or drag and drop' : 'Add images now — they upload when you create the product'}
                   </p>
                   <p className="text-xs text-gray-500">
                     PNG, JPG up to 10MB (recommended: 800x1000px)
                   </p>
-                  {isEdit && (
-                    <Button
-                      variant="outline"
-                      className="mt-4"
-                      size="sm"
-                      disabled={uploadingImages}
-                      onClick={() => document.getElementById('admin-product-images')?.click()}
-                    >
-                      {uploadingImages ? 'Uploading...' : 'Upload Images'}
-                    </Button>
-                  )}
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    size="sm"
+                    disabled={uploadingImages}
+                    onClick={() => document.getElementById('admin-product-images')?.click()}
+                  >
+                    {uploadingImages ? 'Uploading...' : isEdit ? 'Upload Images' : 'Choose Images'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
