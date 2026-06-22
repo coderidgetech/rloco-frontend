@@ -458,6 +458,15 @@ export const AdminAddEditProductPage = () => {
       toast.error('Select at least one market (IN / US)');
       return;
     }
+    // Warn (don't block) when the product has sizes but no stock — it would be
+    // live but unpurchasable ("out of stock" on every size).
+    const hasAnyStock = Object.values(formData.stock).some((q) => (q ?? 0) > 0);
+    if (formData.sizes.length > 0 && !hasAnyStock) {
+      const proceed = window.confirm(
+        'This product has no stock for any size, so it won’t be purchasable until you add inventory.\n\nSave anyway?',
+      );
+      if (!proceed) return;
+    }
 
     try {
       const productData: Partial<Product> = {
