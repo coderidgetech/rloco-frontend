@@ -1034,10 +1034,14 @@ export const AdminAddEditProductPage = () => {
                   </div>
                 </div>
 
-                {/* Stock per size */}
-                {formData.sizes.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Stock quantity per size</Label>
+                {/* Stock per size — always visible so it's discoverable; inputs appear once sizes are chosen */}
+                <div className="space-y-2">
+                  <Label>Stock quantity per size</Label>
+                  {formData.sizes.length === 0 ? (
+                    <p className="text-xs text-muted-foreground">
+                      Select one or more sizes above, then set a quantity for each here. A size with no quantity counts as out of stock.
+                    </p>
+                  ) : (
                     <div className="flex flex-wrap gap-3">
                       {formData.sizes.map((size) => (
                         <div key={size} className="flex items-center gap-2">
@@ -1046,6 +1050,7 @@ export const AdminAddEditProductPage = () => {
                             type="number"
                             min={0}
                             className="w-20"
+                            placeholder="0"
                             value={formData.stock[size] ?? ''}
                             onChange={(e) => {
                               const v = e.target.value;
@@ -1061,8 +1066,8 @@ export const AdminAddEditProductPage = () => {
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* Colors */}
                 {isEdit && variants.length > 1 ? (
