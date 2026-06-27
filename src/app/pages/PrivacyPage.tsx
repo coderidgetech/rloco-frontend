@@ -1,8 +1,13 @@
 import { motion } from 'motion/react';
 import { Footer } from '../components/Footer';
 import { Shield, Lock, Eye, UserX } from 'lucide-react';
+import { useSiteConfig } from '@/app/context/SiteConfigContext';
 
 export function PrivacyPage() {
+  const { config } = useSiteConfig();
+  const supportEmail = config.general?.supportEmail || config.general?.email || '';
+  const contactPhone = config.general?.phone || '';
+  const contactAddress = config.general?.address || '';
   return (
     <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Hero Section */}
@@ -20,7 +25,7 @@ export function PrivacyPage() {
             <h1 className="text-4xl md:text-5xl uppercase tracking-[0.2em] mb-6">
               Privacy Policy
             </h1>
-            <p className="text-foreground/60">Last updated: January 4, 2026</p>
+            <p className="text-foreground/60">Last updated: January 2026</p>
           </motion.div>
         </div>
       </div>
@@ -161,7 +166,7 @@ export function PrivacyPage() {
               <li>Opt-out of marketing communications</li>
             </ul>
             <p className="text-foreground/70 leading-relaxed mt-4">
-              To exercise these rights, contact us at privacy@rloco.com
+              To exercise these rights, contact us at {supportEmail}
             </p>
           </section>
 
@@ -169,7 +174,7 @@ export function PrivacyPage() {
           <section>
             <h2 className="text-2xl uppercase tracking-[0.15em] mb-4">Children's Privacy</h2>
             <p className="text-foreground/70 leading-relaxed">
-              Our website is not intended for children under 16. We do not knowingly collect personal information from children. If you believe we have collected information from a child, please contact us immediately.
+              Our website is not intended for children under 18. We do not knowingly collect personal information from children. If you believe we have collected information from a child, please contact us immediately.
             </p>
           </section>
 
@@ -204,9 +209,9 @@ export function PrivacyPage() {
               If you have questions about this Privacy Policy, please contact us:
             </p>
             <div className="text-foreground/70 space-y-2">
-              <p><strong>Email:</strong> privacy@rloco.com</p>
-              <p><strong>Phone:</strong> +91 123 456 7890</p>
-              <p><strong>Address:</strong> 123 Fashion Street, Bandra West, Mumbai, Maharashtra 400050, India</p>
+              {supportEmail && <p><strong>Email:</strong> {supportEmail}</p>}
+              {contactPhone && <p><strong>Phone:</strong> {contactPhone}</p>}
+              {contactAddress && <p><strong>Address:</strong> {contactAddress}</p>}
             </div>
           </section>
         </motion.div>

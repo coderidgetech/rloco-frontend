@@ -37,7 +37,7 @@ import {
 import { toast } from 'sonner';
 import { VendorTier, VendorRole, VendorPermissions, ROLE_PERMISSIONS, VENDOR_TIERS } from '../../types/vendor-permissions';
 import { adminService, type VendorCreateResponse } from '../../services/adminService';
-import type { User } from '../../types/api';
+import type { User as ApiUser } from '../../types/api';
 import { PH } from '../../lib/formPlaceholders';
 import {
   DEFAULT_VENDOR_SUBSCRIPTION_PLANS,
@@ -57,7 +57,7 @@ export const AddVendorPage = () => {
   const location = useLocation();
   // "Edit" routes here with the vendor row in navigation state. Without this the
   // page silently opened a blank create form and a save created a duplicate vendor.
-  const editingVendor = (location.state as { vendor?: User } | null)?.vendor ?? null;
+  const editingVendor = (location.state as { vendor?: ApiUser } | null)?.vendor ?? null;
   const editingVendorId = editingVendor?.id ?? null;
   const isEditing = Boolean(editingVendorId);
 

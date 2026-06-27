@@ -37,6 +37,23 @@ export function isUnauthorizedApiError(err: unknown): boolean {
 }
 
 /**
+ * Machine-readable error code the backend may attach (e.g. "USER_NOT_FOUND" on login of an
+ * unregistered phone). Lets the UI branch on intent instead of matching message strings.
+ */
+export function getApiErrorCode(err: unknown): string | undefined {
+  if (isPlainRecord(err) && typeof err.code === 'string' && err.code.trim()) {
+    return err.code.trim();
+  }
+  if (isAxiosError(err)) {
+    const d = err.response?.data;
+    if (isPlainRecord(d) && typeof d.code === 'string' && d.code.trim()) {
+      return d.code.trim();
+    }
+  }
+  return undefined;
+}
+
+/**
  * Best-effort user-facing message from API failures (interceptor plain object, AxiosError, or Error).
  */
 export function getApiErrorMessage(err: unknown, fallback = 'Something went wrong'): string {

@@ -156,7 +156,7 @@ export interface Order {
   total: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   payment_method: string;
-  payment_status: 'pending' | 'paid' | 'failed';
+  payment_status: 'pending' | 'paid' | 'failed' | 'refunding' | 'refunded' | 'partially_refunded';
   payment_intent_id?: string;
   tracking_number?: string;
   promotion_code?: string;

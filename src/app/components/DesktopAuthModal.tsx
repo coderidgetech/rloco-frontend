@@ -8,7 +8,7 @@ import { useUser } from '../context/UserContext';
 import { GoogleSignInButton } from './GoogleSignInButton';
 import { authService } from '../services/authService';
 import { SIGNUP_OTP_DRAFT_KEY, type SignupOtpDraft } from '../lib/signupOtpDraft';
-import { getApiErrorMessage } from '../lib/apiErrors';
+import { getApiErrorMessage, getApiErrorCode } from '../lib/apiErrors';
 import { DIAL_COUNTRIES, buildPhoneDigitsForApi } from '../lib/dialCountries';
 import { PH } from '../lib/formPlaceholders';
 import { ACCOUNT_DEFAULT_PATH } from '../lib/accountRoutes';
@@ -83,6 +83,13 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
       startCountdown();
       toast.success('OTP sent to your phone');
     } catch (err) {
+      if (getApiErrorCode(err) === 'USER_NOT_FOUND') {
+        toast.info("No account found — let's get you signed up");
+        setSignupPhoneLocal(loginPhoneLocal);
+        setSignupSelectedCountry(selectedCountry);
+        setCurrentView('signup');
+        return;
+      }
       toast.error(getApiErrorMessage(err, 'Could not send verification code'));
     } finally {
       setIsLoading(false);

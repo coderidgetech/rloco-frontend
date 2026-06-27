@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, User, ArrowRight, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { RlocoLogo } from '@/app/components/RlocoLogo';
@@ -9,24 +9,27 @@ import { SIGNUP_OTP_DRAFT_KEY, LOGIN_OTP_SESSION_KEY } from '@/app/lib/signupOtp
 import { getApiErrorMessage } from '@/app/lib/apiErrors';
 import { GoogleSignInButton } from '@/app/components/GoogleSignInButton';
 import { useUser } from '@/app/context/UserContext';
-import { DIAL_COUNTRIES, buildPhoneDigitsForApi } from '@/app/lib/dialCountries';
+import { DIAL_COUNTRIES, buildPhoneDigitsForApi, type DialCountry } from '@/app/lib/dialCountries';
 import { PH } from '@/app/lib/formPlaceholders';
 import { isAccountPath } from '@/app/lib/accountRoutes';
 import { PhoneCountryRow } from '@/app/components/PhoneCountryRow';
 
 export function DesktopSignupPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/account/profile';
   const { loginWithGoogle } = useUser();
+  // Prefill phone when arriving from login after an unregistered-number lookup.
+  const prefill = (location.state ?? {}) as { prefillPhoneLocal?: string; prefillCountry?: DialCountry };
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
-  const [phoneLocal, setPhoneLocal] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState(DIAL_COUNTRIES[1]);
+  const [phoneLocal, setPhoneLocal] = useState(prefill.prefillPhoneLocal ?? '');
+  const [selectedCountry, setSelectedCountry] = useState(prefill.prefillCountry ?? DIAL_COUNTRIES[1]);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);

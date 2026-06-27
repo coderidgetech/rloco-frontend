@@ -98,7 +98,7 @@ export const AdminOrdersPage = () => {
     items: order.items.length,
     total: order.total,
     status: order.status,
-    date: new Date(order.created_at).toLocaleDateString(),
+    date: order.created_at, // raw timestamp; formatted (date + time) at render
     paymentMethod: order.payment_method,
     shippingAddress: order.shipping_info
       ? `${order.shipping_info.address}, ${order.shipping_info.city}, ${order.shipping_info.state} ${order.shipping_info.zip_code}`
@@ -189,7 +189,7 @@ export const AdminOrdersPage = () => {
       order.total.toFixed(2),
       order.status,
       order.paymentMethod,
-      order.date,
+      new Date(order.date).toLocaleString(),
     ]);
     const csv = [headers, ...rows]
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))

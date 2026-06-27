@@ -180,13 +180,30 @@ export function OrderDetailPage() {
               <h1 className="text-xl font-medium">{order.order_number}</h1>
               <p className="text-sm text-foreground/50 mt-0.5">Placed on {formatDate(order.created_at)}</p>
             </div>
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${getStatusColor(status)}`}>
-              {getStatusIcon(status)}
-              <span className="capitalize">{status.replace('-', ' ')}</span>
+            <div className="flex flex-col items-end gap-1.5">
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium ${getStatusColor(status)}`}>
+                {getStatusIcon(status)}
+                <span className="capitalize">{status.replace('-', ' ')}</span>
+              </div>
+              {order.payment_status === 'refunded' && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-medium text-green-700 bg-green-50 dark:bg-green-950/20">
+                  Refunded
+                </span>
+              )}
+              {order.payment_status === 'partially_refunded' && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-medium text-amber-700 bg-amber-50 dark:bg-amber-950/20">
+                  Partially refunded
+                </span>
+              )}
+              {order.payment_status === 'refunding' && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-medium text-blue-700 bg-blue-50 dark:bg-blue-950/20">
+                  Refund in progress
+                </span>
+              )}
             </div>
           </div>
 
-          {status === 'processing' && (
+          {(order.status === 'processing' || order.status === 'pending') && (
             <div className="mt-3">
               <button
                 onClick={handleCancel}

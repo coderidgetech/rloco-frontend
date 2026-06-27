@@ -7,7 +7,7 @@ import { RlocoLogo } from '@/app/components/RlocoLogo';
 import { useUser } from '@/app/context/UserContext';
 import { GoogleSignInButton } from '@/app/components/GoogleSignInButton';
 import { authService } from '@/app/services/authService';
-import { getApiErrorMessage } from '@/app/lib/apiErrors';
+import { getApiErrorMessage, getApiErrorCode } from '@/app/lib/apiErrors';
 import { isAccountPath } from '@/app/lib/accountRoutes';
 import { LOGIN_OTP_SESSION_KEY, SIGNUP_OTP_DRAFT_KEY, type LoginOtpSession } from '@/app/lib/signupOtpDraft';
 import { DIAL_COUNTRIES, buildPhoneDigitsForApi } from '@/app/lib/dialCountries';
@@ -54,6 +54,16 @@ export function DesktopLoginPage() {
       toast.success('OTP sent to your phone');
       navigate('/otp-verification', { state: session });
     } catch (err) {
+      if (getApiErrorCode(err) === 'USER_NOT_FOUND') {
+        toast.info("No account found — let's get you signed up");
+        const signupPath = !isAccountPath(redirect)
+          ? `/signup?redirect=${encodeURIComponent(redirect)}`
+          : '/signup';
+        navigate(signupPath, {
+          state: { prefillPhoneLocal: phoneLocal, prefillCountry: selectedCountry },
+        });
+        return;
+      }
       toast.error(getApiErrorMessage(err, 'Could not send verification code'));
     } finally {
       setIsLoading(false);
