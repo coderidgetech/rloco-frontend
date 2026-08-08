@@ -558,30 +558,33 @@ export function CartPage() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ delay: index * 0.03 }}
-                      className="rounded-lg bg-white dark:bg-card border border-neutral-200 p-4 md:p-5 shadow-sm dark:border-border"
+                      className="rounded-lg bg-white dark:bg-card border border-neutral-200 p-3 md:p-4 shadow-sm dark:border-border"
                     >
-                      <div className="flex flex-col gap-4 md:flex-row md:gap-5">
-                        <div className="flex gap-3 md:gap-4 flex-1 min-w-0">
-                          <input
-                            type="checkbox"
-                            checked={selectedItems.has(key)}
-                            onChange={() => toggleLine(key)}
-                            className="mt-1 size-4 rounded border-neutral-300 shrink-0"
-                            style={{ accentColor: GOLD }}
-                            aria-label={`Select ${item.name}`}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/product/${item.id}`)}
-                            className="w-[104px] h-[132px] md:w-[120px] md:h-[152px] rounded-lg overflow-hidden bg-muted shrink-0 ring-1 ring-black/5"
-                          >
-                            <img
-                              src={item.image}
-                              alt=""
-                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                      <div className="flex flex-col gap-3 md:flex-row md:gap-5">
+                        <div className="flex gap-2.5 md:gap-4 flex-1 min-w-0">
+                          <div className="relative w-[80px] h-[104px] md:w-[104px] md:h-[132px] shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/product/${item.id}`)}
+                              className="block w-full h-full rounded-lg overflow-hidden bg-muted ring-1 ring-black/5"
+                            >
+                              <img
+                                src={item.image}
+                                alt=""
+                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                              />
+                            </button>
+                            {/* Selection checkbox overlaid on the image (Myntra-style) */}
+                            <input
+                              type="checkbox"
+                              checked={selectedItems.has(key)}
+                              onChange={() => toggleLine(key)}
+                              className="absolute top-1.5 left-1.5 size-5 rounded-md border-2 border-white shadow-sm cursor-pointer"
+                              style={{ accentColor: GOLD }}
+                              aria-label={`Select ${item.name}`}
                             />
-                          </button>
-                          <div className="flex-1 min-w-0 space-y-2">
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-1.5">
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0 pr-2">
                                 <button
@@ -591,7 +594,7 @@ export function CartPage() {
                                 >
                                   {item.name}
                                 </button>
-                                <p className="text-[11px] text-neutral-600 dark:text-muted-foreground mt-1">
+                                <p className="text-[11px] text-neutral-600 dark:text-muted-foreground mt-0.5">
                                   Sold by: RLOKO APPARELS
                                 </p>
                               </div>
@@ -605,9 +608,9 @@ export function CartPage() {
                               </button>
                             </div>
 
-                            <div className="flex flex-wrap items-end gap-3 md:gap-4">
+                            <div className="hidden md:flex flex-wrap items-end gap-3 md:gap-4">
                               <div>
-                                <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+                                <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-0.5">
                                   Size
                                 </label>
                                 <select
@@ -624,7 +627,7 @@ export function CartPage() {
                               </div>
                               {p?.colors && p.colors.length > 0 && (
                                 <div>
-                                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
+                                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-0.5">
                                     Color
                                   </span>
                                   <div className="flex flex-wrap gap-1.5">
@@ -638,55 +641,65 @@ export function CartPage() {
                               )}
                             </div>
 
-                            <div className="flex flex-wrap items-center justify-between gap-3 pt-1 md:hidden">
-                              <div>
-                                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
-                                  Qty
-                                </span>
-                                <div className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-neutral-50 p-0.5 dark:border-border dark:bg-muted/40">
-                                <button
-                                  type="button"
-                                  onClick={() => updateQuantity(item.id, item.size, item.quantity - 1)}
-                                  className="p-2 rounded-md hover:bg-background disabled:opacity-40"
-                                  disabled={item.quantity <= 1}
-                                >
-                                  <Minus size={14} />
-                                </button>
-                                <span className="min-w-[2rem] text-center text-sm font-semibold tabular-nums">
-                                  {item.quantity}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => updateQuantity(item.id, item.size, item.quantity + 1)}
-                                  className="p-2 rounded-md hover:bg-background"
-                                >
-                                  <Plus size={14} />
-                                </button>
+                            {/* Mobile: compact size / qty / colour + inline price (Myntra-style) */}
+                            <div className="md:hidden space-y-2">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <div className="inline-flex items-center gap-1 rounded-md border border-border bg-background pl-2.5 pr-1.5 py-1 text-xs">
+                                  <span className="text-muted-foreground">Size</span>
+                                  <select
+                                    value={item.size}
+                                    onChange={(e) => handleSizeChange(item, e.target.value)}
+                                    className="bg-transparent font-medium focus:outline-none"
+                                    aria-label="Size"
+                                  >
+                                    {sizeOptions.map((s) => (
+                                      <option key={s} value={s}>{s}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div className="inline-flex items-center rounded-md border border-border bg-background text-xs">
+                                  <span className="pl-2.5 pr-1 text-muted-foreground">Qty</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateQuantity(item.id, item.size, item.quantity - 1)}
+                                    disabled={item.quantity <= 1}
+                                    className="px-1.5 py-1 disabled:opacity-40"
+                                    aria-label="Decrease quantity"
+                                  >
+                                    <Minus size={12} />
+                                  </button>
+                                  <span className="min-w-[1.25rem] text-center font-semibold tabular-nums">{item.quantity}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateQuantity(item.id, item.size, item.quantity + 1)}
+                                    className="px-1.5 py-1"
+                                    aria-label="Increase quantity"
+                                  >
+                                    <Plus size={12} />
+                                  </button>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                {p?.original_price != null && p.original_price > item.price && (
-                                    <p className="text-xs text-muted-foreground line-through">
-                                      {formatPrice(p.original_price, p.original_price_inr)}
-                                    </p>
-                                  )}
-                                <p className="font-semibold">
+                              <div className="flex items-baseline gap-2">
+                                <span className="text-base font-semibold tabular-nums">
                                   {formatPrice(item.price, (item as { priceINR?: number }).priceINR)}
-                                </p>
-                                <p className="text-[11px] text-muted-foreground">
-                                  Line{' '}
-                                  {formatAmount(
-                                    convertPrice(item.price, (item as { priceINR?: number }).priceINR) *
-                                      item.quantity
-                                  )}
-                                </p>
+                                </span>
+                                {p?.original_price != null && p.original_price > item.price && (
+                                  <>
+                                    <span className="text-xs text-muted-foreground line-through">
+                                      {formatPrice(p.original_price, p.original_price_inr)}
+                                    </span>
+                                    <span className="text-xs font-semibold text-orange-600 dark:text-orange-400">
+                                      {Math.round(((p.original_price - item.price) / p.original_price) * 100)}% OFF
+                                    </span>
+                                  </>
+                                )}
                               </div>
                             </div>
 
-                            <p className="text-[11px] text-neutral-600 dark:text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 pt-1">
+                            <p className="text-[11px] text-neutral-600 dark:text-muted-foreground flex flex-wrap gap-x-4 gap-y-0.5 pt-0.5">
                               <span className="inline-flex items-center gap-1">
                                 <Clock size={12} className="shrink-0" />
-                                7 days return available
+                                7 days return
                               </span>
                               <span className="inline-flex items-center gap-1 text-green-700 dark:text-green-400">
                                 <CheckCircle2 size={12} className="shrink-0" />
@@ -769,7 +782,7 @@ export function CartPage() {
                           </p>
                         </div>
                         <div>
-                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1 text-right">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-0.5 text-right">
                             Qty
                           </span>
                           <div className="flex items-center gap-1 rounded-lg border border-neutral-200 bg-neutral-50 p-0.5 dark:border-border dark:bg-muted/40">

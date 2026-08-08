@@ -121,7 +121,7 @@ export function ProductRecommendationSection({
                 </div>
                 <div className="px-3 pb-3">
                   <p className="text-xs uppercase tracking-widest text-foreground/50 mb-1.5">RLOKO</p>
-                  <p className="text-sm tracking-wide mb-2 line-clamp-2 min-h-[40px] font-medium">{item.name}</p>
+                  <p className="text-sm tracking-wide mb-2 line-clamp-1 font-medium">{item.name}</p>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-bold">{formatPrice(item.price, item.priceINR)}</span>
                     {item.originalPrice && (
@@ -185,7 +185,7 @@ export function ProductRecommendationSection({
                   />
                 </div>
                 <div className="px-1">
-                  <p className="text-sm tracking-wide mb-2 line-clamp-2 text-background">{item.name}</p>
+                  <p className="text-sm tracking-wide mb-2 line-clamp-1 text-background">{item.name}</p>
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-background">{formatPrice(item.price, item.priceINR)}</span>
                     {item.originalPrice && (
@@ -315,7 +315,7 @@ export function ProductRecommendationSection({
                 />
               </div>
               <div className="px-1">
-                <p className="text-sm tracking-wide mb-2 line-clamp-2 min-h-[40px] group-hover:text-foreground/70 transition-colors">{item.name}</p>
+                <p className="text-sm tracking-wide mb-2 line-clamp-1 group-hover:text-foreground/70 transition-colors">{item.name}</p>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{formatPrice(item.price, item.priceINR)}</span>
                   {item.originalPrice && (
