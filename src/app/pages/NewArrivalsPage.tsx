@@ -1,5 +1,7 @@
 import { motion } from 'motion/react';
 import { ProductCard } from '../components/ProductCard';
+import { MobileProductCard, MobileProductCardData } from '../components/mobile/MobileProductCard';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { useState, useMemo, useEffect } from 'react';
 import { Footer } from '../components/Footer';
 import { Sparkles, SlidersHorizontal, X, ChevronRight } from 'lucide-react';
@@ -13,6 +15,7 @@ import { useCurrency } from '../context/CurrencyContext';
 
 export function NewArrivalsPage() {
   const { market } = useCurrency();
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -461,16 +464,20 @@ export function NewArrivalsPage() {
               </div>
             ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredProducts.map((product, index) => (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.02 }}
-                  >
-                    <ProductCard product={product} />
-                  </motion.div>
-                ))}
+                {filteredProducts.map((product, index) =>
+                  isMobile ? (
+                    <MobileProductCard key={product.id} product={product as MobileProductCardData} index={index} />
+                  ) : (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: index * 0.02 }}
+                    >
+                      <ProductCard product={product} />
+                    </motion.div>
+                  ),
+                )}
               </div>
             ) : (
               <motion.div

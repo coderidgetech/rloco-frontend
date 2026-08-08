@@ -256,7 +256,7 @@ export function Navigation() {
               <RlocoLogo size="sm" />
             </motion.div>
 
-            <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 pl-3 sm:gap-2 md:gap-3 md:pl-2 lg:gap-4 xl:gap-6">
+            <div className="flex min-w-0 flex-1 items-center justify-end gap-4 pl-3 sm:gap-4 md:gap-3 md:pl-2 lg:gap-4 xl:gap-6">
               <button
                 type="button"
                 onClick={() => openSearch()}
@@ -273,15 +273,7 @@ export function Navigation() {
                 </span>
               </button>
 
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                type="button"
-                onClick={() => openSearch()}
-                className={`sm:hidden flex h-10 w-10 shrink-0 items-center justify-center transition-colors ${isTransparent ? 'text-white/80' : 'text-foreground/70'}`}
-                aria-label="Search"
-              >
-                <Search size={20} />
-              </motion.button>
+              {/* Mobile search icon removed — Search lives in the bottom nav on mobile. */}
 
               {!isMarketSwitchInteractive ? (
                 <div

@@ -3,6 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronRight, Search, SlidersHorizontal, X, ChevronDown, Star } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { ProductCard } from '../components/ProductCard';
+import { MobileProductCard, MobileProductCardData } from '../components/mobile/MobileProductCard';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { Footer } from '../components/Footer';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { MobileFilterPanel } from '../components/MobileFilterPanel';
@@ -19,6 +21,7 @@ import { useSearchOverlay } from '../context/SearchOverlayContext';
 
 export function AllProductsPage() {
   const { market, formatPrice } = useCurrency();
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { openSearch } = useSearchOverlay();
@@ -483,17 +486,21 @@ export function AllProductsPage() {
             ) : filteredProducts.length > 0 ? (
               <>
                 <div className="grid min-w-0 grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                  {pagedProducts.map((product, index) => (
-                    <motion.div
-                      key={product.id}
-                      className="min-w-0"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.6, delay: index * 0.02 }}
-                    >
-                      <ProductCard product={product} />
-                    </motion.div>
-                  ))}
+                  {pagedProducts.map((product, index) =>
+                    isMobile ? (
+                      <MobileProductCard key={product.id} product={product as MobileProductCardData} index={index} />
+                    ) : (
+                      <motion.div
+                        key={product.id}
+                        className="min-w-0"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: index * 0.02 }}
+                      >
+                        <ProductCard product={product} />
+                      </motion.div>
+                    ),
+                  )}
                 </div>
                 {/* Pagination */}
                 {filteredProducts.length > PAGE_SIZE && (
