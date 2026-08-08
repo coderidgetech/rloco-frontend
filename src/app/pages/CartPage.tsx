@@ -900,7 +900,7 @@ export function CartPage() {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         </div>
-                        <p className="font-medium text-sm line-clamp-2">{product.name}</p>
+                        <p className="font-medium text-sm line-clamp-1">{product.name}</p>
                         <p className="text-sm text-muted-foreground">{formatPrice(product.price, product.price_inr)}</p>
                       </motion.button>
                     ))}
@@ -929,7 +929,7 @@ export function CartPage() {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         </div>
-                        <p className="font-medium text-sm line-clamp-2">{product.name}</p>
+                        <p className="font-medium text-sm line-clamp-1">{product.name}</p>
                         <p className="text-sm text-muted-foreground">{formatPrice(product.price, product.price_inr)}</p>
                       </motion.button>
                     ))}
@@ -958,7 +958,7 @@ export function CartPage() {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         </div>
-                        <p className="font-medium text-sm line-clamp-2">{product.name}</p>
+                        <p className="font-medium text-sm line-clamp-1">{product.name}</p>
                         <p className="text-sm text-muted-foreground">{formatPrice(product.price, product.price_inr)}</p>
                       </motion.button>
                     ))}
