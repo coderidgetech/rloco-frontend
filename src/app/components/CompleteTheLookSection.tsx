@@ -214,7 +214,7 @@ export function CompleteTheLookSection({ currentProduct, products }: CompleteThe
 
                     {/* Product Info */}
                     <div className="p-3 md:p-4">
-                      <p className="text-xs uppercase tracking-wider text-foreground/50 mb-1.5 font-semibold">RLOCO</p>
+                      <p className="text-xs uppercase tracking-wider text-foreground/50 mb-1.5 font-semibold">RLOKO</p>
                       <h3 className="text-sm mb-2 line-clamp-2 min-h-[40px] tracking-wide leading-snug font-medium">
                         {product.name}
                       </h3>

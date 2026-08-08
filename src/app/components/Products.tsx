@@ -88,7 +88,7 @@ export function Products() {
             className="h-0.5 bg-foreground mx-auto mb-8"
           />
           <h2 className="text-5xl md:text-6xl mb-4 tracking-tighter">
-            New Arrivals
+            Top picks
           </h2>
           <p className="text-xl text-foreground/70">
             Fresh pieces for the season

@@ -72,6 +72,7 @@ export function VideoShowcase() {
   const isAnimating = useRef(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const trackWidthRef = useRef(0);
+  const touchStartX = useRef<number | null>(null);
   const x = useMotionValue(0);
 
   const getX = (p: number) => trackWidthRef.current / 2 - p * SLOT - CARD_WIDTH / 2;
@@ -145,7 +146,7 @@ export function VideoShowcase() {
   // Auto-advance
   useEffect(() => {
     if (n <= 1) return;
-    const t = setInterval(() => slideTo(posRef.current + 1), 6000);
+    const t = setInterval(() => slideTo(posRef.current + 1), 8000);
     return () => clearInterval(t);
   }, [n, slideTo]);
 
@@ -178,7 +179,17 @@ export function VideoShowcase() {
 
       {/* Infinite carousel */}
       <div className="absolute bottom-10 left-0 right-0 z-10">
-        <div ref={trackRef} className="overflow-hidden w-full">
+        <div
+          ref={trackRef}
+          className="overflow-hidden w-full"
+          onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+          onTouchEnd={(e) => {
+            if (touchStartX.current == null) return;
+            const dx = e.changedTouches[0].clientX - touchStartX.current;
+            touchStartX.current = null;
+            if (Math.abs(dx) > 40) slideTo(posRef.current + (dx < 0 ? 1 : -1));
+          }}
+        >
           <motion.div className="flex" style={{ x, gap: CARD_GAP }}>
             {displayList.map((product, index) => {
               const dist = Math.abs(index - pos);

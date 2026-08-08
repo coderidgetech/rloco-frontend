@@ -7,7 +7,7 @@ import { RlocoLogo } from '@/app/components/RlocoLogo';
 import { useUser } from '@/app/context/UserContext';
 import { GoogleSignInButton } from '@/app/components/GoogleSignInButton';
 import { authService } from '@/app/services/authService';
-import { getApiErrorMessage } from '@/app/lib/apiErrors';
+import { getApiErrorMessage, getApiErrorCode } from '@/app/lib/apiErrors';
 import { DIAL_COUNTRIES, buildPhoneDigitsForApi } from '@/app/lib/dialCountries';
 import { PhoneCountryRow } from '@/app/components/PhoneCountryRow';
 
@@ -56,6 +56,17 @@ export function MobileLoginPage() {
       setOtp(['', '', '', '', '', '']);
       toast.success('OTP sent to your phone');
     } catch (err) {
+      // Unregistered number → go straight to registration (matches desktop web).
+      if (getApiErrorCode(err) === 'USER_NOT_FOUND') {
+        toast.info("No account found — let's get you signed up");
+        const signupPath = redirect !== '/account'
+          ? `/signup?redirect=${encodeURIComponent(redirect)}`
+          : '/signup';
+        navigate(signupPath, {
+          state: { prefillPhoneLocal: phone, prefillCountry: selectedCountry },
+        });
+        return;
+      }
       toast.error(getApiErrorMessage(err, 'Could not send verification code'));
     } finally {
       setLoading(false);

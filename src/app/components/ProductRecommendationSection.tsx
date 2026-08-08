@@ -120,7 +120,7 @@ export function ProductRecommendationSection({
                   <div className="absolute top-0 right-0 w-12 h-12 bg-gradient-to-br from-primary to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
                 </div>
                 <div className="px-3 pb-3">
-                  <p className="text-xs uppercase tracking-widest text-foreground/50 mb-1.5">RLOCO</p>
+                  <p className="text-xs uppercase tracking-widest text-foreground/50 mb-1.5">RLOKO</p>
                   <p className="text-sm tracking-wide mb-2 line-clamp-2 min-h-[40px] font-medium">{item.name}</p>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-bold">{formatPrice(item.price, item.priceINR)}</span>
@@ -250,7 +250,7 @@ export function ProductRecommendationSection({
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs tracking-wider uppercase text-foreground/40 mb-1">RLOCO</p>
+                  <p className="text-xs tracking-wider uppercase text-foreground/40 mb-1">RLOKO</p>
                   <p className="text-sm tracking-wide mb-2 line-clamp-1">{item.name}</p>
                   <div className="flex items-center gap-2">
                     <span className="text-sm">{formatPrice(item.price, item.priceINR)}</span>

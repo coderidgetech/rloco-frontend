@@ -506,79 +506,6 @@ export function CartPage() {
         ) : (
           <div className="grid lg:grid-cols-[1fr_min(100%,400px)] gap-6 lg:gap-8 xl:gap-10 items-start">
             <div className="space-y-4 md:space-y-5 min-w-0">
-              {/* Delivery */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 md:p-5 rounded-lg bg-white border border-neutral-200 shadow-sm dark:border-border dark:bg-card">
-                <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-neutral-100 dark:bg-muted">
-                  <MapPin className="text-neutral-700 dark:text-foreground" size={22} style={{ color: GOLD }} />
-                </div>
-                <div className="flex-1 min-w-0 text-sm">
-                  {selectedAddress ? (
-                    <>
-                      <p className="font-medium text-neutral-900 dark:text-foreground">
-                        Deliver to: {selectedAddress.name}, {selectedAddress.pincode}
-                      </p>
-                      <p className="text-xs text-neutral-500 dark:text-muted-foreground mt-0.5 line-clamp-2">
-                        {selectedAddress.addressLine}, {selectedAddress.city}, {selectedAddress.state}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-neutral-600 dark:text-muted-foreground">Add a delivery address to continue.</p>
-                  )}
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="shrink-0 uppercase text-[11px] font-bold tracking-wide border-2 bg-white hover:bg-amber-50/50 dark:bg-transparent dark:hover:bg-transparent"
-                  style={{ borderColor: GOLD, color: GOLD }}
-                  onClick={() => navigate('/checkout')}
-                >
-                  {selectedAddress ? 'CHANGE ADDRESS' : 'ADD ADDRESS'}
-                </Button>
-              </div>
-
-              {/* Offers */}
-              <div className="rounded-lg border border-neutral-200 bg-white overflow-hidden shadow-sm dark:border-border dark:bg-card">
-                <button
-                  type="button"
-                  onClick={() => setOffersOpen((o) => !o)}
-                  className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-neutral-50/80 transition-colors dark:hover:bg-muted/30"
-                >
-                  <span className="flex items-center gap-2 text-sm font-semibold text-neutral-900 dark:text-foreground">
-                    <Gift size={18} style={{ color: GOLD }} />
-                    Available Offers
-                  </span>
-                  {offersOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                </button>
-                <AnimatePresence initial={false}>
-                  {offersOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-neutral-200 dark:border-border"
-                    >
-                      <div className="p-4 flex flex-wrap gap-2">
-                        {availablePromotions.length === 0 ? (
-                          <p className="text-xs text-muted-foreground">No offers available right now.</p>
-                        ) : (
-                          availablePromotions.slice(0, 8).map((promo) => (
-                            <button
-                              key={promo.id}
-                              type="button"
-                              onClick={() => setCouponCode(promo.code)}
-                              className="px-3 py-1.5 text-xs rounded-md border border-neutral-200 bg-neutral-50 hover:border-[#B8860B]/50 transition-colors dark:border-border dark:bg-background"
-                            >
-                              {promo.code}
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
               {/* Toolbar */}
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between py-3 px-4 rounded-lg bg-white border border-neutral-200 shadow-sm dark:border-border dark:bg-card">
                 <label className="flex items-center gap-2 cursor-pointer text-sm">
@@ -665,7 +592,7 @@ export function CartPage() {
                                   {item.name}
                                 </button>
                                 <p className="text-[11px] text-neutral-600 dark:text-muted-foreground mt-1">
-                                  Sold by: RLOCO APPARELS
+                                  Sold by: RLOKO APPARELS
                                 </p>
                               </div>
                               <button
@@ -872,6 +799,71 @@ export function CartPage() {
                   );
                 })}
               </AnimatePresence>
+
+              {/* Delivery — compact single-line bar (Myntra-style) */}
+              <div className="flex items-center gap-2.5 px-4 py-3 rounded-lg bg-white border border-neutral-200 shadow-sm dark:border-border dark:bg-card">
+                <MapPin className="shrink-0" size={18} style={{ color: GOLD }} />
+                <div className="flex-1 min-w-0 text-sm">
+                  {selectedAddress ? (
+                    <p className="truncate">
+                      <span className="text-neutral-500 dark:text-muted-foreground">Deliver to: </span>
+                      <span className="font-medium text-neutral-900 dark:text-foreground">{selectedAddress.name}, {selectedAddress.pincode}</span>
+                    </p>
+                  ) : (
+                    <p className="text-neutral-600 dark:text-muted-foreground">Add a delivery address</p>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => navigate('/checkout')}
+                  className="shrink-0 text-[11px] font-bold uppercase tracking-wide hover:underline"
+                  style={{ color: GOLD }}
+                >
+                  {selectedAddress ? 'Change' : 'Add'}
+                </button>
+              </div>
+
+              {/* Offers */}
+              <div className="rounded-lg border border-neutral-200 bg-white overflow-hidden shadow-sm dark:border-border dark:bg-card">
+                <button
+                  type="button"
+                  onClick={() => setOffersOpen((o) => !o)}
+                  className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-neutral-50/80 transition-colors dark:hover:bg-muted/30"
+                >
+                  <span className="flex items-center gap-2 text-sm font-semibold text-neutral-900 dark:text-foreground">
+                    <Gift size={18} style={{ color: GOLD }} />
+                    Available Offers
+                  </span>
+                  {offersOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                </button>
+                <AnimatePresence initial={false}>
+                  {offersOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="border-t border-neutral-200 dark:border-border"
+                    >
+                      <div className="p-4 flex flex-wrap gap-2">
+                        {availablePromotions.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">No offers available right now.</p>
+                        ) : (
+                          availablePromotions.slice(0, 8).map((promo) => (
+                            <button
+                              key={promo.id}
+                              type="button"
+                              onClick={() => setCouponCode(promo.code)}
+                              className="px-3 py-1.5 text-xs rounded-md border border-neutral-200 bg-neutral-50 hover:border-[#B8860B]/50 transition-colors dark:border-border dark:bg-background"
+                            >
+                              {promo.code}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               {/* Recommendations */}
               {recommendedProducts.length > 0 && (

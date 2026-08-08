@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Star, ChevronRight, ChevronDown, Truck, RefreshCw, Check, Shield, Award, Package, Sparkles, Leaf, Users, Info, MessageCircle, Ruler, Shirt, HelpCircle, Plus, Minus, ShoppingBag, ChevronLeft, Edit2, Trash2, ThumbsUp, Share2 } from 'lucide-react';
+import { Heart, Star, ChevronRight, ChevronDown, Truck, RefreshCw, Check, Shield, Award, Package, Sparkles, Leaf, Users, Info, MessageCircle, Ruler, Shirt, HelpCircle, Plus, Minus, ShoppingBag, ChevronLeft, Edit2, Trash2, ThumbsUp, Share2, X } from 'lucide-react';
 import { Product } from '../types/api';
 import { useState, useEffect, useRef } from 'react';
 import { useCart } from '../context/CartContext';
@@ -99,17 +99,18 @@ export function ProductDetailPage() {
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
   const [expandedSection, setExpandedSection] = useState<string>('details');
-  const sizeGuideRef = useRef<HTMLDivElement>(null);
   const [pincode, setPincode] = useState('');
   const [pincodeResult, setPincodeResult] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [imageDirection, setImageDirection] = useState(0);
+  const [showSizeGuide, setShowSizeGuide] = useState(false);
+  const touchStartX = useRef<number | null>(null);
   
   const { addToCart, items } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { formatPrice, convertPrice, currency, market, country } = useCurrency();
   const { config } = useSiteConfig();
-  const storeName = config.store?.name || 'RLOCO';
+  const storeName = config.store?.name || 'RLOKO';
 
   // Fetch all products for recommendations
   useEffect(() => {
@@ -176,7 +177,7 @@ export function ProductDetailPage() {
     const interval = setInterval(() => {
       setImageDirection(1);
       setSelectedImage((prev) => (prev + 1) % product.images.length);
-    }, 4000);
+    }, 7000);
 
     return () => clearInterval(interval);
   }, [product]);
@@ -377,7 +378,26 @@ export function ProductDetailPage() {
   const productImages = product.images && Array.isArray(product.images) && product.images.length > 0 
     ? product.images.filter(img => img && typeof img === 'string' && img.trim() !== '') // Filter out empty/invalid strings
     : [PLACEHOLDER_IMAGE]; // Fallback placeholder
-  
+
+  // Image gallery navigation (shared by arrows + touch swipe)
+  const showPrevImage = () => {
+    setImageDirection(-1);
+    setSelectedImage((i) => (i === 0 ? productImages.length - 1 : i - 1));
+  };
+  const showNextImage = () => {
+    setImageDirection(1);
+    setSelectedImage((i) => (i === productImages.length - 1 ? 0 : i + 1));
+  };
+  // Finger-swipe: horizontal drag past a small threshold flips the image.
+  const handleGalleryTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const handleGalleryTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current == null || productImages.length <= 1) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (dx <= -40) showNextImage();
+    else if (dx >= 40) showPrevImage();
+  };
+
   const ratingCount = reviewsLoading ? (product.reviews ?? 0) : reviews.length;
   const averageRating = !reviewsLoading && reviews.length > 0
     ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) * 10) / 10
@@ -429,7 +449,11 @@ export function ProductDetailPage() {
           {/* Left - Images Section */}
           <div className="flex flex-col gap-3">
             {/* Main Image */}
-            <div className="relative overflow-hidden group">
+            <div
+              className="relative overflow-hidden group touch-pan-y select-none"
+              onTouchStart={handleGalleryTouchStart}
+              onTouchEnd={handleGalleryTouchEnd}
+            >
               <AnimatePresence initial={false} custom={imageDirection} mode="wait">
                 <motion.div
                   key={selectedImage}
@@ -463,11 +487,7 @@ export function ProductDetailPage() {
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                     className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/95 backdrop-blur-sm shadow-lg flex items-center justify-center transition-all hover:bg-white z-10"
-                    onClick={() => {
-                      const newIndex = selectedImage === 0 ? productImages.length - 1 : selectedImage - 1;
-                      setImageDirection(-1);
-                      setSelectedImage(newIndex);
-                    }}
+                    onClick={showPrevImage}
                     aria-label="Previous image"
                   >
                     <ChevronLeft size={24} strokeWidth={2} />
@@ -476,11 +496,7 @@ export function ProductDetailPage() {
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                     className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white/95 backdrop-blur-sm shadow-lg flex items-center justify-center transition-all hover:bg-white z-10"
-                    onClick={() => {
-                      const newIndex = selectedImage === productImages.length - 1 ? 0 : selectedImage + 1;
-                      setImageDirection(1);
-                      setSelectedImage(newIndex);
-                    }}
+                    onClick={showNextImage}
                     aria-label="Next image"
                   >
                     <ChevronRight size={24} strokeWidth={2} />
@@ -539,14 +555,37 @@ export function ProductDetailPage() {
               ))}
             </div>
 
-            {/* Size guide — below gallery (matches design) */}
-            <div
-              ref={sizeGuideRef}
-              className="border border-border/30 bg-background p-4 shadow-sm dark:border-border/40"
-            >
-              <div className="mb-3 flex items-center gap-2">
-                <Ruler size={18} className="text-[#B4770E]" />
-                <h3 className="font-medium tracking-wide">Size Guide</h3>
+            {/* Size Guide — opens in a modal from the "Size Guide" link (Myntra-style) */}
+            <AnimatePresence>
+              {showSizeGuide && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center bg-black/50 sm:p-4"
+                  onClick={() => setShowSizeGuide(false)}
+                >
+                  <motion.div
+                    initial={{ y: 40, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 40, opacity: 0 }}
+                    transition={{ type: 'spring', damping: 30, stiffness: 350 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full sm:max-w-lg max-h-[85vh] overflow-y-auto bg-background rounded-t-2xl sm:rounded-2xl p-5 shadow-2xl"
+                  >
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Ruler size={18} className="text-[#B4770E]" />
+                  <h3 className="font-medium tracking-wide">Size Guide</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowSizeGuide(false)}
+                  aria-label="Close size guide"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-foreground/50 hover:bg-muted hover:text-foreground transition-colors"
+                >
+                  <X size={18} />
+                </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -595,7 +634,10 @@ export function ProductDetailPage() {
               <p className="mt-3 text-xs text-foreground/50">
                 All measurements are in inches. For best fit, measure yourself and compare with the chart.
               </p>
-            </div>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Right - Product Details */}
@@ -783,7 +825,7 @@ export function ProductDetailPage() {
                   <span className="text-xs font-medium uppercase tracking-widest">Size</span>
                   <button
                     type="button"
-                    onClick={() => sizeGuideRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                    onClick={() => setShowSizeGuide(true)}
                     className="text-xs text-foreground/60 hover:text-foreground transition-colors uppercase underline underline-offset-4"
                   >
                     Size Guide
@@ -1753,7 +1795,7 @@ export function ProductDetailPage() {
                             <MessageCircle size={12} />
                             How do I know my size?
                           </p>
-                          <p>Refer to our detailed size guide above. We recommend measuring your current favorite piece and comparing it to our measurements.</p>
+                          <p>Tap “Size Guide” next to the size selector for our detailed measurement chart. We recommend measuring your current favorite piece and comparing it to our measurements.</p>
                         </div>
                         <div>
                           <p className="text-foreground mb-2 text-xs uppercase tracking-wider flex items-center gap-2">

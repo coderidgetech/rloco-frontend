@@ -116,7 +116,7 @@ export function HelpGuideButton() {
                     <BookOpen className="w-6 h-6" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-light tracking-wider">RLOCO PORTAL GUIDE</h2>
+                    <h2 className="text-2xl font-light tracking-wider">RLOKO PORTAL GUIDE</h2>
                     <p className="text-sm text-white/80 tracking-wide">Comprehensive admin & vendor documentation</p>
                   </div>
                 </div>
@@ -412,7 +412,7 @@ function QuickStartGuide() {
 
       <AlertBox type="info" title="Need Help?">
         <div className="space-y-1">
-          <div>📧 Email: support@rloco.com</div>
+          <div>📧 Email: support@rloko.com</div>
           <div>📞 Phone: +1 (555) 123-4567</div>
           <div>⏰ Hours: Mon-Fri 9AM-6PM EST</div>
         </div>

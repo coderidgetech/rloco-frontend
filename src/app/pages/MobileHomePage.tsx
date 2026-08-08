@@ -6,11 +6,11 @@ import { MobileProductGrid } from '../components/mobile/MobileProductGrid';
 import { MobileInspirationVideos } from '../components/mobile/MobileInspirationVideos';
 import { MobileTestimonials } from '../components/mobile/MobileTestimonials';
 import { MobileNewsletter } from '../components/mobile/MobileNewsletter';
-import { VideoShowcase } from '../components/VideoShowcase';
+import { MobileNewArrivals } from '../components/mobile/MobileNewArrivals';
 import { useFeaturedProducts, useNewArrivals, useOnSaleProducts } from '../hooks/useProducts';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { motion } from 'motion/react';
-import { TrendingUp, Zap, Tag, Truck, RotateCcw, Shield } from 'lucide-react';
+import { Truck, RotateCcw, Shield } from 'lucide-react';
 
 const DEFAULT_ORDER = [
   'featuredProducts','shopByCategory','editorialFeatures',
@@ -32,7 +32,7 @@ export function MobileHomePage() {
   const sectionMap: Record<string, React.ReactNode> = {
     featuredProducts: sections.featuredProducts && featuredProducts.length > 0 && (
       <>
-        <MobileProductGrid products={featuredProducts} title="Top Collection" />
+        <MobileProductGrid products={featuredProducts} title="Latest Drop" seeAllLink="/all-products" />
         <Divider />
       </>
     ),
@@ -50,13 +50,13 @@ export function MobileHomePage() {
     ),
     newArrivals: sections.newArrivals && newArrivals.length > 0 && (
       <>
-        <MobileProductGrid products={newArrivals} title="🆕 New Arrivals" />
+        <MobileProductGrid products={newArrivals} title="Top picks" seeAllLink="/new-arrivals" />
         <Divider />
       </>
     ),
     promotionalBanner: sections.promotionalBanner && saleProducts.length > 0 && (
       <>
-        <MobileProductGrid products={saleProducts} title="🔥 On Sale" />
+        <MobileProductGrid products={saleProducts} title="On Sale" seeAllLink="/sale" />
         <Divider />
       </>
     ),
@@ -70,7 +70,7 @@ export function MobileHomePage() {
     newsletterSignup: sections.newsletterSignup && <MobileNewsletter />,
     editorialFeatures: sections.editorialFeatures && (
       <>
-        <VideoShowcase />
+        <MobileNewArrivals />
         <Divider />
       </>
     ),
@@ -83,29 +83,6 @@ export function MobileHomePage() {
 
       <div className="pt-[110px]">
         {config.homepage.hero.enabled && <MobileHero />}
-
-        {/* Quick stats bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-primary/5 py-3 px-4 mt-3"
-        >
-          <div className="flex items-center justify-around">
-            {[
-              { Icon: TrendingUp, label: 'Trending' },
-              { Icon: Zap, label: 'New In' },
-              { Icon: Tag, label: 'Sale' },
-            ].map(({ Icon, label }) => (
-              <div key={label} className="flex flex-col items-center">
-                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-1.5">
-                  <Icon size={18} className="text-primary" />
-                </div>
-                <span className="text-xs font-medium">{label}</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
 
         {order.map((key) => {
           const node = sectionMap[key];

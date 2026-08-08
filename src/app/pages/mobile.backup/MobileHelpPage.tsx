@@ -199,7 +199,7 @@ export function MobileHelpPage() {
                 <Mail size={20} className="text-primary" />
                 <div className="flex-1 text-left">
                   <p className="font-medium text-sm">Email Support</p>
-                  <p className="text-xs text-foreground/60">support@rloco.com</p>
+                  <p className="text-xs text-foreground/60">support@rloko.com</p>
                 </div>
               </button>
             </div>

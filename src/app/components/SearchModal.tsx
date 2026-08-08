@@ -4,6 +4,8 @@ import { X, Search, ChevronLeft, ChevronRight, Clock, TrendingUp, ArrowRight } f
 import { useNavigate } from 'react-router-dom';
 import { Product } from '../types/product';
 import { productService } from '../services/productService';
+import { categoryService } from '../services/categoryService';
+import { sortByRelevance } from '../utils/filterConfig';
 import { useCurrency } from '../context/CurrencyContext';
 
 interface SearchModalProps {
@@ -15,7 +17,13 @@ interface SearchModalProps {
 const RECENT_KEY = 'rloco_recent_searches_v1';
 const MAX_RECENT = 8;
 
-const TRENDING = ['Dresses', 'Ethnic wear', 'Sneakers', 'Handbags', 'Men shirts', 'Winter jackets', 'New arrivals', 'Sale'];
+// Fallback only — real trending chips are the live catalog categories (fetched below).
+// Tapping a chip runs a text search (same as picking a recent search), so behaviour is
+// consistent everywhere in the overlay; gender/category words now resolve correctly.
+const FALLBACK_TRENDING = ['Women', 'Men', 'Dresses', 'Tops', 'Shirts', 'Shoes'];
+
+// Cache categories across opens so we hit the API at most once per session.
+let cachedTrending: string[] | null = null;
 
 function loadRecent(): string[] {
   try {
@@ -48,6 +56,7 @@ export function SearchModal({ isOpen, onClose, initialQuery = '' }: SearchModalP
   const [hasError, setHasError] = useState(false);
   const [recent, setRecent] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [trending, setTrending] = useState<string[]>(cachedTrending ?? FALLBACK_TRENDING);
 
   // Debounce
   useEffect(() => {
@@ -82,6 +91,23 @@ export function SearchModal({ isOpen, onClose, initialQuery = '' }: SearchModalP
     })();
     return () => controller.abort();
   }, [isOpen, debouncedQuery, market]);
+
+  // Load trending chips from the live catalog categories (cached across opens).
+  useEffect(() => {
+    if (!isOpen || cachedTrending) return;
+    let cancelled = false;
+    categoryService
+      .list()
+      .then((cats) => {
+        const names = [...new Set(cats.map((c) => c.name).filter(Boolean))].slice(0, 8);
+        if (names.length) {
+          cachedTrending = names;
+          if (!cancelled) setTrending(names);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [isOpen]);
 
   // Reset on open/close
   useEffect(() => {
@@ -136,6 +162,7 @@ export function SearchModal({ isOpen, onClose, initialQuery = '' }: SearchModalP
     goToResults(term);
   };
 
+
   const handleClearAll = () => {
     clearRecent();
     setRecent([]);
@@ -147,13 +174,16 @@ export function SearchModal({ isOpen, onClose, initialQuery = '' }: SearchModalP
     setRecent(next);
   };
 
+  // Rank results by relevance to the query (name matches first), then chip/filter over that.
+  const ranked = useMemo(() => sortByRelevance(results, debouncedQuery), [results, debouncedQuery]);
+
   // Category chips from results
   const categories = useMemo(() => {
-    const cats = [...new Set(results.map((r) => r.category).filter(Boolean))];
+    const cats = [...new Set(ranked.map((r) => r.category).filter(Boolean))];
     return cats.slice(0, 6);
-  }, [results]);
+  }, [ranked]);
 
-  const filtered = activeCategory === 'All' ? results : results.filter((r) => r.category === activeCategory);
+  const filtered = activeCategory === 'All' ? ranked : ranked.filter((r) => r.category === activeCategory);
 
   const showExplore = debouncedQuery.length < 2;
   const showResults = !showExplore;
@@ -275,7 +305,7 @@ export function SearchModal({ isOpen, onClose, initialQuery = '' }: SearchModalP
                       <h2 className="text-[11px] font-semibold uppercase tracking-widest text-foreground/40">Trending</h2>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {TRENDING.map((term) => (
+                      {trending.map((term) => (
                         <button
                           key={term}
                           type="button"

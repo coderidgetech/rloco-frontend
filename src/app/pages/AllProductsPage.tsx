@@ -10,7 +10,7 @@ import {
   sortOptions,
   extractFilterOptions,
   getSubcategoriesForCategory,
-  productMatchesSearchQuery,
+  sortByRelevance,
 } from '../utils/filterConfig';
 import { productService } from '../services/productService';
 import { Product } from '../types/product';
@@ -23,10 +23,15 @@ export function AllProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { openSearch } = useSearchOverlay();
   const [products, setProducts] = useState<Product[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 48;
+  // Server handles search/category/gender/sale/new/featured; attribute filters
+  // (colour/size/material/subcategory/rating/price/badge) and sorting are applied
+  // client-side. We therefore fetch the full matching set (backend caps at 100) and
+  // paginate on the client so counts and page controls reflect the *filtered* results,
+  // not just the current server page. Scale path: server-side facet filtering.
+  const FETCH_LIMIT = 100;
 
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,8 +55,10 @@ export function AllProductsPage() {
   // Filter panel sections
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
+  // Keep the search box in sync with the URL. Clearing to '' when `q` is absent is
+  // deliberate: /all-products shares this component, so a prior search must not persist
+  // when the user browses back in via a plain "Shop all" link.
   useEffect(() => {
-    if (!searchParams.has('q')) return;
     setSearchQuery(searchParams.get('q') ?? '');
   }, [searchParams]);
 
@@ -74,8 +81,7 @@ export function AllProductsPage() {
       try {
         setLoading(true);
         const params: Parameters<typeof productService.list>[0] = {
-          limit: PAGE_SIZE,
-          skip: (page - 1) * PAGE_SIZE,
+          limit: FETCH_LIMIT,
           market,
         };
         if (searchQuery.trim()) params.search = searchQuery.trim();
@@ -85,20 +91,17 @@ export function AllProductsPage() {
         if (showNewArrivals) params.new_arrival = true;
         if (showFeatured) params.featured = true;
         const response = await productService.list(params);
-        if (!cancelled) {
-          setProducts(response.products || []);
-          setTotalCount(response.total ?? response.products?.length ?? 0);
-        }
+        if (!cancelled) setProducts(response.products || []);
       } catch (error) {
         console.error('Failed to fetch products:', error);
-        if (!cancelled) { setProducts([]); setTotalCount(0); }
+        if (!cancelled) setProducts([]);
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
     fetchProducts();
     return () => { cancelled = true; };
-  }, [page, market, searchQuery, selectedCategory, selectedGender, showOnSale, showNewArrivals, showFeatured]);
+  }, [market, searchQuery, selectedCategory, selectedGender, showOnSale, showNewArrivals, showFeatured]);
 
   const toggleSection = (section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -153,10 +156,19 @@ export function AllProductsPage() {
       case 'price-desc': filtered.sort((a, b) => b.price - a.price); break;
       case 'newest': filtered.sort((a, b) => ((b.new_arrival || b.newArrival) ? 1 : 0) - ((a.new_arrival || a.newArrival) ? 1 : 0)); break;
       case 'rating': filtered.sort((a, b) => b.rating - a.rating); break;
-      default: filtered.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0)); break;
+      default:
+        // On the default sort, rank by search relevance when searching; otherwise by featured.
+        if (searchQuery.trim()) filtered = sortByRelevance(filtered, searchQuery);
+        else filtered.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
+        break;
     }
     return filtered;
-  }, [products, priceRange, sortBy, selectedColors, selectedSizes, selectedMaterials, selectedSubcategories, minRating, selectedBadges]);
+  }, [products, searchQuery, priceRange, sortBy, selectedColors, selectedSizes, selectedMaterials, selectedSubcategories, minRating, selectedBadges]);
+
+  // Client-side pagination over the filtered set.
+  const pageCount = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE));
+  const pagedProducts = filteredProducts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  useEffect(() => { if (page > pageCount) setPage(1); }, [page, pageCount]);
 
   // Check if any filters are active
   const hasActiveFilters = 
@@ -246,21 +258,23 @@ export function AllProductsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="mb-4"
+          className="mb-3 md:mb-4"
         >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl mb-2">{pageTitle}</h1>
-              <p className="text-foreground/70">
-                Showing {filteredProducts.length} of {products.length} {filteredProducts.length === 1 ? 'product' : 'products'}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
+            {/* Title + count: redundant on mobile (breadcrumb + active-filter chips
+                already convey context), so shown from md+ only. */}
+            <div className="hidden md:block">
+              <h1 className="text-2xl md:text-4xl mb-0.5 md:mb-2">{pageTitle}</h1>
+              <p className="text-sm md:text-base text-foreground/60">
+                Showing {pagedProducts.length} of {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
               </p>
             </div>
-            
-            <div className="flex items-center gap-3">
+
+            <div className="flex items-end gap-2.5 md:gap-3">
               {/* Mobile Filter Toggle */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="md:hidden px-4 py-2 border border-foreground/20 hover:border-foreground transition-colors flex items-center gap-2"
+                className="md:hidden flex-1 px-4 py-2.5 border border-foreground/20 hover:border-foreground transition-colors flex items-center justify-center gap-2 text-sm"
               >
                 <SlidersHorizontal size={16} />
                 Filters
@@ -268,14 +282,14 @@ export function AllProductsPage() {
                   <span className="w-2 h-2 rounded-full bg-primary"></span>
                 )}
               </button>
-              
+
               {/* Sort Dropdown */}
-              <div className="flex flex-col gap-2">
-                <span className="text-xs uppercase tracking-wider text-foreground/60">Sort By</span>
+              <div className="flex flex-1 flex-col gap-2 md:flex-none">
+                <span className="hidden md:block text-xs uppercase tracking-wider text-foreground/60">Sort By</span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-4 py-2 border border-foreground/20 bg-background focus:outline-none focus:border-foreground transition-colors cursor-pointer text-sm"
+                  className="w-full px-4 py-2.5 md:py-2 border border-foreground/20 bg-background focus:outline-none focus:border-foreground transition-colors cursor-pointer text-sm"
                 >
                   {sortOptions.map(option => (
                     <option key={option.value} value={option.value}>
@@ -292,7 +306,7 @@ export function AllProductsPage() {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="mt-4 flex flex-wrap items-center gap-2"
+              className="mt-2.5 md:mt-4 flex flex-wrap items-center gap-2"
             >
               <span className="text-xs text-foreground/60">Active filters:</span>
               
@@ -360,8 +374,9 @@ export function AllProductsPage() {
           )}
         </motion.div>
 
-        {/* Main Content: Sidebar + Products */}
-        <div className="flex min-w-0 gap-8 items-start">
+        {/* Main Content: Sidebar + Products. Flex only from md+ (where the sidebar
+            exists); on mobile it's plain block flow so the grid takes full width. */}
+        <div className="md:flex min-w-0 md:gap-8 md:items-start">
           {/* Desktop Sidebar - Sticky with bottom constraint */}
           <motion.aside
             initial={{ opacity: 0, x: -20 }}
@@ -468,9 +483,10 @@ export function AllProductsPage() {
             ) : filteredProducts.length > 0 ? (
               <>
                 <div className="grid min-w-0 grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-                  {filteredProducts.map((product, index) => (
+                  {pagedProducts.map((product, index) => (
                     <motion.div
                       key={product.id}
+                      className="min-w-0"
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.6, delay: index * 0.02 }}
@@ -480,7 +496,7 @@ export function AllProductsPage() {
                   ))}
                 </div>
                 {/* Pagination */}
-                {totalCount > PAGE_SIZE && (
+                {filteredProducts.length > PAGE_SIZE && (
                   <div className="flex items-center justify-center gap-2 mt-10">
                     <button
                       onClick={() => { setPage(p => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
@@ -490,11 +506,11 @@ export function AllProductsPage() {
                       Previous
                     </button>
                     <span className="text-sm text-foreground/60 px-3">
-                      Page {page} of {Math.ceil(totalCount / PAGE_SIZE)}
+                      Page {page} of {pageCount}
                     </span>
                     <button
                       onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                      disabled={page >= Math.ceil(totalCount / PAGE_SIZE)}
+                      disabled={page >= pageCount}
                       className="px-4 py-2 border border-foreground/20 text-sm hover:border-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                     >
                       Next

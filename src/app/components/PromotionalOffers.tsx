@@ -1,7 +1,4 @@
-import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { promotionService } from '../services/promotionService';
 
 interface CategoryTile {
   id: number;
@@ -44,74 +41,33 @@ const tiles: CategoryTile[] = [
 
 export function PromotionalOffers({ filterGender = 'all', selectedCategory }: PromotionalOffersProps) {
   const navigate = useNavigate();
-  // True when the backend has at least one active promotion — drives the "Sale" badge.
-  const [hasActiveSale, setHasActiveSale] = useState(false);
-
-  useEffect(() => {
-    promotionService.list().then((promos) => {
-      const now = new Date();
-      const active = (promos ?? []).some((p) => {
-        if (!p.is_active) return false;
-        try {
-          return new Date(p.start_date) <= now && new Date(p.end_date) >= now;
-        } catch { return false; }
-      });
-      setHasActiveSale(active);
-    }).catch(() => { /* non-critical */ });
-  }, []);
 
   const visible = tiles.filter(
     (t) => filterGender === 'all' || t.gender === filterGender,
   );
 
   return (
-    <section className="py-3 bg-[#f5f3e8] relative overflow-hidden mb-4">
-      <div className="page-container">
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {visible.map((tile, index) => {
+    <section className="border-b border-foreground/5 mb-3">
+      <div className="page-container py-2.5">
+        <div className="flex gap-2 overflow-x-auto pb-0.5 scrollbar-hide">
+          {visible.map((tile) => {
             const isActive =
               selectedCategory?.toLowerCase() === tile.category.toLowerCase();
             return (
-              <motion.button
+              <button
                 key={tile.id}
+                type="button"
                 onClick={() =>
                   navigate(`/category/${tile.gender}/${tile.category.toLowerCase()}`)
                 }
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.02 }}
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                className="group relative bg-white rounded-sm overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex-shrink-0 w-[90px] sm:w-[100px] md:w-[110px]"
+                className={`shrink-0 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm transition-all ${
+                  isActive
+                    ? 'border-foreground bg-foreground text-background'
+                    : 'border-foreground/15 text-foreground/70 hover:border-foreground/40 hover:text-foreground'
+                }`}
               >
-                {isActive && (
-                  <div className="absolute inset-0 border-2 border-primary z-10 pointer-events-none" />
-                )}
-
-                {/* Real "Sale" badge — only shown when active promotions exist */}
-                {hasActiveSale && (
-                  <div className="absolute top-1 right-1 z-20 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-sm leading-none">
-                    SALE
-                  </div>
-                )}
-
-                <div className="relative aspect-[3/4] overflow-hidden">
-                  <motion.img
-                    src={tile.image}
-                    alt={tile.title}
-                    className="w-full h-full object-cover"
-                    whileHover={{ scale: 1.08 }}
-                    transition={{ duration: 0.6 }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                </div>
-
-                <div className="absolute bottom-0 left-0 right-0 p-1.5 text-center z-20">
-                  <h3 className="text-white font-semibold text-[9px] sm:text-[10px] mb-0.5 tracking-wide leading-tight">
-                    {tile.title}
-                  </h3>
-                </div>
-              </motion.button>
+                {tile.title}
+              </button>
             );
           })}
         </div>

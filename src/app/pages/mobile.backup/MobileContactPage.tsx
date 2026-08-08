@@ -67,7 +67,7 @@ const QUICK_ACTIONS = [
   {
     icon: Mail,
     label: 'Email Support',
-    description: 'support@rloco.com',
+    description: 'support@rloko.com',
     badge: '24h response',
     badgeColor: 'bg-purple-100 text-purple-700',
     action: 'email'
@@ -106,7 +106,7 @@ export function MobileContactPage() {
         window.location.href = 'tel:+18007562601';
         break;
       case 'email':
-        window.location.href = 'mailto:support@rloco.com';
+        window.location.href = 'mailto:support@rloko.com';
         break;
       case 'whatsapp':
         window.open('https://wa.me/18007562601', '_blank');

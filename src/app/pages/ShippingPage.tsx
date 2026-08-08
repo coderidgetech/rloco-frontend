@@ -228,7 +228,7 @@ export function ShippingPage() {
                 <li>Use the tracking number provided in your shipping confirmation email</li>
               </ul>
               <p className="mt-4">
-                Need help? Contact our customer service team at <a href="mailto:support@rloco.com" className="underline">support@rloco.com</a> or call +91 123 456 7890
+                Need help? Contact our customer service team at <a href="mailto:support@rloko.com" className="underline">support@rloko.com</a> or call +91 123 456 7890
               </p>
             </div>
           </section>
@@ -243,8 +243,8 @@ export function ShippingPage() {
               <div className="grid md:grid-cols-2 gap-6 text-sm">
                 <div>
                   <p className="font-medium mb-1">Email Us</p>
-                  <a href="mailto:support@rloco.com" className="text-foreground/70 hover:text-foreground">
-                    support@rloco.com
+                  <a href="mailto:support@rloko.com" className="text-foreground/70 hover:text-foreground">
+                    support@rloko.com
                   </a>
                 </div>
                 <div>

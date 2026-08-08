@@ -245,7 +245,7 @@ const defaultConfig: SiteConfig = {
     description: 'Rloko is a premium fashion retailer offering curated collections of luxury apparel, accessories, and beauty products.',
     email: 'hello@rloco.com',
     phone: '+1 (555) 123-4567',
-    supportEmail: 'support@rloco.com',
+    supportEmail: 'support@rloko.com',
     address: '123 Fashion Avenue, New York, NY 10001, United States',
     socialMedia: {
       instagram: '@rloco',

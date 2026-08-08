@@ -137,7 +137,7 @@ export function Testimonials() {
     if (testimonials.length === 0) return;
     const id = setInterval(
       () => setCurrentIndex((prev) => (prev + 1) % testimonials.length),
-      4000,
+      7000,
     );
     return () => clearInterval(id);
   }, [testimonials.length]);

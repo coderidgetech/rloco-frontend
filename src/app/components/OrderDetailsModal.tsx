@@ -654,7 +654,7 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
                     <Mail size={20} className="text-primary" />
                     <div>
                       <p className="font-medium text-sm">Email Support</p>
-                      <p className="text-xs text-muted-foreground">support@rloco.com</p>
+                      <p className="text-xs text-muted-foreground">support@rloko.com</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-3 bg-background rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">

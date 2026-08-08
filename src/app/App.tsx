@@ -135,13 +135,11 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       <ConfigApplier />
       <ConfigIndicator />
       <ScrollProgress />
-      {/* Site nav on all viewports (hamburger + icons on small screens) */}
-      {!isAdminRoute && (
-        <>
-          <Navigation />
-          <HelpGuideButton />
-        </>
-      )}
+      {/* Global site nav. Hidden only on the mobile home, which renders its own
+          transparent MobileHomeHeader over the hero (else the two would stack).
+          Every other mobile page relies on this nav for its top bar. */}
+      {!isAdminRoute && !(isMobile && location.pathname === '/') && <Navigation />}
+      {!isAdminRoute && <HelpGuideButton />}
       <div className="min-h-screen min-h-svh w-full min-w-0 overflow-x-clip break-words bg-background text-foreground antialiased">
         {children}
         {showMobileBottomNav && <BottomNavigation />}

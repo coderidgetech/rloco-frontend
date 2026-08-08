@@ -134,6 +134,35 @@ export function productMatchesSearchQuery(product: ProductSearchable, searchQuer
   );
 }
 
+/**
+ * Relevance score for a product against a search query (higher = better match).
+ * Name matches rank above category/attribute matches so the closest results surface first.
+ */
+export function searchRelevanceScore(product: ProductSearchable, searchQuery: string): number {
+  const q = searchQuery.trim().toLowerCase();
+  if (!q) return 0;
+  const name = product.name.toLowerCase();
+  const category = product.category.toLowerCase();
+  const subcategory = (product.subcategory ?? '').toLowerCase();
+  const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (name === q) return 100;
+  if (name.startsWith(q)) return 80;
+  if (new RegExp(`\\b${escaped}`).test(name)) return 60; // word-boundary match
+  if (name.includes(q)) return 40;
+  if (category === q || subcategory === q) return 30;
+  if (category.includes(q) || subcategory.includes(q)) return 20;
+  return 10; // matched via description / material / sku only
+}
+
+/** Order products by descending relevance to the query; stable for equal scores. */
+export function sortByRelevance<T extends ProductSearchable>(products: T[], searchQuery: string): T[] {
+  if (!searchQuery.trim()) return products;
+  return products
+    .map((p, i) => ({ p, i, score: searchRelevanceScore(p, searchQuery) }))
+    .sort((a, b) => b.score - a.score || a.i - b.i)
+    .map((x) => x.p);
+}
+
 export const sortOptions = [
   { label: 'Featured', value: 'featured' },
   { label: 'Price: Low to High', value: 'price-asc' },

@@ -104,7 +104,7 @@ export function CustomerGuideButton() {
                     <BookOpen className="w-6 h-6" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-light tracking-wider">RLOCO SHOPPING GUIDE</h2>
+                    <h2 className="text-2xl font-light tracking-wider">RLOKO SHOPPING GUIDE</h2>
                     <p className="text-sm text-white/80 tracking-wide">Complete guide to shopping on Rloko</p>
                   </div>
                 </div>
@@ -153,7 +153,7 @@ export function CustomerGuideButton() {
                   <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <h3 className="text-xs font-medium text-blue-900 mb-2 tracking-wide">NEED HELP?</h3>
                     <div className="text-xs text-blue-700 space-y-1">
-                      <div>📧 support@rloco.com</div>
+                      <div>📧 support@rloko.com</div>
                       <div>📞 +1 (555) 123-4567</div>
                       <div>⏰ Mon-Fri 9AM-6PM EST</div>
                       <div className="pt-2">
@@ -1356,7 +1356,7 @@ function FAQGuide() {
           <div className="border-b border-gray-200 pb-4">
             <h3 className="font-medium text-gray-900 mb-2">Can I change my shipping address after ordering?</h3>
             <p className="text-sm text-gray-700">
-              If your order hasn't shipped yet, contact us immediately at <a href="mailto:support@rloco.com" className="text-[#B4770E] hover:underline">support@rloco.com</a> and we'll update the address. Once shipped, contact the carrier directly.
+              If your order hasn't shipped yet, contact us immediately at <a href="mailto:support@rloko.com" className="text-[#B4770E] hover:underline">support@rloko.com</a> and we'll update the address. Once shipped, contact the carrier directly.
             </p>
           </div>
         </div>
@@ -1433,7 +1433,7 @@ function FAQGuide() {
           <div className="bg-white rounded-lg p-4">
             <div className="text-2xl mb-2">📧</div>
             <div className="font-medium text-gray-900 mb-1">Email Support</div>
-            <a href="mailto:support@rloco.com" className="text-[#B4770E] hover:underline text-sm">support@rloco.com</a>
+            <a href="mailto:support@rloko.com" className="text-[#B4770E] hover:underline text-sm">support@rloko.com</a>
             <div className="text-xs text-gray-600 mt-2">Response within 24 hours</div>
           </div>
 

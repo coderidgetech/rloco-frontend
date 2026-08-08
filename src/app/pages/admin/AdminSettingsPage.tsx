@@ -41,7 +41,7 @@ export const AdminSettingsPage = () => {
       storeUrl: 'https://rloco.com',
       storeDescription: 'Modern fashion retailer offering curated collections',
       contactEmail: 'contact@rloco.com',
-      supportEmail: 'support@rloco.com',
+      supportEmail: 'support@rloko.com',
       phone: '+1 (555) 123-4567',
       timezone: 'america/new_york',
     },
