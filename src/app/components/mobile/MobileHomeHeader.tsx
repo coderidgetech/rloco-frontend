@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ChevronDown, Heart, ShoppingBag } from 'lucide-react';
+import { Heart, ShoppingBag } from 'lucide-react';
 import { useWishlist } from '@/app/context/WishlistContext';
 import { useCart } from '@/app/context/CartContext';
 import { useSiteConfig } from '@/app/context/SiteConfigContext';
-import { useDeliveryAddressPreview } from '@/app/hooks/useDeliveryAddressPreview';
 import { RlocoLogo } from '../RlocoLogo';
 
 interface MobileHomeHeaderProps {
@@ -17,7 +16,6 @@ export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
   const { itemCount } = useWishlist();
   const { itemCount: cartCount } = useCart();
   const { config } = useSiteConfig();
-  const { line: deliveryLine, loading: deliveryLoading, isAuthenticated } = useDeliveryAddressPreview();
 
   // Over the full-screen hero the header is transparent (white icons); once the
   // user scrolls past it, it becomes solid white (dark icons).
@@ -30,14 +28,6 @@ export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
   const over = heroEnabled && !scrolled;
-
-  const deliveryText = !isAuthenticated
-    ? 'Add a delivery address'
-    : deliveryLoading
-      ? 'Loading address…'
-      : deliveryLine
-        ? `Deliver to ${deliveryLine}`
-        : 'Select delivery location';
 
   // Over the hero the icons are white with a soft shadow so they stay legible
   // over bright parts of the image too.
@@ -90,24 +80,6 @@ export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
           </button>
         </div>
       </div>
-
-      {/* Delivery Address Section — hidden while the header overlays the hero,
-          shown once scrolled onto the content. */}
-      {!over && (
-        <div className="px-4 py-2.5 border-t border-border/10">
-          <button
-            className="flex items-center gap-2 w-full text-left touch-manipulation"
-            style={{ WebkitTapHighlightColor: 'transparent' }}
-            onClick={() => navigate('/addresses')}
-          >
-            <MapPin size={20} className="flex-shrink-0 text-foreground/70" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate text-foreground">{deliveryText}</p>
-            </div>
-            <ChevronDown size={20} className="flex-shrink-0 text-foreground/50" />
-          </button>
-        </div>
-      )}
     </header>
   );
 }

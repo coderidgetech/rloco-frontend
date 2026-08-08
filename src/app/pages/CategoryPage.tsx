@@ -3,6 +3,8 @@ import { useParams, useNavigate, useSearchParams, useLocation } from 'react-rout
 import { ChevronRight, SlidersHorizontal, X } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { ProductCard } from '../components/ProductCard';
+import { MobileProductCard, MobileProductCardData } from '../components/mobile/MobileProductCard';
+import { useIsMobile } from '../hooks/useIsMobile';
 import { Footer } from '../components/Footer';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { MobileFilterPanel } from '../components/MobileFilterPanel';
@@ -24,6 +26,7 @@ export function CategoryPage() {
   const isGiftHer = location.pathname === '/gift-for-her';
   const isGiftHim = location.pathname === '/gift-for-him';
   const isGiftRoute = isGiftHer || isGiftHim;
+  const isMobile = useIsMobile();
   const { gender, category } = useParams<{ gender: string; category?: string }>();
   const [searchParams] = useSearchParams();
   const giftOnly = searchParams.get('gift') === 'true' || isGiftRoute;
@@ -556,16 +559,21 @@ export function CategoryPage() {
               </div>
             ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {filteredProducts.map((product, index) => (
-                  <motion.div
-                    key={product.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.02 }}
-                  >
-                    <ProductCard product={product} />
-                  </motion.div>
-                ))}
+                {filteredProducts.map((product, index) =>
+                  isMobile ? (
+                    // Match the home grid card design on mobile.
+                    <MobileProductCard key={product.id} product={product as MobileProductCardData} index={index} />
+                  ) : (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: index * 0.02 }}
+                    >
+                      <ProductCard product={product} />
+                    </motion.div>
+                  ),
+                )}
               </div>
             ) : (
               <motion.div
