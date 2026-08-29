@@ -1,0 +1,8 @@
+onlyBuiltDependencies:
+  - '@firebase/util'
+  - '@tailwindcss/oxide'
+  - esbuild
+  - protobufjs
+
+overrides:
+  vite: 6.3.5
