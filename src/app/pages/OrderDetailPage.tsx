@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Package, MapPin, CreditCard, CheckCircle, Truck, Clock, Phone, Download, XCircle, RotateCcw, Star } from 'lucide-react';
+import { Package, CheckCircle, Truck, Clock, Phone, Download, XCircle } from 'lucide-react';
 import { returnService } from '@/app/services/returnService';
 import { ResponsivePageHeader } from '@/app/components/ResponsivePageHeader';
 import { orderService } from '@/app/services/orderService';
@@ -247,10 +247,7 @@ export function OrderDetailPage() {
           transition={{ delay: 0.1 }}
           className="bg-white rounded-2xl p-4 border border-border/30 shadow-sm"
         >
-          <h2 className="font-medium mb-4 flex items-center gap-2">
-            <Package size={18} />
-            <span>Order Items ({order.items?.length ?? 0})</span>
-          </h2>
+          <h2 className="font-medium mb-4">Order Items ({order.items?.length ?? 0})</h2>
           <div className="space-y-3">
             {(order.items || []).map((item, index) => (
               <div
@@ -289,10 +286,7 @@ export function OrderDetailPage() {
           transition={{ delay: 0.2 }}
           className="bg-white rounded-2xl p-4 border border-border/30 shadow-sm"
         >
-          <h2 className="font-medium mb-3 flex items-center gap-2">
-            <MapPin size={18} />
-            <span>Shipping Address</span>
-          </h2>
+          <h2 className="font-medium mb-3">Shipping Address</h2>
           <div className="bg-muted/30 rounded-xl p-3">
             <p className="font-medium text-sm">{name || '—'}</p>
             <p className="text-sm text-foreground/60 mt-1">{street}</p>
@@ -313,10 +307,7 @@ export function OrderDetailPage() {
           transition={{ delay: 0.3 }}
           className="bg-white rounded-2xl p-4 border border-border/30 shadow-sm"
         >
-          <h2 className="font-medium mb-3 flex items-center gap-2">
-            <CreditCard size={18} />
-            <span>Payment Method</span>
-          </h2>
+          <h2 className="font-medium mb-3">Payment Method</h2>
           <div className="bg-muted/30 rounded-xl p-3 flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">{paymentType}</p>
@@ -368,10 +359,7 @@ export function OrderDetailPage() {
             transition={{ delay: 0.42 }}
             className="bg-white rounded-2xl p-4 border border-border/30 shadow-sm"
           >
-            <h2 className="font-medium mb-3 flex items-center gap-2">
-              <Star size={18} />
-              <span>Write a Review</span>
-            </h2>
+            <h2 className="font-medium mb-3">Write a Review</h2>
             <div className="space-y-2">
               {(order.items || []).map((item, i) => (
                 <div key={`review-${item.product_id}-${i}`} className="flex items-center gap-3">
@@ -404,10 +392,7 @@ export function OrderDetailPage() {
             className="bg-white rounded-2xl p-4 border border-border/30 shadow-sm"
           >
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-medium flex items-center gap-2">
-                <RotateCcw size={18} />
-                <span>Request Return</span>
-              </h2>
+              <h2 className="font-medium">Request Return</h2>
               {!showReturnForm && (
                 <button
                   type="button"

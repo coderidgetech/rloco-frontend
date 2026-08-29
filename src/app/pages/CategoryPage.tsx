@@ -336,9 +336,9 @@ export function CategoryPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="flex items-center justify-between gap-3 py-3"
+            className="flex items-center justify-end md:justify-between gap-3 py-3"
           >
-            <div className="flex items-center gap-1.5 text-[11px] text-foreground/40 uppercase tracking-wide min-w-0 overflow-x-auto scrollbar-hide">
+            <div className="hidden md:flex items-center gap-1.5 text-[11px] text-foreground/40 uppercase tracking-wide min-w-0 overflow-x-auto scrollbar-hide">
               <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors shrink-0">Home</button>
               <ChevronRight size={11} className="shrink-0" />
               {isGiftRoute ? (
@@ -366,13 +366,13 @@ export function CategoryPage() {
               {/* Featured toggle */}
               <button
                 onClick={() => setShowFeatured(!showFeatured)}
-                className={`px-3 py-1.5 border transition-colors text-xs uppercase tracking-wider ${
+                className={`px-3 py-1.5 border transition-colors text-xs uppercase tracking-wider whitespace-nowrap ${
                   showFeatured
                     ? 'border-foreground bg-foreground text-background'
                     : 'border-foreground/20 hover:border-foreground'
                 }`}
               >
-                Featured
+                Featured Only
               </button>
 
               {/* Mobile Filter Toggle */}
@@ -462,7 +462,7 @@ export function CategoryPage() {
               
               {(priceRange[0] !== 0 || priceRange[1] !== 10000) && (
                 <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
-                  ₹{(priceRange[0] * 75).toLocaleString()} - ₹{(priceRange[1] * 75).toLocaleString()}
+                  {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}
                   <button onClick={() => setPriceRange([0, 10000])} className="hover:opacity-70">
                     <X size={12} />
                   </button>

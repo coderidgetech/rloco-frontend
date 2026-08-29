@@ -155,16 +155,11 @@ export function WishlistPage() {
             <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
             Back
           </button>
-          <div className="flex items-center gap-3 md:gap-4 mb-4">
-            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-red-500/10 flex items-center justify-center">
-              <Heart className="text-red-500" size={24} fill="currentColor" />
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl lg:text-4xl">My Wishlist</h1>
-              <p className="text-xs md:text-sm text-muted-foreground">
-                {items.length} {items.length === 1 ? 'item' : 'items'} saved
-              </p>
-            </div>
+          <div className="mb-4">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl">My Wishlist</h1>
+            <p className="text-xs md:text-sm text-muted-foreground">
+              {items.length} {items.length === 1 ? 'item' : 'items'} saved
+            </p>
           </div>
 
           {/* Actions Bar */}

@@ -23,12 +23,27 @@ export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
   // user scrolls past it, it becomes solid white (dark icons).
   const heroEnabled = config.homepage.hero.enabled;
   const [scrolled, setScrolled] = useState(false);
+  // The hero's own big logo (MobileHero) rests at 42% of the hero's height
+  // and needs (0.42*vh - 32) px of scroll to naturally reach this header's
+  // logo position, fading out over the last 15% of that distance. Fade this
+  // logo in over that same final stretch so the handoff is one continuous
+  // crossfade with no gap — a separate CSS-timed transition would lag behind
+  // fast scrolls and read as "logo vanishes, then reappears".
+  const [logoOpacity, setLogoOpacity] = useState(heroEnabled ? 0 : 1);
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > window.innerHeight * 0.55);
+    const onScroll = () => {
+      setScrolled(window.scrollY > window.innerHeight * 0.55);
+      if (heroEnabled) {
+        const vh = window.innerHeight;
+        const end = Math.max(vh * 0.05, vh * 0.42 - 32);
+        const start = end * 0.85;
+        setLogoOpacity(Math.min(1, Math.max(0, (window.scrollY - start) / (end - start))));
+      }
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [heroEnabled]);
   const over = heroEnabled && !scrolled;
 
   // Over the hero the icons are white with a soft shadow so they stay legible
@@ -60,7 +75,12 @@ export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
           {menuOpen ? <X size={24} className={iconColor} /> : <Menu size={24} className={iconColor} />}
         </button>
 
-        <RlocoLogo size="sm" className={over ? '[filter:brightness(0)_invert(1)_drop-shadow(0_1px_4px_rgba(0,0,0,0.5))]' : ''} />
+        <div
+          style={{ opacity: logoOpacity }}
+          className={logoOpacity < 1 ? 'pointer-events-none' : ''}
+        >
+          <RlocoLogo size="sm" className={over ? '[filter:drop-shadow(0_1px_4px_rgba(0,0,0,0.5))]' : ''} />
+        </div>
 
         <div className="flex items-center gap-2">
           <button

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, SlidersHorizontal, X, ChevronDown, ChevronUp, Star, Sparkles, Tag, TrendingUp, Award } from 'lucide-react';
+import { Search, X, ChevronDown, ChevronUp, Star, Sparkles, Tag, TrendingUp, Award } from 'lucide-react';
 import { categoriesByGender, colorMap } from '../utils/filterConfig';
 import { PH } from '../lib/formPlaceholders';
 
@@ -161,10 +161,7 @@ export function FilterSidebar({
     >
       {/* Filter Header */}
       <div className="flex items-center justify-between border-b border-foreground/10 pb-3">
-        <div className="flex items-center gap-2">
-          <SlidersHorizontal size={18} />
-          <h2 className="text-base font-medium uppercase tracking-wider">Filters</h2>
-        </div>
+        <h2 className="text-base font-medium uppercase tracking-wider">Filters</h2>
         {hasActiveFilters && (
           <button
             onClick={clearAllFilters}
@@ -247,7 +244,7 @@ export function FilterSidebar({
           }`}
         >
           <TrendingUp size={16} />
-          <span>Featured</span>
+          <span>Featured Only</span>
         </button>
       </div>
 

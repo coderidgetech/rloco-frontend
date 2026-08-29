@@ -7,10 +7,9 @@ import { MobileInspirationVideos } from '../components/mobile/MobileInspirationV
 import { MobileTestimonials } from '../components/mobile/MobileTestimonials';
 import { MobileNewsletter } from '../components/mobile/MobileNewsletter';
 import { MobileNewArrivals } from '../components/mobile/MobileNewArrivals';
+import { Footer } from '../components/Footer';
 import { useFeaturedProducts, useNewArrivals, useOnSaleProducts } from '../hooks/useProducts';
 import { useSiteConfig } from '../context/SiteConfigContext';
-import { motion } from 'motion/react';
-import { Truck, RotateCcw, Shield } from 'lucide-react';
 
 const DEFAULT_ORDER = [
   'featuredProducts','shopByCategory','editorialFeatures',
@@ -94,49 +93,7 @@ export function MobileHomePage() {
           return node ? <div key={key}>{node}</div> : null;
         })}
 
-        {/* App download banner */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="mx-4 my-4 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 rounded-2xl p-5 text-center"
-        >
-          <h3 className="text-lg font-medium mb-1.5">Download Our App</h3>
-          <p className="text-sm text-foreground/60 mb-3">
-            Get exclusive deals and early access to sales
-          </p>
-          <button className="bg-foreground text-background px-6 py-2.5 rounded-full text-sm font-medium">
-            Download Now
-          </button>
-        </motion.div>
-
-        {/* Trust badges */}
-        <div className="grid grid-cols-3 gap-4 px-4 py-4 border-t border-border/30">
-          {[
-            { Icon: Truck, label: 'Free Shipping', sub: 'On orders $50+' },
-            { Icon: RotateCcw, label: 'Easy Returns', sub: '30-day policy' },
-            { Icon: Shield, label: 'Secure Pay', sub: '100% protected' },
-          ].map(({ Icon, label, sub }) => (
-            <div key={label} className="text-center">
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
-                <Icon size={20} className="text-primary" />
-              </div>
-              <p className="text-xs font-medium">{label}</p>
-              <p className="text-[10px] text-foreground/50">{sub}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="px-4 py-6 text-center border-t border-border/30">
-          <p className="text-sm text-foreground/60 mb-2">© 2026 Rloko. All rights reserved.</p>
-          <div className="flex items-center justify-center gap-4 text-xs text-foreground/50">
-            <button>Privacy</button>
-            <span>•</span>
-            <button>Terms</button>
-            <span>•</span>
-            <button>Help</button>
-          </div>
-        </div>
+        <Footer />
       </div>
     </div>
   );

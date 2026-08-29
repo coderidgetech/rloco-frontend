@@ -25,7 +25,6 @@ import { ResponsiveCartPage } from './components/ResponsiveCartPage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { ResponsiveWishlistPage } from './components/ResponsiveWishlistPage';
 import { ResponsiveCategoryPage } from './components/ResponsiveCategoryPage';
-import { ResponsiveSalePage } from './components/ResponsiveSalePage';
 import { ResponsiveNewArrivalsPage } from './components/ResponsiveNewArrivalsPage';
 import { ResponsiveAllProductsPage } from './components/ResponsiveAllProductsPage';
 import { ResponsiveOrderConfirmationPage } from './components/ResponsiveOrderConfirmationPage';
@@ -218,7 +217,7 @@ function App() {
                             <Route path="/all-products" element={<ResponsiveAllProductsPage />} />
                             <Route path="/shop" element={<Navigate to="/all-products" replace />} />
                             <Route path="/not-found" element={<ResponsiveNotFoundPage />} />
-                            <Route path="/sale" element={<ResponsiveSalePage />} />
+                            <Route path="/sale" element={<Navigate to="/all-products?sale=1" replace />} />
                             <Route path="/new-arrivals" element={<ResponsiveNewArrivalsPage />} />
                             <Route path="/featured-collection" element={<FeaturedCollectionPage />} />
                             <Route path="/about" element={<ResponsiveAboutPage />} />

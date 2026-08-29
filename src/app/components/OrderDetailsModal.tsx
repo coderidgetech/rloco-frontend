@@ -275,16 +275,11 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
               {/* Shipping Address */}
               {order.shipping_info && (
                 <div className="bg-muted/30 rounded-xl p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                      <MapPin size={24} className="text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium">Shipping Address</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {order.shipping_info.first_name} {order.shipping_info.last_name}
-                      </p>
-                    </div>
+                  <div className="mb-4">
+                    <h3 className="font-medium">Shipping Address</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {order.shipping_info.first_name} {order.shipping_info.last_name}
+                    </p>
                   </div>
                   <div className="text-sm text-muted-foreground space-y-1 pl-15">
                     <p>{order.shipping_info.address}</p>
@@ -382,16 +377,11 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
               {/* Review Section - Only show for delivered orders */}
               {order.status === 'delivered' && (
                 <div className="bg-muted/30 rounded-xl p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-yellow-500/10 flex items-center justify-center">
-                      <Star size={24} className="text-yellow-500" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium">Leave a Review</h3>
-                      <p className="text-sm text-muted-foreground">Share your experience with this order</p>
-                    </div>
+                  <div className="mb-4">
+                    <h3 className="font-medium">Leave a Review</h3>
+                    <p className="text-sm text-muted-foreground">Share your experience with this order</p>
                   </div>
-                  
+
                   <div className="space-y-4">
                     {/* Star Rating */}
                     <div>
@@ -575,17 +565,10 @@ export function OrderDetailsModal({ order, isOpen, onClose }: OrderDetailsModalP
             >
               {/* Support Header */}
               <div className="bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-xl p-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-16 h-16 rounded-full bg-blue-500/20 flex items-center justify-center">
-                    <MessageCircle size={32} className="text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-medium mb-1">How Can We Help?</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Our support team typically responds within 24 hours
-                    </p>
-                  </div>
-                </div>
+                <h3 className="text-xl font-medium mb-1">How Can We Help?</h3>
+                <p className="text-sm text-muted-foreground">
+                  Our support team typically responds within 24 hours
+                </p>
               </div>
 
               {/* Contact Form */}

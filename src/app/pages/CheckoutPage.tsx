@@ -755,10 +755,7 @@ export function CheckoutPage() {
                 <ArrowLeft size={16} />
                 <span className="hidden md:inline">Back</span>
               </button>
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={18} className="text-foreground/60" />
-                <h1 className="text-sm md:text-base uppercase tracking-wider">Secure Checkout</h1>
-              </div>
+              <h1 className="text-sm md:text-base uppercase tracking-wider">Secure Checkout</h1>
               <div className="text-xs text-foreground/40 uppercase tracking-wider">
                 Step {currentStep + 1}/{STEPS.length}
               </div>
@@ -825,10 +822,7 @@ export function CheckoutPage() {
                       transition={{ duration: 0.3 }}
                       className="flex flex-col"
                     >
-                      <div className="flex items-center gap-2 mb-4">
-                        <Truck size={18} className="text-foreground/60" />
-                        <h2 className="text-sm uppercase tracking-widest">Delivery Address</h2>
-                      </div>
+                      <h2 className="text-sm uppercase tracking-widest mb-4">Delivery Address</h2>
 
                       <div className="overflow-y-auto pr-2">
                         <div className="space-y-3">
@@ -1078,10 +1072,7 @@ export function CheckoutPage() {
                         </div>
 
                         {/* Payment Method — same step as delivery address */}
-                        <div className="flex items-center gap-2 mt-6 mb-4 pt-6 border-t border-foreground/10">
-                          <CreditCard size={18} className="text-foreground/60" />
-                          <h2 className="text-sm uppercase tracking-widest">Payment Method</h2>
-                        </div>
+                        <h2 className="text-sm uppercase tracking-widest mt-6 mb-4 pt-6 border-t border-foreground/10">Payment Method</h2>
 
                         <div className="space-y-3">
                           {/* Payment Method Selection */}

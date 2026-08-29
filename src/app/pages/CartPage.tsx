@@ -501,9 +501,6 @@ export function CartPage() {
               >
                 <ArrowLeft size={20} />
               </button>
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <ShoppingBag className="text-primary" size={16} />
-              </div>
               <h1 className="text-lg md:text-xl font-medium truncate">Your Bag</h1>
             </div>
           </div>

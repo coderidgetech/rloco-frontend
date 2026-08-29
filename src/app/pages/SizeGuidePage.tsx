@@ -1,6 +1,5 @@
 import { motion } from 'motion/react';
 import { Footer } from '../components/Footer';
-import { Ruler } from 'lucide-react';
 
 export function SizeGuidePage() {
   return (
@@ -13,8 +12,7 @@ export function SizeGuidePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <Ruler size={24} className="text-foreground/60" />
+            <div className="mb-6">
               <span className="text-xs uppercase tracking-[0.3em] text-foreground/60">Find Your Perfect Fit</span>
             </div>
             <h1 className="text-4xl md:text-5xl uppercase tracking-[0.2em] mb-6">

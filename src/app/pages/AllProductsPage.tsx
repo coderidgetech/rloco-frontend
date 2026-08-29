@@ -65,6 +65,15 @@ export function AllProductsPage() {
     setSearchQuery(searchParams.get('q') ?? '');
   }, [searchParams]);
 
+  // /sale links here with ?sale=1 to land pre-filtered to on-sale items.
+  useEffect(() => {
+    if (searchParams.get('sale') === '1') {
+      setShowOnSale(true);
+      setSortBy('discount');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (searchParams.get('focus') !== '1') return;
     const q = searchParams.get('q') ?? '';
@@ -159,6 +168,15 @@ export function AllProductsPage() {
       case 'price-desc': filtered.sort((a, b) => b.price - a.price); break;
       case 'newest': filtered.sort((a, b) => ((b.new_arrival || b.newArrival) ? 1 : 0) - ((a.new_arrival || a.newArrival) ? 1 : 0)); break;
       case 'rating': filtered.sort((a, b) => b.rating - a.rating); break;
+      case 'discount':
+        filtered.sort((a, b) => {
+          const origA = a.original_price || a.originalPrice || 0;
+          const origB = b.original_price || b.originalPrice || 0;
+          const discountA = origA > a.price ? ((origA - a.price) / origA) * 100 : 0;
+          const discountB = origB > b.price ? ((origB - b.price) / origB) * 100 : 0;
+          return discountB - discountA;
+        });
+        break;
       default:
         // On the default sort, rank by search relevance when searching; otherwise by featured.
         if (searchQuery.trim()) filtered = sortByRelevance(filtered, searchQuery);
@@ -214,7 +232,9 @@ export function AllProductsPage() {
       ? selectedCategory
       : genderLabel
         ? `${genderLabel}'s Collection`
-        : 'All Products';
+        : showOnSale
+          ? 'On Sale'
+          : 'All Products';
 
   return (
     <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
@@ -294,6 +314,7 @@ export function AllProductsPage() {
                   onChange={(e) => setSortBy(e.target.value)}
                   className="w-full px-4 py-2.5 md:py-2 border border-foreground/20 bg-background focus:outline-none focus:border-foreground transition-colors cursor-pointer text-sm"
                 >
+                  {showOnSale && <option value="discount">Highest Discount</option>}
                   {sortOptions.map(option => (
                     <option key={option.value} value={option.value}>
                       {option.label}

@@ -8,6 +8,7 @@ import { useCurrency } from '../context/CurrencyContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { AddToBagPopover } from './AddToBagPopover';
+import { colorMap } from '../utils/filterConfig';
 
 interface ProductCardProps {
   product: Product;
@@ -104,29 +105,37 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
       onClick={handleCardClick}
     >
       {/* Image */}
-      <div className="relative aspect-[3/4] overflow-hidden mb-3 bg-muted rounded-lg">
+      <div className="relative aspect-[4/5] overflow-hidden mb-2 bg-accent rounded shadow-sm hover:shadow-lg transition-all duration-500">
         <motion.img
           src={product.images?.[0] || product.image || ''}
           alt={product.name}
           className={`w-full h-full object-cover ${isOutOfStock ? 'grayscale opacity-50' : ''}`}
           style={{ filter: isOutOfStock ? undefined : 'brightness(1.05) contrast(1.05) saturate(1.1)' }}
-          whileHover={isOutOfStock ? undefined : { scale: 1.06 }}
+          whileHover={isOutOfStock ? undefined : { scale: 1.08, rotate: 0.5 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         />
 
-        {/* Badges */}
-        {!isOutOfStock && (
-          <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
-            {(product.new_arrival || product.newArrival) && (
-              <span className="px-2 py-0.5 bg-primary text-primary-foreground text-[10px] tracking-wider uppercase rounded-sm">
-                New
-              </span>
-            )}
-            {(product.on_sale || product.onSale) && (
-              <span className="px-2 py-0.5 bg-red-600 text-white text-[10px] tracking-wider uppercase rounded-sm">
-                {discountPct > 0 ? `-${discountPct}%` : 'Sale'}
-              </span>
-            )}
+        {/* Badge */}
+        {!isOutOfStock && product.badge && (
+          <div
+            className={`absolute top-1.5 left-1.5 px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase z-10 ${
+              product.badge === 'Best Seller' ? 'bg-primary text-white' :
+              product.badge === 'Trending' ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white' :
+              product.badge === 'Most Ordered' ? 'bg-blue-600 text-white' :
+              product.badge === 'New' ? 'bg-green-600 text-white' :
+              product.badge === 'Limited Edition' ? 'bg-black text-white' :
+              product.badge === 'Exclusive' ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white' :
+              product.badge === 'Hot' ? 'bg-gradient-to-r from-orange-500 to-red-500 text-white' :
+              product.badge === 'Popular' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white' :
+              'bg-foreground text-background'
+            }`}
+          >
+            {product.badge}
+          </div>
+        )}
+        {!isOutOfStock && !product.badge && (product.on_sale || product.onSale) && (
+          <div className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-red-600 text-white text-[9px] font-bold tracking-wider uppercase z-10">
+            {discountPct > 0 ? `-${discountPct}%` : 'Sale'}
           </div>
         )}
 
@@ -136,7 +145,7 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={handleToggleWishlist}
-          className={`absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full flex items-center justify-center shadow-md backdrop-blur-sm transition-all ${
+          className={`absolute top-1.5 right-1.5 w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-md backdrop-blur-sm z-10 ${
             isWishlisted ? 'bg-red-500 text-white' : 'bg-white/90 text-foreground hover:bg-white'
           }`}
         >
@@ -144,20 +153,40 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
         </motion.button>
 
         {/* Hover overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
       </div>
 
       {/* Info */}
-      <div className="space-y-1">
-        <p className="text-[11px] text-muted-foreground tracking-wider uppercase">{product.category}</p>
-        <h3 className="text-sm leading-snug group-hover:text-primary transition-colors line-clamp-2">
+      <div className="flex-1 flex flex-col overflow-visible">
+        <div className="text-[10px] text-foreground/50 mb-1 tracking-wider uppercase">
+          {product.category}
+        </div>
+        <h3
+          className="text-xs mb-1 h-4 overflow-hidden text-ellipsis whitespace-nowrap group-hover:text-foreground/70 transition-colors leading-tight"
+          title={product.name}
+        >
           {product.name}
         </h3>
-        <div className="flex items-center justify-between gap-1.5 pt-0.5">
+        {product.colors && product.colors.length > 0 && (
+          <div className="flex items-center gap-1 mb-1.5">
+            {product.colors.slice(0, 5).map((color) => (
+              <span
+                key={color}
+                title={color}
+                className="w-2.5 h-2.5 rounded-full border border-foreground/10 shrink-0"
+                style={{ backgroundColor: colorMap[color.toLowerCase()] || '#9CA3AF' }}
+              />
+            ))}
+            {product.colors.length > 5 && (
+              <span className="text-[9px] text-foreground/40">+{product.colors.length - 5}</span>
+            )}
+          </div>
+        )}
+        <div className="relative flex items-center justify-between gap-1.5">
           <div className="flex items-center gap-1.5 min-w-0">
             <span className="text-sm font-medium">{formatPrice(product.price, product.price_inr || (product as any).priceINR)}</span>
             {originalPrice && originalPrice > product.price && (
-              <span className="text-xs text-muted-foreground line-through shrink-0">
+              <span className="text-[10px] text-foreground/40 line-through shrink-0">
                 {formatPrice(originalPrice, originalPriceInr)}
               </span>
             )}

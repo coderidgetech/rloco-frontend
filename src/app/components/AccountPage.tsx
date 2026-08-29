@@ -3,7 +3,7 @@ import {
   X, User, Package, MapPin, CreditCard, Heart, Settings, 
   LogOut, Edit2, Trash2, Plus, Check, Clock, Truck, 
   Mail, Calendar, ShieldCheck, Eye,
-  Download, Bell, Lock, ShoppingCart
+  Download, ShoppingCart
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -1241,10 +1241,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
 
                             {/* Notifications (client-only until email/push prefs API exists) */}
                             <div className="bg-muted/30 rounded-xl p-6">
-                              <div className="flex items-center gap-3 mb-2">
-                                <Bell size={24} className="text-primary" />
-                                <h3 className="font-medium">Notifications</h3>
-                              </div>
+                              <h3 className="font-medium mb-2">Notifications</h3>
                               <p className="text-xs text-muted-foreground mb-4">
                                 These choices are saved on this device only. They do not change email or SMS from us yet.
                               </p>
@@ -1272,10 +1269,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
 
                             {/* Security */}
                             <div className="bg-muted/30 rounded-xl p-6">
-                              <div className="flex items-center gap-3 mb-4">
-                                <Lock size={24} className="text-primary" />
-                                <h3 className="font-medium">Security</h3>
-                              </div>
+                              <h3 className="font-medium mb-4">Security</h3>
                               <form onSubmit={(e) => void handleChangePassword(e)} className="space-y-4">
                                 <LuxuryInput
                                   label="Current password"

@@ -267,7 +267,7 @@ export function MobileFilterPanel({
                   <LuxuryCheckbox
                     checked={showFeatured}
                     onChange={(e) => setShowFeatured(e.target.checked)}
-                    label="Featured"
+                    label="Featured Only"
                   />
                 </div>
               </div>
