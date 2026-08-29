@@ -74,6 +74,15 @@ export function AllProductsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // /new-arrivals links here with ?new=1 to land pre-filtered to new arrivals.
+  useEffect(() => {
+    if (searchParams.get('new') === '1') {
+      setShowNewArrivals(true);
+      setSortBy('newest');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (searchParams.get('focus') !== '1') return;
     const q = searchParams.get('q') ?? '';
@@ -234,7 +243,9 @@ export function AllProductsPage() {
         ? `${genderLabel}'s Collection`
         : showOnSale
           ? 'On Sale'
-          : 'All Products';
+          : showNewArrivals
+            ? 'New Arrivals'
+            : 'All Products';
 
   return (
     <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
@@ -247,8 +258,8 @@ export function AllProductsPage() {
             </button>
             <ChevronRight size={12} />
             {!genderLabel && selectedCategory === 'All' ? (
-              // No filter applied → All Products is the current page
-              <span className="text-foreground uppercase">All Products</span>
+              // No gender/category filter applied → reflect sale/new-arrivals context if any
+              <span className="text-foreground uppercase">{pageTitle}</span>
             ) : (
               <>
                 {genderLabel && (
