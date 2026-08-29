@@ -132,16 +132,6 @@ export function Testimonials() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Auto-rotate
-  useEffect(() => {
-    if (testimonials.length === 0) return;
-    const id = setInterval(
-      () => setCurrentIndex((prev) => (prev + 1) % testimonials.length),
-      7000,
-    );
-    return () => clearInterval(id);
-  }, [testimonials.length]);
-
   const getVisible = () => {
     if (testimonials.length === 0) return [];
     return [0, 1, 2].map((i) => testimonials[(currentIndex + i) % testimonials.length]);
@@ -168,8 +158,8 @@ export function Testimonials() {
             transition={{ duration: 0.6 }}
             className="mb-4"
           >
-            <div className="inline-block border-b border-[#B4770E] pb-1 mb-6">
-              <span className="text-[10px] uppercase tracking-[0.3em] text-[#B4770E] font-semibold">
+            <div className="inline-block border-b border-primary pb-1 mb-6">
+              <span className="text-[10px] uppercase tracking-[0.3em] text-primary font-semibold">
                 Customer Reviews
               </span>
             </div>
@@ -268,7 +258,7 @@ export function Testimonials() {
               whileHover={{ scale: 1.2 }}
               whileTap={{ scale: 0.9 }}
               className={`h-1 rounded-full transition-all duration-500 ${
-                i === currentIndex ? 'w-12 bg-[#B4770E]' : 'w-1 bg-black/20 hover:bg-black/40'
+                i === currentIndex ? 'w-12 bg-primary' : 'w-1 bg-black/20 hover:bg-black/40'
               }`}
               aria-label={`Go to review ${i + 1}`}
             />
@@ -302,11 +292,11 @@ export function Testimonials() {
                 initial={{ scale: 0, opacity: 0 }}
                 whileHover={{ scale: 1, opacity: 0.1 }}
                 transition={{ duration: 0.3 }}
-                className="absolute inset-0 bg-[#B4770E] rounded-full blur-2xl"
+                className="absolute inset-0 bg-primary rounded-full blur-2xl"
               />
               <div className="relative">
                 <motion.div
-                  className="text-3xl md:text-4xl lg:text-5xl mb-2 font-light text-[#B4770E]"
+                  className="text-3xl md:text-4xl lg:text-5xl mb-2 font-light text-primary"
                   initial={{ scale: 1 }}
                   whileInView={{ scale: [1, 1.1, 1] }}
                   viewport={{ once: true }}
@@ -328,7 +318,7 @@ export function Testimonials() {
                   whileInView={{ scaleX: 1 }}
                   viewport={{ once: true }}
                   transition={{ duration: 1.5, delay: stat.delay + 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  className="mt-4 h-px bg-gradient-to-r from-transparent via-[#B4770E] to-transparent origin-left"
+                  className="mt-4 h-px bg-gradient-to-r from-transparent via-primary to-transparent origin-left"
                 />
               </div>
             </motion.div>

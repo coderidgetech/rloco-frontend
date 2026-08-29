@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heart, ShoppingBag } from 'lucide-react';
+import { Heart, ShoppingBag, Menu, X } from 'lucide-react';
 import { useWishlist } from '@/app/context/WishlistContext';
 import { useCart } from '@/app/context/CartContext';
 import { useSiteConfig } from '@/app/context/SiteConfigContext';
 import { RlocoLogo } from '../RlocoLogo';
+import { MobileNavDrawer } from '../MobileNavDrawer';
 
 interface MobileHomeHeaderProps {
   selectedCategory?: string;
@@ -16,6 +17,7 @@ export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
   const { itemCount } = useWishlist();
   const { itemCount: cartCount } = useCart();
   const { config } = useSiteConfig();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Over the full-screen hero the header is transparent (white icons); once the
   // user scrolls past it, it becomes solid white (dark icons).
@@ -38,7 +40,7 @@ export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-colors duration-300 ${
-        over ? 'bg-transparent' : 'bg-white border-b border-border/10'
+        over ? 'bg-transparent' : 'bg-white/35 backdrop-blur-xl border-b border-white/25'
       }`}
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
@@ -48,7 +50,16 @@ export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
       )}
 
       {/* Logo and Action Icons Section */}
-      <div className={`px-4 py-3 flex items-center justify-between ${over ? '' : 'border-b border-border/10'}`}>
+      <div className={`px-4 py-3 flex items-center justify-between ${over ? '' : 'border-b border-white/20'}`}>
+        <button
+          onClick={() => setMenuOpen((open) => !open)}
+          className={`relative w-10 h-10 -ml-2 rounded-full flex items-center justify-center transition-colors touch-manipulation ${over ? 'bg-black/30' : 'active:bg-foreground/5'}`}
+          style={{ WebkitTapHighlightColor: 'transparent' }}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+        >
+          {menuOpen ? <X size={24} className={iconColor} /> : <Menu size={24} className={iconColor} />}
+        </button>
+
         <RlocoLogo size="sm" className={over ? '[filter:brightness(0)_invert(1)_drop-shadow(0_1px_4px_rgba(0,0,0,0.5))]' : ''} />
 
         <div className="flex items-center gap-2">
@@ -80,6 +91,8 @@ export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
           </button>
         </div>
       </div>
+
+      <MobileNavDrawer isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
     </header>
   );
 }

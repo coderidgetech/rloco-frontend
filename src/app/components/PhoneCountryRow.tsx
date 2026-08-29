@@ -119,7 +119,7 @@ export function PhoneCountryRow({
                     value={countrySearch}
                     onChange={(e) => setCountrySearch(e.target.value)}
                     placeholder={PH.searchCountries}
-                    className="w-full pl-10 pr-3 py-2.5 bg-white border border-border/30 shadow-sm rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#B4770E]/20 focus:border-[#B4770E]"
+                    className="w-full pl-10 pr-3 py-2.5 bg-white border border-border/30 shadow-sm rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
                 </div>
               </div>
@@ -134,7 +134,7 @@ export function PhoneCountryRow({
                       setCountrySearch('');
                     }}
                     className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-muted/30 transition-colors ${
-                      selectedCountry.code === country.code ? 'bg-[#B4770E]/10' : ''
+                      selectedCountry.code === country.code ? 'bg-primary/10' : ''
                     }`}
                   >
                     <span className={variant === 'modal' ? 'text-xl' : 'text-2xl'}>{country.flag}</span>

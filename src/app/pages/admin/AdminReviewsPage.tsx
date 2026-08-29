@@ -152,7 +152,7 @@ export function AdminReviewsPage() {
           <Star
             key={star}
             size={16}
-            className={star <= rating ? 'fill-[#B4770E] text-[#B4770E]' : 'text-gray-300'}
+            className={star <= rating ? 'fill-primary text-primary' : 'text-gray-300'}
           />
         ))}
       </div>
@@ -217,7 +217,7 @@ export function AdminReviewsPage() {
                   <p className="text-sm text-muted-foreground mb-1">Avg Rating</p>
                   <p className="text-2xl font-light">{stats.avgRating}</p>
                 </div>
-                <Award className="text-[#B4770E]" size={24} />
+                <Award className="text-primary" size={24} />
               </div>
             </CardContent>
           </Card>

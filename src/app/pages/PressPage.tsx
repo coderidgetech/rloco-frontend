@@ -159,17 +159,17 @@ export function PressPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="border border-foreground/10 p-6 md:p-8 hover:border-[#B4770E]/30 transition-all group cursor-pointer"
+                  className="border border-foreground/10 p-6 md:p-8 hover:border-primary/30 transition-all group cursor-pointer"
                 >
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-3">
                         <span className="text-sm text-foreground/60">{release.date}</span>
-                        <span className="px-3 py-1 bg-[#B4770E]/10 text-[#B4770E] text-xs rounded-full">
+                        <span className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full">
                           {release.category}
                         </span>
                       </div>
-                      <h3 className="text-xl md:text-2xl font-medium mb-3 group-hover:text-[#B4770E] transition-colors">
+                      <h3 className="text-xl md:text-2xl font-medium mb-3 group-hover:text-primary transition-colors">
                         {release.title}
                       </h3>
                       <p className="text-foreground/70 leading-relaxed">
@@ -178,7 +178,7 @@ export function PressPage() {
                     </div>
                     <ExternalLink 
                       size={20} 
-                      className="flex-shrink-0 text-foreground/40 group-hover:text-[#B4770E] transition-colors"
+                      className="flex-shrink-0 text-foreground/40 group-hover:text-primary transition-colors"
                     />
                   </div>
                 </motion.article>
@@ -212,7 +212,7 @@ export function PressPage() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="border-l-2 border-[#B4770E] pl-6 py-2"
+                  className="border-l-2 border-primary pl-6 py-2"
                 >
                   <div className="flex items-center gap-3 mb-2">
                     <span className="font-medium">{feature.publication}</span>
@@ -254,11 +254,11 @@ export function PressPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="border border-foreground/10 p-6 hover:border-[#B4770E]/30 transition-all group cursor-pointer"
+                  className="border border-foreground/10 p-6 hover:border-primary/30 transition-all group cursor-pointer"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <h3 className="font-medium mb-2 group-hover:text-[#B4770E] transition-colors">
+                      <h3 className="font-medium mb-2 group-hover:text-primary transition-colors">
                         {item.name}
                       </h3>
                       <p className="text-sm text-foreground/60 mb-3">
@@ -268,7 +268,7 @@ export function PressPage() {
                     </div>
                     <Download 
                       size={20} 
-                      className="flex-shrink-0 text-foreground/40 group-hover:text-[#B4770E] transition-colors"
+                      className="flex-shrink-0 text-foreground/40 group-hover:text-primary transition-colors"
                     />
                   </div>
                 </motion.div>
@@ -292,7 +292,7 @@ export function PressPage() {
                 For all media inquiries, interviews, and press requests:
               </p>
               <p className="text-lg mb-8">
-                <a href="mailto:press@rloco.com" className="text-[#B4770E] hover:underline">
+                <a href="mailto:press@rloco.com" className="text-primary hover:underline">
                   press@rloco.com
                 </a>
               </p>

@@ -230,7 +230,7 @@ export function ReturnsPage() {
                   transition={{ delay: index * 0.1 }}
                   className="text-center"
                 >
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#B4770E]/10 text-[#B4770E] mb-6">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-6">
                     <step.icon size={28} />
                   </div>
                   <h3 className="text-lg font-medium mb-3">{step.title}</h3>
@@ -268,7 +268,7 @@ export function ReturnsPage() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="border-l-2 border-[#B4770E] pl-6 py-2"
+                  className="border-l-2 border-primary pl-6 py-2"
                 >
                   <h3 className="text-xl font-medium mb-2">{policy.title}</h3>
                   <p className="text-foreground/70 leading-relaxed">

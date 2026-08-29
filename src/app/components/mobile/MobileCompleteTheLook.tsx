@@ -79,7 +79,7 @@ export function MobileCompleteTheLook({ currentProduct, products }: Props) {
         {/* Header */}
         <div className="flex items-center gap-2 mb-2">
           <Sparkles size={20} className="text-primary" />
-          <h3 className="text-xl font-medium">Complete the Look</h3>
+          <h3 className="text-base font-medium tracking-wide">Complete the Look</h3>
         </div>
         <p className="text-sm text-foreground/60 mb-4">
           Bundle and save 10% on your purchase

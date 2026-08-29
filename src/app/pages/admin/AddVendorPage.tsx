@@ -250,7 +250,7 @@ export const AddVendorPage = () => {
             <Button variant="outline" onClick={() => navigate('/admin/vendors')}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} className="bg-[#B4770E] hover:bg-[#8B5A0B]">
+            <Button onClick={handleSubmit} className="bg-primary hover:brightness-90">
               <Save className="h-4 w-4 mr-2" />
               {isEditing ? 'Save Changes' : 'Create Vendor'}
             </Button>
@@ -264,7 +264,7 @@ export const AddVendorPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Store className="h-5 w-5 text-[#B4770E]" />
+                  <Store className="h-5 w-5 text-primary" />
                   Basic Information
                 </CardTitle>
                 <CardDescription>
@@ -406,7 +406,7 @@ export const AddVendorPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-[#B4770E]" />
+                  <MapPin className="h-5 w-5 text-primary" />
                   Address Information
                 </CardTitle>
                 <CardDescription>Business location and mailing address</CardDescription>
@@ -470,7 +470,7 @@ export const AddVendorPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-[#B4770E]" />
+                  <DollarSign className="h-5 w-5 text-primary" />
                   Banking Information
                 </CardTitle>
                 <CardDescription>Payment and payout details</CardDescription>
@@ -535,7 +535,7 @@ export const AddVendorPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-[#B4770E]" />
+                  <Shield className="h-5 w-5 text-primary" />
                   Privilege & Permission Settings
                 </CardTitle>
                 <CardDescription>
@@ -564,14 +564,14 @@ export const AddVendorPage = () => {
                               onClick={() => setSelectedPlanId(plan.id)}
                               className={`relative border-2 rounded-lg p-4 cursor-pointer transition-all ${
                                 isSelected
-                                  ? 'border-[#B4770E] bg-[#B4770E]/5'
+                                  ? 'border-primary bg-primary/5'
                                   : 'border-gray-200 hover:border-gray-300'
                               }`}
                             >
                               {/* Selection indicator */}
                               {isSelected && (
                                 <div className="absolute top-2 right-2">
-                                  <div className="bg-[#B4770E] text-white rounded-full p-1">
+                                  <div className="bg-primary text-white rounded-full p-1">
                                     <Check className="h-3 w-3" />
                                   </div>
                                 </div>
@@ -600,7 +600,7 @@ export const AddVendorPage = () => {
                               {/* Pricing */}
                               <div className="space-y-1 mb-3 pb-3 border-b">
                                 <div className="flex items-baseline gap-1">
-                                  <span className="font-semibold text-2xl text-[#B4770E]">
+                                  <span className="font-semibold text-2xl text-primary">
                                     ${plan.monthlyPrice}
                                   </span>
                                   <span className="text-sm text-gray-500">/month</span>
@@ -623,7 +623,7 @@ export const AddVendorPage = () => {
                               <div className="space-y-2 text-sm">
                                 <div className="flex items-center justify-between">
                                   <span className="text-gray-600">Commission</span>
-                                  <span className="font-semibold text-[#B4770E]">
+                                  <span className="font-semibold text-primary">
                                     {plan.commission}%
                                   </span>
                                 </div>
@@ -671,13 +671,13 @@ export const AddVendorPage = () => {
                         onClick={() => handleRoleChange('owner')}
                         className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                           selectedRole === 'owner'
-                            ? 'border-[#B4770E] bg-[#B4770E]/5'
+                            ? 'border-primary bg-primary/5'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-3">
                           <h3 className="font-semibold text-lg">Owner</h3>
-                          <Badge variant="default" className="bg-[#B4770E]">
+                          <Badge variant="default" className="bg-primary">
                             Full Access
                           </Badge>
                         </div>
@@ -702,7 +702,7 @@ export const AddVendorPage = () => {
                         onClick={() => handleRoleChange('manager')}
                         className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                           selectedRole === 'manager'
-                            ? 'border-[#B4770E] bg-[#B4770E]/5'
+                            ? 'border-primary bg-primary/5'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
@@ -731,7 +731,7 @@ export const AddVendorPage = () => {
                         onClick={() => handleRoleChange('staff')}
                         className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                           selectedRole === 'staff'
-                            ? 'border-[#B4770E] bg-[#B4770E]/5'
+                            ? 'border-primary bg-primary/5'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
@@ -760,7 +760,7 @@ export const AddVendorPage = () => {
                         onClick={() => handleRoleChange('readonly')}
                         className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                           selectedRole === 'readonly'
-                            ? 'border-[#B4770E] bg-[#B4770E]/5'
+                            ? 'border-primary bg-primary/5'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
@@ -791,7 +791,7 @@ export const AddVendorPage = () => {
                     {/* Products */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 pb-2 border-b">
-                        <Package className="h-4 w-4 text-[#B4770E]" />
+                        <Package className="h-4 w-4 text-primary" />
                         <h3 className="font-semibold">Product Management</h3>
                       </div>
                       <div className="grid grid-cols-3 gap-3">
@@ -821,7 +821,7 @@ export const AddVendorPage = () => {
                     {/* Orders */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 pb-2 border-b">
-                        <ShoppingBag className="h-4 w-4 text-[#B4770E]" />
+                        <ShoppingBag className="h-4 w-4 text-primary" />
                         <h3 className="font-semibold">Order Management</h3>
                       </div>
                       <div className="grid grid-cols-3 gap-3">
@@ -851,7 +851,7 @@ export const AddVendorPage = () => {
                     {/* Analytics */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 pb-2 border-b">
-                        <BarChart3 className="h-4 w-4 text-[#B4770E]" />
+                        <BarChart3 className="h-4 w-4 text-primary" />
                         <h3 className="font-semibold">Analytics & Reports</h3>
                       </div>
                       <div className="grid grid-cols-3 gap-3">
@@ -881,7 +881,7 @@ export const AddVendorPage = () => {
                     {/* Financial */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 pb-2 border-b">
-                        <DollarSign className="h-4 w-4 text-[#B4770E]" />
+                        <DollarSign className="h-4 w-4 text-primary" />
                         <h3 className="font-semibold">Financial Access</h3>
                       </div>
                       <div className="grid grid-cols-3 gap-3">
@@ -911,7 +911,7 @@ export const AddVendorPage = () => {
                     {/* Marketing */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 pb-2 border-b">
-                        <Tag className="h-4 w-4 text-[#B4770E]" />
+                        <Tag className="h-4 w-4 text-primary" />
                         <h3 className="font-semibold">Marketing & Promotions</h3>
                       </div>
                       <div className="grid grid-cols-3 gap-3">
@@ -941,7 +941,7 @@ export const AddVendorPage = () => {
                     {/* Settings */}
                     <div className="space-y-3">
                       <div className="flex items-center gap-2 pb-2 border-b">
-                        <Settings className="h-4 w-4 text-[#B4770E]" />
+                        <Settings className="h-4 w-4 text-primary" />
                         <h3 className="font-semibold">Store Settings</h3>
                       </div>
                       <div className="grid grid-cols-3 gap-3">
@@ -1094,7 +1094,7 @@ export const AddVendorPage = () => {
                 <span className="font-medium">Login URL:</span>{' '}
                 <a
                   href={createResult.login_url}
-                  className="text-[#B4770E] underline break-all"
+                  className="text-primary underline break-all"
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -1127,7 +1127,7 @@ export const AddVendorPage = () => {
           )}
           <DialogFooter>
             <Button
-              className="bg-[#B4770E] hover:bg-[#8B5A0B]"
+              className="bg-primary hover:brightness-90"
               onClick={() => {
                 setCreateResult(null);
                 navigate('/admin/vendors');

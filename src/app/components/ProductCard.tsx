@@ -108,33 +108,27 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
         <motion.img
           src={product.images?.[0] || product.image || ''}
           alt={product.name}
-          className="w-full h-full object-cover"
-          style={{ filter: 'brightness(1.05) contrast(1.05) saturate(1.1)' }}
-          whileHover={{ scale: 1.06 }}
+          className={`w-full h-full object-cover ${isOutOfStock ? 'grayscale opacity-50' : ''}`}
+          style={{ filter: isOutOfStock ? undefined : 'brightness(1.05) contrast(1.05) saturate(1.1)' }}
+          whileHover={isOutOfStock ? undefined : { scale: 1.06 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         />
 
         {/* Badges */}
-        <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
-          {isOutOfStock ? (
-            <span className="px-2 py-0.5 bg-foreground/70 text-background text-[10px] tracking-wider uppercase rounded-sm">
-              Out of stock
-            </span>
-          ) : (
-            <>
-              {(product.new_arrival || product.newArrival) && (
-                <span className="px-2 py-0.5 bg-primary text-primary-foreground text-[10px] tracking-wider uppercase rounded-sm">
-                  New
-                </span>
-              )}
-              {(product.on_sale || product.onSale) && (
-                <span className="px-2 py-0.5 bg-red-600 text-white text-[10px] tracking-wider uppercase rounded-sm">
-                  {discountPct > 0 ? `-${discountPct}%` : 'Sale'}
-                </span>
-              )}
-            </>
-          )}
-        </div>
+        {!isOutOfStock && (
+          <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
+            {(product.new_arrival || product.newArrival) && (
+              <span className="px-2 py-0.5 bg-primary text-primary-foreground text-[10px] tracking-wider uppercase rounded-sm">
+                New
+              </span>
+            )}
+            {(product.on_sale || product.onSale) && (
+              <span className="px-2 py-0.5 bg-red-600 text-white text-[10px] tracking-wider uppercase rounded-sm">
+                {discountPct > 0 ? `-${discountPct}%` : 'Sale'}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Wishlist */}
         <motion.button

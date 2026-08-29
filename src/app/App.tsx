@@ -110,7 +110,7 @@ function isCapacitorNative(): boolean {
 
 const AppRouter = isCapacitorNative() ? HashRouter : BrowserRouter;
 
-const MOBILE_HIDE_NAV_PATHS = ['/splash', '/onboarding', '/login', '/signup', '/forgot-password', '/otp-verification'];
+const MOBILE_HIDE_NAV_PATHS = ['/splash', '/onboarding', '/login', '/signup', '/forgot-password', '/otp-verification', '/cart'];
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();

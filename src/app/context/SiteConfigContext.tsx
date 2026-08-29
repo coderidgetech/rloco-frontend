@@ -268,9 +268,9 @@ const defaultConfig: SiteConfig = {
   },
   design: {
     colors: {
-      primary: '#B4770E',
+      primary: '#3E6C7A',
       primaryLight: '#D4970E',
-      primaryDark: '#8B5A0B',
+      primaryDark: '#57808C',
       secondary: '#000000',
       secondaryGray: '#666666',
       secondaryLightGray: '#999999',

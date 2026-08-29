@@ -127,10 +127,7 @@ export function CompleteTheLookSection({ currentProduct, products }: CompleteThe
               </div>
             </div>
             <h2 className="text-4xl md:text-6xl mb-4 tracking-tight font-medium bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text">Complete the Look</h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto mb-4" />
-            <p className="text-foreground/60 tracking-wide max-w-2xl mx-auto text-lg">
-              Curated pieces that perfectly complement your selection. Build your complete outfit with confidence.
-            </p>
+            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-primary to-transparent mx-auto" />
           </motion.div>
         </div>
 

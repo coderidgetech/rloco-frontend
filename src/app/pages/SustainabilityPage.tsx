@@ -148,7 +148,7 @@ export function SustainabilityPage() {
                   className="border border-foreground/10 p-8"
                 >
                   <div className="flex items-start gap-4 mb-6">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#B4770E]/10 flex items-center justify-center text-[#B4770E]">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                       <commitment.icon size={24} />
                     </div>
                     <div className="flex-1">
@@ -157,7 +157,7 @@ export function SustainabilityPage() {
                         {commitment.description}
                       </p>
                       <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-light text-[#B4770E]">
+                        <span className="text-3xl font-light text-primary">
                           {commitment.percentage}
                         </span>
                         <span className="text-sm text-foreground/60">
@@ -199,7 +199,7 @@ export function SustainabilityPage() {
                   transition={{ delay: index * 0.1 }}
                   className="text-center"
                 >
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#B4770E]/10 text-[#B4770E] mb-6">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-6">
                     <initiative.icon size={28} />
                   </div>
                   <h3 className="text-lg font-medium mb-3">{initiative.title}</h3>
@@ -246,7 +246,7 @@ export function SustainabilityPage() {
                     }`}
                   >
                     {/* Year Badge */}
-                    <div className="absolute left-0 md:left-1/2 md:-translate-x-1/2 w-16 h-16 rounded-full bg-[#B4770E] text-background flex items-center justify-center font-medium z-10">
+                    <div className="absolute left-0 md:left-1/2 md:-translate-x-1/2 w-16 h-16 rounded-full bg-primary text-background flex items-center justify-center font-medium z-10">
                       {item.year}
                     </div>
 

@@ -32,7 +32,12 @@ export function MobileHomePage() {
   const sectionMap: Record<string, React.ReactNode> = {
     featuredProducts: sections.featuredProducts && featuredProducts.length > 0 && (
       <>
-        <MobileProductGrid products={featuredProducts} title="Latest Drop" seeAllLink="/all-products" />
+        <MobileProductGrid
+          products={featuredProducts}
+          title="Latest Drop"
+          seeAllLink="/all-products"
+          className="py-4"
+        />
         <Divider />
       </>
     ),

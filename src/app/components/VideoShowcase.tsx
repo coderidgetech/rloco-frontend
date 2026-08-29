@@ -143,13 +143,6 @@ export function VideoShowcase() {
     return () => { cancelled = true; };
   }, []);
 
-  // Auto-advance
-  useEffect(() => {
-    if (n <= 1) return;
-    const t = setInterval(() => slideTo(posRef.current + 1), 8000);
-    return () => clearInterval(t);
-  }, [n, slideTo]);
-
   const realIndex = ((pos - clones) % n + n) % n;
   const bg = products[realIndex]?.images?.[0] ?? FALLBACK_PRODUCTS[0].images[0];
 

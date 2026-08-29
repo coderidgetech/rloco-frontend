@@ -64,7 +64,7 @@ export function AnimatedText({
       variants={container}
       initial="hidden"
       animate="visible"
-      className={`inline-flex flex-wrap ${gradient ? 'bg-gradient-to-r from-foreground via-[#B4770E] to-foreground bg-clip-text text-transparent' : ''} ${className}`}
+      className={`inline-flex flex-wrap ${gradient ? 'bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent' : ''} ${className}`}
     >
       {elements.map((element, index) => (
         <motion.span
@@ -100,7 +100,7 @@ export function AnimatedHeading({ children, className = '', delay = 0, gradient 
         delay,
         ease: easing.luxury,
       }}
-      className={`${gradient ? 'bg-gradient-to-r from-foreground via-[#B4770E] to-foreground bg-clip-text text-transparent' : ''} ${className}`}
+      className={`${gradient ? 'bg-gradient-to-r from-foreground via-primary to-foreground bg-clip-text text-transparent' : ''} ${className}`}
     >
       {children}
     </motion.h1>

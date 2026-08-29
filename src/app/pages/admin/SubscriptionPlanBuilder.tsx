@@ -300,7 +300,7 @@ export default function SubscriptionPlanBuilder() {
               </Button>
               <Button
                 onClick={handleSave}
-                className="bg-[#B4770E] hover:bg-[#8B5A0B]"
+                className="bg-primary hover:brightness-90"
               >
                 <Save className="h-4 w-4 mr-2" />
                 {formData.id === 0 ? 'Create Plan' : 'Save Changes'}
@@ -319,7 +319,7 @@ export default function SubscriptionPlanBuilder() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Package className="h-5 w-5 text-[#B4770E]" />
+                  <Package className="h-5 w-5 text-primary" />
                   Plan Details
                 </CardTitle>
                 <CardDescription>
@@ -437,7 +437,7 @@ export default function SubscriptionPlanBuilder() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5 text-[#B4770E]" />
+                  <DollarSign className="h-5 w-5 text-primary" />
                   Commission & Earnings
                 </CardTitle>
               </CardHeader>
@@ -484,7 +484,7 @@ export default function SubscriptionPlanBuilder() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-[#B4770E]" />
+                  <Users className="h-5 w-5 text-primary" />
                   Usage Limits
                 </CardTitle>
               </CardHeader>
@@ -534,7 +534,7 @@ export default function SubscriptionPlanBuilder() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5 text-[#B4770E]" />
+                  <Calendar className="h-5 w-5 text-primary" />
                   Billing Configuration
                 </CardTitle>
               </CardHeader>
@@ -651,7 +651,7 @@ export default function SubscriptionPlanBuilder() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5 text-[#B4770E]" />
+                  <Bell className="h-5 w-5 text-primary" />
                   Email Notifications
                 </CardTitle>
               </CardHeader>
@@ -736,7 +736,7 @@ export default function SubscriptionPlanBuilder() {
             <Card className="sticky top-24">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Star className="h-5 w-5 text-[#B4770E]" />
+                  <Star className="h-5 w-5 text-primary" />
                   Plan Preview
                 </CardTitle>
               </CardHeader>
@@ -746,7 +746,7 @@ export default function SubscriptionPlanBuilder() {
                   style={{ borderColor: formData.color }}
                 >
                   {formData.isPopular && (
-                    <div className="inline-block bg-[#B4770E] text-white text-xs px-3 py-1 rounded-full mb-3">
+                    <div className="inline-block bg-primary text-white text-xs px-3 py-1 rounded-full mb-3">
                       POPULAR
                     </div>
                   )}
@@ -761,7 +761,7 @@ export default function SubscriptionPlanBuilder() {
                   <div className="space-y-2 text-left">
                     {formData.features.map((feature, index) => (
                       <div key={index} className="flex items-center gap-2 text-sm">
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#B4770E]" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                         {feature}
                       </div>
                     ))}
@@ -774,7 +774,7 @@ export default function SubscriptionPlanBuilder() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Settings className="h-5 w-5 text-[#B4770E]" />
+                  <Settings className="h-5 w-5 text-primary" />
                   Plan Features
                 </CardTitle>
               </CardHeader>

@@ -40,11 +40,11 @@ export function CompleteAdminSidebarGuide() {
       </AlertBox>
 
       {/* Table of Contents */}
-      <div className="bg-gradient-to-r from-[#B4770E]/10 to-white border-l-4 border-[#B4770E] p-5 rounded-r-lg mb-6">
+      <div className="bg-gradient-to-r from-primary/10 to-white border-l-4 border-primary p-5 rounded-r-lg mb-6">
         <h2 className="text-lg font-medium text-gray-900 mb-3">📋 Admin Sidebar Pages (16 Total)</h2>
         <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs">
           <div className="space-y-1">
-            <div className="font-medium text-[#B4770E]">Core Management</div>
+            <div className="font-medium text-primary">Core Management</div>
             <div className="ml-3">1. Dashboard</div>
             <div className="ml-3">2. Products</div>
             <div className="ml-3">3. Orders</div>
@@ -53,7 +53,7 @@ export function CompleteAdminSidebarGuide() {
             <div className="ml-3">6. Vendors</div>
           </div>
           <div className="space-y-1">
-            <div className="font-medium text-[#B4770E]">Analytics & Content</div>
+            <div className="font-medium text-primary">Analytics & Content</div>
             <div className="ml-3">7. Analytics</div>
             <div className="ml-3">8. Content</div>
             <div className="ml-3">9. Videos</div>
@@ -62,7 +62,7 @@ export function CompleteAdminSidebarGuide() {
             <div className="ml-3">12. Badges</div>
           </div>
           <div className="space-y-1">
-            <div className="font-medium text-[#B4770E]">Configuration</div>
+            <div className="font-medium text-primary">Configuration</div>
             <div className="ml-3">13. Promotions</div>
             <div className="ml-3">14. Configuration</div>
             <div className="ml-3">15. Settings</div>
@@ -75,12 +75,12 @@ export function CompleteAdminSidebarGuide() {
         {/* ========================================= */}
         {/* 1. DASHBOARD */}
         {/* ========================================= */}
-        <section className="border-4 border-[#B4770E] rounded-xl p-5 bg-white shadow-lg">
+        <section className="border-4 border-primary rounded-xl p-5 bg-white shadow-lg">
           <div className="flex items-start gap-3 mb-4">
-            <div className="bg-[#B4770E] text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold flex-shrink-0">1</div>
+            <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center text-lg font-bold flex-shrink-0">1</div>
             <div className="flex-1">
               <h2 className="text-xl font-medium text-gray-900 mb-1 flex items-center gap-2">
-                <LayoutDashboard className="w-5 h-5 text-[#B4770E]" /> Dashboard
+                <LayoutDashboard className="w-5 h-5 text-primary" /> Dashboard
               </h2>
               <div className="text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded px-2 py-1 inline-block">
                 URL: /admin/dashboard | Access: Admin + Vendor
@@ -391,9 +391,9 @@ export function CompleteAdminSidebarGuide() {
               <div className="space-y-3 text-xs">
                 
                 {/* Step 1 */}
-                <div className="bg-white border-2 border-[#B4770E] rounded-lg p-3">
+                <div className="bg-white border-2 border-primary rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="bg-[#B4770E] text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">1</div>
+                    <div className="bg-primary text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">1</div>
                     <div className="font-semibold text-gray-900">Basic Information</div>
                   </div>
                   <div className="ml-8 space-y-1 text-gray-700">
@@ -564,7 +564,7 @@ export function CompleteAdminSidebarGuide() {
                     </div>
                     
                     <div className="ml-3 mt-1">
-                      <span className="bg-[#B4770E] text-white px-2 py-0.5 rounded text-xs">BEST SELLER</span>
+                      <span className="bg-primary text-white px-2 py-0.5 rounded text-xs">BEST SELLER</span>
                       <span className="text-gray-600 ml-2">Top performers (manual or auto)</span>
                     </div>
                     

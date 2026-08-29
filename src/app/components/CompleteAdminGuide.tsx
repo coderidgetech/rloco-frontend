@@ -37,11 +37,11 @@ export function CompleteAdminGuide() {
       </AlertBox>
 
       {/* TABLE OF CONTENTS */}
-      <div className="bg-gradient-to-r from-[#B4770E]/10 to-white border-l-4 border-[#B4770E] p-6 rounded-r-lg mb-8">
+      <div className="bg-gradient-to-r from-primary/10 to-white border-l-4 border-primary p-6 rounded-r-lg mb-8">
         <h2 className="text-2xl font-medium text-gray-900 mb-4">📚 Table of Contents</h2>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="space-y-2">
-            <div className="font-medium text-[#B4770E]">Core Management</div>
+            <div className="font-medium text-primary">Core Management</div>
             <div className="ml-3">1. Dashboard</div>
             <div className="ml-3">2. Products Management</div>
             <div className="ml-3">3. Orders Management</div>
@@ -50,7 +50,7 @@ export function CompleteAdminGuide() {
             <div className="ml-3">6. Categories Management</div>
           </div>
           <div className="space-y-2">
-            <div className="font-medium text-[#B4770E]">Content & Marketing</div>
+            <div className="font-medium text-primary">Content & Marketing</div>
             <div className="ml-3">7. Analytics Dashboard</div>
             <div className="ml-3">8. Content Management</div>
             <div className="ml-3">9. Videos Management</div>
@@ -59,7 +59,7 @@ export function CompleteAdminGuide() {
             <div className="ml-3">12. Badge Management</div>
           </div>
           <div className="space-y-2">
-            <div className="font-medium text-[#B4770E]">Configuration</div>
+            <div className="font-medium text-primary">Configuration</div>
             <div className="ml-3">13. Promotions</div>
             <div className="ml-3">14. Site Configuration</div>
             <div className="ml-3">15. Subscription Plans</div>

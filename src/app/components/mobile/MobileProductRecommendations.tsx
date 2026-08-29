@@ -67,7 +67,7 @@ export function MobileProductRecommendations({
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
             <Icon size={20} className="text-primary" />
-            <h3 className="text-xl font-medium">{title}</h3>
+            <h3 className="text-base font-medium tracking-wide">{title}</h3>
           </div>
           <button className="text-sm text-primary font-medium flex items-center gap-1">
             View All

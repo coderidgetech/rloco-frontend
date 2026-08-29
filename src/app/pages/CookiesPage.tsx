@@ -164,7 +164,7 @@ export function CookiesPage() {
                   className="border border-foreground/10 p-6 md:p-8"
                 >
                   <div className="flex items-start gap-4 mb-4">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-[#B4770E]/10 flex items-center justify-center text-[#B4770E]">
+                    <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                       <type.icon size={24} />
                     </div>
                     <div className="flex-1">
@@ -186,7 +186,7 @@ export function CookiesPage() {
                     <ul className="space-y-1">
                       {type.examples.map((example) => (
                         <li key={example} className="text-sm text-foreground/60 flex items-start gap-2">
-                          <span className="text-[#B4770E] mt-1">•</span>
+                          <span className="text-primary mt-1">•</span>
                           <span>{example}</span>
                         </li>
                       ))}
@@ -239,7 +239,7 @@ export function CookiesPage() {
                       <td className="p-4 text-sm text-foreground/70">{cookie.purpose}</td>
                       <td className="p-4 text-sm text-foreground/70">{cookie.duration}</td>
                       <td className="p-4">
-                        <span className="px-3 py-1 bg-[#B4770E]/10 text-[#B4770E] text-xs rounded-full">
+                        <span className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full">
                           {cookie.type}
                         </span>
                       </td>
@@ -277,21 +277,21 @@ export function CookiesPage() {
                   <h3 className="font-medium text-foreground mb-3">How to Control Cookies:</h3>
                   <ul className="space-y-2">
                     <li className="flex items-start gap-2">
-                      <span className="text-[#B4770E] mt-1">•</span>
+                      <span className="text-primary mt-1">•</span>
                       <span>
                         <strong>Browser Settings:</strong> Most browsers allow you to refuse to accept cookies 
                         and to delete cookies. Check your browser's Help menu for instructions.
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-[#B4770E] mt-1">•</span>
+                      <span className="text-primary mt-1">•</span>
                       <span>
                         <strong>Cookie Preferences:</strong> Use our cookie preference center to manage 
                         your cookie settings.
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <span className="text-[#B4770E] mt-1">•</span>
+                      <span className="text-primary mt-1">•</span>
                       <span>
                         <strong>Opt-Out Tools:</strong> Visit third-party opt-out pages like 
                         aboutads.info or youronlinechoices.com
@@ -317,7 +317,7 @@ export function CookiesPage() {
               <h2 className="text-3xl md:text-4xl mb-6">Questions About Cookies?</h2>
               <p className="text-lg text-foreground/60 mb-8">
                 If you have any questions about our use of cookies, please contact us at{' '}
-                <a href="mailto:privacy@rloco.com" className="text-[#B4770E] hover:underline">
+                <a href="mailto:privacy@rloco.com" className="text-primary hover:underline">
                   privacy@rloco.com
                 </a>
               </p>

@@ -175,7 +175,7 @@ export function ProductsGrid() {
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       className={`absolute top-1.5 left-1.5 px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase z-10 ${
-                        product.badge === 'Best Seller' ? 'bg-[#B4770E] text-white' :
+                        product.badge === 'Best Seller' ? 'bg-primary text-white' :
                         product.badge === 'Trending' ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white' :
                         product.badge === 'Most Ordered' ? 'bg-blue-600 text-white' :
                         product.badge === 'New' ? 'bg-green-600 text-white' :

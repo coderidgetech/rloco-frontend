@@ -45,7 +45,7 @@ interface PaymentInfo {
   cvv: string;
 }
 
-const STEPS = ['Shipping', 'Payment', 'Review'];
+const STEPS = ['Checkout', 'Review'];
 
 export function CheckoutPage() {
   const navigate = useNavigate();
@@ -259,7 +259,7 @@ export function CheckoutPage() {
 
   // Calculate shipping and tax when shipping info is available (backend uses USD)
   useEffect(() => {
-    if (shippingInfo.country && currentStep >= 1) {
+    if (shippingInfo.country) {
       const calculateCosts = async () => {
         try {
           const shippingMethods = await shippingService.calculate({
@@ -318,7 +318,6 @@ export function CheckoutPage() {
     shippingInfo.email,
     shippingInfo.phone,
     subtotalUSD,
-    currentStep,
     cartWeightLb,
   ]);
 
@@ -452,8 +451,7 @@ export function CheckoutPage() {
   };
 
   const handleNext = () => {
-    if (currentStep === 0 && !validateShipping()) return;
-    if (currentStep === 1 && !validatePayment()) return;
+    if (currentStep === 0 && (!validateShipping() || !validatePayment())) return;
     setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
   };
 
@@ -762,7 +760,7 @@ export function CheckoutPage() {
                 <h1 className="text-sm md:text-base uppercase tracking-wider">Secure Checkout</h1>
               </div>
               <div className="text-xs text-foreground/40 uppercase tracking-wider">
-                Step {currentStep + 1}/3
+                Step {currentStep + 1}/{STEPS.length}
               </div>
             </div>
 
@@ -817,10 +815,10 @@ export function CheckoutPage() {
               {/* Left: Step Content */}
               <div className="flex flex-col">
                 <AnimatePresence mode="wait">
-                  {/* Step 1: Shipping */}
+                  {/* Step 1: Checkout — delivery address and payment combined */}
                   {currentStep === 0 && (
                     <motion.div
-                      key="shipping"
+                      key="checkout"
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -20 }}
@@ -1078,36 +1076,13 @@ export function CheckoutPage() {
                             </div>
                           )}
                         </div>
-                      </div>
 
-                      <div className="pt-4 mt-4 border-t border-foreground/10">
-                        <button
-                          type="button"
-                          onClick={handleNext}
-                          className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 transition-all uppercase tracking-widest text-xs"
-                        >
-                          Continue to Payment
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
+                        {/* Payment Method — same step as delivery address */}
+                        <div className="flex items-center gap-2 mt-6 mb-4 pt-6 border-t border-foreground/10">
+                          <CreditCard size={18} className="text-foreground/60" />
+                          <h2 className="text-sm uppercase tracking-widest">Payment Method</h2>
+                        </div>
 
-                  {/* Step 2: Payment */}
-                  {currentStep === 1 && (
-                    <motion.div
-                      key="payment"
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.3 }}
-                      className="flex flex-col"
-                    >
-                      <div className="flex items-center gap-2 mb-4">
-                        <CreditCard size={18} className="text-foreground/60" />
-                        <h2 className="text-sm uppercase tracking-widest">Payment Method</h2>
-                      </div>
-
-                      <div className="overflow-y-auto pr-2">
                         <div className="space-y-3">
                           {/* Payment Method Selection */}
                           <div className="grid grid-cols-2 gap-2 mb-4">
@@ -1310,14 +1285,14 @@ export function CheckoutPage() {
                           onClick={handleNext}
                           className="w-full h-11 bg-foreground text-background hover:bg-foreground/90 transition-all uppercase tracking-widest text-xs"
                         >
-                          Review Order
+                          Continue to Review
                         </button>
                       </div>
                     </motion.div>
                   )}
 
-                  {/* Step 3: Review */}
-                  {currentStep === 2 && (
+                  {/* Step 2: Review */}
+                  {currentStep === 1 && (
                     <motion.div
                       key="review"
                       initial={{ opacity: 0, x: 20 }}
@@ -1348,7 +1323,7 @@ export function CheckoutPage() {
                         <div className="border border-foreground/10 p-3">
                           <div className="flex items-center justify-between mb-2">
                             <p className="text-xs uppercase tracking-wider text-foreground/60">Payment Method</p>
-                            <button onClick={() => setCurrentStep(1)} className="text-xs underline text-foreground/60 hover:text-foreground">Edit</button>
+                            <button onClick={() => setCurrentStep(0)} className="text-xs underline text-foreground/60 hover:text-foreground">Edit</button>
                           </div>
                           <div className="text-sm">
                             {paymentMethod === 'card' && <p>Credit/Debit Card ending in {paymentInfo.cardNumber.slice(-4)}</p>}

@@ -176,7 +176,7 @@ export function FeaturedCollectionPage() {
       </div>
 
       {/* Hero Banner */}
-      <div className="border-b border-foreground/5 bg-gradient-to-b from-[#B4770E]/5 to-transparent">
+      <div className="border-b border-foreground/5 bg-gradient-to-b from-primary/5 to-transparent">
         <div className="w-full px-4 md:px-6 lg:px-12 xl:px-16 py-8 md:py-12 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -184,8 +184,8 @@ export function FeaturedCollectionPage() {
             transition={{ duration: 0.6 }}
           >
             <div className="flex items-center justify-center gap-3 mb-3">
-              <Star size={20} className="text-[#B4770E] fill-[#B4770E]" />
-              <span className="text-xs uppercase tracking-[0.3em] text-[#B4770E]">Featured</span>
+              <Star size={20} className="text-primary fill-primary" />
+              <span className="text-xs uppercase tracking-[0.3em] text-primary">Featured</span>
             </div>
             <h1 className="text-3xl md:text-4xl uppercase tracking-[0.2em] mb-4">
               Curated Collection
@@ -255,7 +255,7 @@ export function FeaturedCollectionPage() {
                 <SlidersHorizontal size={16} />
                 Filters
                 {hasActiveFilters && (
-                  <span className="w-2 h-2 rounded-full bg-[#B4770E]" />
+                  <span className="w-2 h-2 rounded-full bg-primary" />
                 )}
               </button>
 

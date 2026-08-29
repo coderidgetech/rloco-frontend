@@ -30,10 +30,6 @@ export function CategoryGrid() {
 
   return (
     <div className="w-full bg-white py-6">
-      <div className="px-4 mb-4">
-        <h2 className="text-xl font-medium tracking-wide">Shop by Category</h2>
-      </div>
-
       <div className="grid grid-cols-2 gap-3 px-4">
         {categories.map((category, index) => (
           <motion.button

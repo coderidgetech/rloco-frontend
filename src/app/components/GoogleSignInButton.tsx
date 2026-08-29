@@ -106,18 +106,25 @@ export function GoogleSignInButton({
     gsiHandlers.onError = onError ?? null;
     ensureGsiInitialized(clientId);
 
-    if (!customContent) {
-      window.google.accounts.id.renderButton(containerRef.current, {
-        theme,
-        size,
-        width: containerRef.current.offsetWidth || 400,
-        text: label === 'signup' ? 'signup_with' : 'continue_with',
-        shape,
-      });
-    }
+    // Always render Google's real button — it's the only reliably clickable
+    // entry point into the account chooser popup. When `customContent` is
+    // set, this real button is rendered invisibly and overlaid exactly on
+    // top of our custom-styled visual (see render below), so the user's
+    // click still lands on Google's actual iframe button underneath.
+    // (`google.accounts.id.prompt()` — One Tap — was used here previously,
+    // but it silently shows nothing whenever the browser has no active
+    // Google session, One Tap was dismissed before, or third-party cookies
+    // are restricted, which reads to users as "the button doesn't work.")
+    window.google.accounts.id.renderButton(containerRef.current, {
+      theme,
+      size,
+      width: containerRef.current.offsetWidth || 400,
+      text: label === 'signup' ? 'signup_with' : 'continue_with',
+      shape,
+    });
 
     setIsReady(true);
-  }, [clientId, onSuccess, onError, label, theme, size, shape, customContent]);
+  }, [clientId, onSuccess, onError, label, theme, size, shape]);
 
   useEffect(() => {
     if (!clientId) return;
@@ -174,31 +181,35 @@ export function GoogleSignInButton({
     );
   }
 
-  return (
-    <div className={`w-full ${className}`}>
-      {customContent ? (
-        <div ref={containerRef} className="w-full">
-          <button
-            type="button"
-            onClick={() => {
-              if (!window.google || !isReady) {
-                onError?.('Google sign-in is still loading. Please try again.');
-                return;
-              }
-              window.google.accounts.id.prompt();
-            }}
-            className="w-full text-left"
-          >
-            {customContent}
-          </button>
-        </div>
-      ) : (
+  if (customContent) {
+    return (
+      <div className={`relative w-full ${className}`} style={{ minHeight: '44px' }}>
+        {/* Our custom-styled visual — purely decorative, clicks pass through it */}
+        <div className="pointer-events-none w-full">{customContent}</div>
+        {/* Google's real button, rendered invisibly and stretched to cover the
+            same area, so the click a user sees landing on our design actually
+            lands on Google's own clickable iframe underneath. */}
         <div
           ref={containerRef}
-          className="w-full overflow-hidden"
-          style={{ minHeight: '44px' }}
+          className="absolute inset-0 overflow-hidden opacity-0"
+          aria-label="Continue with Google"
         />
-      )}
+        {!isReady && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/60 text-xs text-foreground/50">
+            Loading…
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`w-full ${className}`}>
+      <div
+        ref={containerRef}
+        className="w-full overflow-hidden"
+        style={{ minHeight: '44px' }}
+      />
     </div>
   );
 }

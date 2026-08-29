@@ -544,9 +544,59 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
               {/* Content */}
               <div className="flex-1 overflow-y-auto bg-white dark:bg-background" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
                 <div className="page-section py-8">
+                  {/* Mobile: compact horizontal tab strip instead of the vertical sidebar below */}
+                  <div className="lg:hidden -mx-4 px-4 mb-6 flex gap-2 overflow-x-auto scrollbar-hide">
+                    {tabs.map((tab) => {
+                      const Icon = tab.icon;
+                      const count =
+                        tab.id === 'orders'
+                          ? orders.length
+                          : tab.id === 'wishlist'
+                            ? wishlistItems.length
+                            : tab.id === 'addresses'
+                              ? addresses.length
+                              : null;
+                      return (
+                        <button
+                          key={tab.id}
+                          type="button"
+                          onClick={() => navigate(accountPath(tab.id as AccountSection))}
+                          className={`flex items-center gap-1.5 shrink-0 px-3.5 py-2 rounded-full text-sm whitespace-nowrap transition-colors ${
+                            activeTab === tab.id
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted text-foreground/70'
+                          }`}
+                        >
+                          <Icon size={15} />
+                          {tab.label}
+                          {count !== null && count > 0 && (
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                              activeTab === tab.id ? 'bg-primary-foreground/20' : 'bg-foreground/10'
+                            }`}>
+                              {count}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await logout();
+                        toast.success('Logged out successfully');
+                        onClose();
+                        if (onLogout) onLogout();
+                      }}
+                      className="flex items-center gap-1.5 shrink-0 px-3.5 py-2 rounded-full text-sm whitespace-nowrap bg-muted text-red-600"
+                    >
+                      <LogOut size={15} />
+                      Log Out
+                    </button>
+                  </div>
+
                   <div className="grid lg:grid-cols-4 gap-8">
-                    {/* Sidebar Navigation */}
-                    <div className="lg:col-span-1">
+                    {/* Sidebar Navigation (desktop/tablet only — mobile uses the tab strip above) */}
+                    <div className="hidden lg:block lg:col-span-1">
                       <div className="bg-muted/30 rounded-xl p-4 space-y-2 sticky top-8">
                         {tabs.map((tab) => {
                           const Icon = tab.icon;
@@ -617,16 +667,17 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                             exit={{ opacity: 0, y: -20 }}
                             className="space-y-6"
                           >
-                            <div className="flex items-center justify-between mb-6">
-                              <h2 className="text-2xl">Personal Information</h2>
+                            <div className="flex items-center justify-between gap-3 mb-6">
+                              <h2 className="text-xl md:text-2xl whitespace-nowrap">Personal Information</h2>
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={handleSaveProfile}
                                 disabled={profileSaving}
-                                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg disabled:opacity-60"
+                                className="flex items-center gap-1.5 md:gap-2 shrink-0 whitespace-nowrap px-3 md:px-4 py-2 text-sm md:text-base bg-primary text-primary-foreground rounded-lg disabled:opacity-60"
                               >
-                                <Edit2 size={18} />
+                                <Edit2 size={16} className="md:hidden" />
+                                <Edit2 size={18} className="hidden md:block" />
                                 {profileSaving ? 'Saving...' : 'Save Profile'}
                               </motion.button>
                             </div>
@@ -870,8 +921,8 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                             exit={{ opacity: 0, y: -20 }}
                             className="space-y-6"
                           >
-                            <div className="flex items-center justify-between mb-6">
-                              <h2 className="text-2xl">Saved Addresses</h2>
+                            <div className="flex items-center justify-between gap-3 mb-6">
+                              <h2 className="text-xl md:text-2xl whitespace-nowrap">Saved Addresses</h2>
                               <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
@@ -880,9 +931,10 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                   setAddressModalMode('add');
                                   setShowAddressModal(true);
                                 }}
-                                className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg"
+                                className="flex items-center gap-1.5 md:gap-2 shrink-0 whitespace-nowrap px-3 md:px-4 py-2 text-sm md:text-base bg-primary text-primary-foreground rounded-lg"
                               >
-                                <Plus size={18} />
+                                <Plus size={16} className="md:hidden" />
+                                <Plus size={18} className="hidden md:block" />
                                 Add Address
                               </motion.button>
                             </div>

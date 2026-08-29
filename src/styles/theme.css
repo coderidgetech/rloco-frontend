@@ -27,51 +27,51 @@ html {
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   
   /* 60:30:10 Color System */
-  /* 60% - Dominant: White/Light backgrounds */
+  /* 60% - Dominant: white ground with cool, ceramic-tinted neutrals */
   --background: #FFFFFF;
   --card: #FFFFFF;
   --popover: #FFFFFF;
-  --muted: #F5F5F5;
-  --input-background: #FAFAFA;
+  --muted: #F1F4F6;
+  --input-background: #F7F9FA;
   --sidebar: #FFFFFF;
-  --sidebar-accent: #F8F8F8;
-  
-  /* 30% - Secondary: Black/Dark text and elements */
-  --foreground: #1A1A1A;
-  --card-foreground: #1A1A1A;
-  --popover-foreground: #1A1A1A;
-  --muted-foreground: #666666;
-  --sidebar-foreground: #1A1A1A;
-  --sidebar-accent-foreground: #1A1A1A;
-  
-  /* 10% - Accent: Brown/Gold (#B4770E) for highlights and CTAs */
-  --accent: #B4770E;
+  --sidebar-accent: #F1F4F6;
+
+  /* 30% - Ink (cool near-black) */
+  --foreground: #16181D;
+  --card-foreground: #16181D;
+  --popover-foreground: #16181D;
+  --muted-foreground: #666C74;
+  --sidebar-foreground: #16181D;
+  --sidebar-accent-foreground: #16181D;
+
+  /* 10% - Accent: Ceramic teal (#3E6C7A) for highlights and CTAs */
+  --accent: #3E6C7A;
   --accent-foreground: #FFFFFF;
-  --ring: #B4770E;
-  
-  /* Primary: Logo colors (Brown/Gold - Brand Identity) */
-  --primary: #B4770E;
+  --ring: #3E6C7A;
+
+  /* Primary: brand accent (ceramic teal) */
+  --primary: #3E6C7A;
   --primary-foreground: #FFFFFF;
-  --secondary: #F1B041;
-  --secondary-foreground: #1A1A1A;
-  --sidebar-primary: #B4770E;
+  --secondary: #DDE9EC;
+  --secondary-foreground: #16181D;
+  --sidebar-primary: #3E6C7A;
   --sidebar-primary-foreground: #FFFFFF;
-  
+
   /* Supporting colors */
-  --destructive: #d4183d;
+  --destructive: #D0453B;
   --destructive-foreground: #ffffff;
-  --border: rgba(26, 26, 26, 0.1);
+  --border: rgba(22, 24, 29, 0.1);
   --input: transparent;
-  --switch-background: #E0E0E0;
-  --sidebar-border: rgba(26, 26, 26, 0.1);
-  --sidebar-ring: #B4770E;
-  
-  /* Chart colors with brand theme */
-  --chart-1: #B4770E;
-  --chart-2: #F1B041;
-  --chart-3: #724B09;
-  --chart-4: #8B5A0B;
-  --chart-5: #666666;
+  --switch-background: #E0E4E7;
+  --sidebar-border: rgba(22, 24, 29, 0.1);
+  --sidebar-ring: #3E6C7A;
+
+  /* Chart colors (ceramic family) */
+  --chart-1: #3E6C7A;
+  --chart-2: #7FA3AE;
+  --chart-3: #274852;
+  --chart-4: #57808C;
+  --chart-5: #666C74;
   
   --radius: 0.625rem;
 }
@@ -84,19 +84,19 @@ html {
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.145 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: #6BA3B2;
+  --primary-foreground: #0E1418;
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: #6BA3B2;
+  --accent-foreground: #0E1418;
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
-  --ring: oklch(0.439 0 0);
+  --ring: #6BA3B2;
   --font-weight-medium: 500;
   --font-weight-normal: 400;
   --chart-1: oklch(0.488 0.243 264.376);
@@ -106,12 +106,12 @@ html {
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary: #6BA3B2;
+  --sidebar-primary-foreground: #0E1418;
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
-  --sidebar-ring: oklch(0.439 0 0);
+  --sidebar-ring: #6BA3B2;
 }
 
 @theme inline {

@@ -42,10 +42,10 @@ export function BottomNavigation() {
   return (
     <motion.nav
       initial={false}
-      className="fixed left-4 right-4 z-50 md:hidden rounded-full bg-white/70 backdrop-blur-2xl border border-white/60"
+      className="fixed left-4 right-4 z-50 md:hidden rounded-full bg-white/35 backdrop-blur-xl border border-white/25"
       style={{
         bottom: 'calc(0.75rem + env(safe-area-inset-bottom))',
-        boxShadow: '0 10px 30px rgba(0, 0, 0, 0.18)',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
       }}
     >
       <div className="flex items-center justify-around h-16 px-2">

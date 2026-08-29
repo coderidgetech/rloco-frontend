@@ -72,7 +72,7 @@ export function HelpGuideButton() {
       {/* Floating Help Button */}
       <motion.button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-8 right-8 z-[100] bg-[#B4770E] text-white rounded-full p-4 shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300 group"
+        className="fixed bottom-8 right-8 z-[100] bg-primary text-white rounded-full p-4 shadow-2xl hover:shadow-3xl hover:scale-110 transition-all duration-300 group"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         initial={{ opacity: 0, scale: 0 }}
@@ -110,7 +110,7 @@ export function HelpGuideButton() {
               className="fixed right-0 top-0 h-full w-full max-w-5xl bg-white shadow-2xl z-[120] overflow-hidden"
             >
               {/* Header */}
-              <div className="bg-gradient-to-r from-black to-[#B4770E] text-white p-6 flex items-center justify-between">
+              <div className="bg-gradient-to-r from-black to-primary text-white p-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="bg-white/20 rounded-full p-3">
                     <BookOpen className="w-6 h-6" />
@@ -138,7 +138,7 @@ export function HelpGuideButton() {
                         onClick={() => setActiveTab(guide.id)}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                           activeTab === guide.id
-                            ? 'bg-[#B4770E] text-white shadow-lg'
+                            ? 'bg-primary text-white shadow-lg'
                             : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                         }`}
                       >
@@ -174,10 +174,10 @@ export function HelpGuideButton() {
                   <div className="mt-4 bg-white border border-gray-200 rounded-lg p-4">
                     <h3 className="text-sm font-medium text-gray-900 mb-3 tracking-wide">QUICK LINKS</h3>
                     <div className="space-y-2 text-xs">
-                      <a href="/admin/dashboard" className="block text-[#B4770E] hover:underline">📊 Dashboard</a>
-                      <a href="/admin/products" className="block text-[#B4770E] hover:underline">📦 Products</a>
-                      <a href="/admin/orders" className="block text-[#B4770E] hover:underline">🛒 Orders</a>
-                      <a href="/admin/configuration" className="block text-[#B4770E] hover:underline">⚙️ Configuration</a>
+                      <a href="/admin/dashboard" className="block text-primary hover:underline">📊 Dashboard</a>
+                      <a href="/admin/products" className="block text-primary hover:underline">📦 Products</a>
+                      <a href="/admin/orders" className="block text-primary hover:underline">🛒 Orders</a>
+                      <a href="/admin/configuration" className="block text-primary hover:underline">⚙️ Configuration</a>
                     </div>
                   </div>
                 </div>
@@ -238,25 +238,25 @@ function QuickStartGuide() {
       </AlertBox>
 
       {/* Admin Quick Start */}
-      <div className="bg-gradient-to-r from-[#B4770E]/10 to-transparent border-l-4 border-[#B4770E] p-6 rounded-r-lg mb-8">
+      <div className="bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary p-6 rounded-r-lg mb-8">
         <h2 className="text-2xl font-light tracking-wide text-gray-900 mb-4 flex items-center gap-2">
           <Shield className="w-6 h-6" /> Admin Quick Start
         </h2>
         
         <div className="space-y-4">
           <div className="flex gap-4">
-            <div className="bg-[#B4770E] text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">1</div>
+            <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">1</div>
             <div className="flex-1">
               <h3 className="font-medium text-gray-900 mb-2">Login & Access Dashboard</h3>
               <p className="text-sm text-gray-600 mb-2">Use your admin credentials to access the portal</p>
               <div className="bg-white border border-gray-200 rounded p-3 text-sm">
-                <div className="font-mono text-[#B4770E]">admin@rloko.com / admin123</div>
+                <div className="font-mono text-primary">admin@rloko.com / admin123</div>
               </div>
             </div>
           </div>
 
           <div className="flex gap-4">
-            <div className="bg-[#B4770E] text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">2</div>
+            <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">2</div>
             <div className="flex-1">
               <h3 className="font-medium text-gray-900 mb-2">Configure Site Settings</h3>
               <p className="text-sm text-gray-600">Set up logo, currency, shipping options in Configuration</p>
@@ -264,7 +264,7 @@ function QuickStartGuide() {
           </div>
 
           <div className="flex gap-4">
-            <div className="bg-[#B4770E] text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">3</div>
+            <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">3</div>
             <div className="flex-1">
               <h3 className="font-medium text-gray-900 mb-2">Create Categories</h3>
               <p className="text-sm text-gray-600">Organize products by categories (Women, Men, Jewelry, Beauty)</p>
@@ -272,7 +272,7 @@ function QuickStartGuide() {
           </div>
 
           <div className="flex gap-4">
-            <div className="bg-[#B4770E] text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">4</div>
+            <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">4</div>
             <div className="flex-1">
               <h3 className="font-medium text-gray-900 mb-2">Add Products</h3>
               <p className="text-sm text-gray-600">Upload products with images, variants, and pricing</p>
@@ -280,7 +280,7 @@ function QuickStartGuide() {
           </div>
 
           <div className="flex gap-4">
-            <div className="bg-[#B4770E] text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">5</div>
+            <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">5</div>
             <div className="flex-1">
               <h3 className="font-medium text-gray-900 mb-2">Start Managing Orders</h3>
               <p className="text-sm text-gray-600">Process orders, track shipments, manage customers</p>
@@ -347,7 +347,7 @@ function QuickStartGuide() {
       <div className="grid grid-cols-2 gap-4">
         <div className="border border-gray-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Package className="w-5 h-5 text-[#B4770E]" />
+            <Package className="w-5 h-5 text-primary" />
             <h3 className="font-medium text-gray-900">Product Management</h3>
           </div>
           <p className="text-sm text-gray-600">Create, edit, and manage product catalog with variants and inventory</p>
@@ -355,7 +355,7 @@ function QuickStartGuide() {
 
         <div className="border border-gray-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <ShoppingCart className="w-5 h-5 text-[#B4770E]" />
+            <ShoppingCart className="w-5 h-5 text-primary" />
             <h3 className="font-medium text-gray-900">Order Processing</h3>
           </div>
           <p className="text-sm text-gray-600">Track and fulfill customer orders with status updates and shipping</p>
@@ -363,7 +363,7 @@ function QuickStartGuide() {
 
         <div className="border border-gray-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <BarChart3 className="w-5 h-5 text-[#B4770E]" />
+            <BarChart3 className="w-5 h-5 text-primary" />
             <h3 className="font-medium text-gray-900">Analytics Dashboard</h3>
           </div>
           <p className="text-sm text-gray-600">Monitor sales, revenue, and performance with detailed charts</p>
@@ -371,7 +371,7 @@ function QuickStartGuide() {
 
         <div className="border border-gray-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Users className="w-5 h-5 text-[#B4770E]" />
+            <Users className="w-5 h-5 text-primary" />
             <h3 className="font-medium text-gray-900">Customer Management</h3>
           </div>
           <p className="text-sm text-gray-600">View customer profiles, order history, and engagement (Admin only)</p>
@@ -379,7 +379,7 @@ function QuickStartGuide() {
 
         <div className="border border-gray-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Video className="w-5 h-5 text-[#B4770E]" />
+            <Video className="w-5 h-5 text-primary" />
             <h3 className="font-medium text-gray-900">Video Management</h3>
           </div>
           <p className="text-sm text-gray-600">Upload short style videos to showcase products on the homepage</p>
@@ -387,7 +387,7 @@ function QuickStartGuide() {
 
         <div className="border border-gray-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <MessageSquare className="w-5 h-5 text-[#B4770E]" />
+            <MessageSquare className="w-5 h-5 text-primary" />
             <h3 className="font-medium text-gray-900">Review Management</h3>
           </div>
           <p className="text-sm text-gray-600">Moderate and respond to customer product reviews</p>
@@ -395,7 +395,7 @@ function QuickStartGuide() {
 
         <div className="border border-gray-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Award className="w-5 h-5 text-[#B4770E]" />
+            <Award className="w-5 h-5 text-primary" />
             <h3 className="font-medium text-gray-900">Badge System</h3>
           </div>
           <p className="text-sm text-gray-600">Create and apply product badges (NEW, SALE, TRENDING, etc.)</p>
@@ -403,7 +403,7 @@ function QuickStartGuide() {
 
         <div className="border border-gray-200 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <Percent className="w-5 h-5 text-[#B4770E]" />
+            <Percent className="w-5 h-5 text-primary" />
             <h3 className="font-medium text-gray-900">Promotions</h3>
           </div>
           <p className="text-sm text-gray-600">Create sales, discounts, and promotional campaigns (Admin only)</p>
@@ -438,7 +438,7 @@ function OLD_AdminGuide_REMOVE_ME() {
       {/* Dashboard */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
         <h2 className="text-2xl font-light tracking-wide text-gray-900 mb-4 flex items-center gap-2">
-          <BarChart3 className="w-6 h-6 text-[#B4770E]" /> Dashboard
+          <BarChart3 className="w-6 h-6 text-primary" /> Dashboard
         </h2>
         
         <p className="text-gray-700 mb-4">Your central command center showing key metrics and insights.</p>
@@ -481,7 +481,7 @@ function OLD_AdminGuide_REMOVE_ME() {
       {/* Products */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
         <h2 className="text-2xl font-light tracking-wide text-gray-900 mb-4 flex items-center gap-2">
-          <Package className="w-6 h-6 text-[#B4770E]" /> Product Management
+          <Package className="w-6 h-6 text-primary" /> Product Management
         </h2>
 
         <p className="text-gray-700 mb-4">Complete product catalog management with 6-step creation process.</p>
@@ -491,7 +491,7 @@ function OLD_AdminGuide_REMOVE_ME() {
         </AlertBox>
 
         <div className="space-y-4">
-          <div className="border-l-4 border-[#B4770E] pl-4">
+          <div className="border-l-4 border-primary pl-4">
             <h3 className="font-medium text-gray-900 mb-2">Step 1: Basic Information</h3>
             <ul className="text-sm text-gray-700 space-y-1">
               <li>• Product Name (required, 3-100 characters)</li>
@@ -573,7 +573,7 @@ function OLD_AdminGuide_REMOVE_ME() {
       {/* Orders */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
         <h2 className="text-2xl font-light tracking-wide text-gray-900 mb-4 flex items-center gap-2">
-          <ShoppingCart className="w-6 h-6 text-[#B4770E]" /> Order Management
+          <ShoppingCart className="w-6 h-6 text-primary" /> Order Management
         </h2>
 
         <p className="text-gray-700 mb-4">Process and track all customer orders across all vendors.</p>
@@ -642,13 +642,13 @@ function OLD_VendorGuide_REMOVE_ME() {
       {/* Subscription Plans */}
       <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6">
         <h2 className="text-2xl font-light tracking-wide text-gray-900 mb-4 flex items-center gap-2">
-          <DollarSign className="w-6 h-6 text-[#B4770E]" /> Subscription Plans
+          <DollarSign className="w-6 h-6 text-primary" /> Subscription Plans
         </h2>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="border-2 border-gray-300 rounded-lg p-4">
             <div className="text-lg font-medium text-gray-900 mb-1">Starter</div>
-            <div className="text-2xl font-bold text-[#B4770E] mb-2">$29<span className="text-sm font-normal text-gray-600">/month</span></div>
+            <div className="text-2xl font-bold text-primary mb-2">$29<span className="text-sm font-normal text-gray-600">/month</span></div>
             <ul className="text-sm text-gray-700 space-y-1">
               <li>✓ 50 products max</li>
               <li>✓ 20% commission</li>
@@ -668,9 +668,9 @@ function OLD_VendorGuide_REMOVE_ME() {
             </ul>
           </div>
 
-          <div className="border-2 border-[#B4770E] rounded-lg p-4 bg-[#B4770E]/5">
+          <div className="border-2 border-primary rounded-lg p-4 bg-primary/5">
             <div className="text-lg font-medium text-gray-900 mb-1">Professional</div>
-            <div className="text-2xl font-bold text-[#B4770E] mb-2">$149<span className="text-sm font-normal text-gray-600">/month</span></div>
+            <div className="text-2xl font-bold text-primary mb-2">$149<span className="text-sm font-normal text-gray-600">/month</span></div>
             <ul className="text-sm text-gray-700 space-y-1">
               <li>✓ 1,000 products max</li>
               <li>✓ 12% commission</li>
@@ -681,7 +681,7 @@ function OLD_VendorGuide_REMOVE_ME() {
 
           <div className="border-2 border-black rounded-lg p-4 bg-gray-900 text-white">
             <div className="text-lg font-medium mb-1">Enterprise</div>
-            <div className="text-2xl font-bold text-[#B4770E] mb-2">Custom</div>
+            <div className="text-2xl font-bold text-primary mb-2">Custom</div>
             <ul className="text-sm space-y-1">
               <li>✓ Unlimited products</li>
               <li>✓ 8% commission</li>
@@ -702,7 +702,7 @@ function OLD_VendorGuide_REMOVE_ME() {
 
         <div className="space-y-4">
           <div className="flex gap-4">
-            <div className="bg-[#B4770E] text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">1</div>
+            <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">1</div>
             <div className="flex-1">
               <h3 className="font-medium text-gray-900 mb-1">Create Product</h3>
               <p className="text-sm text-gray-600">Upload product with images, pricing, and variants</p>
@@ -742,7 +742,7 @@ function OLD_VendorGuide_REMOVE_ME() {
           </div>
 
           <div className="flex gap-4">
-            <div className="bg-[#B4770E] text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">6</div>
+            <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">6</div>
             <div className="flex-1">
               <h3 className="font-medium text-gray-900 mb-1">Receive Payout</h3>
               <p className="text-sm text-gray-600">Monthly commission payout on 1st of month (min $50)</p>
@@ -942,9 +942,9 @@ function PermissionsGuide() {
 
       {/* Page Access Summary */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-gradient-to-br from-[#B4770E]/10 to-white border-2 border-[#B4770E] rounded-lg p-5">
+        <div className="bg-gradient-to-br from-primary/10 to-white border-2 border-primary rounded-lg p-5">
           <h3 className="text-lg font-medium text-gray-900 mb-3 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-[#B4770E]" /> Admin Pages (16)
+            <Shield className="w-5 h-5 text-primary" /> Admin Pages (16)
           </h3>
           <ul className="text-sm text-gray-700 space-y-1">
             <li>✓ Dashboard</li>

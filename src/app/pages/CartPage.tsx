@@ -31,6 +31,7 @@ import { useNavigate } from 'react-router-dom';
 import { Footer } from '../components/Footer';
 import { promotionService } from '../services/promotionService';
 import { productService } from '../services/productService';
+import { addressService } from '../services/addressService';
 import { Promotion, Product } from '../types/api';
 import { PH } from '../lib/formPlaceholders';
 import {
@@ -42,12 +43,13 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import { Button } from '../components/ui/button';
-import { CheckoutStepper } from '../components/CheckoutStepper';
 import { cn } from '../components/ui/utils';
 
-/** Matches RLOKO cart design (gold accent) */
-const GOLD = '#B8860B';
-const GOLD_HOVER = '#9a7310';
+/** Follows the site's live (admin-configurable) primary color instead of a
+ * hardcoded hex, so Cart/Checkout matches the same brand color as the rest
+ * of the app rather than a frozen old default. */
+const GOLD = 'var(--primary)';
+const GOLD_HOVER = 'var(--primary-dark)';
 /** Keep in sync with CartContext GIFT_PACKING_PER_ITEM */
 const GIFT_PACKING_PER_ITEM_INR = 50;
 
@@ -94,7 +96,7 @@ export function CartPage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { isAuthenticated } = useUser();
-  const { selectedAddress, donationAmount, setDonationAmount } = useOrder();
+  const { selectedAddress, setSelectedAddress, donationAmount, setDonationAmount } = useOrder();
   const { addToWishlist } = useWishlist();
   const { items, removeFromCart, updateQuantity, updateGiftOptions, addToCart } = useCart();
   const { formatPrice, formatAmount, convertPrice, currency, market } = useCurrency();
@@ -128,6 +130,37 @@ export function CartPage() {
   useEffect(() => {
     if (donationAmount > 0) setDonatePledge(true);
   }, []);
+
+  // Auto-pick the account's default saved address so "Add a delivery
+  // address" only shows up when there truly isn't one (no addresses, or
+  // none marked default) — otherwise the default is used automatically.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let cancelled = false;
+    addressService
+      .list()
+      .then((addrs) => {
+        if (cancelled) return;
+        const def = (addrs ?? []).find((a) => a.is_default);
+        if (def) {
+          setSelectedAddress({
+            id: def.id,
+            name: def.name,
+            type: def.type,
+            addressLine: def.address_line,
+            city: def.city,
+            state: def.state,
+            pincode: def.pincode,
+            mobile: def.mobile,
+            country: def.country,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, setSelectedAddress]);
 
   useEffect(() => {
     const ids = [...new Set(items.map((i) => String(i.id)).filter(isValidProductId))];
@@ -348,7 +381,7 @@ export function CartPage() {
       return;
     }
     if (selectedItems.size === 0) {
-      toast.error('Select at least one item to place order');
+      toast.error('Select at least one item to checkout');
       return;
     }
     if (!isAuthenticated) {
@@ -474,7 +507,6 @@ export function CartPage() {
               <h1 className="text-lg md:text-xl font-medium truncate">Your Bag</h1>
             </div>
           </div>
-          <CheckoutStepper activeStep="bag" />
         </div>
       </div>
 
@@ -866,7 +898,7 @@ export function CartPage() {
                               key={promo.id}
                               type="button"
                               onClick={() => setCouponCode(promo.code)}
-                              className="px-3 py-1.5 text-xs rounded-md border border-neutral-200 bg-neutral-50 hover:border-[#B8860B]/50 transition-colors dark:border-border dark:bg-background"
+                              className="px-3 py-1.5 text-xs rounded-md border border-neutral-200 bg-neutral-50 hover:border-primary/50 transition-colors dark:border-border dark:bg-background"
                             >
                               {promo.code}
                             </button>
@@ -984,7 +1016,7 @@ export function CartPage() {
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                       placeholder="Enter coupon code"
-                      className="w-full pl-10 pr-3 py-2.5 text-sm bg-white border border-neutral-200 rounded-lg outline-none focus:border-[#B8860B] uppercase dark:bg-background dark:border-border"
+                      className="w-full pl-10 pr-3 py-2.5 text-sm bg-white border border-neutral-200 rounded-lg outline-none focus:border-primary uppercase dark:bg-background dark:border-border"
                       onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
                     />
                   </div>
@@ -1044,7 +1076,7 @@ export function CartPage() {
                         'px-3 py-1.5 text-xs font-semibold rounded-md border transition-colors disabled:opacity-40',
                         donationAmount === amt && donatePledge
                           ? 'text-white border-transparent'
-                          : 'border-neutral-200 bg-neutral-50 hover:border-[#B8860B]/40 dark:border-border dark:bg-background'
+                          : 'border-neutral-200 bg-neutral-50 hover:border-primary/40 dark:border-border dark:bg-background'
                       )}
                       style={
                         donationAmount === amt && donatePledge
@@ -1120,7 +1152,7 @@ export function CartPage() {
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = GOLD)}
                 onClick={handleCheckout}
               >
-                PLACE ORDER
+                PROCEED TO PAY
                 <ArrowRight size={18} />
               </Button>
               <Button type="button" variant="outline" className="w-full" onClick={() => navigate('/')}>
@@ -1160,7 +1192,7 @@ export function CartPage() {
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = GOLD)}
             onClick={handleCheckout}
           >
-            PLACE ORDER
+            PROCEED TO PAY
             <ArrowRight size={18} />
           </Button>
         </div>

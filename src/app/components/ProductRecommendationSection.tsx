@@ -93,7 +93,7 @@ export function ProductRecommendationSection({
                   {item.badge && (
                     <div
                       className={`absolute top-2 left-2 px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase z-10 ${
-                        item.badge === 'Best Seller' ? 'bg-[#B4770E] text-white' :
+                        item.badge === 'Best Seller' ? 'bg-primary text-white' :
                         item.badge === 'Trending' ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white' :
                         item.badge === 'Most Ordered' ? 'bg-blue-600 text-white' :
                         item.badge === 'New' ? 'bg-green-600 text-white' :
@@ -165,7 +165,7 @@ export function ProductRecommendationSection({
             <p className="text-background/60 tracking-wide">{subtitle}</p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-8 px-4 md:px-6">
+          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-5 px-4 md:px-6">
             {(products || []).map((item, index) => (
               <motion.div
                 key={`${item.id}-${index}`}
@@ -176,7 +176,7 @@ export function ProductRecommendationSection({
                 onClick={() => navigate(`/product/${item.id}`)}
                 className="cursor-pointer group"
               >
-                <div className="relative aspect-[3/4] overflow-hidden mb-4 border-2 border-background/10 group-hover:border-background/40 transition-colors">
+                <div className="relative aspect-[3/4] overflow-hidden mb-2 border-2 border-background/10 group-hover:border-background/40 transition-colors">
                   <img
                     src={item.image}
                     alt={item.name}
@@ -185,11 +185,11 @@ export function ProductRecommendationSection({
                   />
                 </div>
                 <div className="px-1">
-                  <p className="text-sm tracking-wide mb-2 line-clamp-1 text-background">{item.name}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-background">{formatPrice(item.price, item.priceINR)}</span>
+                  <p className="text-xs tracking-wide mb-1 line-clamp-1 text-background">{item.name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-background">{formatPrice(item.price, item.priceINR)}</span>
                     {item.originalPrice && (
-                      <span className="text-xs text-background/50 line-through">{formatPrice(item.originalPrice, item.originalPriceINR)}</span>
+                      <span className="text-[10px] text-background/50 line-through">{formatPrice(item.originalPrice, item.originalPriceINR)}</span>
                     )}
                   </div>
                 </div>

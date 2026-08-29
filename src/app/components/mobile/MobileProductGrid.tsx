@@ -8,6 +8,12 @@ interface MobileProductGridProps {
   maxItems?: number;
   /** Route the "Show more" link navigates to. */
   seeAllLink?: string;
+  /** Override the default title classes (e.g. for a more compact heading). */
+  titleClassName?: string;
+  /** Override the default spacing below the title row. */
+  headerClassName?: string;
+  /** Override the default outer section padding. */
+  className?: string;
 }
 
 export function MobileProductGrid({
@@ -15,6 +21,9 @@ export function MobileProductGrid({
   title,
   maxItems = 4,
   seeAllLink,
+  titleClassName,
+  headerClassName,
+  className,
 }: MobileProductGridProps) {
   const navigate = useNavigate();
 
@@ -22,10 +31,10 @@ export function MobileProductGrid({
   const hasMore = seeAllLink != null && products.length > maxItems;
 
   return (
-    <div className="w-full bg-white py-6">
+    <div className={`w-full bg-white ${className || 'py-6'}`}>
       {title && (
-        <div className="px-4 mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-medium tracking-wide">{title}</h2>
+        <div className={`px-4 flex items-center justify-between ${headerClassName || 'mb-2.5'}`}>
+          <h2 className={titleClassName || 'text-base font-medium tracking-wide'}>{title}</h2>
           {hasMore && (
             <button
               onClick={() => navigate(seeAllLink!)}

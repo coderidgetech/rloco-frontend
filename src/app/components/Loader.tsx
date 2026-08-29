@@ -51,7 +51,7 @@ export function Loader({ onComplete }: { onComplete: () => void }) {
         
         <div className="w-64 h-0.5 bg-border mx-auto overflow-hidden rounded-full">
           <motion.div
-            className="h-full bg-gradient-to-r from-[#724B09] to-[#F1B041]"
+            className="h-full bg-gradient-to-r from-primary to-primary/50"
             initial={{ width: '0%' }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.1 }}

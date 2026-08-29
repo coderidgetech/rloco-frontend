@@ -14,7 +14,6 @@ const FALLBACK_PRODUCTS: Product[] = [
 
 const CLONES = 2;
 const GAP = 16;
-const AUTOPLAY_MS = 8000;
 
 export function MobileNewArrivals() {
   const navigate = useNavigate();
@@ -94,12 +93,6 @@ export function MobileNewArrivals() {
     return () => { cancelled = true; };
   }, []);
 
-  useEffect(() => {
-    if (n <= 1) return;
-    const t = setInterval(() => slideTo(posRef.current + 1), AUTOPLAY_MS);
-    return () => clearInterval(t);
-  }, [n, slideTo]);
-
   const realIndex = ((pos - clones) % n + n) % n;
   const cardHeight = Math.round(card * (4 / 3));
 
@@ -118,13 +111,6 @@ export function MobileNewArrivals() {
 
   return (
     <section className="w-full bg-background py-8 overflow-hidden">
-      <div className="flex justify-center mb-5">
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-foreground/70">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-          New Arrivals
-        </span>
-      </div>
-
       <div ref={trackRef} className="w-full select-none" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         {card > 0 && (
           <motion.div className="flex" style={{ x, gap: GAP }}>

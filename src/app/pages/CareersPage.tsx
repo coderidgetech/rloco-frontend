@@ -142,7 +142,7 @@ export function CareersPage() {
                   transition={{ delay: index * 0.1 }}
                   className="text-center"
                 >
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#B4770E]/10 text-[#B4770E] mb-6">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-6">
                     <value.icon size={28} />
                   </div>
                   <h3 className="text-lg font-medium mb-3">{value.title}</h3>
@@ -180,11 +180,11 @@ export function CareersPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
-                  className="border border-foreground/10 p-6 md:p-8 hover:border-[#B4770E]/30 transition-all group"
+                  className="border border-foreground/10 p-6 md:p-8 hover:border-primary/30 transition-all group"
                 >
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
                     <div>
-                      <h3 className="text-xl md:text-2xl font-medium mb-2 group-hover:text-[#B4770E] transition-colors">
+                      <h3 className="text-xl md:text-2xl font-medium mb-2 group-hover:text-primary transition-colors">
                         {position.title}
                       </h3>
                       <div className="flex flex-wrap items-center gap-4 text-sm text-foreground/60">
@@ -245,7 +245,7 @@ export function CareersPage() {
                   transition={{ delay: index * 0.05 }}
                   className="flex items-start gap-3 p-4 rounded-lg hover:bg-foreground/5 transition-colors"
                 >
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#B4770E] mt-2 flex-shrink-0" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
                   <span className="text-foreground/80">{benefit}</span>
                 </motion.div>
               ))}

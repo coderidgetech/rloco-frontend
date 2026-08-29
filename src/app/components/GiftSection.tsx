@@ -17,7 +17,7 @@ export function GiftSection() {
   const gs = config.homepage.giftSection;
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-background via-background to-muted/30 py-10 sm:py-12 md:py-14">
+    <section className="relative mx-3 overflow-hidden rounded-[2rem] bg-gradient-to-br from-background via-background to-muted/30 py-10 sm:mx-6 sm:py-12 sm:rounded-[2.5rem] md:py-14">
       <BackgroundDecor variant="default" showOrbs showDots />
 
       <motion.div

@@ -344,7 +344,7 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
                 }}
                 className={`shrink-0 rounded-full transition-all touch-manipulation ${
                   idx === currentIndex 
-                    ? 'h-2 w-6 sm:w-8 bg-[#B4770E]' 
+                    ? 'h-2 w-6 sm:w-8 bg-primary' 
                     : 'h-1.5 w-1.5 sm:h-2 sm:w-2 bg-border hover:bg-muted-foreground'
                 }`}
                 aria-label={`Go to video ${idx + 1}`}

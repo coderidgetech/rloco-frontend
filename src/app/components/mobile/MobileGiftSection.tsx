@@ -12,8 +12,8 @@ export function MobileGiftSection() {
 
   return (
     <section className="w-full bg-white py-6">
-      <div className="px-4 mb-4">
-        <h2 className="text-xl font-medium tracking-wide">{gs?.heading || 'Perfect Gifts'}</h2>
+      <div className="px-4 mb-2.5">
+        <h2 className="text-base font-medium tracking-wide">{gs?.heading || 'Perfect Gifts'}</h2>
       </div>
 
       <div className="grid grid-cols-2 gap-3 px-4">

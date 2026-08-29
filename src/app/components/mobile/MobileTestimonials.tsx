@@ -88,7 +88,7 @@ export function MobileTestimonials() {
       <div className="px-4">
         {/* Header */}
         <div className="text-center mb-4">
-          <h2 className="text-2xl font-medium mb-1.5">What Our Customers Say</h2>
+          <h2 className="text-base font-medium tracking-wide mb-1.5">What Our Customers Say</h2>
           <p className="text-sm text-foreground/60">
             Trusted by thousands of fashion lovers
           </p>

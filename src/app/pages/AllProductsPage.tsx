@@ -350,7 +350,7 @@ export function AllProductsPage() {
               ))}
               
               {selectedBadges.map(badge => (
-                <span key={badge} className="px-3 py-1 bg-[#B4770E] text-background text-xs flex items-center gap-2">
+                <span key={badge} className="px-3 py-1 bg-primary text-background text-xs flex items-center gap-2">
                   {badge}
                   <button onClick={() => toggleArrayFilter(selectedBadges, setSelectedBadges, badge)} className="hover:opacity-70">
                     <X size={12} />

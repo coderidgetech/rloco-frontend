@@ -11,7 +11,7 @@ interface MegaMenuProps {
   onCategoryClick?: (gender: 'women' | 'men', category?: string) => void;
 }
 
-const ACCENT = '#B4770E';
+const ACCENT = 'var(--primary)';
 
 export function MegaMenu({ isOpen, gender, onClose, onCategoryClick }: MegaMenuProps) {
   const navigate = useNavigate();
@@ -193,18 +193,18 @@ export function MegaMenu({ isOpen, gender, onClose, onCategoryClick }: MegaMenuP
                         </div>
                         <div
                           className="absolute bottom-0 left-0 right-0 h-1.5 translate-y-1.5 group-hover:translate-y-0 transition-transform duration-500"
-                          style={{ background: 'linear-gradient(90deg, #B4770E 0%, #D4A84E 50%, #B4770E 100%)' }}
+                          style={{ background: 'linear-gradient(90deg, var(--primary) 0%, var(--primary-light) 50%, var(--primary) 100%)' }}
                         />
                       </div>
                       <div className="space-y-1 px-0.5">
-                        <h3 className="text-[10px] xl:text-[11px] uppercase tracking-[0.15em] font-semibold text-black/70 group-hover:text-[#B4770E] transition-all duration-300 text-center leading-tight group-hover:tracking-[0.2em]">
+                        <h3 className="text-[10px] xl:text-[11px] uppercase tracking-[0.15em] font-semibold text-black/70 group-hover:text-primary transition-all duration-300 text-center leading-tight group-hover:tracking-[0.2em]">
                           {cat.name}
                         </h3>
                         <div className="flex justify-center">
                           <div
                             className="h-[2px] w-0 group-hover:w-8 transition-all duration-700"
                             style={{
-                              background: 'linear-gradient(90deg, transparent 0%, #B4770E 50%, transparent 100%)',
+                              background: 'linear-gradient(90deg, transparent 0%, var(--primary) 50%, transparent 100%)',
                             }}
                           />
                         </div>

@@ -229,8 +229,8 @@ export function AdminVideosPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white p-6 rounded-lg border border-border">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-[#B4770E]/10 flex items-center justify-center">
-                <Video className="text-[#B4770E]" size={24} />
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Video className="text-primary" size={24} />
               </div>
               <div>
                 <p className="text-2xl font-light">{videos.length}</p>
@@ -286,7 +286,7 @@ export function AdminVideosPage() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   {video.featured && (
-                    <div className="absolute top-3 right-3 px-3 py-1 bg-[#B4770E] text-white text-xs uppercase tracking-wider rounded-full">
+                    <div className="absolute top-3 right-3 px-3 py-1 bg-primary text-white text-xs uppercase tracking-wider rounded-full">
                       Featured
                     </div>
                   )}
@@ -404,7 +404,7 @@ export function AdminVideosPage() {
                       type="text"
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B4770E]"
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder={PH.videoTitle}
                     />
                   </div>
@@ -418,7 +418,7 @@ export function AdminVideosPage() {
                       type="url"
                       value={formData.videoUrl}
                       onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B4770E]"
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder={PH.videoUrl}
                     />
                     <p className="text-xs text-muted-foreground mt-1">
@@ -435,7 +435,7 @@ export function AdminVideosPage() {
                       type="url"
                       value={formData.thumbnailUrl}
                       onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B4770E]"
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                       placeholder={PH.thumbnailUrl}
                     />
                   </div>
@@ -448,7 +448,7 @@ export function AdminVideosPage() {
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#B4770E]"
+                      className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                     >
                       <option value="">Select category</option>
                       <option value="Street Style">Street Style</option>
@@ -468,7 +468,7 @@ export function AdminVideosPage() {
                       id="featured"
                       checked={formData.featured}
                       onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                      className="w-5 h-5 rounded border-border text-[#B4770E] focus:ring-[#B4770E]"
+                      className="w-5 h-5 rounded border-border text-primary focus:ring-primary"
                     />
                     <label htmlFor="featured" className="text-sm font-medium cursor-pointer">
                       Mark as featured video

@@ -12,10 +12,10 @@ export function Newsletter() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Don't render if newsletter signup is disabled
-  if (!config.homepage.sections.newsletterSignup) {
-    return null;
-  }
+  // Temporarily hidden: subscribing doesn't yet do anything beyond storing
+  // the email (no welcome email, no admin-visible subscriber list) — hide
+  // the UI until that's built out.
+  return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

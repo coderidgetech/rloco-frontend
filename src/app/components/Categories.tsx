@@ -162,9 +162,6 @@ export function Categories() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="h-0.5 bg-foreground mx-auto mb-6"
             />
-            <h2 className="text-3xl md:text-4xl lg:text-5xl tracking-tight mb-3">
-              Shop by Category
-            </h2>
             <p className="text-foreground/60 text-sm md:text-base max-w-2xl mx-auto">
               Explore our diverse collection of premium fashion categories
             </p>

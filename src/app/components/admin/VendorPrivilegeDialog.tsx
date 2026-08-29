@@ -132,7 +132,7 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-[#B4770E]" />
+            <Shield className="h-5 w-5 text-primary" />
             Manage Vendor Privileges - {vendor.businessName}
           </DialogTitle>
           <DialogDescription>
@@ -168,13 +168,13 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
                         onClick={() => setSelectedTier(tier)}
                         className={`relative border-2 rounded-lg p-4 cursor-pointer transition-all ${
                           isSelected
-                            ? 'border-[#B4770E] bg-[#B4770E]/5'
+                            ? 'border-primary bg-primary/5'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                       >
                         {isSelected && (
                           <div className="absolute top-2 right-2">
-                            <div className="bg-[#B4770E] text-white rounded-full p-1">
+                            <div className="bg-primary text-white rounded-full p-1">
                               <Check className="h-3 w-3" />
                             </div>
                           </div>
@@ -203,7 +203,7 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
                         <div className="space-y-2 border-t pt-3">
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-gray-600">Commission</span>
-                            <span className="font-semibold text-[#B4770E]">{tierData.features.commission}%</span>
+                            <span className="font-semibold text-primary">{tierData.features.commission}%</span>
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-gray-600">Max Products</span>
@@ -265,13 +265,13 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
                     onClick={() => handleRoleChange('owner')}
                     className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                       selectedRole === 'owner'
-                        ? 'border-[#B4770E] bg-[#B4770E]/5'
+                        ? 'border-primary bg-primary/5'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-semibold text-lg">Owner</h3>
-                      <Badge variant="default" className="bg-[#B4770E]">Full Access</Badge>
+                      <Badge variant="default" className="bg-primary">Full Access</Badge>
                     </div>
                     <p className="text-sm text-gray-600 mb-3">
                       Complete control over all vendor operations, settings, and team management
@@ -297,7 +297,7 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
                     onClick={() => handleRoleChange('manager')}
                     className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                       selectedRole === 'manager'
-                        ? 'border-[#B4770E] bg-[#B4770E]/5'
+                        ? 'border-primary bg-primary/5'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
@@ -329,7 +329,7 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
                     onClick={() => handleRoleChange('staff')}
                     className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                       selectedRole === 'staff'
-                        ? 'border-[#B4770E] bg-[#B4770E]/5'
+                        ? 'border-primary bg-primary/5'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
@@ -361,7 +361,7 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
                     onClick={() => handleRoleChange('readonly')}
                     className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
                       selectedRole === 'readonly'
-                        ? 'border-[#B4770E] bg-[#B4770E]/5'
+                        ? 'border-primary bg-primary/5'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
@@ -405,7 +405,7 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
                 {/* Products */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 pb-2 border-b">
-                    <Package className="h-4 w-4 text-[#B4770E]" />
+                    <Package className="h-4 w-4 text-primary" />
                     <h3 className="font-semibold">Product Management</h3>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
@@ -426,7 +426,7 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
                 {/* Orders */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 pb-2 border-b">
-                    <ShoppingBag className="h-4 w-4 text-[#B4770E]" />
+                    <ShoppingBag className="h-4 w-4 text-primary" />
                     <h3 className="font-semibold">Order Management</h3>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
@@ -447,7 +447,7 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
                 {/* Analytics */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 pb-2 border-b">
-                    <BarChart3 className="h-4 w-4 text-[#B4770E]" />
+                    <BarChart3 className="h-4 w-4 text-primary" />
                     <h3 className="font-semibold">Analytics & Reports</h3>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
@@ -468,7 +468,7 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
                 {/* Financial */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 pb-2 border-b">
-                    <DollarSign className="h-4 w-4 text-[#B4770E]" />
+                    <DollarSign className="h-4 w-4 text-primary" />
                     <h3 className="font-semibold">Financial Access</h3>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
@@ -489,7 +489,7 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
                 {/* Marketing */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 pb-2 border-b">
-                    <Tag className="h-4 w-4 text-[#B4770E]" />
+                    <Tag className="h-4 w-4 text-primary" />
                     <h3 className="font-semibold">Marketing & Promotions</h3>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
@@ -510,7 +510,7 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
                 {/* Settings */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 pb-2 border-b">
-                    <Settings className="h-4 w-4 text-[#B4770E]" />
+                    <Settings className="h-4 w-4 text-primary" />
                     <h3 className="font-semibold">Store Settings</h3>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
@@ -544,7 +544,7 @@ export const VendorPrivilegeDialog = ({ open, onClose, vendor, onSave }: VendorP
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={handleSave} className="bg-[#B4770E] hover:bg-[#8B5A0B]">
+            <Button onClick={handleSave} className="bg-primary hover:brightness-90">
               <Shield className="h-4 w-4 mr-2" />
               Save Privileges
             </Button>

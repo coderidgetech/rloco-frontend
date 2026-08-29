@@ -36,7 +36,7 @@ export function MobileInspirationVideos() {
     return (
       <div className="bg-foreground/5 py-5">
         <div className="px-4 mb-3">
-          <h2 className="text-lg font-medium mb-0.5">Style Inspiration</h2>
+          <h2 className="text-base font-medium tracking-wide mb-0.5">Style Inspiration</h2>
           <p className="text-xs text-foreground/60">Discover trends and styling tips</p>
         </div>
         <div

@@ -134,7 +134,7 @@ export function AdminWishlistPage() {
   const categoryData = Object.entries(categoryCounts).map(([name, value], index) => ({
     name,
     value,
-    color: ['#000000', '#B4770E', '#3b3b3b', '#666666', '#999999'][index % 5],
+    color: ['#000000', 'var(--primary)', '#3b3b3b', '#666666', '#999999'][index % 5],
   }));
 
   const trendData: { month: string; items: number }[] = [];
@@ -173,7 +173,7 @@ export function AdminWishlistPage() {
                   <p className="text-sm text-muted-foreground mb-1">Unique Users</p>
                   <p className="text-2xl font-light">{uniqueUsers.toLocaleString()}</p>
                 </div>
-                <Users className="text-[#B4770E]" size={24} />
+                <Users className="text-primary" size={24} />
               </div>
             </CardContent>
           </Card>
@@ -220,7 +220,7 @@ export function AdminWishlistPage() {
                     <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="items" fill="#B4770E" />
+                    <Bar dataKey="items" fill="var(--primary)" />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (

@@ -54,8 +54,10 @@ export function Footer() {
 
   return (
     <footer className="bg-white dark:bg-background border-t border-border/10" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-      {/* Newsletter Section - when enabled */}
-      {config.navigation.footer.showNewsletter && (
+      {/* Newsletter Section - temporarily hidden: subscribing doesn't yet do
+          anything beyond storing the email (no welcome email, no
+          admin-visible subscriber list) — hide until that's built out. */}
+      {false && config.navigation.footer.showNewsletter && (
         <div className="border-b border-border/10">
           <div className="page-container py-12 md:py-16">
             <div className="max-w-2xl mx-auto text-center space-y-6">
@@ -73,7 +75,7 @@ export function Footer() {
                   onChange={(e) => setNewsletterEmail(e.target.value)}
                   className="border-border/30 shadow-sm h-12"
                 />
-                <Button type="submit" disabled={newsletterLoading} className="bg-[#B4770E] hover:bg-[#8B5A0B] h-12 px-8 whitespace-nowrap">
+                <Button type="submit" disabled={newsletterLoading} className="bg-primary hover:brightness-90 h-12 px-8 whitespace-nowrap">
                   {newsletterLoading ? 'Subscribing...' : 'Subscribe'}
                 </Button>
               </form>

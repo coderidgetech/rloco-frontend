@@ -13,9 +13,10 @@ export function MobileNewsletter() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  if (!config.homepage.sections.newsletterSignup) {
-    return null;
-  }
+  // Temporarily hidden: subscribing doesn't yet do anything beyond storing
+  // the email (no welcome email, no admin-visible subscriber list) — hide
+  // the UI until that's built out.
+  return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +54,7 @@ export function MobileNewsletter() {
             </motion.div>
 
             <div className="text-center mb-4">
-              <h2 className="text-xl font-medium mb-1.5">Stay in the Loop</h2>
+              <h2 className="text-base font-medium tracking-wide mb-1.5">Stay in the Loop</h2>
               <p className="text-sm text-foreground/60 leading-relaxed">
                 Subscribe to get exclusive deals, early access to sales, and style tips
               </p>

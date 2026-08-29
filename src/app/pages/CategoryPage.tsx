@@ -331,46 +331,50 @@ export function CategoryPage() {
       {/* Page header */}
       <div className="border-b border-foreground/5">
         <div className="page-container">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1.5 text-[11px] text-foreground/40 uppercase tracking-wide py-2 border-b border-foreground/5">
-            <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors">Home</button>
-            <ChevronRight size={11} />
-            {isGiftRoute ? (
-              <span className="text-foreground/60">Gift for {isGiftHer ? 'Her' : 'Him'}</span>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => { setSelectedCategory('All'); navigate(`/category/${selectedGender}`); }}
-                  className="hover:text-foreground transition-colors capitalize"
-                >
-                  {selectedGender === 'all' ? 'All' : selectedGender}
-                </button>
-                {selectedCategory !== 'All' && (
-                  <>
-                    <ChevronRight size={11} />
-                    <span className="text-foreground/60 capitalize">{selectedCategory}</span>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Title row */}
+          {/* Consolidated: breadcrumb, Featured toggle, Filters trigger and Sort — one row */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="flex items-center justify-between gap-4 py-3"
+            className="flex items-center justify-between gap-3 py-3"
           >
-            <div className="flex items-baseline gap-3">
-              <h1 className="text-2xl md:text-3xl font-light tracking-tight">{pageTitle}</h1>
-              <span className="text-xs text-foreground/40 hidden sm:block">
-                {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
-              </span>
+            <div className="flex items-center gap-1.5 text-[11px] text-foreground/40 uppercase tracking-wide min-w-0 overflow-x-auto scrollbar-hide">
+              <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors shrink-0">Home</button>
+              <ChevronRight size={11} className="shrink-0" />
+              {isGiftRoute ? (
+                <span className="text-foreground/60 shrink-0">Gift for {isGiftHer ? 'Her' : 'Him'}</span>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedCategory('All'); navigate(`/category/${selectedGender}`); }}
+                    className="hover:text-foreground transition-colors capitalize shrink-0"
+                  >
+                    {selectedGender === 'all' ? 'All' : selectedGender}
+                  </button>
+                  {selectedCategory !== 'All' && (
+                    <>
+                      <ChevronRight size={11} className="shrink-0" />
+                      <span className="text-foreground/60 capitalize shrink-0">{selectedCategory}</span>
+                    </>
+                  )}
+                </>
+              )}
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+              {/* Featured toggle */}
+              <button
+                onClick={() => setShowFeatured(!showFeatured)}
+                className={`px-3 py-1.5 border transition-colors text-xs uppercase tracking-wider ${
+                  showFeatured
+                    ? 'border-foreground bg-foreground text-background'
+                    : 'border-foreground/20 hover:border-foreground'
+                }`}
+              >
+                Featured
+              </button>
+
               {/* Mobile Filter Toggle */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
@@ -382,20 +386,25 @@ export function CategoryPage() {
               </button>
 
               {/* Sort Dropdown */}
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] uppercase tracking-wider text-foreground/40 hidden sm:block">Sort by</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-1.5 border border-foreground/15 bg-background focus:outline-none focus:border-foreground transition-colors cursor-pointer text-xs"
-                >
-                  {sortOptions.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-1.5 border border-foreground/15 bg-background focus:outline-none focus:border-foreground transition-colors cursor-pointer text-xs"
+              >
+                {sortOptions.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
             </div>
           </motion.div>
+
+          {/* Title */}
+          <div className="flex items-baseline gap-3 pb-3">
+            <h1 className="text-2xl md:text-3xl font-light tracking-tight">{pageTitle}</h1>
+            <span className="text-xs text-foreground/40">
+              {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
+            </span>
+          </div>
 
           {/* Active Filters Display */}
           {hasActiveFilters && (
@@ -443,7 +452,7 @@ export function CategoryPage() {
               ))}
               
               {selectedBadges.map(badge => (
-                <span key={badge} className="px-3 py-1 bg-[#B4770E] text-background text-xs flex items-center gap-2">
+                <span key={badge} className="px-3 py-1 bg-primary text-background text-xs flex items-center gap-2">
                   {badge}
                   <button onClick={() => toggleArrayFilter(selectedBadges, setSelectedBadges, badge)} className="hover:opacity-70">
                     <X size={12} />

@@ -60,7 +60,7 @@ export function CustomerGuideButton() {
       {/* Floating Help Button */}
       <motion.button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-8 right-8 z-40 bg-[#B4770E] text-white rounded-full p-4 shadow-2xl hover:shadow-3xl transition-all duration-300 group"
+        className="fixed bottom-8 right-8 z-40 bg-primary text-white rounded-full p-4 shadow-2xl hover:shadow-3xl transition-all duration-300 group"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         initial={{ opacity: 0, scale: 0 }}
@@ -98,7 +98,7 @@ export function CustomerGuideButton() {
               className="fixed right-0 top-0 h-full w-full max-w-5xl bg-white shadow-2xl z-[61] overflow-hidden"
             >
               {/* Header */}
-              <div className="bg-gradient-to-r from-black to-[#B4770E] text-white p-6 flex items-center justify-between">
+              <div className="bg-gradient-to-r from-black to-primary text-white p-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="bg-white/20 rounded-full p-3">
                     <BookOpen className="w-6 h-6" />
@@ -126,7 +126,7 @@ export function CustomerGuideButton() {
                         onClick={() => setActiveTab(guide.id)}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                           activeTab === guide.id
-                            ? 'bg-[#B4770E] text-white shadow-lg'
+                            ? 'bg-primary text-white shadow-lg'
                             : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
                         }`}
                       >
@@ -141,11 +141,11 @@ export function CustomerGuideButton() {
                   <div className="mt-6 bg-white border border-gray-200 rounded-lg p-4">
                     <h3 className="text-sm font-medium text-gray-900 mb-3 tracking-wide">QUICK LINKS</h3>
                     <div className="space-y-2 text-xs">
-                      <a href="/" className="block text-[#B4770E] hover:underline">🏠 Home</a>
-                      <a href="/all-products" className="block text-[#B4770E] hover:underline">🛍️ All Products</a>
-                      <a href="/cart" className="block text-[#B4770E] hover:underline">🛒 Shopping Cart</a>
-                      <a href="/wishlist" className="block text-[#B4770E] hover:underline">❤️ Wishlist</a>
-                      <a href="/contact" className="block text-[#B4770E] hover:underline">📧 Contact Us</a>
+                      <a href="/" className="block text-primary hover:underline">🏠 Home</a>
+                      <a href="/all-products" className="block text-primary hover:underline">🛍️ All Products</a>
+                      <a href="/cart" className="block text-primary hover:underline">🛒 Shopping Cart</a>
+                      <a href="/wishlist" className="block text-primary hover:underline">❤️ Wishlist</a>
+                      <a href="/contact" className="block text-primary hover:underline">📧 Contact Us</a>
                     </div>
                   </div>
 
@@ -190,7 +190,7 @@ function GettingStartedGuide() {
       <h1 className="text-4xl font-light tracking-wider text-gray-900 mb-2">🎉 Welcome to Rloko!</h1>
       <p className="text-gray-600 mb-8">Your complete guide to luxury fashion shopping</p>
 
-      <div className="bg-gradient-to-r from-[#B4770E]/10 to-transparent border-l-4 border-[#B4770E] p-6 rounded-r-lg mb-8">
+      <div className="bg-gradient-to-r from-primary/10 to-transparent border-l-4 border-primary p-6 rounded-r-lg mb-8">
         <h2 className="text-xl font-light tracking-wide text-gray-900 mb-2">What is Rloko?</h2>
         <p className="text-gray-700">
           Rloko is your premier destination for luxury fashion, cosmetics, and jewelry. We curate the finest collections from top designers and emerging brands, bringing you exclusive pieces for every occasion.
@@ -203,7 +203,7 @@ function GettingStartedGuide() {
       <div className="grid grid-cols-1 gap-4 mb-6">
         <div className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-lg transition-shadow">
           <div className="flex items-start gap-4">
-            <div className="bg-[#B4770E] text-white rounded-full w-12 h-12 flex items-center justify-center flex-shrink-0">
+            <div className="bg-primary text-white rounded-full w-12 h-12 flex items-center justify-center flex-shrink-0">
               <Search className="w-6 h-6" />
             </div>
             <div>
@@ -305,7 +305,7 @@ function GettingStartedGuide() {
       
       <div className="space-y-4">
         <div className="flex gap-4">
-          <div className="bg-[#B4770E] text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">1</div>
+          <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">1</div>
           <div className="flex-1 bg-white border border-gray-200 rounded-lg p-4">
             <h3 className="font-medium text-gray-900 mb-2">Browse Our Collections</h3>
             <p className="text-sm text-gray-600 mb-3">Start exploring products by category, search, or featured sections</p>
@@ -319,7 +319,7 @@ function GettingStartedGuide() {
         </div>
 
         <div className="flex gap-4">
-          <div className="bg-[#B4770E] text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">2</div>
+          <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">2</div>
           <div className="flex-1 bg-white border border-gray-200 rounded-lg p-4">
             <h3 className="font-medium text-gray-900 mb-2">Add Items to Cart or Wishlist</h3>
             <p className="text-sm text-gray-600 mb-2">Found something you love?</p>
@@ -333,7 +333,7 @@ function GettingStartedGuide() {
         </div>
 
         <div className="flex gap-4">
-          <div className="bg-[#B4770E] text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">3</div>
+          <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">3</div>
           <div className="flex-1 bg-white border border-gray-200 rounded-lg p-4">
             <h3 className="font-medium text-gray-900 mb-2">Checkout & Enjoy</h3>
             <p className="text-sm text-gray-600 mb-2">Complete your purchase in minutes:</p>
@@ -485,27 +485,27 @@ function ShoppingGuide() {
             <h3 className="font-medium text-gray-900 mb-3 text-sm">Sorting Options:</h3>
             <div className="space-y-2 text-sm text-gray-700">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#B4770E]"></div>
+                <div className="w-2 h-2 rounded-full bg-primary"></div>
                 <span><strong>Featured:</strong> Our hand-picked selections (default)</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#B4770E]"></div>
+                <div className="w-2 h-2 rounded-full bg-primary"></div>
                 <span><strong>Price: Low to High:</strong> Budget-friendly first</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#B4770E]"></div>
+                <div className="w-2 h-2 rounded-full bg-primary"></div>
                 <span><strong>Price: High to Low:</strong> Premium items first</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#B4770E]"></div>
+                <div className="w-2 h-2 rounded-full bg-primary"></div>
                 <span><strong>Newest:</strong> Latest arrivals first</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#B4770E]"></div>
+                <div className="w-2 h-2 rounded-full bg-primary"></div>
                 <span><strong>Best Selling:</strong> Most popular items</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-[#B4770E]"></div>
+                <div className="w-2 h-2 rounded-full bg-primary"></div>
                 <span><strong>Top Rated:</strong> Highest customer ratings</span>
               </div>
             </div>
@@ -612,7 +612,7 @@ function ShoppingGuide() {
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-3">
             <div className="flex items-center gap-2 mb-2">
-              <div className="bg-[#B4770E] text-white px-2 py-1 rounded text-xs font-medium">NEW</div>
+              <div className="bg-primary text-white px-2 py-1 rounded text-xs font-medium">NEW</div>
               <span className="text-sm font-medium text-yellow-900">New Arrivals</span>
             </div>
             <p className="text-xs text-yellow-800">Products added in the last 30 days. Be the first to wear the latest trends!</p>
@@ -673,10 +673,10 @@ function CheckoutGuide() {
       {/* Checkout Steps */}
       <div className="space-y-6">
         {/* Step 1: Cart */}
-        <div className="bg-white border-2 border-[#B4770E] rounded-lg overflow-hidden">
-          <div className="bg-gradient-to-r from-[#B4770E] to-[#9a6409] text-white p-4">
+        <div className="bg-white border-2 border-primary rounded-lg overflow-hidden">
+          <div className="bg-primary text-white p-4">
             <div className="flex items-center gap-3">
-              <div className="bg-white text-[#B4770E] rounded-full w-10 h-10 flex items-center justify-center font-bold">1</div>
+              <div className="bg-white text-primary rounded-full w-10 h-10 flex items-center justify-center font-bold">1</div>
               <div>
                 <h3 className="text-lg font-medium">Shopping Cart</h3>
                 <p className="text-sm text-white/80">Review your items and apply discounts</p>
@@ -737,7 +737,7 @@ function CheckoutGuide() {
             </div>
 
             <div className="mt-4 text-center">
-              <div className="inline-block bg-[#B4770E] text-white px-6 py-3 rounded-lg font-medium">
+              <div className="inline-block bg-primary text-white px-6 py-3 rounded-lg font-medium">
                 PROCEED TO ADDRESS →
               </div>
             </div>
@@ -759,7 +759,7 @@ function CheckoutGuide() {
             <h4 className="font-medium text-gray-900 mb-3">Address Options:</h4>
             
             <div className="space-y-3 mb-4">
-              <div className="border-2 border-[#B4770E] bg-[#B4770E]/5 rounded-lg p-4">
+              <div className="border-2 border-primary bg-primary/5 rounded-lg p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <input type="radio" name="address" checked className="mt-1" />
@@ -774,7 +774,7 @@ function CheckoutGuide() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button className="text-xs text-[#B4770E] hover:underline">Edit</button>
+                    <button className="text-xs text-primary hover:underline">Edit</button>
                     <button className="text-xs text-red-600 hover:underline">Delete</button>
                   </div>
                 </div>
@@ -795,14 +795,14 @@ function CheckoutGuide() {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <button className="text-xs text-[#B4770E] hover:underline">Edit</button>
+                    <button className="text-xs text-primary hover:underline">Edit</button>
                     <button className="text-xs text-red-600 hover:underline">Delete</button>
                   </div>
                 </div>
               </div>
             </div>
 
-            <button className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-[#B4770E] hover:bg-gray-50 transition-colors">
+            <button className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-primary hover:bg-gray-50 transition-colors">
               + ADD NEW ADDRESS
             </button>
 
@@ -820,7 +820,7 @@ function CheckoutGuide() {
             </div>
 
             <div className="mt-4 text-center">
-              <div className="inline-block bg-[#B4770E] text-white px-6 py-3 rounded-lg font-medium">
+              <div className="inline-block bg-primary text-white px-6 py-3 rounded-lg font-medium">
                 CONTINUE TO PAYMENT →
               </div>
             </div>
@@ -842,7 +842,7 @@ function CheckoutGuide() {
             <h4 className="font-medium text-gray-900 mb-3">Payment Options:</h4>
             
             <div className="space-y-3">
-              <div className="border-2 border-[#B4770E] bg-[#B4770E]/5 rounded-lg p-4">
+              <div className="border-2 border-primary bg-primary/5 rounded-lg p-4">
                 <div className="flex items-center gap-3 mb-3">
                   <input type="radio" name="payment" checked />
                   <div className="flex items-center gap-2">
@@ -897,7 +897,7 @@ function CheckoutGuide() {
             </div>
 
             <div className="mt-4 text-center">
-              <div className="inline-block bg-[#B4770E] text-white px-6 py-3 rounded-lg font-medium">
+              <div className="inline-block bg-primary text-white px-6 py-3 rounded-lg font-medium">
                 PLACE ORDER →
               </div>
             </div>
@@ -948,7 +948,7 @@ function CheckoutGuide() {
               <button className="border border-gray-300 rounded-lg py-3 text-gray-700 hover:bg-gray-50 transition-colors">
                 View Order Details
               </button>
-              <button className="bg-[#B4770E] text-white rounded-lg py-3 hover:bg-[#9a6409] transition-colors">
+              <button className="bg-primary text-white rounded-lg py-3 hover:brightness-90 transition-colors">
                 Continue Shopping
               </button>
             </div>
@@ -1052,7 +1052,7 @@ function AccountGuide() {
         <h3 className="font-medium text-gray-900 mb-3">How to Use Wishlists:</h3>
         <div className="space-y-4">
           <div className="flex gap-4">
-            <div className="bg-[#B4770E] text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">1</div>
+            <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">1</div>
             <div className="flex-1">
               <h4 className="font-medium text-gray-900 mb-1">Add Items to Wishlist</h4>
               <p className="text-sm text-gray-600 mb-2">Click the ❤️ icon on any product card or product page</p>
@@ -1063,7 +1063,7 @@ function AccountGuide() {
           </div>
 
           <div className="flex gap-4">
-            <div className="bg-[#B4770E] text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">2</div>
+            <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">2</div>
             <div className="flex-1">
               <h4 className="font-medium text-gray-900 mb-1">View Your Wishlist</h4>
               <p className="text-sm text-gray-600 mb-2">Click the ❤️ icon in the top navigation bar</p>
@@ -1074,7 +1074,7 @@ function AccountGuide() {
           </div>
 
           <div className="flex gap-4">
-            <div className="bg-[#B4770E] text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">3</div>
+            <div className="bg-primary text-white rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 font-medium">3</div>
             <div className="flex-1">
               <h4 className="font-medium text-gray-900 mb-1">Quick Actions</h4>
               <div className="space-y-2 text-sm text-gray-600">
@@ -1124,7 +1124,7 @@ function AccountGuide() {
               <div>• Your data is encrypted and secure</div>
               <div>• We never share your personal information</div>
               <div>• Two-factor authentication available</div>
-              <div>• Review our <a href="/privacy" className="text-[#B4770E] hover:underline">Privacy Policy</a></div>
+              <div>• Review our <a href="/privacy" className="text-primary hover:underline">Privacy Policy</a></div>
             </div>
           </div>
         </div>
@@ -1225,35 +1225,35 @@ function OrdersGuide() {
         <h3 className="font-medium text-gray-900 mb-3">How to Return an Item:</h3>
         <div className="space-y-3">
           <div className="flex gap-3">
-            <div className="bg-[#B4770E] text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 text-sm font-medium">1</div>
+            <div className="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 text-sm font-medium">1</div>
             <div className="flex-1 text-sm">
               <strong className="text-gray-900">Initiate Return</strong>
               <p className="text-gray-600 mt-1">Log into your account → Orders → Select order → Click "Return Items"</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="bg-[#B4770E] text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 text-sm font-medium">2</div>
+            <div className="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 text-sm font-medium">2</div>
             <div className="flex-1 text-sm">
               <strong className="text-gray-900">Select Items & Reason</strong>
               <p className="text-gray-600 mt-1">Choose items to return and reason (Wrong size, Changed mind, Defective, etc.)</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="bg-[#B4770E] text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 text-sm font-medium">3</div>
+            <div className="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 text-sm font-medium">3</div>
             <div className="flex-1 text-sm">
               <strong className="text-gray-900">Print Return Label</strong>
               <p className="text-gray-600 mt-1">We'll email you a prepaid return shipping label</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="bg-[#B4770E] text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 text-sm font-medium">4</div>
+            <div className="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 text-sm font-medium">4</div>
             <div className="flex-1 text-sm">
               <strong className="text-gray-900">Pack & Ship</strong>
               <p className="text-gray-600 mt-1">Pack items securely, attach label, drop off at any UPS/FedEx location</p>
             </div>
           </div>
           <div className="flex gap-3">
-            <div className="bg-[#B4770E] text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 text-sm font-medium">5</div>
+            <div className="bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 text-sm font-medium">5</div>
             <div className="flex-1 text-sm">
               <strong className="text-gray-900">Receive Refund</strong>
               <p className="text-gray-600 mt-1">Refund processed within 5-7 days after we receive your return</p>
@@ -1356,7 +1356,7 @@ function FAQGuide() {
           <div className="border-b border-gray-200 pb-4">
             <h3 className="font-medium text-gray-900 mb-2">Can I change my shipping address after ordering?</h3>
             <p className="text-sm text-gray-700">
-              If your order hasn't shipped yet, contact us immediately at <a href="mailto:support@rloko.com" className="text-[#B4770E] hover:underline">support@rloko.com</a> and we'll update the address. Once shipped, contact the carrier directly.
+              If your order hasn't shipped yet, contact us immediately at <a href="mailto:support@rloko.com" className="text-primary hover:underline">support@rloko.com</a> and we'll update the address. Once shipped, contact the carrier directly.
             </p>
           </div>
         </div>
@@ -1401,7 +1401,7 @@ function FAQGuide() {
           <div className="border-b border-gray-200 pb-4">
             <h3 className="font-medium text-gray-900 mb-2">How do I know what size to order?</h3>
             <p className="text-sm text-gray-700">
-              Check our detailed <a href="/size-guide" className="text-[#B4770E] hover:underline">Size Guide</a> with measurement charts for each category. Also read product reviews - customers often mention if items run small/large.
+              Check our detailed <a href="/size-guide" className="text-primary hover:underline">Size Guide</a> with measurement charts for each category. Also read product reviews - customers often mention if items run small/large.
             </p>
           </div>
 
@@ -1422,7 +1422,7 @@ function FAQGuide() {
       </div>
 
       {/* Contact Support */}
-      <div className="bg-gradient-to-br from-[#B4770E]/10 to-transparent border-2 border-[#B4770E] rounded-lg p-6">
+      <div className="bg-gradient-to-br from-primary/10 to-transparent border-2 border-primary rounded-lg p-6">
         <h2 className="text-2xl font-light tracking-wide text-gray-900 mb-4">📞 Contact Customer Support</h2>
         
         <p className="text-sm text-gray-700 mb-4">
@@ -1433,28 +1433,28 @@ function FAQGuide() {
           <div className="bg-white rounded-lg p-4">
             <div className="text-2xl mb-2">📧</div>
             <div className="font-medium text-gray-900 mb-1">Email Support</div>
-            <a href="mailto:support@rloko.com" className="text-[#B4770E] hover:underline text-sm">support@rloko.com</a>
+            <a href="mailto:support@rloko.com" className="text-primary hover:underline text-sm">support@rloko.com</a>
             <div className="text-xs text-gray-600 mt-2">Response within 24 hours</div>
           </div>
 
           <div className="bg-white rounded-lg p-4">
             <div className="text-2xl mb-2">📞</div>
             <div className="font-medium text-gray-900 mb-1">Phone Support</div>
-            <a href="tel:+15551234567" className="text-[#B4770E] hover:underline text-sm">+1 (555) 123-4567</a>
+            <a href="tel:+15551234567" className="text-primary hover:underline text-sm">+1 (555) 123-4567</a>
             <div className="text-xs text-gray-600 mt-2">Mon-Fri 9AM-6PM EST</div>
           </div>
 
           <div className="bg-white rounded-lg p-4">
             <div className="text-2xl mb-2">💬</div>
             <div className="font-medium text-gray-900 mb-1">Live Chat</div>
-            <button className="text-[#B4770E] hover:underline text-sm">Start Chat</button>
+            <button className="text-primary hover:underline text-sm">Start Chat</button>
             <div className="text-xs text-gray-600 mt-2">Available during business hours</div>
           </div>
 
           <div className="bg-white rounded-lg p-4">
             <div className="text-2xl mb-2">📝</div>
             <div className="font-medium text-gray-900 mb-1">Contact Form</div>
-            <a href="/contact" className="text-[#B4770E] hover:underline text-sm">Submit Request</a>
+            <a href="/contact" className="text-primary hover:underline text-sm">Submit Request</a>
             <div className="text-xs text-gray-600 mt-2">Detailed inquiries</div>
           </div>
         </div>

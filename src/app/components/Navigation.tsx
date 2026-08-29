@@ -10,6 +10,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useSearchOverlay } from '../context/SearchOverlayContext';
 import { RlocoLogo } from './RlocoLogo';
 import { MegaMenu } from './MegaMenu';
+import { MobileNavDrawer } from './MobileNavDrawer';
 import { LoginModal } from './LoginModal';
 import { useIsMobile } from '../hooks/useIsMobile';
 import { ACCOUNT_DEFAULT_PATH } from '../lib/accountRoutes';
@@ -22,7 +23,6 @@ export function Navigation() {
   const [visible, setVisible] = useState(true);
   const [accountOpen, setAccountOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<'women' | 'men' | null>(null);
-  const [mobileSubMenu, setMobileSubMenu] = useState<'women' | 'men' | null>(null);
 
   const { openSearch } = useSearchOverlay();
   const { itemCount } = useCart();
@@ -52,16 +52,6 @@ export function Navigation() {
     }
   }, [indiaEnabled, country, setCountry]);
 
-  // Get configured categories or use defaults
-  const womenCategories = config?.categories?.women || {
-    clothing: ['Dresses', 'Tops', 'Bottoms', 'Outerwear', 'Knitwear'],
-    accessories: ['Shoes', 'Jewelry', 'Bags'],
-  };
-  const menCategories = config?.categories?.men || {
-    clothing: ['Shirts', 'Tops', 'Bottoms', 'Outerwear', 'Knitwear'],
-    accessories: ['Shoes', 'Accessories'],
-  };
-
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollPos = window.scrollY;
@@ -81,37 +71,11 @@ export function Navigation() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [prevScrollPos]);
 
-  const scrollToSection = (sectionId: string) => {
-    // Check if we're on the home page
-    if (location.pathname !== '/') {
-      // Navigate to home page first, then scroll
-      navigate('/');
-      setTimeout(() => {
-        const element = document.getElementById(sectionId);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-        }
-      }, 100);
-    } else {
-      // Already on home page, just scroll
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-    
-    // Delay closing to allow scroll to start
-    setTimeout(() => {
-      setIsOpen(false);
-    }, 100);
-  };
-
   const handleCategoryClick = (gender: 'women' | 'men', category?: string) => {
     // Close dropdowns and mobile menu
     setActiveDropdown(null);
     setIsOpen(false);
-    setMobileSubMenu(null);
-    
+
     // Navigate to category page
     if (category) {
       navigate(`/category/${gender}/${category.toLowerCase()}`);
@@ -167,10 +131,10 @@ export function Navigation() {
           paddingTop: 'env(safe-area-inset-top, 0px)',
           transform: visible ? 'translateY(0)' : 'translateY(-100%)',
           transition: 'transform 0.3s ease-in-out, background-color 0.4s ease, backdrop-filter 0.4s ease, box-shadow 0.4s ease',
-          backgroundColor: (location.pathname === '/' && !scrolled) ? 'transparent' : 'rgba(255, 255, 255, 0.85)',
+          backgroundColor: (location.pathname === '/' && !scrolled) ? 'transparent' : `rgba(255, 255, 255, ${isMobile ? 0.35 : 0.85})`,
           backdropFilter: (location.pathname === '/' && !scrolled) ? 'none' : 'blur(20px)',
           WebkitBackdropFilter: (location.pathname === '/' && !scrolled) ? 'none' : 'blur(20px)',
-          borderBottom: (location.pathname === '/' && !scrolled) ? 'none' : '1px solid rgba(0, 0, 0, 0.06)',
+          borderBottom: (location.pathname === '/' && !scrolled) ? 'none' : (isMobile ? '1px solid rgba(255, 255, 255, 0.25)' : '1px solid rgba(0, 0, 0, 0.06)'),
           boxShadow: (location.pathname === '/' && !scrolled) ? 'none' : '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
         }}
       >
@@ -406,190 +370,10 @@ export function Navigation() {
         </div>
 
           {/* Mobile Navigation - below 56px bar */}
-          <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25 }}
-              className="border-b border-border/40 bg-background/98 shadow-sm md:hidden overflow-hidden"
-            >
-              <div className="border-t border-border/60 bg-muted/20 px-6 pt-3 pb-4 dark:bg-muted/10 max-h-[min(72vh,520px)] overflow-y-auto overscroll-contain rounded-b-2xl">
-                <div className="flex flex-col gap-1">
-                  <button
-                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); scrollToSection('products'); }}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); scrollToSection('products'); }}
-                    className="text-foreground/70 hover:text-foreground transition-colors text-left py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px] flex items-center"
-                    type="button"
-                  >
-                    New Arrivals
-                  </button>
+          <div className="md:hidden">
+            <MobileNavDrawer isOpen={isOpen} onClose={() => setIsOpen(false)} />
+          </div>
 
-                  {/* Women Menu with Sub-items */}
-                  <div>
-                    <button
-                      onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); setMobileSubMenu(mobileSubMenu === 'women' ? null : 'women'); }}
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileSubMenu(mobileSubMenu === 'women' ? null : 'women'); }}
-                      className="text-foreground/70 hover:text-foreground transition-colors text-left w-full flex items-center justify-between py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px]"
-                      type="button"
-                    >
-                      <span>Women</span>
-                      <ChevronDown size={16} className={`transition-transform duration-300 ${mobileSubMenu === 'women' ? 'rotate-180' : ''}`} />
-                    </button>
-                    {mobileSubMenu === 'women' && (
-                      <div className="pl-4 pt-2 flex flex-col gap-1">
-                        <button
-                          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleCategoryClick('women'); setTimeout(() => { setIsOpen(false); setMobileSubMenu(null); }, 100); }}
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCategoryClick('women'); setTimeout(() => { setIsOpen(false); setMobileSubMenu(null); }, 100); }}
-                          className="text-sm text-foreground/60 hover:text-primary transition-colors text-left py-2.5 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[44px] flex items-center"
-                          type="button"
-                        >
-                          View All Women's
-                        </button>
-                      <div className="text-xs text-primary uppercase tracking-wider mt-2 mb-1 px-2">Clothing</div>
-                      {womenCategories.clothing.map((item) => (
-                        <button
-                          key={item}
-                          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleCategoryClick('women', item); setTimeout(() => { setIsOpen(false); setMobileSubMenu(null); }, 100); }}
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCategoryClick('women', item); setTimeout(() => { setIsOpen(false); setMobileSubMenu(null); }, 100); }}
-                          className="text-sm text-foreground/60 hover:text-primary transition-colors text-left py-2.5 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[44px] flex items-center"
-                          type="button"
-                        >
-                          {item}
-                        </button>
-                      ))}
-                      <div className="text-xs text-primary uppercase tracking-wider mt-2 mb-1 px-2">Accessories</div>
-                      {womenCategories.accessories.map((item) => (
-                        <button
-                          key={item}
-                          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleCategoryClick('women', item); setTimeout(() => { setIsOpen(false); setMobileSubMenu(null); }, 100); }}
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCategoryClick('women', item); setTimeout(() => { setIsOpen(false); setMobileSubMenu(null); }, 100); }}
-                          className="text-sm text-foreground/60 hover:text-primary transition-colors text-left py-2.5 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[44px] flex items-center"
-                          type="button"
-                        >
-                          {item}
-                        </button>
-                      ))}
-                    </div>
-                    )}
-                  </div>
-
-                  {/* Men Menu with Sub-items */}
-                  <div>
-                    <button
-                      onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); setMobileSubMenu(mobileSubMenu === 'men' ? null : 'men'); }}
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileSubMenu(mobileSubMenu === 'men' ? null : 'men'); }}
-                      className="text-foreground/70 hover:text-foreground transition-colors text-left w-full flex items-center justify-between py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px]"
-                      type="button"
-                    >
-                      <span>Men</span>
-                      <ChevronDown size={16} className={`transition-transform duration-300 ${mobileSubMenu === 'men' ? 'rotate-180' : ''}`} />
-                    </button>
-                    {mobileSubMenu === 'men' && (
-                      <div className="pl-4 pt-2 flex flex-col gap-1">
-                        <button
-                          onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleCategoryClick('men'); setTimeout(() => { setIsOpen(false); setMobileSubMenu(null); }, 100); }}
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCategoryClick('men'); setTimeout(() => { setIsOpen(false); setMobileSubMenu(null); }, 100); }}
-                          className="text-sm text-foreground/60 hover:text-primary transition-colors text-left py-2.5 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[44px] flex items-center"
-                          type="button"
-                        >
-                          View All Men's
-                        </button>
-                        <div className="text-xs text-primary uppercase tracking-wider mt-2 mb-1 px-2">Clothing</div>
-                        {menCategories.clothing.map((item) => (
-                          <button
-                            key={item}
-                            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleCategoryClick('men', item); setTimeout(() => { setIsOpen(false); setMobileSubMenu(null); }, 100); }}
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCategoryClick('men', item); setTimeout(() => { setIsOpen(false); setMobileSubMenu(null); }, 100); }}
-                            className="text-sm text-foreground/60 hover:text-primary transition-colors text-left py-2.5 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[44px] flex items-center"
-                            type="button"
-                          >
-                            {item}
-                          </button>
-                        ))}
-                        <div className="text-xs text-primary uppercase tracking-wider mt-2 mb-1 px-2">Accessories</div>
-                        {menCategories.accessories.map((item) => (
-                          <button
-                            key={item}
-                            onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleCategoryClick('men', item); setTimeout(() => { setIsOpen(false); setMobileSubMenu(null); }, 100); }}
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCategoryClick('men', item); setTimeout(() => { setIsOpen(false); setMobileSubMenu(null); }, 100); }}
-                            className="text-sm text-foreground/60 hover:text-primary transition-colors text-left py-2.5 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[44px] flex items-center"
-                            type="button"
-                          >
-                            {item}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); scrollToSection('categories'); }}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); scrollToSection('categories'); }}
-                    className="text-foreground/70 hover:text-foreground transition-colors text-left py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px] flex items-center"
-                    type="button"
-                  >
-                    Collections
-                  </button>
-                  <button
-                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); scrollToSection('products'); }}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); scrollToSection('products'); }}
-                    className="text-foreground/70 hover:text-foreground transition-colors text-left py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px] flex items-center"
-                    type="button"
-                  >
-                    Promotions
-                  </button>
-                  <button
-                    onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/sale'); }}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/sale'); }}
-                    className="text-foreground/70 hover:text-foreground transition-colors text-left py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px] flex items-center"
-                    type="button"
-                  >
-                    Sale
-                  </button>
-                  <div className="border-t border-border pt-4 mt-3 flex flex-col gap-1">
-                    <button
-                      onClick={() => {
-                        openSearch();
-                        setIsOpen(false);
-                      }}
-                      className="text-foreground/70 hover:text-foreground transition-colors text-left flex items-center gap-2 py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px]"
-                      type="button"
-                    >
-                      <Search size={18} />
-                      Search
-                    </button>
-                    <button
-                      onClick={() => {
-                        navigate(
-                          isAuthenticated
-                            ? ACCOUNT_DEFAULT_PATH
-                            : `/login?redirect=${encodeURIComponent(ACCOUNT_DEFAULT_PATH)}`
-                        );
-                        setIsOpen(false);
-                      }}
-                      className="text-foreground/70 hover:text-foreground transition-colors text-left flex items-center gap-2 py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px]"
-                      type="button"
-                    >
-                      <User size={18} />
-                      Account
-                    </button>
-                    <button
-                      onClick={() => { navigate('/wishlist'); setIsOpen(false); }}
-                      className="text-foreground/70 hover:text-foreground transition-colors text-left flex items-center gap-2 py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px]"
-                      type="button"
-                    >
-                      <Heart size={18} />
-                      Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-          </AnimatePresence>
-        
         {/* Mega Menus - Outside nav with fixed positioning */}
         <MegaMenu 
           isOpen={activeDropdown === 'women'} 

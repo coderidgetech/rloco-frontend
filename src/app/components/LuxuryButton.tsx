@@ -27,7 +27,7 @@ export function LuxuryButton({
     primary: 'bg-foreground text-background hover:bg-foreground/90',
     secondary: 'bg-muted text-foreground hover:bg-muted/80',
     outline: 'border-2 border-foreground text-foreground hover:bg-foreground hover:text-background',
-    brand: 'bg-[#B4770E] text-white hover:bg-[#9A6308]',
+    brand: 'bg-primary text-white hover:brightness-90',
   };
 
   return (

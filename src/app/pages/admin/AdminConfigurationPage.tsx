@@ -1684,7 +1684,7 @@ export const AdminConfigurationPage = () => {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   {[
-                    { name: 'New Arrival', color: '#B4770E', icon: <Zap className="h-5 w-5" />, active: true, products: 24 },
+                    { name: 'New Arrival', color: 'var(--primary)', icon: <Zap className="h-5 w-5" />, active: true, products: 24 },
                     { name: 'Best Seller', color: '#FF6B6B', icon: <TrendingUp className="h-5 w-5" />, active: true, products: 18 },
                     { name: 'Limited Edition', color: '#9B59B6', icon: <Award className="h-5 w-5" />, active: true, products: 8 },
                     { name: 'Sale', color: '#E74C3C', icon: <Percent className="h-5 w-5" />, active: true, products: 45 },
@@ -1857,7 +1857,7 @@ export const AdminConfigurationPage = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="flex items-center gap-2">
-                      <Crown className="h-5 w-5 text-[#B4770E]" />
+                      <Crown className="h-5 w-5 text-primary" />
                       Manage Subscription Plans
                     </CardTitle>
                     <CardDescription>
@@ -1870,7 +1870,7 @@ export const AdminConfigurationPage = () => {
                         onClick={() => setViewMode('table')}
                         className={`px-3 py-1 rounded ${
                           viewMode === 'table'
-                            ? 'bg-white shadow-sm text-[#B4770E]'
+                            ? 'bg-white shadow-sm text-primary'
                             : 'text-gray-600 hover:text-gray-900'
                         }`}
                       >
@@ -1880,14 +1880,14 @@ export const AdminConfigurationPage = () => {
                         onClick={() => setViewMode('grid')}
                         className={`px-3 py-1 rounded ${
                           viewMode === 'grid'
-                            ? 'bg-white shadow-sm text-[#B4770E]'
+                            ? 'bg-white shadow-sm text-primary'
                             : 'text-gray-600 hover:text-gray-900'
                         }`}
                       >
                         <Grid3x3 className="h-4 w-4" />
                       </button>
                     </div>
-                    <Button onClick={handleAddPlan} className="bg-[#B4770E] hover:bg-[#8B5A0B]">
+                    <Button onClick={handleAddPlan} className="bg-primary hover:brightness-90">
                       <Plus className="h-4 w-4 mr-2" />
                       Create New Plan
                     </Button>
@@ -1919,7 +1919,7 @@ export const AdminConfigurationPage = () => {
                           <tr
                             key={plan.id}
                             className={`border-b hover:bg-gray-50 ${
-                              plan.isDefault ? 'bg-[#B4770E]/5' : ''
+                              plan.isDefault ? 'bg-primary/5' : ''
                             }`}
                           >
                             <td className="p-3">
@@ -1935,7 +1935,7 @@ export const AdminConfigurationPage = () => {
                                 />
                                 <span className="font-semibold">{plan.name}</span>
                                 {plan.isDefault && (
-                                  <Badge className="bg-[#B4770E] text-white text-xs">
+                                  <Badge className="bg-primary text-white text-xs">
                                     Default
                                   </Badge>
                                 )}
@@ -1944,7 +1944,7 @@ export const AdminConfigurationPage = () => {
                             <td className="p-3 text-sm text-gray-600 max-w-xs truncate">
                               {plan.description}
                             </td>
-                            <td className="p-3 font-semibold text-[#B4770E]">
+                            <td className="p-3 font-semibold text-primary">
                               ${plan.monthlyPrice}
                             </td>
                             <td className="p-3 text-sm text-gray-600">
@@ -2020,14 +2020,14 @@ export const AdminConfigurationPage = () => {
                       key={plan.id}
                       className={`relative border-2 rounded-lg p-4 transition-all ${
                         plan.isDefault
-                          ? 'border-[#B4770E] bg-[#B4770E]/5'
+                          ? 'border-primary bg-primary/5'
                           : 'border-gray-200 hover:border-gray-300'
                       } ${!plan.active ? 'opacity-50' : ''}`}
                     >
                       {/* Status Badges */}
                       <div className="absolute top-2 right-2 flex gap-1">
                         {plan.isDefault && (
-                          <span className="px-2 py-0.5 bg-[#B4770E] text-white text-xs rounded-full">
+                          <span className="px-2 py-0.5 bg-primary text-white text-xs rounded-full">
                             Default
                           </span>
                         )}
@@ -2049,7 +2049,7 @@ export const AdminConfigurationPage = () => {
                       {/* Pricing */}
                       <div className="mb-3 pb-3 border-b">
                         <div className="flex items-baseline gap-1 mb-1">
-                          <span className="text-2xl font-bold text-[#B4770E]">
+                          <span className="text-2xl font-bold text-primary">
                             ${plan.monthlyPrice}
                           </span>
                           <span className="text-sm text-gray-500">/month</span>
@@ -2072,7 +2072,7 @@ export const AdminConfigurationPage = () => {
                       <div className="space-y-2 mb-3 text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-600">Commission:</span>
-                          <span className="font-semibold text-[#B4770E]">
+                          <span className="font-semibold text-primary">
                             {plan.commission}%
                           </span>
                         </div>
@@ -2153,7 +2153,7 @@ export const AdminConfigurationPage = () => {
                         {!plan.isDefault && (
                           <button
                             onClick={() => handleSetDefaultPlan(plan.id)}
-                            className="text-[#B4770E] hover:underline"
+                            className="text-primary hover:underline"
                           >
                             Set as Default
                           </button>
@@ -2541,7 +2541,7 @@ export const AdminConfigurationPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-[#B4770E]" />
+                  <CreditCard className="h-5 w-5 text-primary" />
                   Billing & Payment Settings
                 </CardTitle>
                 <CardDescription>
@@ -2648,7 +2648,7 @@ export const AdminConfigurationPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Gift className="h-5 w-5 text-[#B4770E]" />
+                  <Gift className="h-5 w-5 text-primary" />
                   Trial & Promotional Settings
                 </CardTitle>
                 <CardDescription>
@@ -2756,7 +2756,7 @@ export const AdminConfigurationPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Percent className="h-5 w-5 text-[#B4770E]" />
+                  <Percent className="h-5 w-5 text-primary" />
                   Commission & Payout Settings
                 </CardTitle>
                 <CardDescription>
@@ -2833,7 +2833,7 @@ export const AdminConfigurationPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Mail className="h-5 w-5 text-[#B4770E]" />
+                  <Mail className="h-5 w-5 text-primary" />
                   Subscription Email Notifications
                 </CardTitle>
                 <CardDescription>
