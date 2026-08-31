@@ -336,7 +336,7 @@ export function CategoryPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="flex items-center justify-end md:justify-between gap-3 py-3"
+            className="flex items-center justify-start md:justify-between gap-3 py-3"
           >
             <div className="hidden md:flex items-center gap-1.5 text-[11px] text-foreground/40 uppercase tracking-wide min-w-0 overflow-x-auto scrollbar-hide">
               <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors shrink-0">Home</button>
@@ -362,11 +362,11 @@ export function CategoryPage() {
               )}
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
               {/* Featured toggle */}
               <button
                 onClick={() => setShowFeatured(!showFeatured)}
-                className={`px-3 py-1.5 border transition-colors text-xs uppercase tracking-wider whitespace-nowrap ${
+                className={`shrink-0 px-3 py-1.5 border transition-colors text-xs uppercase tracking-wider whitespace-nowrap ${
                   showFeatured
                     ? 'border-foreground bg-foreground text-background'
                     : 'border-foreground/20 hover:border-foreground'
@@ -378,7 +378,7 @@ export function CategoryPage() {
               {/* Mobile Filter Toggle */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="md:hidden px-3 py-1.5 border border-foreground/20 hover:border-foreground transition-colors flex items-center gap-1.5 text-xs"
+                className="md:hidden shrink-0 px-3 py-1.5 border border-foreground/20 hover:border-foreground transition-colors flex items-center gap-1.5 text-xs"
               >
                 <SlidersHorizontal size={13} />
                 Filters
@@ -389,7 +389,7 @@ export function CategoryPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-1.5 border border-foreground/15 bg-background focus:outline-none focus:border-foreground transition-colors cursor-pointer text-xs"
+                className="shrink-0 px-3 py-1.5 border border-foreground/15 bg-background focus:outline-none focus:border-foreground transition-colors cursor-pointer text-xs"
               >
                 {sortOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
