@@ -38,14 +38,13 @@ export function MobileHero() {
   // The header (MobileHomeHeader) centers its logo in a `py-3` row against a
   // 40px-tall sibling (the menu/icon buttons), so its vertical center sits at
   // 12 (top padding) + 20 (half of 40px) = 32px from the header's top edge.
-  // Horizontally it's the middle child of a 3-item `justify-between` row with
-  // a single 40px button on the left but two 40px buttons + gap on the right
-  // (88px), so it's pulled 28px left of true center to keep the flex gaps
-  // even. The header logo itself renders at `size="sm"` (24px tall) vs this
-  // hero logo's 64px base, so the end scale is 24/64.
+  // Horizontally it's absolutely centered at the true viewport middle
+  // (independent of the asymmetric icon groups on either side — see
+  // MobileHomeHeader), so no x-offset is needed here either. The header logo
+  // itself renders at `size="sm"` (24px tall) vs this hero logo's 64px base,
+  // so the end scale is 24/64.
   const restCenter = vh * 0.42;
   const headerCenterY = 32;
-  const headerOffsetX = -28;
   const headerScale = 24 / 64;
   // scrollYProgress reaches this value after exactly (restCenter - headerCenterY)
   // px of scroll — the natural distance for the logo to reach the header.
@@ -53,7 +52,6 @@ export function MobileHero() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
   const logoScale = useTransform(scrollYProgress, [0, arrivalProgress], [1, headerScale]);
   const logoOpacity = useTransform(scrollYProgress, [0, arrivalProgress * 0.85, arrivalProgress], [1, 1, 0]);
-  const logoX = useTransform(scrollYProgress, [0, arrivalProgress], [0, headerOffsetX]);
 
   return (
     <section
@@ -76,7 +74,7 @@ export function MobileHero() {
 
       {/* Scroll-linked logo watermark — shrinks and rides up into the header, matching web */}
       <motion.div
-        style={{ scale: logoScale, x: logoX, opacity: logoOpacity, top: restCenter }}
+        style={{ scale: logoScale, opacity: logoOpacity, top: restCenter }}
         className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
       >
         <motion.div

@@ -65,7 +65,7 @@ export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
       )}
 
       {/* Logo and Action Icons Section */}
-      <div className={`px-4 py-3 flex items-center justify-between ${over ? '' : 'border-b border-white/20'}`}>
+      <div className={`relative px-4 py-3 flex items-center justify-between ${over ? '' : 'border-b border-white/20'}`}>
         <button
           onClick={() => setMenuOpen((open) => !open)}
           className={`relative w-10 h-10 -ml-2 rounded-full flex items-center justify-center transition-colors touch-manipulation ${over ? 'bg-black/30' : 'active:bg-foreground/5'}`}
@@ -75,9 +75,12 @@ export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
           {menuOpen ? <X size={24} className={iconColor} /> : <Menu size={24} className={iconColor} />}
         </button>
 
+        {/* True viewport-center regardless of the icon groups' widths on either
+            side (they're asymmetric: one 40px button left, two + gap right) —
+            matches the same absolute-centering technique Navigation.tsx uses. */}
         <div
           style={{ opacity: logoOpacity }}
-          className={logoOpacity < 1 ? 'pointer-events-none' : ''}
+          className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${logoOpacity < 1 ? 'pointer-events-none' : ''}`}
         >
           <RlocoLogo size="sm" className={over ? '[filter:drop-shadow(0_1px_4px_rgba(0,0,0,0.5))]' : ''} />
         </div>
