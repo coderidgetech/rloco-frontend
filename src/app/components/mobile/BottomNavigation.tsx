@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
-import { Home, Grid, Search, ShoppingBag, User, type LucideIcon } from 'lucide-react';
+import { Home, Search, ShoppingBag, User, type LucideIcon } from 'lucide-react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useCart } from '@/app/context/CartContext';
 import { useUser } from '@/app/context/UserContext';
@@ -57,7 +57,6 @@ export function BottomNavigation() {
     badge?: number;
   }[] = [
     { key: 'Home', Icon: Home, active: location.pathname === '/', onClick: () => navigate('/') },
-    { key: 'Categories', Icon: Grid, active: location.pathname === '/categories', onClick: () => navigate('/categories') },
     { key: 'Search', Icon: Search, active: isSearchTabActive, onClick: () => openSearch() },
     { key: 'Account', Icon: User, active: isAccountPath(location.pathname), onClick: goAccount },
     { key: 'Cart', Icon: ShoppingBag, active: location.pathname === '/cart', onClick: () => navigate('/cart'), badge: itemCount },
@@ -75,7 +74,7 @@ export function BottomNavigation() {
         pointerEvents: visible ? 'auto' : 'none',
       }}
     >
-      <div className="flex items-center justify-around h-16 px-2">
+      <div className="flex items-center justify-around h-14 px-2">
         {tabs.map(({ key, Icon, active, onClick, badge }) => (
           <button
             key={key}
@@ -85,12 +84,12 @@ export function BottomNavigation() {
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             <div
-              className={`relative flex items-center justify-center w-11 h-11 rounded-full transition-colors ${
+              className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
                 active ? 'bg-foreground/10' : ''
               }`}
             >
               <Icon
-                size={23}
+                size={20}
                 strokeWidth={active ? 2.4 : 1.8}
                 className={active ? 'text-foreground/80' : 'text-foreground/50'}
               />
