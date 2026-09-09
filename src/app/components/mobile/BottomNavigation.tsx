@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { useEffect, useRef, useState } from 'react';
 import { Home, Grid, Search, ShoppingBag, User, type LucideIcon } from 'lucide-react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useCart } from '@/app/context/CartContext';
@@ -13,6 +14,29 @@ export function BottomNavigation() {
   const { openSearch, isSearchOpen } = useSearchOverlay();
   const { itemCount } = useCart();
   const { isAuthenticated } = useUser();
+
+  // Visible near the top and while scrolling up; hides while scrolling down,
+  // so it doesn't sit over content the user is actively reading further down
+  // the page.
+  const [visible, setVisible] = useState(true);
+  const lastScrollY = useRef(0);
+  useEffect(() => {
+    lastScrollY.current = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - lastScrollY.current;
+      if (y < 40) {
+        setVisible(true);
+      } else if (delta > 4) {
+        setVisible(false);
+      } else if (delta < -4) {
+        setVisible(true);
+      }
+      lastScrollY.current = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const isSearchTabActive =
     isSearchOpen ||
@@ -42,10 +66,13 @@ export function BottomNavigation() {
   return (
     <motion.nav
       initial={false}
+      animate={{ y: visible ? 0 : 96, opacity: visible ? 1 : 0 }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       className="fixed left-4 right-4 z-50 md:hidden rounded-full bg-white/35 backdrop-blur-xl border border-white/25"
       style={{
         bottom: 'calc(0.75rem + env(safe-area-inset-bottom))',
         boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+        pointerEvents: visible ? 'auto' : 'none',
       }}
     >
       <div className="flex items-center justify-around h-16 px-2">
