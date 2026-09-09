@@ -126,7 +126,7 @@ export function Navigation() {
   return (
     <>
       <nav
-        className="fixed left-0 right-0 top-0 z-50 min-h-14 border-b border-transparent transition-all duration-300 dark:border-border/30 dark:bg-background/95"
+        className="fixed left-0 right-0 top-0 z-50 min-h-12 md:min-h-14 border-b border-transparent transition-all duration-300 dark:border-border/30 dark:bg-background/95"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
           transform: visible ? 'translateY(0)' : 'translateY(-100%)',
@@ -138,16 +138,16 @@ export function Navigation() {
           boxShadow: (location.pathname === '/' && !scrolled) ? 'none' : '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
         }}
       >
-        <div className="mx-auto flex h-14 w-full min-w-0 max-w-[100%] items-center gap-1.5 px-3 sm:gap-2 sm:px-4 md:px-6 lg:px-10 xl:px-14 2xl:px-20">
+        <div className="mx-auto flex h-12 md:h-14 w-full min-w-0 max-w-[100%] items-center gap-1.5 px-3 sm:gap-2 sm:px-4 md:px-6 lg:px-10 xl:px-14 2xl:px-20">
           <div className="relative flex h-full w-full min-w-0 items-center justify-between gap-1">
             <motion.button
               whileTap={{ scale: 0.94 }}
               onClick={() => setIsOpen(!isOpen)}
-              className={`md:hidden flex h-10 w-10 shrink-0 items-center justify-center rounded-lg p-2 -ml-2 transition-colors ${isTransparent ? 'text-white' : 'text-foreground'}`}
+              className={`md:hidden flex h-9 w-9 shrink-0 items-center justify-center rounded-lg p-2 -ml-1.5 transition-colors ${isTransparent ? 'text-white' : 'text-foreground'}`}
               aria-label={isOpen ? 'Close menu' : 'Open menu'}
               type="button"
             >
-              {isOpen ? <X size={22} strokeWidth={2} /> : <Menu size={22} strokeWidth={2} />}
+              {isOpen ? <X size={20} strokeWidth={2} /> : <Menu size={20} strokeWidth={2} />}
             </motion.button>
 
             <motion.div
@@ -217,7 +217,7 @@ export function Navigation() {
                 pointerEvents: location.pathname === '/' && !scrolled && !isMobile ? 'none' : 'auto',
               }}
             >
-              <RlocoLogo size="sm" />
+              <RlocoLogo size="sm" className="[&_svg]:h-5 md:[&_svg]:h-6" />
             </motion.div>
 
             <div className="flex min-w-0 flex-1 items-center justify-end gap-4 pl-3 sm:gap-4 md:gap-3 md:pl-2 lg:gap-4 xl:gap-6">

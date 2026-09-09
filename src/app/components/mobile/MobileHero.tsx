@@ -35,17 +35,17 @@ export function MobileHero() {
   // need to time the scale/opacity/x transforms to *finish* exactly when
   // natural scroll has carried it to the header's vertical position.
   //
-  // The header (MobileHomeHeader) centers its logo in a `py-3` row against a
-  // 40px-tall sibling (the menu/icon buttons), so its vertical center sits at
-  // 12 (top padding) + 20 (half of 40px) = 32px from the header's top edge.
+  // The header (MobileHomeHeader) centers its logo in a `py-2` row against a
+  // 36px-tall sibling (the menu/icon buttons), so its vertical center sits at
+  // 8 (top padding) + 18 (half of 36px) = 26px from the header's top edge.
   // Horizontally it's absolutely centered at the true viewport middle
   // (independent of the asymmetric icon groups on either side — see
   // MobileHomeHeader), so no x-offset is needed here either. The header logo
-  // itself renders at `size="sm"` (24px tall) vs this hero logo's 64px base,
-  // so the end scale is 24/64.
+  // itself renders at 20px tall vs this hero logo's 64px base, so the end
+  // scale is 20/64.
   const restCenter = vh * 0.42;
-  const headerCenterY = 32;
-  const headerScale = 24 / 64;
+  const headerCenterY = 26;
+  const headerScale = 20 / 64;
   // scrollYProgress reaches this value after exactly (restCenter - headerCenterY)
   // px of scroll — the natural distance for the logo to reach the header.
   const arrivalProgress = Math.max(0.05, (restCenter - headerCenterY) / vh);
