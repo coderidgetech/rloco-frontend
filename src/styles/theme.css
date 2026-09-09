@@ -389,18 +389,20 @@ html {
     word-break: break-word;
   }
 
-  /* Below fixed global Navigation + notch safe area */
+  /* Below fixed global Navigation + notch safe area. Matches the shrunk
+     mobile toolbar (~52px tall) — was tuned for a taller header and left a
+     visible gap above page content once the toolbar was reduced. */
   .pt-page-nav {
-    padding-top: max(3.75rem, calc(2.875rem + env(safe-area-inset-top, 0px)));
+    padding-top: max(3.25rem, calc(2.5rem + env(safe-area-inset-top, 0px)));
   }
   @media (min-width: 640px) {
     .pt-page-nav {
-      padding-top: max(5rem, calc(4.25rem + env(safe-area-inset-top, 0px)));
+      padding-top: max(4.25rem, calc(3.5rem + env(safe-area-inset-top, 0px)));
     }
   }
   @media (min-width: 768px) {
     .pt-page-nav {
-      padding-top: 6rem;
+      padding-top: 5rem;
     }
   }
 

@@ -8,7 +8,6 @@ import {
   ShieldCheck,
   Truck,
   RefreshCw,
-  ArrowLeft,
   ChevronDown,
   ChevronUp,
   MapPin,
@@ -493,14 +492,6 @@ export function CartPage() {
         <div className="page-container py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2 min-w-0">
-              <button
-                type="button"
-                onClick={() => navigate(-1)}
-                className="p-2 hover:bg-muted rounded-full transition-colors mr-2 shrink-0"
-                aria-label="Back"
-              >
-                <ArrowLeft size={20} />
-              </button>
               <h1 className="text-lg md:text-xl font-medium truncate">Your Bag</h1>
             </div>
           </div>

@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { useParams, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
-import { ChevronRight, SlidersHorizontal, X } from 'lucide-react';
+import { SlidersHorizontal, X } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { ProductCard } from '../components/ProductCard';
 import { MobileProductCard, MobileProductCardData } from '../components/mobile/MobileProductCard';
@@ -331,65 +331,34 @@ export function CategoryPage() {
       {/* Page header */}
       <div className="border-b border-foreground/5">
         <div className="page-container">
-          {/* Consolidated: breadcrumb, Featured toggle, Filters trigger and Sort — one row */}
+          {/* Consolidated: title, Filter, Sort — always one line, never scrolls
+              (title truncates first if space is tight). */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="flex items-center justify-start md:justify-between gap-3 py-3"
+            className="flex items-center justify-between gap-2 py-3"
           >
-            <div className="hidden md:flex items-center gap-1.5 text-[11px] text-foreground/40 uppercase tracking-wide min-w-0 overflow-x-auto scrollbar-hide">
-              <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors shrink-0">Home</button>
-              <ChevronRight size={11} className="shrink-0" />
-              {isGiftRoute ? (
-                <span className="text-foreground/60 shrink-0">Gift for {isGiftHer ? 'Her' : 'Him'}</span>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => { setSelectedCategory('All'); navigate(`/category/${selectedGender}`); }}
-                    className="hover:text-foreground transition-colors capitalize shrink-0"
-                  >
-                    {selectedGender === 'all' ? 'All' : selectedGender}
-                  </button>
-                  {selectedCategory !== 'All' && (
-                    <>
-                      <ChevronRight size={11} className="shrink-0" />
-                      <span className="text-foreground/60 capitalize shrink-0">{selectedCategory}</span>
-                    </>
-                  )}
-                </>
-              )}
+            <div className="min-w-0 flex-1">
+              <h1 className="text-base md:text-3xl font-light tracking-tight truncate">{pageTitle}</h1>
             </div>
 
-            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-              {/* Featured toggle */}
-              <button
-                onClick={() => setShowFeatured(!showFeatured)}
-                className={`shrink-0 px-3 py-1.5 border transition-colors text-xs uppercase tracking-wider whitespace-nowrap ${
-                  showFeatured
-                    ? 'border-foreground bg-foreground text-background'
-                    : 'border-foreground/20 hover:border-foreground'
-                }`}
-              >
-                Featured Only
-              </button>
-
-              {/* Mobile Filter Toggle */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Mobile Filter Toggle — icon-only pill */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="md:hidden shrink-0 px-3 py-1.5 border border-foreground/20 hover:border-foreground transition-colors flex items-center gap-1.5 text-xs"
+                aria-label="Filters"
+                className="md:hidden shrink-0 relative w-9 h-9 rounded-full flex items-center justify-center border border-foreground/15 hover:border-foreground/40 bg-background transition-colors"
               >
-                <SlidersHorizontal size={13} />
-                Filters
-                {hasActiveFilters && <span className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                <SlidersHorizontal size={15} className="text-foreground/70" />
+                {hasActiveFilters && <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-background" />}
               </button>
 
               {/* Sort Dropdown */}
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="shrink-0 px-3 py-1.5 border border-foreground/15 bg-background focus:outline-none focus:border-foreground transition-colors cursor-pointer text-xs"
+                className="shrink-0 h-9 max-w-[100px] sm:max-w-none px-3.5 rounded-full border border-foreground/15 hover:border-foreground/40 bg-background focus:outline-none focus:border-foreground/40 transition-colors cursor-pointer text-xs"
               >
                 {sortOptions.map(option => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -397,14 +366,6 @@ export function CategoryPage() {
               </select>
             </div>
           </motion.div>
-
-          {/* Title */}
-          <div className="flex items-baseline gap-3 pb-3">
-            <h1 className="text-2xl md:text-3xl font-light tracking-tight">{pageTitle}</h1>
-            <span className="text-xs text-foreground/40">
-              {filteredProducts.length} {filteredProducts.length === 1 ? 'item' : 'items'}
-            </span>
-          </div>
 
           {/* Active Filters Display */}
           {hasActiveFilters && (

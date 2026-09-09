@@ -140,7 +140,7 @@ export function Featured() {
               className="group"
             >
               <div 
-                className="relative aspect-[4/5] overflow-hidden mb-3 md:mb-4 bg-accent rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-500 cursor-pointer"
+                className="relative aspect-[2/3] overflow-hidden mb-2 md:mb-2.5 bg-accent rounded-lg shadow-lg hover:shadow-2xl transition-shadow duration-500 cursor-pointer"
                 onClick={() => navigate(`/product/${product.id}`)}
               >
                 <motion.img
@@ -158,23 +158,24 @@ export function Featured() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={(e) => toggleWishlist(product, e)}
-                  className={`absolute z-10 top-2.5 right-2.5 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-md backdrop-blur-sm ${
-                    isInWishlist(String(product.id))
-                      ? 'bg-red-500 text-white'
-                      : 'bg-white/90 text-foreground hover:bg-white'
-                  }`}
+                  className="absolute z-10 top-2.5 right-2.5 w-8 h-8 flex items-center justify-center"
                 >
-                  <Heart size={14} fill={isInWishlist(String(product.id)) ? 'currentColor' : 'none'} />
+                  <Heart
+                    size={19}
+                    className={isInWishlist(String(product.id)) ? 'text-red-500' : 'text-white'}
+                    fill="currentColor"
+                    style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }}
+                  />
                 </motion.button>
 
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
               </div>
 
-              <div className="text-xs md:text-sm text-foreground/50 mb-1 md:mb-2 tracking-wider uppercase">
+              <div className="text-xs md:text-sm text-foreground/50 mb-0.5 md:mb-1 tracking-wider uppercase">
                 {product.category}
               </div>
               <h3
-                className="text-sm md:text-base mb-1.5 group-hover:text-foreground/70 transition-colors line-clamp-1 cursor-pointer"
+                className="text-xs md:text-sm mb-1 group-hover:text-foreground/70 transition-colors line-clamp-1 cursor-pointer"
                 onClick={() => navigate(`/product/${product.id}`)}
               >
                 {product.name}
@@ -196,7 +197,7 @@ export function Featured() {
               )}
               <div className="relative flex items-center justify-between gap-1.5">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-sm font-medium">{formatPrice(product.price)}</span>
+                  <span className="text-xs font-medium">{formatPrice(product.price)}</span>
                   {product.original_price && (
                     <span className="text-xs text-foreground/40 line-through shrink-0">
                       {formatPrice(product.original_price)}

@@ -47,8 +47,8 @@ export function Footer() {
     <footer className="relative bg-gradient-to-b from-white via-neutral-50 to-neutral-100 dark:from-neutral-900 dark:via-neutral-950 dark:to-black rounded-t-[2rem] md:rounded-t-[2.5rem] overflow-hidden">
       <div className="page-container pt-14 pb-10 md:pt-20 md:pb-14">
         {/* Brand */}
-        <div className="flex justify-center mb-12 md:mb-16">
-          <RlocoLogo size="2xl" />
+        <div className="flex justify-center mb-12 md:mb-16 px-8">
+          <RlocoLogo size="2xl" className="[&_svg]:h-10 md:[&_svg]:h-20" />
         </div>
 
         {/* Link groups */}

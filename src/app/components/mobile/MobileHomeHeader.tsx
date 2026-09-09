@@ -82,7 +82,7 @@ export function MobileHomeHeader(_props: MobileHomeHeaderProps = {}) {
           style={{ opacity: logoOpacity }}
           className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${logoOpacity < 1 ? 'pointer-events-none' : ''}`}
         >
-          <RlocoLogo size="sm" className={`[&_svg]:h-5 ${over ? '[filter:drop-shadow(0_1px_4px_rgba(0,0,0,0.5))]' : ''}`} />
+          <RlocoLogo size="sm" className={`[&_svg]:h-[18px] ${over ? '[filter:drop-shadow(0_1px_4px_rgba(0,0,0,0.5))]' : ''}`} />
         </div>
 
         <div className="flex items-center gap-1">

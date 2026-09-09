@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ChevronRight, Search, SlidersHorizontal, X, ChevronDown, Star } from 'lucide-react';
+import { Search, SlidersHorizontal, X, ChevronDown, Star } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { ProductCard } from '../components/ProductCard';
 import { MobileProductCard, MobileProductCardData } from '../components/mobile/MobileProductCard';
@@ -249,43 +249,6 @@ export function AllProductsPage() {
 
   return (
     <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
-      {/* Breadcrumb */}
-      <div className="border-b border-foreground/5 bg-background">
-        <div className="page-container py-3">
-          <div className="flex items-center gap-2 text-xs text-foreground/50">
-            <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors uppercase">
-              Home
-            </button>
-            <ChevronRight size={12} />
-            {!genderLabel && selectedCategory === 'All' ? (
-              // No gender/category filter applied → reflect sale/new-arrivals context if any
-              <span className="text-foreground uppercase">{pageTitle}</span>
-            ) : (
-              <>
-                {genderLabel && (
-                  selectedCategory !== 'All' ? (
-                    <>
-                      <button
-                        onClick={() => setSelectedCategory('All')}
-                        className="hover:text-foreground transition-colors uppercase capitalize"
-                      >
-                        {genderLabel}
-                      </button>
-                      <ChevronRight size={12} />
-                    </>
-                  ) : (
-                    <span className="text-foreground uppercase capitalize">{genderLabel}</span>
-                  )
-                )}
-                {selectedCategory !== 'All' && (
-                  <span className="text-foreground uppercase">{selectedCategory}</span>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Header */}
       <div className="page-container py-3 md:py-4">
         <motion.div
@@ -294,36 +257,31 @@ export function AllProductsPage() {
           transition={{ duration: 0.6 }}
           className="mb-3 md:mb-4"
         >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
-            {/* Title + count: redundant on mobile (breadcrumb + active-filter chips
-                already convey context), so shown from md+ only. */}
-            <div className="hidden md:block">
-              <h1 className="text-2xl md:text-4xl mb-0.5 md:mb-2">{pageTitle}</h1>
-              <p className="text-sm md:text-base text-foreground/60">
-                Showing {pagedProducts.length} of {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
-              </p>
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-base md:text-4xl truncate">{pageTitle}</h1>
             </div>
 
-            <div className="flex items-end gap-2.5 md:gap-3">
-              {/* Mobile Filter Toggle */}
+            <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
+              {/* Mobile Filter Toggle — icon-only pill */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="md:hidden flex-1 px-4 py-2.5 border border-foreground/20 hover:border-foreground transition-colors flex items-center justify-center gap-2 text-sm"
+                aria-label="Filters"
+                className="md:hidden shrink-0 relative w-9 h-9 rounded-full flex items-center justify-center border border-foreground/15 hover:border-foreground/40 bg-background transition-colors"
               >
-                <SlidersHorizontal size={16} />
-                Filters
+                <SlidersHorizontal size={15} className="text-foreground/70" />
                 {hasActiveFilters && (
-                  <span className="w-2 h-2 rounded-full bg-primary"></span>
+                  <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-background"></span>
                 )}
               </button>
 
               {/* Sort Dropdown */}
-              <div className="flex flex-1 flex-col gap-2 md:flex-none">
-                <span className="hidden md:block text-xs uppercase tracking-wider text-foreground/60">Sort By</span>
+              <div className="shrink-0 flex items-center gap-2">
+                <span className="hidden md:inline text-xs uppercase tracking-wider text-foreground/60">Sort By</span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full px-4 py-2.5 md:py-2 border border-foreground/20 bg-background focus:outline-none focus:border-foreground transition-colors cursor-pointer text-sm"
+                  className="shrink-0 h-9 max-w-[100px] md:max-w-none md:h-auto px-3.5 md:px-4 rounded-full md:rounded-none border border-foreground/15 md:border-foreground/20 hover:border-foreground/40 md:hover:border-foreground bg-background focus:outline-none focus:border-foreground/40 md:focus:border-foreground transition-colors cursor-pointer text-xs md:text-sm"
                 >
                   {showOnSale && <option value="discount">Highest Discount</option>}
                   {sortOptions.map(option => (

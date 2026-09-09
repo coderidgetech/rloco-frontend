@@ -20,11 +20,13 @@ import { AddressFormModal } from './AddressFormModal';
 import { normalizeCountry } from '../lib/market';
 import { Order as APIOrder, PaymentTransaction } from '../types/api';
 import { useUser } from '../context/UserContext';
-import { useCart } from '../context/CartContext';
 import { authService } from '../services/authService';
 import { PH } from '../lib/formPlaceholders';
 import { getApiErrorMessage, isUnauthorizedApiError } from '../lib/apiErrors';
 import { accountPath, isAccountPath, isAccountSection, type AccountSection } from '../lib/accountRoutes';
+import { ProductCard } from './ProductCard';
+import { MobileProductCard, MobileProductCardData } from './mobile/MobileProductCard';
+import { useIsMobile } from '../hooks/useIsMobile';
 import {
   DIAL_COUNTRIES,
   buildPhoneDigitsForApi,
@@ -159,8 +161,8 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
-  const { items: wishlistItems, removeFromWishlist } = useWishlist();
-  const { addToCart } = useCart();
+  const { items: wishlistItems } = useWishlist();
+  const isMobile = useIsMobile();
   const { logout, refreshUser } = useUser();
   const [settingsNotifications, setSettingsNotifications] = useState(loadSettingsNotifications);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
@@ -513,18 +515,18 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
             style={{ backgroundColor: 'var(--background, #ffffff)' }}
             onClick={(e) => !isStandalone && e.stopPropagation()}
           >
-            <div className={`${isStandalone ? 'pt-20' : 'h-full'} bg-white dark:bg-background flex flex-col relative`} style={{ backgroundColor: 'var(--background, #ffffff)' }}>
+            <div className={`${isStandalone ? 'pt-page-nav' : 'h-full'} bg-white dark:bg-background flex flex-col relative`} style={{ backgroundColor: 'var(--background, #ffffff)' }}>
               {/* Header */}
               <div className="border-b border-border bg-white dark:bg-background" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-                <div className="page-section py-6">
+                <div className="page-section py-3">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User size={32} className="text-primary" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User size={22} className="text-primary" />
                       </div>
                       <div>
-                        <h1 className="text-2xl md:text-3xl">My Account</h1>
-                        <p className="text-sm text-muted-foreground">
+                        <h1 className="text-lg md:text-2xl">My Account</h1>
+                        <p className="text-xs text-muted-foreground">
                           {profileData.firstName} {profileData.lastName}
                         </p>
                       </div>
@@ -543,9 +545,9 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
 
               {/* Content */}
               <div className="flex-1 overflow-y-auto bg-white dark:bg-background" style={{ backgroundColor: 'var(--background, #ffffff)' }}>
-                <div className="page-section py-8">
+                <div className="page-section pt-4 pb-8 md:py-8">
                   {/* Mobile: compact horizontal tab strip instead of the vertical sidebar below */}
-                  <div className="lg:hidden -mx-4 px-4 mb-6 flex gap-2 overflow-x-auto scrollbar-hide">
+                  <div className="lg:hidden -mx-4 px-4 mb-4 flex gap-2 overflow-x-auto scrollbar-hide">
                     {tabs.map((tab) => {
                       const Icon = tab.icon;
                       const count =
@@ -1170,59 +1172,15 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                 </motion.button>
                               </div>
                             ) : (
-                              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {wishlistItems.map((item) => (
-                                  <motion.div
-                                    key={item.id}
-                                    whileHover={{ scale: 1.02 }}
-                                    className="bg-muted/30 rounded-xl overflow-hidden"
-                                  >
-                                    <div className="aspect-square bg-muted">
-                                      <img
-                                        src={item.image}
-                                        alt={item.name}
-                                        className="w-full h-full object-cover"
-                                        style={{ filter: 'brightness(1.05) contrast(1.05) saturate(1.1)' }}
-                                      />
-                                    </div>
-                                    <div className="p-4">
-                                      <h3 className="font-medium mb-1 truncate">{item.name}</h3>
-                                      <p className="font-medium text-primary mb-3">${item.price}</p>
-                                      <div className="flex gap-2">
-                                        <motion.button
-                                          whileHover={{ scale: 1.05 }}
-                                          whileTap={{ scale: 0.95 }}
-                                          onClick={async () => {
-                                            try {
-                                              await addToCart({
-                                                product_id: String(item.id),
-                                                product_name: item.name,
-                                                image: item.image,
-                                                price: item.price,
-                                                size: 'M',
-                                                quantity: 1,
-                                              });
-                                              toast.success('Added to cart!');
-                                            } catch (err: unknown) {
-                                              toast.error(getApiErrorMessage(err, 'Failed to add to cart'));
-                                            }
-                                          }}
-                                          className="flex-1 px-3 py-2 rounded-lg text-sm flex items-center justify-center gap-2 bg-primary text-primary-foreground"
-                                        >
-                                          Add to Bag
-                                        </motion.button>
-                                        <motion.button
-                                          whileHover={{ scale: 1.05 }}
-                                          whileTap={{ scale: 0.95 }}
-                                          onClick={() => removeFromWishlist(item.id)}
-                                          className="px-3 py-2 border border-border rounded-lg"
-                                        >
-                                          <Trash2 size={16} />
-                                        </motion.button>
-                                      </div>
-                                    </div>
-                                  </motion.div>
-                                ))}
+                              /* Same card used everywhere else products show in a grid */
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                                {wishlistItems.map((item, index) =>
+                                  isMobile ? (
+                                    <MobileProductCard key={item.id} product={item as unknown as MobileProductCardData} index={index} wishlistView />
+                                  ) : (
+                                    <ProductCard key={item.id} product={item as any} index={index} wishlistView />
+                                  )
+                                )}
                               </div>
                             )}
                           </motion.div>

@@ -41,11 +41,11 @@ export function MobileHero() {
   // Horizontally it's absolutely centered at the true viewport middle
   // (independent of the asymmetric icon groups on either side — see
   // MobileHomeHeader), so no x-offset is needed here either. The header logo
-  // itself renders at 20px tall vs this hero logo's 64px base, so the end
-  // scale is 20/64.
+  // itself renders at 18px tall vs this hero logo's 56px base, so the end
+  // scale is 18/56.
   const restCenter = vh * 0.42;
   const headerCenterY = 26;
-  const headerScale = 20 / 64;
+  const headerScale = 18 / 56;
   // scrollYProgress reaches this value after exactly (restCenter - headerCenterY)
   // px of scroll — the natural distance for the logo to reach the header.
   const arrivalProgress = Math.max(0.05, (restCenter - headerCenterY) / vh);
@@ -75,17 +75,18 @@ export function MobileHero() {
       {/* Scroll-linked logo watermark — shrinks and rides up into the header, matching web */}
       <motion.div
         style={{ scale: logoScale, opacity: logoOpacity, top: restCenter }}
-        className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
+        className="pointer-events-none absolute left-1/2 z-10 w-full -translate-x-1/2 -translate-y-1/2 px-10"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="flex justify-center"
           style={{
             filter: 'drop-shadow(0 4px 30px rgba(0,0,0,0.3)) drop-shadow(0 0 40px rgba(241,176,65,0.15))',
           }}
         >
-          <RlocoLogo size="3xl" className="[&_svg]:h-16" />
+          <RlocoLogo size="3xl" className="[&_svg]:h-14 [&_svg]:max-w-full" />
         </motion.div>
       </motion.div>
     </section>

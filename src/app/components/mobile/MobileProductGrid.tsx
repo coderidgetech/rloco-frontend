@@ -46,7 +46,7 @@ export function MobileProductGrid({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 px-4">
+      <div className="grid grid-cols-2 gap-2 px-4">
         {shown.map((product, index) => (
           <MobileProductCard key={`${product.id}-${index}`} product={product} index={index} />
         ))}

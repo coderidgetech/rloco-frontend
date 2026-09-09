@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Star, Truck, RefreshCw, Check, Shield, Award, Package, Sparkles, ShoppingBag, Edit2, Trash2, ThumbsUp, Share2, X } from 'lucide-react';
+import { Heart, Star, Truck, RefreshCw, Check, ShoppingBag, Edit2, Trash2, ThumbsUp, Share2, X, Flag } from 'lucide-react';
 import { Product } from '../types/api';
 import { useState, useEffect, useRef } from 'react';
 import { useCart } from '../context/CartContext';
@@ -8,28 +8,15 @@ import { toast } from 'sonner';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Footer } from '../components/Footer';
 import { ProductRecommendationSection } from '../components/ProductRecommendationSection';
-import { CompleteTheLookSection } from '../components/CompleteTheLookSection';
 import { useProduct, useProductVariants } from '../hooks/useProducts';
 import { productService } from '../services/productService';
 import { reviewService } from '../services/reviewService';
 import { ProductReview } from '../types/api';
 import { useUser } from '../context/UserContext';
 import { useCurrency } from '../context/CurrencyContext';
-import { useSiteConfig } from '../context/SiteConfigContext';
 import { PLACEHOLDER_IMAGE } from '../constants';
 import { PH } from '../lib/formPlaceholders';
 import { getApiErrorMessage } from '../lib/apiErrors';
-
-interface Review {
-  id: number;
-  author: string;
-  rating: number;
-  date: string;
-  comment: string;
-  verified: boolean;
-}
-
-// Mock reviews removed - using API reviews instead
 
 const getColorHex = (colorName: string): string => {
   const colorMap: Record<string, string> = {
@@ -93,6 +80,7 @@ export function ProductDetailPage() {
   const [editingReview, setEditingReview] = useState<string | null>(null);
   const [editReviewForm, setEditReviewForm] = useState({ rating: 5, title: '', comment: '' });
   const [markingHelpful, setMarkingHelpful] = useState<Set<string>>(new Set());
+  const [reportedReviews, setReportedReviews] = useState<Set<string>>(new Set());
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   
   const [selectedImage, setSelectedImage] = useState(0);
@@ -109,8 +97,6 @@ export function ProductDetailPage() {
   const { addToCart, items } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { formatPrice, convertPrice, currency, market, country } = useCurrency();
-  const { config } = useSiteConfig();
-  const storeName = config.store?.name || 'RLOKO';
 
   // Fetch all products for recommendations
   useEffect(() => {
@@ -333,25 +319,6 @@ export function ProductDetailPage() {
     .sort((a, b) => b.rating - a.rating)
     .slice(0, 6);
 
-  // Get products often bought together (same price range)
-  const completeTheLook = allProducts
-    .filter(p => 
-      String(p.id) !== String(product.id) && 
-      Math.abs(p.price - product.price) < 50 &&
-      p.category !== product.category
-    )
-    .slice(0, 6)
-    .map(p => ({
-      id: String(p.id),
-      name: p.name,
-      price: p.price,
-      originalPrice: p.original_price,
-      image: p.images && p.images.length > 0 ? p.images[0] : PLACEHOLDER_IMAGE,
-      category: p.category,
-      priceINR: p.price_inr,
-      originalPriceINR: p.original_price_inr,
-    }));
-
   // Get product images - ensure we have an array with valid image URLs
   const productImages = product.images && Array.isArray(product.images) && product.images.length > 0 
     ? product.images.filter(img => img && typeof img === 'string' && img.trim() !== '') // Filter out empty/invalid strings
@@ -405,8 +372,8 @@ export function ProductDetailPage() {
   return (
     <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
       {/* Main Content */}
-      <div className="page-section pt-3 pb-8 md:pt-6 md:pb-12">
-        <div className="grid min-w-0 grid-cols-1 gap-8 md:gap-12 lg:grid-cols-2">
+      <div className="page-section pt-3 pb-3 md:pt-6 md:pb-6">
+        <div className="grid min-w-0 grid-cols-1 gap-1.5 md:gap-12 lg:grid-cols-2">
           {/* Left - Images Section */}
           <div className="flex flex-col gap-3">
             {/* Main Image */}
@@ -443,10 +410,34 @@ export function ProductDetailPage() {
 
               {/* Slide counter */}
               {productImages.length > 1 && (
-                <div className="absolute bottom-4 left-4 z-10 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-sm text-white text-xs font-medium tabular-nums">
+                <div className="absolute bottom-4 right-4 z-10 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-sm text-white text-xs font-medium tabular-nums">
                   {selectedImage + 1} / {productImages.length}
                 </div>
               )}
+
+              {/* Reviews badge, overlaid on the image — Myntra-style rating chip */}
+              {ratingCount > 0 && (
+                <div className="absolute bottom-4 left-4 z-10 flex items-center gap-1 rounded bg-green-700 pl-2 pr-1.5 py-1 text-white text-xs font-semibold shadow-sm">
+                  <span>{averageRating}</span>
+                  <Star size={10} className="fill-white text-white" />
+                  <span className="ml-1 pl-1 border-l border-white/40 font-normal text-white/90">{ratingCount}</span>
+                </div>
+              )}
+
+              {/* Wishlist toggle */}
+              <button
+                type="button"
+                onClick={handleToggleWishlist}
+                aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+                className="absolute top-4 right-4 z-10 flex items-center justify-center"
+              >
+                <Heart
+                  size={22}
+                  className={isWishlisted ? 'text-red-500' : 'text-white'}
+                  fill="currentColor"
+                  style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }}
+                />
+              </button>
             </div>
 
             {/* Size Guide — opens in a modal from the "Size Guide" link (Myntra-style) */}
@@ -538,26 +529,17 @@ export function ProductDetailPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="py-3 border-t border-b border-foreground/10 space-y-3"
+              className="py-2 border-b border-foreground/10 space-y-0"
             >
               <div>
-                <h2 className="text-[11px] uppercase text-foreground/60 mb-1 tracking-widest">{storeName}</h2>
-                <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 mb-1">
+                <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
                   <div className="flex items-center gap-2 flex-1 min-w-[65%]">
-                    <h1 className="text-lg md:text-xl">{product.name}</h1>
+                    <h1 className="text-base md:text-lg">{product.name}</h1>
                     {product.badge && (
                       <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 bg-primary text-primary-foreground rounded-full">
                         {product.badge}
                       </span>
                     )}
-                    <button
-                      type="button"
-                      onClick={handleToggleWishlist}
-                      aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-                      className="shrink-0 text-foreground/50 hover:text-foreground transition-colors"
-                    >
-                      <Heart size={18} className={isWishlisted ? 'fill-current text-foreground' : ''} />
-                    </button>
                   </div>
                   {product.sizes && product.sizes.length > 0 && (
                     <button
@@ -569,39 +551,12 @@ export function ProductDetailPage() {
                     </button>
                   )}
                 </div>
-
-                {/* Rating */}
-                <div className="flex items-center gap-2">
-                  {ratingCount > 0 ? (
-                    <>
-                      <div className="flex gap-0.5">
-                        {[1, 2, 3, 4, 5].map((i) => (
-                          <Star
-                            key={i}
-                            size={12}
-                            className={
-                              i <= Math.floor(averageRating)
-                                ? 'fill-foreground text-foreground'
-                                : i - 0.5 <= averageRating
-                                  ? 'fill-foreground/50 text-foreground/50'
-                                  : 'fill-foreground/20 text-foreground/20'
-                            }
-                          />
-                        ))}
-                      </div>
-                      <span className="text-xs font-medium">{averageRating}</span>
-                      <span className="text-xs text-foreground/50">({ratingCount} {ratingCount === 1 ? 'review' : 'reviews'})</span>
-                    </>
-                  ) : (
-                    <span className="text-xs text-foreground/50">No reviews yet</span>
-                  )}
-                </div>
               </div>
 
               {/* Price */}
-              <div>
+              <div className="-mt-1.5">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-xl md:text-2xl">
+                  <span className="text-lg md:text-xl">
                     {formatPrice(product.price, product.price_inr)}
                   </span>
                   {product.original_price && (
@@ -705,9 +660,9 @@ export function ProductDetailPage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
-                className="py-3 border-b border-foreground/10"
+                className="py-2 border-b border-foreground/10"
               >
-                <div className="flex flex-wrap gap-2">
+                <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
                   {product.sizes.map((size) => {
                     const available = product.stock?.[size] ?? 0;
                     const outOfStock = available === 0;
@@ -719,7 +674,7 @@ export function ProductDetailPage() {
                         whileHover={!outOfStock ? { scale: 1.05 } : undefined}
                         whileTap={!outOfStock ? { scale: 0.95 } : undefined}
                         disabled={outOfStock}
-                        className={`min-w-10 h-10 px-3.5 rounded-full border text-xs transition-all flex items-center justify-center ${
+                        className={`h-10 px-2 rounded-full border text-xs transition-all flex items-center justify-center ${
                           outOfStock
                             ? 'border-foreground/10 bg-foreground/5 text-foreground/40 cursor-not-allowed line-through'
                             : selectedSize === size
@@ -740,7 +695,7 @@ export function ProductDetailPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="py-3"
+              className="py-2"
             >
               <div className="flex flex-col gap-2">
                 {isInCart ? (
@@ -795,86 +750,14 @@ export function ProductDetailPage() {
               </div>
             </motion.div>
 
-            {/* Product Highlights */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="py-4 border-t border-foreground/10"
-            >
-              <div className="mb-4">
-                <span className="text-xs font-medium uppercase tracking-widest">Why Choose This</span>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 border border-foreground/10 flex items-center justify-center flex-shrink-0">
-                    <Award size={16} className="text-foreground/60" />
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wide mb-1">Premium Quality</p>
-                    <p className="text-xs text-foreground/50">{product.material || 'Finest materials'}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 border border-foreground/10 flex items-center justify-center flex-shrink-0">
-                    <Shield size={16} className="text-foreground/60" />
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wide mb-1">Authentic</p>
-                    <p className="text-xs text-foreground/50">100% genuine</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 border border-foreground/10 flex items-center justify-center flex-shrink-0">
-                    <Package size={16} className="text-foreground/60" />
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-wide mb-1">Fast Delivery</p>
-                    <p className="text-xs text-foreground/50">2-5 business days</p>
-                  </div>
-                </div>
-                {product.featured ? (
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 border border-foreground/10 flex items-center justify-center flex-shrink-0">
-                      <Sparkles size={16} className="text-foreground/60" />
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide mb-1">{product.badge || 'Featured'}</p>
-                      <p className="text-xs text-foreground/50">Curated selection</p>
-                    </div>
-                  </div>
-                ) : product.new_arrival ? (
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 border border-foreground/10 flex items-center justify-center flex-shrink-0">
-                      <Sparkles size={16} className="text-foreground/60" />
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide mb-1">New Arrival</p>
-                      <p className="text-xs text-foreground/50">Just landed</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 border border-foreground/10 flex items-center justify-center flex-shrink-0">
-                      <Sparkles size={16} className="text-foreground/60" />
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wide mb-1">Easy Returns</p>
-                      <p className="text-xs text-foreground/50">30-day policy</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-
             {/* Delivery Options */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
-              className="py-4 border-t border-foreground/10"
+              className="py-3 border-t border-foreground/10"
             >
-              <div className="mb-3">
+              <div className="mb-2">
                 <span className="text-xs font-medium uppercase tracking-widest">Check Delivery</span>
                 <p className="text-[11px] text-foreground/50 mt-1 normal-case tracking-normal">
                   Enter your {country === 'India' ? 'pincode' : 'ZIP code'} to see the estimated delivery date.
@@ -923,7 +806,7 @@ export function ProductDetailPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.7 }}
-              className="pt-5 md:pt-6 border-t border-foreground/10"
+              className="pt-3 md:pt-4 border-t border-foreground/10"
             >
               <div className="flex border-b border-foreground/10 overflow-x-auto scrollbar-hide">
                 {([
@@ -936,7 +819,7 @@ export function ProductDetailPage() {
                     key={tab.key}
                     type="button"
                     onClick={() => setActiveDetailsTab(tab.key)}
-                    className={`shrink-0 px-4 py-3 text-xs uppercase tracking-wider whitespace-nowrap transition-colors border-b-2 ${
+                    className={`shrink-0 px-4 py-2 text-xs uppercase tracking-wider whitespace-nowrap transition-colors border-b-2 ${
                       activeDetailsTab === tab.key
                         ? 'text-foreground border-foreground'
                         : 'text-foreground/50 border-transparent hover:text-foreground'
@@ -948,7 +831,7 @@ export function ProductDetailPage() {
               </div>
 
               {activeDetailsTab === 'details' && (
-                <div className="py-5 text-sm text-foreground/60 space-y-4 tracking-wide leading-relaxed">
+                <div className="pt-3 pb-3 text-sm text-foreground/60 space-y-4 tracking-wide leading-relaxed">
                   <p>{product.description || 'Crafted with meticulous attention to detail, this piece embodies timeless elegance and modern sophistication.'}</p>
                   {product.details && product.details.length > 0 && (
                     <ul className="space-y-1 pt-1">
@@ -964,7 +847,7 @@ export function ProductDetailPage() {
                 </div>
               )}
               {activeDetailsTab === 'care' && (
-                <div className="py-5 text-sm text-foreground/60 space-y-2 tracking-wide">
+                <div className="pt-3 pb-3 text-sm text-foreground/60 space-y-2 tracking-wide">
                   {product.material && <p>• {product.material}</p>}
                   {product.care ? (
                     product.care.split(/[,;.\n]+/).filter(Boolean).map((line, i) => (
@@ -980,7 +863,7 @@ export function ProductDetailPage() {
                 </div>
               )}
               {activeDetailsTab === 'shipping' && (
-                <div className="py-5 text-sm text-foreground/60 space-y-4 tracking-wide">
+                <div className="pt-3 pb-3 text-sm text-foreground/60 space-y-4 tracking-wide">
                   <div>
                     <p className="text-foreground mb-2 text-xs uppercase tracking-wider">Shipping</p>
                     <p>• Free standard shipping on all orders</p>
@@ -998,7 +881,7 @@ export function ProductDetailPage() {
                 </div>
               )}
               {activeDetailsTab === 'reviews' && (
-                <div className="py-5">
+                <div className="pt-3 pb-5">
                         {/* Rating Summary */}
                         {!reviewsLoading && reviews.length > 0 && (() => {
                           const dist = [5, 4, 3, 2, 1].map((star) => ({
@@ -1208,6 +1091,7 @@ export function ProductDetailPage() {
                                           )}
                                           <span>• {new Date(review.created_at).toLocaleDateString()}</span>
                                         </div>
+                                        <div className="flex items-center gap-1 shrink-0">
                                         {isAuthenticated && (
                                           <button
                                             onClick={async () => {
@@ -1233,6 +1117,28 @@ export function ProductDetailPage() {
                                             Helpful{review.helpful > 0 ? ` (${review.helpful})` : ''}
                                           </button>
                                         )}
+                                        {isAuthenticated && !isOwnReview && (
+                                          <button
+                                            onClick={async () => {
+                                              if (reportedReviews.has(review.id)) return;
+                                              try {
+                                                const { message } = await reviewService.report(id!, review.id);
+                                                setReportedReviews(prev => new Set([...prev, review.id]));
+                                                toast.success(message);
+                                              } catch (error: unknown) {
+                                                console.error('Failed to report review:', error);
+                                                toast.error(getApiErrorMessage(error, 'Failed to report review'));
+                                              }
+                                            }}
+                                            disabled={reportedReviews.has(review.id)}
+                                            title={reportedReviews.has(review.id) ? 'Reported' : 'Report this review'}
+                                            className="flex items-center gap-1 px-2 py-1 text-xs text-foreground/40 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+                                          >
+                                            <Flag size={12} className={reportedReviews.has(review.id) ? 'fill-current' : ''} />
+                                            {reportedReviews.has(review.id) ? 'Reported' : 'Report'}
+                                          </button>
+                                        )}
+                                        </div>
                                       </div>
                                     </>
                                   )}
@@ -1362,7 +1268,6 @@ export function ProductDetailPage() {
         {similarProducts.length > 0 && (
           <ProductRecommendationSection
             title="Similar Products"
-            subtitle="Explore similar styles"
             products={similarProducts}
             variant="minimal"
           />
@@ -1375,23 +1280,6 @@ export function ProductDetailPage() {
             subtitle="Most loved by our customers"
             products={trendingProducts}
             variant="bold"
-          />
-        )}
-
-        {/* Complete the Look */}
-        {completeTheLook.length > 0 && (
-          <CompleteTheLookSection
-            currentProduct={{
-              id: String(product.id),
-              name: product.name,
-              price: product.price,
-              originalPrice: product.original_price,
-              image: product.images && product.images.length > 0 ? product.images[0] : PLACEHOLDER_IMAGE,
-              category: product.category,
-              priceINR: product.price_inr,
-              originalPriceINR: product.original_price_inr,
-            }}
-            products={completeTheLook}
           />
         )}
 

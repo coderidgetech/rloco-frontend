@@ -6,7 +6,7 @@ import { useIsMobile } from '../hooks/useIsMobile';
 
 interface ProductRecommendationSectionProps {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   products: Product[];
   variant?: 'featured' | 'carousel' | 'minimal' | 'bold';
 }
@@ -107,7 +107,7 @@ export function ProductRecommendationSection({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.8 }}
-        className="relative mt-6 md:mt-8 border-t border-foreground/5 pt-6 md:pt-8 overflow-hidden"
+        className="relative mt-3 md:mt-4 border-t border-foreground/5 pt-4 md:pt-5 overflow-hidden"
       >
         {/* Minimalist Elegant Background */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-foreground/20 to-transparent" />
@@ -115,12 +115,12 @@ export function ProductRecommendationSection({
         <div className="absolute bottom-10 right-1/4 w-96 h-96 bg-foreground/[0.02] rounded-full blur-3xl" />
 
         <div className="relative w-full">
-          <div className="mb-4 md:mb-6 px-4 md:px-6">
-            <h2 className="text-xl md:text-3xl tracking-tight mb-1">{title}</h2>
-            <p className="text-sm text-foreground/50 tracking-wide">{subtitle}</p>
+          <div className="mb-3 md:mb-4 px-4 md:px-6">
+            <h2 className="text-xl md:text-3xl tracking-tight">{title}</h2>
+            {subtitle && <p className="mt-1 text-sm text-foreground/50 tracking-wide">{subtitle}</p>}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-8 px-4 md:px-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-6 px-4 md:px-6">
             {(products || []).map((item, index) => (
               <RecommendationCard key={`${item.id}-${index}`} product={item} index={index} isMobile={isMobile} />
             ))}

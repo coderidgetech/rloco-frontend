@@ -157,7 +157,7 @@ export function ProductsGrid() {
                 className="group"
               >
                 <div 
-                  className="relative aspect-[4/5] overflow-hidden mb-2 bg-accent cursor-pointer rounded shadow-sm hover:shadow-lg transition-all duration-500"
+                  className="relative aspect-[2/3] overflow-hidden mb-1.5 bg-accent cursor-pointer rounded shadow-sm hover:shadow-lg transition-all duration-500"
                   onClick={() => navigate(`/product/${product.id}`)}
                 >
                   <motion.img
@@ -198,13 +198,14 @@ export function ProductsGrid() {
                       e.stopPropagation();
                       toggleWishlist(product);
                     }}
-                    className={`absolute top-1.5 right-1.5 w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-md backdrop-blur-sm z-10 ${
-                      isInWishlist(String(product.id))
-                        ? 'bg-red-500 text-white'
-                        : 'bg-white/90 text-foreground hover:bg-white'
-                    }`}
+                    className="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center z-10"
                   >
-                    <Heart size={14} fill={isInWishlist(String(product.id)) ? 'currentColor' : 'none'} />
+                    <Heart
+                      size={18}
+                      className={isInWishlist(String(product.id)) ? 'text-red-500' : 'text-white'}
+                      fill="currentColor"
+                      style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }}
+                    />
                   </motion.button>
 
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
@@ -217,11 +218,11 @@ export function ProductsGrid() {
                   transition={{ duration: 0.5, delay: index * 0.05 + 0.2 }}
                   className="flex-1 flex flex-col overflow-visible"
                 >
-                  <div className="text-[10px] text-foreground/50 mb-1 tracking-wider uppercase">
+                  <div className="text-[10px] text-foreground/50 mb-0.5 tracking-wider uppercase">
                     {product.category}
                   </div>
                   <h3
-                    className="text-xs mb-1 h-4 overflow-hidden text-ellipsis whitespace-nowrap group-hover:text-foreground/70 transition-colors cursor-pointer leading-tight"
+                    className="text-[11px] mb-0.5 h-4 overflow-hidden text-ellipsis whitespace-nowrap group-hover:text-foreground/70 transition-colors cursor-pointer leading-tight"
                     title={product.name}
                     onClick={() => navigate(`/product/${product.id}`)}
                   >
@@ -244,7 +245,7 @@ export function ProductsGrid() {
                   )}
                   <div className="relative flex items-center justify-between gap-1.5">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-sm font-medium">{formatPrice(product.price)}</span>
+                      <span className="text-xs font-medium">{formatPrice(product.price)}</span>
                       {product.original_price && (
                         <span className="text-[10px] text-foreground/40 line-through shrink-0">
                           {formatPrice(product.original_price)}

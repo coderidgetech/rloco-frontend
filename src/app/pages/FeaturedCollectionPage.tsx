@@ -4,17 +4,15 @@ import { MobileProductCard, MobileProductCardData } from '../components/mobile/M
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useState, useMemo, useEffect } from 'react';
 import { Footer } from '../components/Footer';
-import { Star, SlidersHorizontal, ChevronRight } from 'lucide-react';
+import { Star, SlidersHorizontal } from 'lucide-react';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { MobileFilterPanel } from '../components/MobileFilterPanel';
 import { sortOptions, productMatchesSearchQuery } from '../utils/filterConfig';
-import { useNavigate } from 'react-router-dom';
 import { useFeaturedProducts } from '../hooks/useProducts';
 import { Product } from '../types/api';
 
 export function FeaturedCollectionPage() {
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
   const { products: allProducts, loading } = useFeaturedProducts(200);
   
   // All filter states
@@ -162,19 +160,6 @@ export function FeaturedCollectionPage() {
 
   return (
     <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
-      {/* Breadcrumb */}
-      <div className="border-b border-foreground/5 bg-background">
-        <div className="page-container py-3">
-          <div className="flex items-center gap-2 text-xs text-foreground/50">
-            <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors uppercase">
-              Home
-            </button>
-            <ChevronRight size={12} />
-            <span className="text-foreground uppercase">Featured Collection</span>
-          </div>
-        </div>
-      </div>
-
       {/* Hero Banner */}
       <div className="border-b border-foreground/5 bg-gradient-to-b from-primary/5 to-transparent">
         <div className="w-full px-4 md:px-6 lg:px-12 xl:px-16 py-8 md:py-12 text-center">
@@ -241,31 +226,27 @@ export function FeaturedCollectionPage() {
 
           {/* Main Content */}
           <div className="flex-1">
-            {/* Toolbar */}
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-xs text-foreground/60">
-                Showing {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'}
-              </p>
-              
-              {/* Mobile Filter Toggle */}
+            {/* Toolbar: Filter and Sort — one row (this page's title lives in
+                the hero banner above, so there's no third element here). */}
+            <div className="flex items-center justify-end gap-1.5 md:gap-3 mb-6">
+              {/* Mobile Filter Toggle — icon-only pill */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden flex items-center gap-2 px-4 py-2 border border-foreground/10 hover:border-foreground/30 transition-colors text-sm"
+                aria-label="Filters"
+                className="lg:hidden shrink-0 relative w-9 h-9 rounded-full flex items-center justify-center border border-foreground/15 hover:border-foreground/40 bg-background transition-colors"
               >
-                <SlidersHorizontal size={16} />
-                Filters
+                <SlidersHorizontal size={15} className="text-foreground/70" />
                 {hasActiveFilters && (
-                  <span className="w-2 h-2 rounded-full bg-primary" />
+                  <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-background" />
                 )}
               </button>
 
-              {/* Desktop Sort */}
-              <div className="hidden lg:flex items-center gap-3">
-                <span className="text-sm text-foreground/60">Sort by:</span>
+              <div className="shrink-0 flex items-center gap-2 md:gap-3">
+                <span className="hidden lg:inline text-sm text-foreground/60">Sort by:</span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-4 py-2 border border-foreground/10 bg-background text-sm focus:outline-none focus:border-foreground/30 transition-colors"
+                  className="shrink-0 h-9 max-w-[100px] lg:max-w-none lg:h-auto px-3.5 lg:px-4 rounded-full lg:rounded-none border border-foreground/15 lg:border-foreground/10 hover:border-foreground/40 lg:hover:border-foreground/30 bg-background text-xs md:text-sm focus:outline-none focus:border-foreground/40 lg:focus:border-foreground/30 transition-colors"
                 >
                   {sortOptions.map(option => (
                     <option key={option.value} value={option.value}>

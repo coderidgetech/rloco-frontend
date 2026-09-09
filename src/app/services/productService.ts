@@ -104,8 +104,8 @@ export const productService = {
   },
 
   async getReviews(productId: string): Promise<ProductReview[]> {
-    const response = await api.get<ProductReview[]>(`/products/${productId}/reviews`);
-    return Array.isArray(response.data) ? response.data : [];
+    const response = await api.get<{ reviews: ProductReview[] }>(`/products/${productId}/reviews`);
+    return Array.isArray(response.data?.reviews) ? response.data.reviews : [];
   },
 
   async createReview(productId: string, review: CreateReviewRequest): Promise<ProductReview> {

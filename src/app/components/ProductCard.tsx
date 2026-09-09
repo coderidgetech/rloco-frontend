@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { Heart, ShoppingBag, Check } from 'lucide-react';
+import { Heart, ShoppingBag, Check, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Product } from '../types/product';
 import { useCart } from '../context/CartContext';
@@ -14,9 +14,13 @@ interface ProductCardProps {
   product: Product;
   index?: number;
   onProductClick?: (product: Product) => void;
+  /** On a wishlist listing, every card is already saved — show a remove (X)
+   * control instead of the save/wishlist heart, matching standard fashion
+   * e-commerce wishlist pages (Myntra, etc.). */
+  wishlistView?: boolean;
 }
 
-export function ProductCard({ product, index = 0, onProductClick }: ProductCardProps) {
+export function ProductCard({ product, index = 0, onProductClick, wishlistView = false }: ProductCardProps) {
   const { addToCart, items } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { formatPrice } = useCurrency();
@@ -105,7 +109,7 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
       onClick={handleCardClick}
     >
       {/* Image */}
-      <div className="relative aspect-[4/5] overflow-hidden mb-2 bg-accent rounded shadow-sm hover:shadow-lg transition-all duration-500">
+      <div className="relative aspect-[2/3] overflow-hidden mb-1.5 bg-accent rounded shadow-sm hover:shadow-lg transition-all duration-500">
         <motion.img
           src={product.images?.[0] || product.image || ''}
           alt={product.name}
@@ -139,17 +143,33 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
           </div>
         )}
 
-        {/* Wishlist */}
+        {/* Wishlist toggle, or a remove (X) control on the wishlist page itself */}
         <motion.button
           type="button"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          onClick={handleToggleWishlist}
-          className={`absolute top-1.5 right-1.5 w-7 h-7 rounded-full flex items-center justify-center transition-all shadow-md backdrop-blur-sm z-10 ${
-            isWishlisted ? 'bg-red-500 text-white' : 'bg-white/90 text-foreground hover:bg-white'
-          }`}
+          onClick={
+            wishlistView
+              ? (e) => {
+                  e.stopPropagation();
+                  removeFromWishlist(product.id);
+                  toast.success('Removed from wishlist');
+                }
+              : handleToggleWishlist
+          }
+          aria-label={wishlistView ? 'Remove from wishlist' : undefined}
+          className="absolute top-1.5 right-1.5 w-7 h-7 flex items-center justify-center z-10"
         >
-          <Heart size={14} fill={isWishlisted ? 'currentColor' : 'none'} />
+          {wishlistView ? (
+            <Trash2 size={17} className="text-white" strokeWidth={2} style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }} />
+          ) : (
+            <Heart
+              size={18}
+              className={isWishlisted ? 'text-red-500' : 'text-white'}
+              fill="currentColor"
+              style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }}
+            />
+          )}
         </motion.button>
 
         {/* Hover overlay */}
@@ -158,11 +178,11 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
 
       {/* Info */}
       <div className="flex-1 flex flex-col overflow-visible">
-        <div className="text-[10px] text-foreground/50 mb-1 tracking-wider uppercase">
+        <div className="text-[10px] text-foreground/50 mb-0.5 tracking-wider uppercase">
           {product.category}
         </div>
         <h3
-          className="text-xs mb-1 h-4 overflow-hidden text-ellipsis whitespace-nowrap group-hover:text-foreground/70 transition-colors leading-tight"
+          className="text-[11px] mb-0.5 h-4 overflow-hidden text-ellipsis whitespace-nowrap group-hover:text-foreground/70 transition-colors leading-tight"
           title={product.name}
         >
           {product.name}
@@ -184,7 +204,7 @@ export function ProductCard({ product, index = 0, onProductClick }: ProductCardP
         )}
         <div className="relative flex items-center justify-between gap-1.5">
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-sm font-medium">{formatPrice(product.price, product.price_inr || (product as any).priceINR)}</span>
+            <span className="text-xs font-medium">{formatPrice(product.price, product.price_inr || (product as any).priceINR)}</span>
             {originalPrice && originalPrice > product.price && (
               <span className="text-[10px] text-foreground/40 line-through shrink-0">
                 {formatPrice(originalPrice, originalPriceInr)}

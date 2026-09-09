@@ -1,22 +1,20 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, ShoppingBag, Trash2, ArrowLeft, SlidersHorizontal, Grid3x3, List, X } from 'lucide-react';
+import { Heart, SlidersHorizontal, X } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
-import { useCart } from '../context/CartContext';
-import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Footer } from '../components/Footer';
 import { PH } from '../lib/formPlaceholders';
-import { AddToBagPopover } from '../components/AddToBagPopover';
+import { ProductCard } from '../components/ProductCard';
+import { MobileProductCard, MobileProductCardData } from '../components/mobile/MobileProductCard';
+import { useIsMobile } from '../hooks/useIsMobile';
 
-type ViewMode = 'grid' | 'list';
 type SortOption = 'recent' | 'price-low' | 'price-high' | 'name';
 
 export function WishlistPage() {
   const navigate = useNavigate();
-  const { items, removeFromWishlist, clearWishlist } = useWishlist();
-  const { addToCart } = useCart();
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const { items } = useWishlist();
+  const isMobile = useIsMobile();
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
@@ -25,7 +23,7 @@ export function WishlistPage() {
   const [showOnSale, setShowOnSale] = useState(false);
   const [showNewArrivals, setShowNewArrivals] = useState(false);
   const [showFeatured, setShowFeatured] = useState(false);
-  const [showFilters, setShowFilters] = useState(true); // Open by default
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -73,42 +71,6 @@ export function WishlistPage() {
     }
   });
 
-  const [popoverItemId, setPopoverItemId] = useState<string | number | null>(null);
-  const [selectedSize, setSelectedSize] = useState('');
-  const [selectedColor, setSelectedColor] = useState('');
-
-  const openPopover = (item: typeof items[0]) => {
-    setSelectedSize(item.sizes?.[0] || 'M');
-    setSelectedColor(item.colors?.[0] || 'Default');
-    setPopoverItemId(item.id);
-  };
-
-  const handleConfirm = (item: typeof items[0]) => {
-    addToCart({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      image: item.image,
-      size: selectedSize || item.sizes?.[0] || 'M',
-    });
-    removeFromWishlist(item.id);
-    toast.success('Added to bag');
-    setPopoverItemId(null);
-  };
-
-  const handleAddAllToCart = () => {
-    sortedItems.forEach(item => {
-      addToCart({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        image: item.image,
-        size: item.sizes?.[0] || 'M',
-      });
-    });
-    toast.success(`${sortedItems.length} items added to cart!`);
-  };
-
   const toggleCategory = (category: string) => {
     setSelectedCategories(prev =>
       prev.includes(category)
@@ -145,43 +107,31 @@ export function WishlistPage() {
 
   return (
     <div className="min-h-screen w-full min-w-0 bg-background pt-page-nav pb-mobile-nav">
-      <div className="page-container py-6 md:py-8">
+      <div className="page-container pt-3 pb-6 md:pt-4 md:pb-8">
         {/* Header */}
-        <div className="mb-6 md:mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors mb-4 group"
-          >
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-            Back
-          </button>
-          <div className="mb-4">
-            <h1 className="text-2xl md:text-3xl lg:text-4xl">My Wishlist</h1>
-            <p className="text-xs md:text-sm text-muted-foreground">
-              {items.length} {items.length === 1 ? 'item' : 'items'} saved
-            </p>
-          </div>
+        <div className="mb-4 md:mb-6">
+          {/* Title, Filters and Sort — one row, always single-line */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg md:text-3xl lg:text-4xl truncate">My Wishlist</h1>
+            </div>
 
-          {/* Actions Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 bg-muted/30 p-4 rounded-xl">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  showFilters ? 'bg-primary text-primary-foreground' : 'bg-background hover:bg-muted'
-                }`}
+                aria-label="Filters"
+                className="shrink-0 relative w-9 h-9 rounded-full flex items-center justify-center border border-foreground/15 hover:border-foreground/40 bg-background transition-colors"
               >
-                <SlidersHorizontal size={18} />
-                <span className="hidden sm:inline">Filters</span>
+                <SlidersHorizontal size={15} className="text-foreground/70" />
                 {(selectedCategories.length > 0 || selectedGenders.length > 0 || selectedColors.length > 0 || priceRange[0] !== minPrice || priceRange[1] !== maxPrice || showOnSale || showNewArrivals || showFeatured) && (
-                  <span className="w-2 h-2 rounded-full bg-red-500" />
+                  <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-background" />
                 )}
               </button>
 
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="px-4 py-2 bg-background border border-border rounded-lg outline-none focus:border-primary transition-colors"
+                className="shrink-0 h-9 max-w-[100px] sm:max-w-none px-3.5 rounded-full border border-foreground/15 hover:border-foreground/40 bg-background outline-none focus:border-foreground/40 transition-colors cursor-pointer text-xs"
               >
                 <option value="recent">Recently Added</option>
                 <option value="price-low">Price: Low to High</option>
@@ -189,80 +139,50 @@ export function WishlistPage() {
                 <option value="name">Name: A to Z</option>
               </select>
             </div>
-
-            <div className="flex items-center gap-2">
-              {items.length > 0 && (
-                <>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleAddAllToCart}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2"
-                  >
-                    <ShoppingBag size={18} />
-                    <span className="hidden sm:inline">Add All to Cart</span>
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      if (confirm('Clear all items from wishlist?')) {
-                        clearWishlist();
-                        toast.success('Wishlist cleared');
-                      }
-                    }}
-                    className="p-2 hover:bg-destructive/10 hover:text-destructive rounded-lg transition-colors"
-                    title="Clear all"
-                  >
-                    <Trash2 size={18} />
-                  </motion.button>
-                </>
-              )}
-
-              <div className="flex bg-background rounded-lg border border-border">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-l-lg transition-colors ${
-                    viewMode === 'grid' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                  }`}
-                >
-                  <Grid3x3 size={18} />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-r-lg transition-colors ${
-                    viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
-                  }`}
-                >
-                  <List size={18} />
-                </button>
-              </div>
-            </div>
           </div>
+
         </div>
 
         <div className="grid lg:grid-cols-4 gap-6">
-          {/* Filters Sidebar */}
+          {/* Filters — inline sidebar on desktop, full-screen bottom sheet on mobile
+              so it doesn't push the whole page (including the empty state) down. */}
           <AnimatePresence>
             {showFilters && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="lg:col-span-1"
-              >
-                <div className="bg-muted/30 rounded-xl p-6 sticky top-24">
+              <>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setShowFilters(false)}
+                  className="fixed inset-0 z-50 bg-black/40 lg:hidden"
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 40 }}
+                  transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+                  className="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto rounded-t-2xl lg:static lg:col-span-1 lg:max-h-none lg:overflow-visible lg:rounded-none"
+                >
+                <div className="bg-background lg:bg-muted/30 rounded-t-2xl lg:rounded-xl p-6 lg:sticky lg:top-24">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-lg font-semibold">Filters</h2>
-                    {(selectedCategories.length > 0 || selectedGenders.length > 0 || selectedColors.length > 0 || priceRange[0] !== minPrice || priceRange[1] !== maxPrice || showOnSale || showNewArrivals || showFeatured) && (
+                    <div className="flex items-center gap-4">
+                      {(selectedCategories.length > 0 || selectedGenders.length > 0 || selectedColors.length > 0 || priceRange[0] !== minPrice || priceRange[1] !== maxPrice || showOnSale || showNewArrivals || showFeatured) && (
+                        <button
+                          onClick={clearFilters}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Clear All
+                        </button>
+                      )}
                       <button
-                        onClick={clearFilters}
-                        className="text-sm text-primary hover:underline"
+                        onClick={() => setShowFilters(false)}
+                        className="lg:hidden p-1 -mr-1 text-muted-foreground hover:text-foreground"
+                        aria-label="Close filters"
                       >
-                        Clear All
+                        <X size={20} />
                       </button>
-                    )}
+                    </div>
                   </div>
 
                   {/* Categories */}
@@ -441,7 +361,8 @@ export function WishlistPage() {
                     </label>
                   </div>
                 </div>
-              </motion.div>
+                </motion.div>
+              </>
             )}
           </AnimatePresence>
 
@@ -485,153 +406,30 @@ export function WishlistPage() {
                 )}
               </div>
             ) : (
-              /* Items Grid/List */
+              /* Items Grid — same card used everywhere else products show in a grid */
               <div>
                 <p className="text-sm text-muted-foreground mb-4">
                   Showing {sortedItems.length} of {items.length} items
                 </p>
                 <AnimatePresence mode="popLayout">
-                  {viewMode === 'grid' ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                      {sortedItems.map((item, index) => (
-                        <motion.div
-                          key={item.id}
-                          layout
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          transition={{ delay: index * 0.05 }}
-                          className="group bg-muted/30 rounded-xl overflow-hidden hover:shadow-lg transition-shadow"
-                        >
-                          <div 
-                            onClick={() => navigate(`/product/${item.id}`)}
-                            className="aspect-[3/4] overflow-hidden bg-muted cursor-pointer relative"
-                          >
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                              style={{ filter: 'brightness(1.05) contrast(1.05) saturate(1.1)' }}
-                            />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                removeFromWishlist(item.id);
-                                toast.success('Removed from wishlist');
-                              }}
-                              className="absolute top-3 right-3 p-2 bg-background/90 hover:bg-destructive/90 hover:text-white rounded-full transition-colors backdrop-blur-sm"
-                            >
-                              <X size={16} />
-                            </button>
-                          </div>
-                          <div className="p-4">
-                            <h3 
-                              onClick={() => navigate(`/product/${item.id}`)}
-                              className="font-medium mb-1 line-clamp-1 cursor-pointer hover:text-primary transition-colors"
-                            >
-                              {item.name}
-                            </h3>
-                            <p className="text-sm text-muted-foreground mb-3">{item.category}</p>
-                            <div className="flex items-center justify-between">
-                              <span className="font-semibold text-lg">₹{(item as any).priceINR || item.price * 75}</span>
-                              <div className="relative">
-                                <AddToBagPopover
-                                  isOpen={popoverItemId === item.id}
-                                  product={item as any}
-                                  selectedSize={selectedSize}
-                                  selectedColor={selectedColor}
-                                  onSizeChange={setSelectedSize}
-                                  onColorChange={setSelectedColor}
-                                  onConfirm={() => handleConfirm(item)}
-                                  onCancel={() => setPopoverItemId(null)}
-                                />
-                                <motion.button
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                  onClick={() => openPopover(item)}
-                                  className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2"
-                                >
-                                  <ShoppingBag size={16} />
-                                  Add
-                                </motion.button>
-                              </div>
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {sortedItems.map((item, index) => (
-                        <motion.div
-                          key={item.id}
-                          layout
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
-                          transition={{ delay: index * 0.05 }}
-                          className="flex gap-4 p-4 bg-muted/30 rounded-xl hover:bg-muted/50 transition-colors group"
-                        >
-                          <div 
-                            onClick={() => navigate(`/product/${item.id}`)}
-                            className="w-24 md:w-32 h-24 md:h-32 rounded-lg overflow-hidden bg-muted flex-shrink-0 cursor-pointer"
-                          >
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                              style={{ filter: 'brightness(1.05) contrast(1.05) saturate(1.1)' }}
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 
-                              onClick={() => navigate(`/product/${item.id}`)}
-                              className="font-medium text-lg mb-1 cursor-pointer hover:text-primary transition-colors"
-                            >
-                              {item.name}
-                            </h3>
-                            <p className="text-sm text-muted-foreground mb-2">{item.category}</p>
-                            <p className="font-semibold text-xl">₹{(item as any).priceINR || item.price * 75}</p>
-                          </div>
-                          <div className="flex flex-col gap-2 justify-center">
-                            <div className="relative">
-                              <AddToBagPopover
-                                isOpen={popoverItemId === item.id}
-                                product={item as any}
-                                selectedSize={selectedSize}
-                                selectedColor={selectedColor}
-                                onSizeChange={setSelectedSize}
-                                onColorChange={setSelectedColor}
-                                onConfirm={() => handleConfirm(item)}
-                                onCancel={() => setPopoverItemId(null)}
-                              />
-                              <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                onClick={() => openPopover(item)}
-                                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 whitespace-nowrap"
-                              >
-                                <ShoppingBag size={16} />
-                                Add to Bag
-                              </motion.button>
-                            </div>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => {
-                                removeFromWishlist(item.id);
-                                toast.success('Removed from wishlist');
-                              }}
-                              className="px-4 py-2 border border-border hover:bg-destructive/10 hover:text-destructive rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
-                            >
-                              <Trash2 size={16} />
-                              Remove
-                            </motion.button>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                    {sortedItems.map((item, index) => (
+                      <motion.div
+                        key={item.id}
+                        layout
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        {isMobile ? (
+                          <MobileProductCard product={item as unknown as MobileProductCardData} index={index} wishlistView />
+                        ) : (
+                          <ProductCard product={item as any} index={index} wishlistView />
+                        )}
+                      </motion.div>
+                    ))}
+                  </div>
                 </AnimatePresence>
               </div>
             )}

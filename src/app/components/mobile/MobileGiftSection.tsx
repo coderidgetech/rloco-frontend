@@ -11,8 +11,8 @@ export function MobileGiftSection() {
   if (items.length === 0) return null;
 
   return (
-    <section className="w-full bg-white py-6">
-      <div className="px-4 mb-2.5">
+    <section className="w-full bg-white py-3">
+      <div className="px-4 mb-2">
         <h2 className="text-base font-medium tracking-wide">{gs?.heading || 'Perfect Gifts'}</h2>
       </div>
 

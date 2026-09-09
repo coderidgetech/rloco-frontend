@@ -217,7 +217,7 @@ export function Navigation() {
                 pointerEvents: location.pathname === '/' && !scrolled && !isMobile ? 'none' : 'auto',
               }}
             >
-              <RlocoLogo size="sm" className="[&_svg]:h-5 md:[&_svg]:h-6" />
+              <RlocoLogo size="sm" className="[&_svg]:h-[18px] md:[&_svg]:h-6" />
             </motion.div>
 
             <div className="flex min-w-0 flex-1 items-center justify-end gap-4 pl-3 sm:gap-4 md:gap-3 md:pl-2 lg:gap-4 xl:gap-6">

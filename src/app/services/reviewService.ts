@@ -42,4 +42,9 @@ export const reviewService = {
     const response = await api.post<ProductReview>(`/products/${productId}/reviews/${reviewId}/helpful`);
     return response.data;
   },
+
+  async report(productId: string, reviewId: string): Promise<{ message: string }> {
+    const response = await api.post<{ message: string }>(`/products/${productId}/reviews/${reviewId}/report`);
+    return response.data;
+  },
 };

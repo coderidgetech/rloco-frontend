@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { Heart } from 'lucide-react';
+import { Heart, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -77,7 +77,18 @@ function CardImages({ images, alt }: { images: string[]; alt: string }) {
 }
 
 /** The home-style product card (used on the home grids and mobile listing grids). */
-export function MobileProductCard({ product, index = 0 }: { product: MobileProductCardData; index?: number }) {
+export function MobileProductCard({
+  product,
+  index = 0,
+  wishlistView = false,
+}: {
+  product: MobileProductCardData;
+  index?: number;
+  /** On a wishlist listing, every card is already saved — show a remove (X)
+   * control instead of the save/wishlist heart, matching standard fashion
+   * e-commerce wishlist pages (Myntra, etc.). */
+  wishlistView?: boolean;
+}) {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { formatPrice } = useCurrency();
@@ -114,16 +125,31 @@ export function MobileProductCard({ product, index = 0 }: { product: MobileProdu
       onClick={() => navigate(`/product/${product.id}`)}
       className="cursor-pointer"
     >
-      <div className="relative aspect-[3/4] bg-muted overflow-hidden rounded-xl">
+      <div className="relative aspect-[2/3] bg-muted overflow-hidden rounded-xl">
         <CardImages images={images} alt={product.name} />
 
         <motion.button
           whileTap={{ scale: 0.9 }}
-          onClick={toggleWishlist}
-          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 backdrop-blur-md flex items-center justify-center shadow-sm z-10"
-          aria-label="Save"
+          onClick={
+            wishlistView
+              ? (e) => {
+                  e.stopPropagation();
+                  removeFromWishlist(product.id);
+                }
+              : toggleWishlist
+          }
+          className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center z-10"
+          aria-label={wishlistView ? 'Remove from wishlist' : 'Save'}
         >
-          <Heart size={15} className={isInWishlist(product.id) ? 'text-red-500 fill-red-500' : 'text-foreground/60'} />
+          {wishlistView ? (
+            <Trash2 size={18} className="text-white" strokeWidth={2} style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }} />
+          ) : (
+            <Heart
+              size={19}
+              className={`fill-current ${isInWishlist(product.id) ? 'text-red-500' : 'text-white'}`}
+              style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }}
+            />
+          )}
         </motion.button>
 
         {isOnSale && (
@@ -138,14 +164,14 @@ export function MobileProductCard({ product, index = 0 }: { product: MobileProdu
         )}
       </div>
 
-      <div className="pt-2.5 px-0.5">
-        <h3 className="text-sm text-foreground line-clamp-1">{product.name}</h3>
-        <div className="mt-1 flex items-center gap-2">
-          <span className="text-sm font-semibold text-foreground">
+      <div className="pt-1.5 px-0.5">
+        <h3 className="text-xs text-foreground line-clamp-1">{product.name}</h3>
+        <div className="mt-0.5 flex items-center gap-1.5">
+          <span className="text-xs font-semibold text-foreground">
             {formatPrice(product.price, product.price_inr ?? product.priceINR)}
           </span>
           {original != null && original > product.price && (
-            <span className="text-xs text-foreground/40 line-through">{formatPrice(original, undefined)}</span>
+            <span className="text-[10px] text-foreground/40 line-through">{formatPrice(original, undefined)}</span>
           )}
         </div>
       </div>

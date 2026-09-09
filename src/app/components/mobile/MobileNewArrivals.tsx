@@ -110,7 +110,7 @@ export function MobileNewArrivals() {
   };
 
   return (
-    <section className="w-full bg-background py-8 overflow-hidden">
+    <section className="w-full bg-background py-3 overflow-hidden">
       <div ref={trackRef} className="w-full select-none" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         {card > 0 && (
           <motion.div className="flex" style={{ x, gap: GAP }}>
@@ -141,7 +141,7 @@ export function MobileNewArrivals() {
       </div>
 
       {n > 1 && (
-        <div className="flex justify-center gap-1.5 mt-6">
+        <div className="flex justify-center gap-1.5 mt-3">
           {products.map((_, index) => (
             <button
               key={index}
