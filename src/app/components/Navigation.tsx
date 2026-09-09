@@ -126,7 +126,7 @@ export function Navigation() {
   return (
     <>
       <nav
-        className="fixed left-0 right-0 top-0 z-50 min-h-12 md:min-h-14 border-b border-transparent transition-all duration-300 dark:border-border/30 dark:bg-background/95"
+        className="fixed left-0 right-0 top-0 z-50 min-h-[52px] md:min-h-14 border-b border-transparent transition-all duration-300 dark:border-border/30 dark:bg-background/95"
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
           transform: visible ? 'translateY(0)' : 'translateY(-100%)',
@@ -138,7 +138,7 @@ export function Navigation() {
           boxShadow: (location.pathname === '/' && !scrolled) ? 'none' : '0 1px 3px 0 rgba(0, 0, 0, 0.08)',
         }}
       >
-        <div className="mx-auto flex h-12 md:h-14 w-full min-w-0 max-w-[100%] items-center gap-1.5 px-3 sm:gap-2 sm:px-4 md:px-6 lg:px-10 xl:px-14 2xl:px-20">
+        <div className="mx-auto flex h-[52px] md:h-14 w-full min-w-0 max-w-[100%] items-center gap-1.5 px-3 sm:gap-2 sm:px-4 md:px-6 lg:px-10 xl:px-14 2xl:px-20">
           <div className="relative flex h-full w-full min-w-0 items-center justify-between gap-1">
             <motion.button
               whileTap={{ scale: 0.94 }}
