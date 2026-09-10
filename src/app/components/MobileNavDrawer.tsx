@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronDown, Search, User, Heart } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
-import { useSiteConfig } from '../context/SiteConfigContext';
 import { useUser } from '../context/UserContext';
 import { useSearchOverlay } from '../context/SearchOverlayContext';
 import { ACCOUNT_DEFAULT_PATH } from '../lib/accountRoutes';
+import { categoryService } from '../services/categoryService';
+import type { Category } from '../types/api';
 
 interface MobileNavDrawerProps {
   isOpen: boolean;
@@ -23,18 +24,28 @@ export function MobileNavDrawer({ isOpen, onClose }: MobileNavDrawerProps) {
   const location = useLocation();
   const { openSearch } = useSearchOverlay();
   const { itemCount: wishlistCount } = useWishlist();
-  const { config } = useSiteConfig();
   const { isAuthenticated } = useUser();
   const [mobileSubMenu, setMobileSubMenu] = useState<'women' | 'men' | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
 
-  const womenCategories = config?.categories?.women || {
-    clothing: ['Dresses', 'Tops', 'Bottoms', 'Outerwear', 'Knitwear'],
-    accessories: ['Shoes', 'Jewelry', 'Bags'],
-  };
-  const menCategories = config?.categories?.men || {
-    clothing: ['Shirts', 'Tops', 'Bottoms', 'Outerwear', 'Knitwear'],
-    accessories: ['Shoes', 'Accessories'],
-  };
+  // Same real category data (and admin source) as the desktop mega menu —
+  // no separate hardcoded/config-driven list to drift out of sync.
+  useEffect(() => {
+    let cancelled = false;
+    categoryService.list().then((list) => {
+      if (!cancelled) setCategories(list);
+    }).catch(() => {
+      if (!cancelled) setCategories([]);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const womenCategories = categories
+    .filter((c) => c.gender === 'women' || c.gender === 'unisex')
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  const menCategories = categories
+    .filter((c) => c.gender === 'men' || c.gender === 'unisex')
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   const closeAll = () => {
     setMobileSubMenu(null);
@@ -53,10 +64,11 @@ export function MobileNavDrawer({ isOpen, onClose }: MobileNavDrawerProps) {
     setTimeout(() => onClose(), 100);
   };
 
-  const handleCategoryClick = (gender: 'women' | 'men', category?: string) => {
+  const handleCategoryClick = (gender: 'women' | 'men', category?: Category) => {
     closeAll();
     if (category) {
-      navigate(`/category/${gender}/${category.toLowerCase()}`);
+      const seg = (category.slug || category.name || '').toLowerCase();
+      navigate(`/category/${gender}/${seg}`);
     } else {
       navigate(`/category/${gender}`);
     }
@@ -101,26 +113,14 @@ export function MobileNavDrawer({ isOpen, onClose }: MobileNavDrawerProps) {
                     >
                       View All Women's
                     </button>
-                    <div className="text-xs text-primary uppercase tracking-wider mt-2 mb-1 px-2">Clothing</div>
-                    {womenCategories.clothing.map((item) => (
+                    {womenCategories.map((cat) => (
                       <button
-                        key={item}
-                        onClick={() => handleCategoryClick('women', item)}
+                        key={cat.id}
+                        onClick={() => handleCategoryClick('women', cat)}
                         className="text-sm text-foreground/60 hover:text-primary transition-colors text-left py-2.5 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[44px] flex items-center"
                         type="button"
                       >
-                        {item}
-                      </button>
-                    ))}
-                    <div className="text-xs text-primary uppercase tracking-wider mt-2 mb-1 px-2">Accessories</div>
-                    {womenCategories.accessories.map((item) => (
-                      <button
-                        key={item}
-                        onClick={() => handleCategoryClick('women', item)}
-                        className="text-sm text-foreground/60 hover:text-primary transition-colors text-left py-2.5 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[44px] flex items-center"
-                        type="button"
-                      >
-                        {item}
+                        {cat.name}
                       </button>
                     ))}
                   </div>
@@ -146,26 +146,14 @@ export function MobileNavDrawer({ isOpen, onClose }: MobileNavDrawerProps) {
                     >
                       View All Men's
                     </button>
-                    <div className="text-xs text-primary uppercase tracking-wider mt-2 mb-1 px-2">Clothing</div>
-                    {menCategories.clothing.map((item) => (
+                    {menCategories.map((cat) => (
                       <button
-                        key={item}
-                        onClick={() => handleCategoryClick('men', item)}
+                        key={cat.id}
+                        onClick={() => handleCategoryClick('men', cat)}
                         className="text-sm text-foreground/60 hover:text-primary transition-colors text-left py-2.5 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[44px] flex items-center"
                         type="button"
                       >
-                        {item}
-                      </button>
-                    ))}
-                    <div className="text-xs text-primary uppercase tracking-wider mt-2 mb-1 px-2">Accessories</div>
-                    {menCategories.accessories.map((item) => (
-                      <button
-                        key={item}
-                        onClick={() => handleCategoryClick('men', item)}
-                        className="text-sm text-foreground/60 hover:text-primary transition-colors text-left py-2.5 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[44px] flex items-center"
-                        type="button"
-                      >
-                        {item}
+                        {cat.name}
                       </button>
                     ))}
                   </div>

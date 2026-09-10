@@ -36,6 +36,7 @@ export function MobileHomePage() {
           title="Latest Drop"
           seeAllLink="/all-products"
           className="py-4"
+          maxItems={6}
         />
         <Divider />
       </>
