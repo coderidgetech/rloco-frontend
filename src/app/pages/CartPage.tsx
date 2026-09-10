@@ -488,16 +488,6 @@ export function CartPage() {
 
   return (
     <div className="min-h-screen w-full min-w-0 bg-muted/20 pt-page-nav pb-mobile-nav dark:bg-background">
-      <div className="bg-background border-b border-border shadow-sm">
-        <div className="page-container py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2 min-w-0">
-              <h1 className="text-lg md:text-xl font-medium truncate">Your Bag</h1>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div
         className={cn(
           'page-container-lg py-4 md:py-8',
@@ -1133,15 +1123,15 @@ export function CartPage() {
               )}
 
               <Button
-                className="w-full gap-2 py-6 text-base font-bold uppercase tracking-wide text-white shadow-md hover:opacity-95 disabled:opacity-50"
+                className="ml-auto w-full max-w-[220px] h-11 rounded-full gap-1.5 text-sm font-semibold text-white hover:opacity-95 disabled:opacity-50"
                 style={{ backgroundColor: GOLD }}
                 disabled={selectedCount === 0}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = GOLD_HOVER)}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = GOLD)}
                 onClick={handleCheckout}
               >
-                PROCEED TO PAY
-                <ArrowRight size={18} />
+                Checkout
+                <ArrowRight size={15} />
               </Button>
               <Button type="button" variant="outline" className="w-full" onClick={() => navigate('/')}>
                 Continue shopping
@@ -1173,15 +1163,15 @@ export function CartPage() {
             <p className="text-lg font-bold leading-tight tabular-nums truncate">{formatAmount(finalTotal)}</p>
           </div>
           <Button
-            className="ml-auto min-h-[48px] flex-1 max-w-[min(100%,280px)] gap-2 font-bold uppercase text-white hover:opacity-95 disabled:opacity-50"
+            className="ml-auto h-10 rounded-full flex-1 max-w-[min(100%,180px)] gap-1.5 text-sm font-semibold text-white hover:opacity-95 disabled:opacity-50"
             style={{ backgroundColor: GOLD }}
             disabled={selectedCount === 0}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = GOLD_HOVER)}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = GOLD)}
             onClick={handleCheckout}
           >
-            PROCEED TO PAY
-            <ArrowRight size={18} />
+            Checkout
+            <ArrowRight size={15} />
           </Button>
         </div>
       )}

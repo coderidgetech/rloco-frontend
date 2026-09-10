@@ -259,29 +259,28 @@ export function AllProductsPage() {
         >
           <div className="flex items-center justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-base md:text-4xl truncate">{pageTitle}</h1>
+              <h1 className="text-lg sm:text-2xl md:text-4xl truncate">{pageTitle}</h1>
             </div>
 
-            <div className="flex items-center gap-1.5 md:gap-3 shrink-0">
-              {/* Mobile Filter Toggle — icon-only pill */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Mobile Filter Toggle — soft squircle with an active-filter dot */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 aria-label="Filters"
-                className="md:hidden shrink-0 relative w-9 h-9 rounded-full flex items-center justify-center border border-foreground/15 hover:border-foreground/40 bg-background transition-colors"
+                className="md:hidden shrink-0 relative w-9 h-9 rounded-xl flex items-center justify-center bg-muted hover:bg-muted/70 transition-colors"
               >
                 <SlidersHorizontal size={15} className="text-foreground/70" />
                 {hasActiveFilters && (
-                  <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-background"></span>
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary"></span>
                 )}
               </button>
 
-              {/* Sort Dropdown */}
-              <div className="shrink-0 flex items-center gap-2">
-                <span className="hidden md:inline text-xs uppercase tracking-wider text-foreground/60">Sort By</span>
+              {/* Sort Dropdown — same squircle language as the filter button */}
+              <div className="relative shrink-0 h-9 rounded-xl bg-muted overflow-hidden">
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="shrink-0 h-9 max-w-[100px] md:max-w-none md:h-auto px-3.5 md:px-4 rounded-full md:rounded-none border border-foreground/15 md:border-foreground/20 hover:border-foreground/40 md:hover:border-foreground bg-background focus:outline-none focus:border-foreground/40 md:focus:border-foreground transition-colors cursor-pointer text-xs md:text-sm"
+                  className="h-9 w-full max-w-[110px] sm:max-w-none pl-3 pr-8 rounded-xl bg-transparent focus:outline-none cursor-pointer text-xs font-medium appearance-none"
                 >
                   {showOnSale && <option value="discount">Highest Discount</option>}
                   {sortOptions.map(option => (
@@ -290,6 +289,9 @@ export function AllProductsPage() {
                     </option>
                   ))}
                 </select>
+                <div className="pointer-events-none absolute right-0 top-0 h-9 w-8 rounded-xl bg-foreground flex items-center justify-center">
+                  <ChevronDown size={13} className="text-background" />
+                </div>
               </div>
             </div>
           </div>
@@ -299,57 +301,57 @@ export function AllProductsPage() {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className="mt-2.5 md:mt-4 flex flex-wrap items-center gap-2"
+              className="mt-2.5 md:mt-4 flex flex-wrap items-center gap-2 pb-1"
             >
-              <span className="text-xs text-foreground/60">Active filters:</span>
-              
+              <span className="text-xs text-foreground/60 mr-0.5">Active Filters:</span>
+
               {selectedGender !== 'all' && (
-                <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
+                <span className="pl-3.5 pr-2.5 py-1.5 rounded-full bg-muted text-foreground text-xs flex items-center gap-1.5">
                   {selectedGender}
                   <button onClick={() => setSelectedGender('all')} className="hover:opacity-70">
                     <X size={12} />
                   </button>
                 </span>
               )}
-              
+
               {selectedCategory !== 'All' && (
-                <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
+                <span className="pl-3.5 pr-2.5 py-1.5 rounded-full bg-foreground text-background text-xs flex items-center gap-1.5">
                   {selectedCategory}
                   <button onClick={() => setSelectedCategory('All')} className="hover:opacity-70">
                     <X size={12} />
                   </button>
                 </span>
               )}
-              
+
               {selectedColors.map(color => (
-                <span key={color} className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
+                <span key={color} className="pl-3.5 pr-2.5 py-1.5 rounded-full bg-foreground text-background text-xs flex items-center gap-1.5">
                   {color}
                   <button onClick={() => toggleArrayFilter(selectedColors, setSelectedColors, color)} className="hover:opacity-70">
                     <X size={12} />
                   </button>
                 </span>
               ))}
-              
+
               {selectedSizes.map(size => (
-                <span key={size} className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
+                <span key={size} className="pl-3.5 pr-2.5 py-1.5 rounded-full bg-foreground text-background text-xs flex items-center gap-1.5">
                   Size: {size}
                   <button onClick={() => toggleArrayFilter(selectedSizes, setSelectedSizes, size)} className="hover:opacity-70">
                     <X size={12} />
                   </button>
                 </span>
               ))}
-              
+
               {selectedBadges.map(badge => (
-                <span key={badge} className="px-3 py-1 bg-primary text-background text-xs flex items-center gap-2">
+                <span key={badge} className="pl-3.5 pr-2.5 py-1.5 rounded-full bg-foreground text-background text-xs flex items-center gap-1.5">
                   {badge}
                   <button onClick={() => toggleArrayFilter(selectedBadges, setSelectedBadges, badge)} className="hover:opacity-70">
                     <X size={12} />
                   </button>
                 </span>
               ))}
-              
+
               {(priceRange[0] !== 0 || priceRange[1] !== maxPrice) && (
-                <span className="px-3 py-1 bg-foreground text-background text-xs flex items-center gap-2">
+                <span className="pl-3.5 pr-2.5 py-1.5 rounded-full bg-foreground text-background text-xs flex items-center gap-1.5">
                   ₹{(priceRange[0] * 75).toLocaleString()} - ₹{(priceRange[1] * 75).toLocaleString()}
                   <button onClick={() => setPriceRange([0, maxPrice])} className="hover:opacity-70">
                     <X size={12} />
@@ -359,7 +361,7 @@ export function AllProductsPage() {
 
               <button
                 onClick={clearAllFilters}
-                className="text-xs text-foreground/60 hover:text-foreground underline ml-2"
+                className="text-xs text-foreground/60 hover:text-foreground underline ml-1"
               >
                 Clear all
               </button>

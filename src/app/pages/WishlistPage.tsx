@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, SlidersHorizontal, X } from 'lucide-react';
+import { Heart, SlidersHorizontal, X, ChevronDown } from 'lucide-react';
 import { useWishlist } from '../context/WishlistContext';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
@@ -120,24 +120,29 @@ export function WishlistPage() {
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 aria-label="Filters"
-                className="shrink-0 relative w-9 h-9 rounded-full flex items-center justify-center border border-foreground/15 hover:border-foreground/40 bg-background transition-colors"
+                className="shrink-0 relative w-9 h-9 rounded-xl flex items-center justify-center bg-muted hover:bg-muted/70 transition-colors"
               >
                 <SlidersHorizontal size={15} className="text-foreground/70" />
                 {(selectedCategories.length > 0 || selectedGenders.length > 0 || selectedColors.length > 0 || priceRange[0] !== minPrice || priceRange[1] !== maxPrice || showOnSale || showNewArrivals || showFeatured) && (
-                  <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-background" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
                 )}
               </button>
 
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="shrink-0 h-9 max-w-[100px] sm:max-w-none px-3.5 rounded-full border border-foreground/15 hover:border-foreground/40 bg-background outline-none focus:border-foreground/40 transition-colors cursor-pointer text-xs"
-              >
-                <option value="recent">Recently Added</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="name">Name: A to Z</option>
-              </select>
+              <div className="relative shrink-0 h-9 rounded-xl bg-muted overflow-hidden">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="h-9 w-full max-w-[132px] sm:max-w-none pl-3 pr-8 rounded-xl bg-transparent outline-none focus:outline-none cursor-pointer text-xs font-medium appearance-none"
+                >
+                  <option value="recent">Recently Added</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="name">Name: A to Z</option>
+                </select>
+                <div className="pointer-events-none absolute right-0 top-0 h-9 w-8 rounded-xl bg-foreground flex items-center justify-center">
+                  <ChevronDown size={13} className="text-background" />
+                </div>
+              </div>
             </div>
           </div>
 

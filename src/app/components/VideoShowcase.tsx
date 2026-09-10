@@ -148,8 +148,13 @@ export function VideoShowcase() {
 
   return (
     <section className="relative h-screen w-full snap-start snap-always overflow-hidden bg-neutral-950">
-      {/* Background synced to active product */}
-      <div className="absolute inset-0">
+      {/* Background synced to active product — clickable through to that product */}
+      <button
+        type="button"
+        onClick={() => navigate(`/product/${products[realIndex]?.id}`)}
+        className="absolute inset-0 cursor-pointer"
+        aria-label={`Shop ${products[realIndex]?.name ?? 'this product'}`}
+      >
         <motion.img
           key={bg}
           src={bg}
@@ -160,7 +165,7 @@ export function VideoShowcase() {
           transition={{ duration: 0.9, ease: 'easeInOut' }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/10 to-black/70" aria-hidden />
-      </div>
+      </button>
 
       {/* Label */}
       <div className="absolute top-8 left-1/2 -translate-x-1/2 z-10">
@@ -212,31 +217,19 @@ export function VideoShowcase() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-                  {/* NEW badge */}
-                  <div className="absolute top-2.5 left-2.5">
-                    <span className="bg-primary text-white text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
-                      NEW
-                    </span>
-                  </div>
-
-                  {/* Shop button */}
-                  <motion.button
-                    whileTap={{ scale: 0.88 }}
-                    onClick={(e) => { e.stopPropagation(); navigate(`/product/${product.id}`); }}
-                    className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30"
-                  >
-                    <ShoppingBag size={12} className="text-white" strokeWidth={1.8} />
-                  </motion.button>
-
-                  {/* Product info */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3">
-                    <p className="text-white/60 text-[9px] uppercase tracking-widest mb-0.5 truncate">
-                      {product.category}
-                    </p>
+                  {/* Product info — title + Shop Now only, centered */}
+                  <div className="absolute bottom-0 left-0 right-0 p-3 flex flex-col items-center text-center">
                     <h3 className="text-white text-[11px] font-semibold leading-tight line-clamp-2 mb-1.5">
                       {product.name}
                     </h3>
-                    <p className="text-white font-bold text-sm">${product.price.toFixed(2)}</p>
+                    <motion.button
+                      whileTap={{ scale: 0.94 }}
+                      onClick={(e) => { e.stopPropagation(); navigate(`/product/${product.id}`); }}
+                      className="inline-flex items-center gap-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider text-white"
+                    >
+                      <ShoppingBag size={10} strokeWidth={1.8} />
+                      Shop Now
+                    </motion.button>
                   </div>
                 </motion.div>
               );

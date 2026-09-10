@@ -4,7 +4,7 @@ import { MobileProductCard, MobileProductCardData } from '../components/mobile/M
 import { useIsMobile } from '../hooks/useIsMobile';
 import { useState, useMemo, useEffect } from 'react';
 import { Footer } from '../components/Footer';
-import { Star, SlidersHorizontal } from 'lucide-react';
+import { Star, SlidersHorizontal, ChevronDown } from 'lucide-react';
 import { FilterSidebar } from '../components/FilterSidebar';
 import { MobileFilterPanel } from '../components/MobileFilterPanel';
 import { sortOptions, productMatchesSearchQuery } from '../utils/filterConfig';
@@ -228,25 +228,25 @@ export function FeaturedCollectionPage() {
           <div className="flex-1">
             {/* Toolbar: Filter and Sort — one row (this page's title lives in
                 the hero banner above, so there's no third element here). */}
-            <div className="flex items-center justify-end gap-1.5 md:gap-3 mb-6">
-              {/* Mobile Filter Toggle — icon-only pill */}
+            <div className="flex items-center justify-end gap-1.5 mb-6">
+              {/* Mobile Filter Toggle — soft squircle with an active-filter dot */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 aria-label="Filters"
-                className="lg:hidden shrink-0 relative w-9 h-9 rounded-full flex items-center justify-center border border-foreground/15 hover:border-foreground/40 bg-background transition-colors"
+                className="lg:hidden shrink-0 relative w-9 h-9 rounded-xl flex items-center justify-center bg-muted hover:bg-muted/70 transition-colors"
               >
                 <SlidersHorizontal size={15} className="text-foreground/70" />
                 {hasActiveFilters && (
-                  <span className="absolute top-0 right-0 w-2.5 h-2.5 rounded-full bg-primary ring-2 ring-background" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
                 )}
               </button>
 
-              <div className="shrink-0 flex items-center gap-2 md:gap-3">
-                <span className="hidden lg:inline text-sm text-foreground/60">Sort by:</span>
+              {/* Sort Dropdown — same squircle language as the filter button */}
+              <div className="relative shrink-0 h-9 rounded-xl bg-muted overflow-hidden">
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="shrink-0 h-9 max-w-[100px] lg:max-w-none lg:h-auto px-3.5 lg:px-4 rounded-full lg:rounded-none border border-foreground/15 lg:border-foreground/10 hover:border-foreground/40 lg:hover:border-foreground/30 bg-background text-xs md:text-sm focus:outline-none focus:border-foreground/40 lg:focus:border-foreground/30 transition-colors"
+                  className="h-9 w-full max-w-[110px] sm:max-w-none pl-3.5 pr-9 rounded-xl bg-transparent focus:outline-none cursor-pointer text-xs font-medium appearance-none"
                 >
                   {sortOptions.map(option => (
                     <option key={option.value} value={option.value}>
@@ -254,6 +254,9 @@ export function FeaturedCollectionPage() {
                     </option>
                   ))}
                 </select>
+                <div className="pointer-events-none absolute right-0 top-0 h-9 w-8 rounded-xl bg-foreground flex items-center justify-center">
+                  <ChevronDown size={13} className="text-background" />
+                </div>
               </div>
             </div>
 

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Star, Truck, RefreshCw, Check, ShoppingBag, Edit2, Trash2, ThumbsUp, Share2, X, Flag } from 'lucide-react';
+import { Heart, Star, Truck, RefreshCw, Check, ShoppingBag, Edit2, Trash2, ThumbsUp, Share2, X, Flag, Ruler } from 'lucide-react';
 import { Product } from '../types/api';
 import { useState, useEffect, useRef } from 'react';
 import { useCart } from '../context/CartContext';
@@ -375,7 +375,7 @@ export function ProductDetailPage() {
       <div className="page-section pt-3 pb-3 md:pt-6 md:pb-6">
         <div className="grid min-w-0 grid-cols-1 gap-1.5 md:gap-12 lg:grid-cols-2">
           {/* Left - Images Section */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 lg:sticky lg:top-24 lg:self-start">
             {/* Main Image */}
             <div
               className="relative overflow-hidden group touch-pan-y select-none"
@@ -393,7 +393,7 @@ export function ProductDetailPage() {
                     x: { type: 'spring', stiffness: 300, damping: 30 },
                     opacity: { duration: 0.3 }
                   }}
-                  className="aspect-[3/4] overflow-hidden bg-background relative"
+                  className="aspect-[3/4] lg:aspect-auto lg:h-[calc(100vh-8rem)] overflow-hidden bg-background relative"
                 >
                   <img
                     src={productImages[selectedImage]}
@@ -541,20 +541,11 @@ export function ProductDetailPage() {
                       </span>
                     )}
                   </div>
-                  {product.sizes && product.sizes.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setShowSizeGuide(true)}
-                      className="shrink-0 px-3 py-1.5 rounded-full border border-foreground/20 text-[11px] uppercase tracking-wider hover:border-foreground transition-colors"
-                    >
-                      Size Guide
-                    </button>
-                  )}
                 </div>
               </div>
 
               {/* Price */}
-              <div className="-mt-1.5">
+              <div className="-mt-1.5 md:mt-2">
                 <div className="flex items-baseline gap-2">
                   <span className="text-lg md:text-xl">
                     {formatPrice(product.price, product.price_inr)}
@@ -662,7 +653,18 @@ export function ProductDetailPage() {
                 transition={{ duration: 0.6, delay: 0.3 }}
                 className="py-2 border-b border-foreground/10"
               >
-                <div className="grid grid-cols-5 sm:grid-cols-6 gap-2">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-sm">Size</span>
+                  <button
+                    type="button"
+                    onClick={() => setShowSizeGuide(true)}
+                    className="flex items-center gap-1 text-xs text-foreground/60 hover:text-foreground underline transition-colors"
+                  >
+                    <Ruler size={13} />
+                    Size Chart
+                  </button>
+                </div>
+                <div className="grid grid-cols-6 gap-2">
                   {product.sizes.map((size) => {
                     const available = product.stock?.[size] ?? 0;
                     const outOfStock = available === 0;
@@ -674,7 +676,7 @@ export function ProductDetailPage() {
                         whileHover={!outOfStock ? { scale: 1.05 } : undefined}
                         whileTap={!outOfStock ? { scale: 0.95 } : undefined}
                         disabled={outOfStock}
-                        className={`h-10 px-2 rounded-full border text-xs transition-all flex items-center justify-center ${
+                        className={`h-10 px-1 rounded-md border text-xs transition-all flex items-center justify-center ${
                           outOfStock
                             ? 'border-foreground/10 bg-foreground/5 text-foreground/40 cursor-not-allowed line-through'
                             : selectedSize === size

@@ -78,14 +78,14 @@ export function Featured() {
   };
 
   return (
-    <section id="featured" className="py-10 md:py-12 bg-accent/20 relative" style={{ position: 'relative' }}>
+    <section id="featured" className="py-6 md:py-8 bg-accent/20 relative" style={{ position: 'relative' }}>
       <div className="w-full" style={{ position: 'relative' }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="flex items-end justify-between gap-4 mb-8 md:mb-10 px-2 md:px-4"
+          className="flex items-end justify-between gap-4 mb-5 md:mb-6 px-2 md:px-4"
         >
           <div>
             <motion.div
@@ -93,10 +93,10 @@ export function Featured() {
               whileInView={{ width: '2.5rem' }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="h-0.5 bg-foreground mb-4"
+              className="h-0.5 bg-foreground mb-2.5"
             />
-            <h2 className="text-3xl md:text-4xl lg:text-5xl tracking-tight">Featured Collection</h2>
-            <p className="text-sm text-foreground/60 mt-1.5">Handpicked pieces for the season</p>
+            <h2 className="text-xl md:text-2xl lg:text-3xl tracking-tight">Featured Collection</h2>
+            <p className="text-sm text-foreground/60 mt-1">Handpicked pieces for the season</p>
           </div>
           <motion.button
             whileTap={{ scale: 0.97 }}
@@ -127,7 +127,7 @@ export function Featured() {
         )}
 
         {!loading && !error && featuredProducts && featuredProducts.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 lg:gap-6 mb-8 md:mb-12 px-2 md:px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 lg:gap-6 mb-2 md:mb-3 px-2 md:px-4">
             {featuredProducts.slice(0, 8).map((product, index) => (
             <motion.div
               key={product.id}
