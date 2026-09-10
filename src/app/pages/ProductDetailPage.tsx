@@ -545,9 +545,9 @@ export function ProductDetailPage() {
               </div>
 
               {/* Price */}
-              <div className="-mt-1.5 md:mt-2">
+              <div className="mt-1 md:mt-2">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-lg md:text-xl">
+                  <span className="text-base md:text-lg">
                     {formatPrice(product.price, product.price_inr)}
                   </span>
                   {product.original_price && (
