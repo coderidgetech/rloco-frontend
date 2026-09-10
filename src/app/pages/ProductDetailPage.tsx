@@ -378,11 +378,11 @@ export function ProductDetailPage() {
           <div className="flex flex-col gap-3 lg:sticky lg:top-24 lg:self-start">
             {/* Main Image */}
             <div
-              className="relative overflow-hidden group touch-pan-y select-none"
+              className="relative overflow-hidden group touch-pan-y select-none aspect-[3/4] lg:aspect-auto lg:h-[calc(100vh-8rem)] bg-background"
               onTouchStart={handleGalleryTouchStart}
               onTouchEnd={handleGalleryTouchEnd}
             >
-              <AnimatePresence initial={false} custom={imageDirection} mode="wait">
+              <AnimatePresence initial={false} custom={imageDirection}>
                 <motion.div
                   key={selectedImage}
                   custom={imageDirection}
@@ -393,7 +393,7 @@ export function ProductDetailPage() {
                     x: { type: 'spring', stiffness: 300, damping: 30 },
                     opacity: { duration: 0.3 }
                   }}
-                  className="aspect-[3/4] lg:aspect-auto lg:h-[calc(100vh-8rem)] overflow-hidden bg-background relative"
+                  className="absolute inset-0 overflow-hidden bg-background"
                 >
                   <img
                     src={productImages[selectedImage]}

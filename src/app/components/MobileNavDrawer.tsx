@@ -161,20 +161,6 @@ export function MobileNavDrawer({ isOpen, onClose }: MobileNavDrawerProps) {
               </div>
 
               <button
-                onClick={() => scrollToSection('categories')}
-                className="text-foreground/70 hover:text-foreground transition-colors text-left py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px] flex items-center"
-                type="button"
-              >
-                Collections
-              </button>
-              <button
-                onClick={() => scrollToSection('products')}
-                className="text-foreground/70 hover:text-foreground transition-colors text-left py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px] flex items-center"
-                type="button"
-              >
-                Promotions
-              </button>
-              <button
                 onClick={() => { onClose(); navigate('/sale'); }}
                 className="text-foreground/70 hover:text-foreground transition-colors text-left py-3 px-3 -mx-2 rounded-md active:bg-foreground/5 min-h-[48px] flex items-center"
                 type="button"
