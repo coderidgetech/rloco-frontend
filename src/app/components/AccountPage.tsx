@@ -13,7 +13,6 @@ import { OrderDetailsModal } from './OrderDetailsModal';
 import { InvoiceModal } from './InvoiceModal';
 import { LuxuryInput } from './ui/luxury-input';
 import { LuxurySelect } from './ui/luxury-select';
-import { LuxuryCheckbox } from './ui/luxury-checkbox';
 import { orderService } from '../services/orderService';
 import { addressService, Address as APIAddress } from '../services/addressService';
 import { AddressFormModal } from './AddressFormModal';
@@ -35,25 +34,12 @@ import {
   type DialCountry,
 } from '../lib/dialCountries';
 
-const SETTINGS_NOTIFICATIONS_KEY = 'rloco_notifications';
-
 /** `YYYY-MM-DD` in local timezone (for `<input type="date" max>`). */
 function isoDateLocal(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
-}
-
-function loadSettingsNotifications(): { orders: boolean; offers: boolean; updates: boolean } {
-  try {
-    const raw = localStorage.getItem(SETTINGS_NOTIFICATIONS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return { orders: !!parsed.orders, offers: !!parsed.offers, updates: !!parsed.updates };
-    }
-  } catch (_) {}
-  return { orders: true, offers: true, updates: false };
 }
 
 interface AccountPageProps {
@@ -158,22 +144,17 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
   const [passwordForm, setPasswordForm] = useState({ current: '', next: '', confirm: '' });
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersFilter, setOrdersFilter] = useState<'active' | 'completed' | 'all'>('active');
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [transactions, setTransactions] = useState<PaymentTransaction[]>([]);
   const [transactionsLoading, setTransactionsLoading] = useState(false);
   const { items: wishlistItems } = useWishlist();
   const isMobile = useIsMobile();
   const { logout, refreshUser } = useUser();
-  const [settingsNotifications, setSettingsNotifications] = useState(loadSettingsNotifications);
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [dangerLoading, setDangerLoading] = useState<'deactivate' | 'delete' | null>(null);
   const [profileSaving, setProfileSaving] = useState(false);
-  useEffect(() => {
-    if (activeTab === 'settings') {
-      localStorage.setItem(SETTINGS_NOTIFICATIONS_KEY, JSON.stringify(settingsNotifications));
-    }
-  }, [activeTab, settingsNotifications]);
 
   const isStandalone = isAccountPath(location.pathname);
 
@@ -795,11 +776,29 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                             exit={{ opacity: 0, y: -20 }}
                             className="space-y-6"
                           >
-                            <div className="flex items-center justify-between mb-6">
-                              <h2 className="text-2xl">Order History</h2>
+                            <div className="flex items-center justify-between mb-6 pb-6 border-b border-foreground/10">
+                              <h2 className="text-lg md:text-xl">Order History</h2>
                               <div className="text-sm text-muted-foreground">
                                 {orders.length} orders
                               </div>
+                            </div>
+
+                            {/* Active / Completed / All filter */}
+                            <div className="flex gap-2">
+                              {(['active', 'completed', 'all'] as const).map((f) => (
+                                <button
+                                  key={f}
+                                  type="button"
+                                  onClick={() => setOrdersFilter(f)}
+                                  className={`flex-1 py-2.5 rounded-full text-sm font-medium border transition-colors ${
+                                    ordersFilter === f
+                                      ? 'bg-foreground text-background border-foreground'
+                                      : 'border-foreground/15 text-muted-foreground hover:border-foreground/40'
+                                  }`}
+                                >
+                                  {f === 'active' ? 'Active' : f === 'completed' ? 'Completed' : 'All Orders'}
+                                </button>
+                              ))}
                             </div>
 
                             <div className="space-y-4">
@@ -808,19 +807,23 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
                                   <p className="mt-4 text-gray-600">Loading orders...</p>
                                 </div>
-                              ) : orders.length === 0 ? (
+                              ) : orders.filter((order) => {
+                                  if (ordersFilter === 'all') return true;
+                                  if (ordersFilter === 'active') return order.status === 'processing' || order.status === 'shipped';
+                                  return order.status === 'delivered';
+                                }).length === 0 ? (
                                 /* Empty State */
                                 <div className="flex flex-col items-center justify-center text-center py-12 md:py-20">
                                   <motion.div
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
                                     transition={{ type: 'spring', damping: 15 }}
-                                    className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-muted flex items-center justify-center mb-4 md:mb-6"
+                                    className="w-20 h-20 md:w-24 md:h-24 rounded-full border border-foreground/10 flex items-center justify-center mb-4 md:mb-6"
                                   >
-                                    <Package size={48} className="md:hidden text-muted-foreground" />
-                                    <Package size={64} className="hidden md:block text-muted-foreground" />
+                                    <Package size={36} className="md:hidden text-muted-foreground" />
+                                    <Package size={44} className="hidden md:block text-muted-foreground" />
                                   </motion.div>
-                                  <h2 className="text-xl md:text-2xl mb-2 md:mb-3">No orders yet</h2>
+                                  <h2 className="text-lg md:text-xl mb-2 md:mb-3">No orders yet</h2>
                                   <p className="text-sm md:text-base text-muted-foreground mb-6 md:mb-8 max-w-md px-4">
                                     You haven't placed any orders yet. Start shopping to see your order history here!
                                   </p>
@@ -832,18 +835,22 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                       // Navigate to home or products page
                                       window.location.href = '/';
                                     }}
-                                    className="px-6 md:px-8 py-3 md:py-4 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2 text-sm md:text-base"
+                                    className="px-6 md:px-8 py-3 bg-foreground text-background rounded-full hover:opacity-90 transition-opacity flex items-center gap-2 text-sm"
                                   >
-                                    <ShoppingCart size={20} />
+                                    <ShoppingCart size={18} />
                                     Start Shopping
                                   </motion.button>
                                 </div>
                               ) : (
-                                orders.map((order) => (
+                                orders.filter((order) => {
+                                  if (ordersFilter === 'all') return true;
+                                  if (ordersFilter === 'active') return order.status === 'processing' || order.status === 'shipped';
+                                  return order.status === 'delivered';
+                                }).map((order) => (
                                 <motion.div
                                   key={order.id}
                                   whileHover={{ scale: 1.01 }}
-                                  className="bg-muted/30 rounded-xl p-6 hover:bg-muted/50 transition-colors cursor-pointer"
+                                  className="border border-foreground/10 rounded-lg p-5 hover:border-foreground/30 transition-colors cursor-pointer"
                                 >
                                   <div className="flex flex-col md:flex-row md:items-center gap-4">
                                     <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted flex-shrink-0">
@@ -888,9 +895,9 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                         whileHover={{ scale: 1.05 }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => setSelectedOrder(order)}
-                                        className="px-4 py-2 bg-primary text-primary-foreground rounded-lg flex items-center gap-2 justify-center"
+                                        className="px-4 py-2 bg-foreground text-background rounded-full flex items-center gap-2 justify-center text-sm"
                                       >
-                                        <Eye size={16} />
+                                        <Eye size={15} />
                                         View Details
                                       </motion.button>
                                       <motion.button
@@ -900,9 +907,9 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                                           setInvoiceOrder(order);
                                           setShowInvoice(true);
                                         }}
-                                        className="px-4 py-2 border border-border rounded-lg flex items-center gap-2 justify-center text-sm"
+                                        className="px-4 py-2 border border-foreground/20 rounded-full flex items-center gap-2 justify-center text-sm hover:border-foreground/40"
                                       >
-                                        <Download size={16} />
+                                        <Download size={15} />
                                         Invoice
                                       </motion.button>
                                     </div>
@@ -1196,34 +1203,6 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                             className="space-y-6"
                           >
                             <h2 className="text-2xl mb-6">Account Settings</h2>
-
-                            {/* Notifications (client-only until email/push prefs API exists) */}
-                            <div className="bg-muted/30 rounded-xl p-6">
-                              <h3 className="font-medium mb-2">Notifications</h3>
-                              <p className="text-xs text-muted-foreground mb-4">
-                                These choices are saved on this device only. They do not change email or SMS from us yet.
-                              </p>
-                              <div className="space-y-4">
-                                {[
-                                  { key: 'orders' as const, label: 'Order updates', desc: 'Get notified about your orders' },
-                                  { key: 'offers' as const, label: 'Offers & Promotions', desc: 'Get the latest deals' },
-                                  { key: 'updates' as const, label: 'App updates', desc: 'New features & improvements' },
-                                ].map((setting) => (
-                                  <div key={setting.key} className="flex items-center justify-between">
-                                    <div>
-                                      <p className="font-medium">{setting.label}</p>
-                                      <p className="text-sm text-muted-foreground">{setting.desc}</p>
-                                    </div>
-                                    <LuxuryCheckbox
-                                      checked={settingsNotifications[setting.key]}
-                                      onChange={() =>
-                                        setSettingsNotifications((prev) => ({ ...prev, [setting.key]: !prev[setting.key] }))
-                                      }
-                                    />
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
 
                             {/* Security */}
                             <div className="bg-muted/30 rounded-xl p-6">

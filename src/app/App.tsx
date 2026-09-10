@@ -48,7 +48,6 @@ import { ResponsiveAccountPage } from './components/ResponsiveAccountPage';
 import { ResponsiveOTPVerificationPage } from './components/ResponsiveOTPVerificationPage';
 import { AddAddressPage } from './pages/AddAddressPage';
 import { CategoriesHubPage } from './pages/CategoriesHubPage';
-import { OrdersPage } from './pages/OrdersPage';
 import { OrderDetailPage } from './pages/OrderDetailPage';
 import { AddressesPage } from './pages/AddressesPage';
 import { DesktopHeaderWrapper } from './components/DesktopHeaderWrapper';
@@ -172,11 +171,10 @@ function App() {
                             <Route path="/reset-password" element={<ResetPasswordPage />} />
                             <Route path="/otp-verification" element={<ResponsiveOTPVerificationPage />} />
                             <Route path="/delivery-location" element={<Navigate to="/addresses" replace />} />
-                            <Route path="/orders" element={<OrdersPage />} />
+                            {/* Orders live inside the Account tabs now — redirect legacy standalone links there. */}
+                            <Route path="/orders" element={<Navigate to="/account/orders" replace />} />
                             <Route path="/orders/:id" element={<OrderDetailPage />} />
                             <Route path="/order/:id" element={<OrderDetailPage />} />
-                            {/* Aliases: keep already-shared /account/orders links working */}
-                            <Route path="/account/orders" element={<OrdersPage />} />
                             <Route path="/account/orders/:id" element={<OrderDetailPage />} />
                             <Route path="/addresses" element={<AddressesPage />} />
                             <Route path="/addresses/add" element={<DesktopHeaderWrapper title="Add address" backPath="/addresses"><AddAddressPage /></DesktopHeaderWrapper>} />

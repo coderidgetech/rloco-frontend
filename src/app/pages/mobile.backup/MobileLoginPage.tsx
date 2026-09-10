@@ -156,7 +156,7 @@ export function MobileLoginPage() {
       style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       {/* Header with Close Button */}
-      <div className="flex-shrink-0 px-4 pt-2 pb-1">
+      <div className="flex-shrink-0 px-4 pt-4 pb-2">
         <button
           onClick={() => navigate('/')}
           className="p-2 -ml-2 hover:bg-foreground/5 rounded-full transition-colors"
@@ -174,12 +174,12 @@ export function MobileLoginPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="text-center mb-5 mt-1"
+              className="text-center mb-8 mt-8"
             >
-              <div className="mb-3">
-                <RlocoLogo size="sm" />
+              <div className="mb-4">
+                <RlocoLogo size="md" />
               </div>
-              <h1 className="text-2xl mb-1">Welcome Back</h1>
+              <h1 className="text-3xl mb-2">Welcome Back</h1>
               <p className="text-foreground/60">Sign in with your phone number</p>
             </motion.div>
 
@@ -281,7 +281,7 @@ export function MobileLoginPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
-              className="mt-1"
+              className="mt-8"
             >
               {/* Back Button */}
               <button
@@ -291,17 +291,17 @@ export function MobileLoginPage() {
                   setPhoneForOtp('');
                   setOtp(['', '', '', '', '', '']);
                 }}
-                className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors mb-4"
+                className="flex items-center gap-2 text-foreground/60 hover:text-foreground transition-colors mb-6"
               >
                 <ArrowLeft size={20} />
                 <span className="text-sm">Back to phone number</span>
               </button>
 
-              <div className="text-center mb-5">
-                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <Phone size={28} className="text-primary" />
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Phone size={32} className="text-primary" />
                 </div>
-                <h2 className="text-2xl mb-1">Verify OTP</h2>
+                <h2 className="text-3xl mb-2">Verify OTP</h2>
                 <p className="text-foreground/60 px-4">
                   Enter the 6-digit code sent to<br />
                   <span className="font-medium text-foreground">
