@@ -125,7 +125,7 @@ export function MobileProductCard({
       onClick={() => navigate(`/product/${product.id}`)}
       className="cursor-pointer"
     >
-      <div className="relative aspect-[2/3] bg-muted overflow-hidden rounded-xl">
+      <div className="relative aspect-[2/3] bg-muted overflow-hidden rounded-xl shadow-md">
         <CardImages images={images} alt={product.name} />
 
         <motion.button
@@ -166,7 +166,7 @@ export function MobileProductCard({
 
       <div className="pt-1.5 px-0.5">
         <h3 className="text-xs text-foreground line-clamp-1">{product.name}</h3>
-        <div className="mt-0.5 flex items-center gap-1.5">
+        <div className="mt-1 flex items-center gap-1.5">
           <span className="text-xs font-semibold text-foreground">
             {formatPrice(product.price, product.price_inr ?? product.priceINR)}
           </span>

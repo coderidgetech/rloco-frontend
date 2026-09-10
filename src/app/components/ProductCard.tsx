@@ -109,7 +109,7 @@ export function ProductCard({ product, index = 0, onProductClick, wishlistView =
       onClick={handleCardClick}
     >
       {/* Image */}
-      <div className="relative aspect-[2/3] overflow-hidden mb-1.5 bg-accent rounded shadow-sm hover:shadow-lg transition-all duration-500">
+      <div className="relative aspect-[2/3] overflow-hidden mb-1.5 bg-accent rounded-lg shadow-md hover:shadow-xl transition-all duration-500">
         <motion.img
           src={product.images?.[0] || product.image || ''}
           alt={product.name}
@@ -182,7 +182,7 @@ export function ProductCard({ product, index = 0, onProductClick, wishlistView =
           {product.category}
         </div>
         <h3
-          className="text-[11px] mb-0.5 h-4 overflow-hidden text-ellipsis whitespace-nowrap group-hover:text-foreground/70 transition-colors leading-tight"
+          className="text-[11px] mb-1.5 h-4 overflow-hidden text-ellipsis whitespace-nowrap group-hover:text-foreground/70 transition-colors leading-tight"
           title={product.name}
         >
           {product.name}
