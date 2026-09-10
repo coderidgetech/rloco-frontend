@@ -481,9 +481,12 @@ export function OrderDetailPage() {
           )}
           <button
             type="button"
-            onClick={() => {
-              window.print();
-              toast.success('Use "Save as PDF" in the print dialog to download the invoice.');
+            onClick={async () => {
+              try {
+                await orderService.downloadInvoice(order.id, order.order_number);
+              } catch (error) {
+                toast.error('Failed to download invoice. Please try again.');
+              }
             }}
             className="w-full bg-white border border-border/30 shadow-sm py-3.5 rounded-full font-medium flex items-center justify-center gap-2"
           >

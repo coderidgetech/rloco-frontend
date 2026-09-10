@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { X, Download, Printer, Mail } from 'lucide-react';
 import { RlocoLogo } from './RlocoLogo';
 import { toast } from 'sonner';
+import { orderService } from '../services/orderService';
 
 interface OrderProduct {
   id: string;
@@ -50,9 +51,12 @@ interface InvoiceModalProps {
 export function InvoiceModal({ order, isOpen, onClose }: InvoiceModalProps) {
   if (!isOpen || !order) return null;
 
-  const handleDownload = () => {
-    window.print();
-    toast.success('Use "Save as PDF" in the print dialog to download the invoice.');
+  const handleDownload = async () => {
+    try {
+      await orderService.downloadInvoice(order.id);
+    } catch (error) {
+      toast.error('Failed to download invoice. Please try again.');
+    }
   };
 
   const handlePrint = () => {

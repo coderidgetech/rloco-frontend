@@ -1,4 +1,5 @@
 import api from '../lib/api';
+import { downloadBlob } from '../lib/downloadFile';
 import { Order, CreateOrderRequest, PaginatedResponse } from '../types/api';
 
 export const orderService = {
@@ -40,6 +41,16 @@ export const orderService = {
     const response = await api.get<{ updates: OrderTrackingUpdate[] }>(`/orders/${orderId}/tracking`);
     const data = response.data ?? {};
     return { updates: data.updates ?? [] };
+  },
+
+  async downloadInvoice(id: string, orderNumber?: string): Promise<void> {
+    const response = await api.get(`/orders/${id}/invoice`, { responseType: 'blob' });
+    downloadBlob(response.data as Blob, `invoice-${orderNumber || id}.pdf`);
+  },
+
+  async downloadPackingSlip(id: string, orderNumber?: string): Promise<void> {
+    const response = await api.get(`/orders/${id}/packing-slip`, { responseType: 'blob' });
+    downloadBlob(response.data as Blob, `packing-slip-${orderNumber || id}.pdf`);
   },
 };
 
