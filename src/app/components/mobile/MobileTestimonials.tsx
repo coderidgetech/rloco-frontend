@@ -84,10 +84,10 @@ export function MobileTestimonials() {
   };
 
   return (
-    <div className="py-6 bg-gradient-to-br from-primary/5 via-white to-primary/5">
+    <div className="bg-gradient-to-br from-primary/5 via-white to-primary/5 py-4">
       <div className="px-4">
         {/* Header */}
-        <div className="text-center mb-4">
+        <div className="mb-3 text-center">
           <h2 className="text-base font-medium tracking-wide mb-1.5">What Our Customers Say</h2>
           <p className="text-sm text-foreground/60">
             Trusted by thousands of fashion lovers

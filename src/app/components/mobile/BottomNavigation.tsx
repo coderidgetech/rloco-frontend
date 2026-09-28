@@ -15,9 +15,6 @@ export function BottomNavigation() {
   const { itemCount } = useCart();
   const { isAuthenticated } = useUser();
 
-  // Visible near the top and while scrolling up; hides while scrolling down,
-  // so it doesn't sit over content the user is actively reading further down
-  // the page.
   const [visible, setVisible] = useState(true);
   const lastScrollY = useRef(0);
   useEffect(() => {
@@ -67,34 +64,39 @@ export function BottomNavigation() {
       initial={false}
       animate={{ y: visible ? 0 : 96, opacity: visible ? 1 : 0 }}
       transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed left-4 right-4 z-50 md:hidden rounded-full bg-white/35 backdrop-blur-xl border border-white/25"
+      className="fixed left-4 right-4 z-50 overflow-hidden rounded-full border border-white/45 bg-white/45 backdrop-blur-xl backdrop-saturate-150 md:hidden dark:border-white/10 dark:bg-neutral-950/45"
       style={{
         bottom: 'calc(0.75rem + env(safe-area-inset-bottom))',
-        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+        boxShadow:
+          '0 10px 28px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.55)',
         pointerEvents: visible ? 'auto' : 'none',
       }}
     >
-      <div className="flex items-center justify-around h-14 px-2">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent"
+      />
+      <div className="flex h-14 items-center justify-around px-2">
         {tabs.map(({ key, Icon, active, onClick, badge }) => (
           <button
             key={key}
             onClick={onClick}
             aria-label={key}
-            className="flex items-center justify-center flex-1 h-full"
+            className="flex h-full flex-1 items-center justify-center"
             style={{ WebkitTapHighlightColor: 'transparent' }}
           >
             <div
-              className={`relative flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
-                active ? 'bg-foreground/10' : ''
+              className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200 ${
+                active ? 'bg-white/55 shadow-sm ring-1 ring-white/60 dark:bg-white/10 dark:ring-white/10' : ''
               }`}
             >
               <Icon
-                size={20}
-                strokeWidth={active ? 2.4 : 1.8}
-                className={active ? 'text-foreground/80' : 'text-foreground/50'}
+                size={24}
+                strokeWidth={active ? 2.4 : 1.85}
+                className={active ? 'text-foreground' : 'text-foreground/75'}
               />
               {badge != null && badge > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 bg-foreground/70 text-background text-[9px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-foreground/70 px-1 text-[9px] font-bold text-background">
                   {badge > 9 ? '9+' : badge}
                 </span>
               )}

@@ -53,7 +53,7 @@ export function ProductRecommendationSection({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-6 px-4 md:px-6">
+          <div className="grid grid-cols-2 gap-x-2 gap-y-3 px-4 md:grid-cols-3 md:gap-6 md:px-6 lg:grid-cols-6">
             {(products || []).map((item, index) => (
               <RecommendationCard key={`${item.id}-${index}`} product={item} index={index} isMobile={isMobile} />
             ))}
@@ -90,7 +90,7 @@ export function ProductRecommendationSection({
             <p className="text-background/60 tracking-wide">{subtitle}</p>
           </div>
 
-          <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-5 px-4 md:px-6">
+          <div className="grid grid-cols-3 gap-x-2 gap-y-6 px-4 md:grid-cols-4 md:gap-5 md:px-6 lg:grid-cols-6">
             {(products || []).map((item, index) => (
               <RecommendationCard key={`${item.id}-${index}`} product={item} index={index} isMobile={isMobile} />
             ))}
@@ -120,7 +120,7 @@ export function ProductRecommendationSection({
             {subtitle && <p className="mt-1 text-sm text-foreground/50 tracking-wide">{subtitle}</p>}
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-6 px-4 md:px-6">
+          <div className="grid grid-cols-2 gap-x-2 gap-y-3 px-4 md:grid-cols-3 md:gap-6 md:px-6 lg:grid-cols-6">
             {(products || []).map((item, index) => (
               <RecommendationCard key={`${item.id}-${index}`} product={item} index={index} isMobile={isMobile} />
             ))}
@@ -151,7 +151,7 @@ export function ProductRecommendationSection({
           <p className="text-sm text-foreground/50 tracking-wide">{subtitle}</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6 px-2 md:px-4">
+        <div className="grid grid-cols-2 gap-x-2 gap-y-3 px-2 md:grid-cols-4 md:gap-6 md:px-4 lg:grid-cols-6">
           {(products || []).map((item, index) => (
             <RecommendationCard key={`${item.id}-${index}`} product={item} index={index} isMobile={isMobile} />
           ))}

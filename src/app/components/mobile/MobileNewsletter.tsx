@@ -40,7 +40,7 @@ export function MobileNewsletter() {
   };
 
   return (
-    <div className="py-6 bg-gradient-to-br from-primary/10 via-primary/5 to-primary/10">
+    <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-primary/10 py-4">
       <div className="px-4">
         {!isSubmitted ? (
           <>
@@ -53,7 +53,7 @@ export function MobileNewsletter() {
               <Mail size={28} className="text-primary" />
             </motion.div>
 
-            <div className="text-center mb-4">
+            <div className="mb-3 text-center">
               <h2 className="text-base font-medium tracking-wide mb-1.5">Stay in the Loop</h2>
               <p className="text-sm text-foreground/60 leading-relaxed">
                 Subscribe to get exclusive deals, early access to sales, and style tips

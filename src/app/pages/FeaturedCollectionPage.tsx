@@ -265,7 +265,7 @@ export function FeaturedCollectionPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.4 }}
-              className="grid min-w-0 grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4"
+              className="grid min-w-0 grid-cols-2 gap-x-2 gap-y-3 md:grid-cols-3 md:gap-6 lg:grid-cols-4"
             >
               {filteredProducts.map((product, index) =>
                 isMobile ? (

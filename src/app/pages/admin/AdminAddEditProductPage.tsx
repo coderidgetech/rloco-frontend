@@ -223,7 +223,7 @@ export const AdminAddEditProductPage = () => {
           care: product.care || '',
           featured: product.featured || false,
           onSale: product.on_sale || false,
-          newArrival: product.new_arrival || false,
+          newArrival: product.new_arrival || product.badge === 'New',
           isGift: product.is_gift || false,
           images: product.images || [],
           stock: product.stock || {},
@@ -236,7 +236,7 @@ export const AdminAddEditProductPage = () => {
             return ['IN', 'US'] as ('IN' | 'US')[];
           })(),
           status: (product.status === 'draft' ? 'draft' : 'active') as 'active' | 'draft',
-          badge: product.badge || '',
+          badge: product.badge === 'New' ? '' : product.badge || '',
           videoUrl: product.video_url || '',
           brand: product.brand || '',
           barcode: product.barcode || '',
@@ -972,7 +972,7 @@ export const AdminAddEditProductPage = () => {
                       value={formData.badge}
                       onChange={(e) => setFormData({ ...formData, badge: e.target.value })}>
                       <option value="">None</option>
-                      {['Best Seller', 'Trending', 'Most Ordered', 'New', 'Limited Edition', 'Exclusive', 'Hot', 'Popular'].map((b) => (
+                      {['Best Seller', 'Trending', 'Most Ordered', 'Limited Edition', 'Exclusive', 'Hot', 'Popular'].map((b) => (
                         <option key={b} value={b}>{b}</option>
                       ))}
                     </select>

@@ -29,7 +29,10 @@ export function CategoryGrid() {
   const navigate = useNavigate();
 
   return (
-    <div className="w-full bg-white py-6">
+    <div className="w-full bg-white py-4">
+      <h2 className="mb-2 px-4 text-base font-medium tracking-wide">
+        Shop by Category
+      </h2>
       <div className="grid grid-cols-2 gap-3 px-4">
         {categories.map((category, index) => (
           <motion.button

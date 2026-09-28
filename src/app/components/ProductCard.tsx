@@ -120,7 +120,17 @@ export function ProductCard({ product, index = 0, onProductClick, wishlistView =
         />
 
         {/* Badge */}
-        {!isOutOfStock && product.badge && (
+        {!isOutOfStock && (product.on_sale || product.onSale) && (
+          <div className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-red-600 text-white text-[9px] font-bold tracking-wider uppercase z-10">
+            {discountPct > 0 ? `-${discountPct}%` : 'Sale'}
+          </div>
+        )}
+        {!isOutOfStock && !(product.on_sale || product.onSale) && (product.new_arrival || product.newArrival) && (
+          <div className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-green-600 text-white text-[9px] font-bold tracking-wider uppercase z-10">
+            New
+          </div>
+        )}
+        {!isOutOfStock && !(product.on_sale || product.onSale) && !(product.new_arrival || product.newArrival) && product.badge && (
           <div
             className={`absolute top-1.5 left-1.5 px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase z-10 ${
               product.badge === 'Best Seller' ? 'bg-primary text-white' :
@@ -135,11 +145,6 @@ export function ProductCard({ product, index = 0, onProductClick, wishlistView =
             }`}
           >
             {product.badge}
-          </div>
-        )}
-        {!isOutOfStock && !product.badge && (product.on_sale || product.onSale) && (
-          <div className="absolute top-1.5 left-1.5 px-2 py-0.5 bg-red-600 text-white text-[9px] font-bold tracking-wider uppercase z-10">
-            {discountPct > 0 ? `-${discountPct}%` : 'Sale'}
           </div>
         )}
 

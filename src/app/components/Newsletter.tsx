@@ -38,7 +38,7 @@ export function Newsletter() {
   };
 
   return (
-    <section className="py-32 px-6 bg-accent/20 relative">
+    <section className="relative bg-accent/20 px-6 py-12 md:py-16">
       <div className="max-w-4xl mx-auto" style={{ position: 'relative' }}>
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -52,15 +52,15 @@ export function Newsletter() {
             whileInView={{ width: '4rem' }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="h-0.5 bg-foreground mx-auto mb-8"
+            className="mx-auto mb-4 h-0.5 bg-foreground"
           />
           {config.homepage.newsletter?.heading && (
-            <h2 className="text-5xl md:text-6xl mb-6 tracking-tighter">
+            <h2 className="mb-3 text-5xl tracking-tighter md:text-6xl">
               {config.homepage.newsletter.heading}
             </h2>
           )}
           {config.homepage.newsletter?.subheading && (
-            <p className="text-xl text-foreground/70 mb-12 max-w-2xl mx-auto">
+            <p className="mx-auto mb-6 max-w-2xl text-xl text-foreground/70">
               {config.homepage.newsletter.subheading}
             </p>
           )}

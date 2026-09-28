@@ -45,15 +45,15 @@ export function Footer() {
 
   return (
     <footer className="relative bg-gradient-to-b from-white via-neutral-50 to-neutral-100 dark:from-neutral-900 dark:via-neutral-950 dark:to-black rounded-t-[2rem] md:rounded-t-[2.5rem] overflow-hidden">
-      <div className="page-container pt-14 pb-10 md:pt-20 md:pb-14">
+      <div className="page-container pb-28 pt-14 md:pb-14 md:pt-20">
         {/* Brand */}
         <div className="flex justify-center mb-12 md:mb-16 px-8">
           <RlocoLogo size="2xl" className="[&_svg]:h-10 md:[&_svg]:h-20" />
         </div>
 
         {/* Link groups */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-10 md:gap-x-12 max-w-md md:max-w-3xl mx-auto mb-10 md:mb-12">
-          <div>
+        <div className="mx-auto mb-10 grid max-w-md grid-cols-2 items-start gap-x-6 gap-y-10 md:mb-12 md:max-w-3xl md:grid-cols-3 md:gap-x-12">
+          <div className="min-w-0">
             <h4 className="font-semibold mb-4">Connect with us</h4>
             <ul className="space-y-3">
               {connectLinks.map((item) => (
@@ -62,7 +62,7 @@ export function Footer() {
                     href={item.href}
                     target={item.href.startsWith('http') ? '_blank' : undefined}
                     rel={item.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                    className="text-sm text-foreground/60 hover:text-foreground transition-colors"
+                    className="block w-fit text-left text-sm leading-5 text-foreground/60 transition-colors hover:text-foreground"
                   >
                     {item.name}
                   </a>
@@ -71,14 +71,14 @@ export function Footer() {
             </ul>
           </div>
 
-          <div>
+          <div className="min-w-0">
             <h4 className="font-semibold mb-4">We are {config.general.siteName}</h4>
             <ul className="space-y-3">
               {weAreLinks.map((item) => (
                 <li key={item.name}>
                   <button
                     onClick={() => navigate(item.path)}
-                    className="text-sm text-foreground/60 hover:text-foreground transition-colors"
+                    className="block w-fit text-left text-sm leading-5 text-foreground/60 transition-colors hover:text-foreground"
                   >
                     {item.name}
                   </button>
@@ -87,14 +87,14 @@ export function Footer() {
             </ul>
           </div>
 
-          <div className="col-span-2 md:col-span-1">
+          <div className="col-span-2 min-w-0 md:col-span-1">
             <h4 className="font-semibold mb-4">Order Support</h4>
-            <ul className="space-y-3">
+            <ul className="grid grid-cols-2 gap-x-6 gap-y-3 md:block md:space-y-3">
               {orderSupportLinks.map((item) => (
                 <li key={item.name}>
                   <button
                     onClick={() => navigate(item.path)}
-                    className="text-sm text-foreground/60 hover:text-foreground transition-colors"
+                    className="block w-fit text-left text-sm leading-5 text-foreground/60 transition-colors hover:text-foreground"
                   >
                     {item.name}
                   </button>

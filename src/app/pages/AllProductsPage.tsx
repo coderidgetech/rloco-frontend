@@ -477,7 +477,7 @@ export function AllProductsPage() {
               </div>
             ) : filteredProducts.length > 0 ? (
               <>
-                <div className="grid min-w-0 grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                <div className="grid min-w-0 grid-cols-2 gap-x-2 gap-y-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4">
                   {pagedProducts.map((product, index) =>
                     isMobile ? (
                       <MobileProductCard key={product.id} product={product as MobileProductCardData} index={index} />

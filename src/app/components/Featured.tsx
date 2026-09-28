@@ -78,14 +78,14 @@ export function Featured() {
   };
 
   return (
-    <section id="featured" className="py-6 md:py-8 bg-accent/20 relative" style={{ position: 'relative' }}>
+    <section id="featured" className="relative bg-accent/20 py-4 md:py-6" style={{ position: 'relative' }}>
       <div className="w-full" style={{ position: 'relative' }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="flex items-end justify-between gap-4 mb-5 md:mb-6 px-2 md:px-4"
+          className="mb-3 flex items-end justify-between gap-4 px-2 md:mb-4 md:px-4"
         >
           <div>
             <motion.div
@@ -127,7 +127,7 @@ export function Featured() {
         )}
 
         {!loading && !error && featuredProducts && featuredProducts.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 lg:gap-6 mb-2 md:mb-3 px-2 md:px-4">
+          <div className="mb-2 grid grid-cols-2 gap-x-2 gap-y-3 px-2 md:mb-3 md:grid-cols-4 md:gap-4 md:px-4 lg:gap-6">
             {featuredProducts.slice(0, 8).map((product, index) => (
             <motion.div
               key={product.id}

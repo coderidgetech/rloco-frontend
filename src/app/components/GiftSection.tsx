@@ -12,14 +12,14 @@ export function GiftSection() {
   if (items.length === 0) return null;
 
   return (
-    <section className="py-6 md:py-8 bg-background">
+    <section className="bg-background py-4 md:py-6">
       <div className="w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="mb-5 md:mb-6 px-2 md:px-4"
+          className="mb-3 px-2 md:mb-4 md:px-4"
         >
           <motion.div
             initial={{ width: 0 }}

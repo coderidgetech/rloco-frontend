@@ -81,7 +81,7 @@ export function ProductsGrid() {
   };
 
   return (
-    <section id="products" className="pt-8 pb-10 px-4 md:pt-10 md:pb-12 md:px-6 bg-background relative">
+    <section id="products" className="px-4 pt-4 pb-8 md:px-6 md:pt-6 md:pb-10 bg-background relative">
       {/* Reusable Background Decoration */}
       <BackgroundDecor 
         variant="alternate"
@@ -119,7 +119,7 @@ export function ProductsGrid() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="flex items-end justify-between gap-4 mb-8 md:mb-10"
+              className="mb-4 flex items-end justify-between gap-4 md:mb-6"
             >
               <div>
                 <motion.div
@@ -127,9 +127,9 @@ export function ProductsGrid() {
                   whileInView={{ width: '2.5rem' }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, delay: 0.1 }}
-                  className="h-0.5 bg-foreground mb-4"
+                  className="mb-2.5 h-0.5 bg-foreground"
                 />
-                <h2 className="text-3xl md:text-4xl lg:text-5xl tracking-tight">Top Collection</h2>
+                <h2 className="text-xl md:text-2xl lg:text-3xl tracking-tight">Top Collection</h2>
                 <p className="text-sm text-foreground/60 mt-1.5">{displayProducts.length} handpicked pieces</p>
               </div>
               <motion.button
@@ -143,7 +143,7 @@ export function ProductsGrid() {
             </motion.div>
 
         {/* Products Grid - 4x1 grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 lg:gap-6 px-2 md:px-4">
+        <div className="grid grid-cols-2 gap-x-2 gap-y-3 px-2 md:grid-cols-4 md:gap-4 md:px-4 lg:gap-6">
           <AnimatePresence mode="popLayout">
             {displayProducts.map((product, index) => (
               <motion.div

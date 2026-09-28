@@ -31,9 +31,9 @@ export function MobileProductGrid({
   const hasMore = seeAllLink != null && products.length > maxItems;
 
   return (
-    <div className={`w-full bg-white ${className || 'py-6'}`}>
+    <div className={`w-full bg-white ${className || 'py-4'}`}>
       {title && (
-        <div className={`px-4 flex items-center justify-between ${headerClassName || 'mb-2.5'}`}>
+        <div className={`px-4 flex items-center justify-between ${headerClassName || 'mb-2'}`}>
           <h2 className={titleClassName || 'text-base font-medium tracking-wide'}>{title}</h2>
           {hasMore && (
             <button
@@ -46,7 +46,7 @@ export function MobileProductGrid({
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2 px-4">
+      <div className="grid grid-cols-2 gap-x-2 gap-y-3 px-4">
         {shown.map((product, index) => (
           <MobileProductCard key={`${product.id}-${index}`} product={product} index={index} />
         ))}

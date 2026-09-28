@@ -1,10 +1,13 @@
 import { useRef, useState } from 'react';
 import { motion } from 'motion/react';
-import { Heart, Trash2 } from 'lucide-react';
+import { Check, Heart, ShoppingBag, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
+import { useCart } from '../../context/CartContext';
 import { useCurrency } from '../../context/CurrencyContext';
 import { PLACEHOLDER_IMAGE } from '../../constants';
+import { AddToBagPopover } from '../AddToBagPopover';
+import { toast } from 'sonner';
 
 export interface MobileProductCardData {
   id: string | number;
@@ -24,6 +27,8 @@ export interface MobileProductCardData {
   onSale?: boolean;
   new_arrival?: boolean;
   newArrival?: boolean;
+  sizes?: string[];
+  colors?: string[];
 }
 
 /**
@@ -91,7 +96,11 @@ export function MobileProductCard({
 }) {
   const navigate = useNavigate();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
+  const { addToCart, items: cartItems } = useCart();
   const { formatPrice } = useCurrency();
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [selectedSize, setSelectedSize] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
 
   const images = (product.images ?? (product.image ? [product.image] : [])).filter(
     (s) => typeof s === 'string' && s.trim() !== '',
@@ -99,6 +108,31 @@ export function MobileProductCard({
   const isOnSale = product.sale ?? product.on_sale ?? product.onSale;
   const isNew = (product.isNew ?? product.new_arrival ?? product.newArrival) && !isOnSale;
   const original = product.originalPrice ?? product.original_price;
+  const isInCart = cartItems.some((item) => String(item.id) === String(product.id));
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isInCart) {
+      navigate('/cart');
+      return;
+    }
+    setSelectedSize(product.sizes?.[0] || 'M');
+    setSelectedColor(product.colors?.[0] || 'Default');
+    setPopoverOpen(true);
+  };
+
+  const handleConfirmAddToCart = () => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      priceINR: product.price_inr ?? product.priceINR,
+      image: images[0] ?? PLACEHOLDER_IMAGE,
+      size: selectedSize || product.sizes?.[0] || 'M',
+    });
+    toast.success('Added to cart');
+    setPopoverOpen(false);
+  };
 
   const toggleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -166,12 +200,40 @@ export function MobileProductCard({
 
       <div className="pt-1.5 px-0.5">
         <h3 className="text-xs text-foreground line-clamp-1">{product.name}</h3>
-        <div className="mt-1 flex items-center gap-1.5">
-          <span className="text-xs font-semibold text-foreground">
-            {formatPrice(product.price, product.price_inr ?? product.priceINR)}
-          </span>
-          {original != null && original > product.price && (
-            <span className="text-[10px] text-foreground/40 line-through">{formatPrice(original, undefined)}</span>
+        <div className="mt-1 flex items-center justify-between gap-1.5">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <span className="text-xs font-semibold text-foreground">
+              {formatPrice(product.price, product.price_inr ?? product.priceINR)}
+            </span>
+            {original != null && original > product.price && (
+              <span className="text-[10px] text-foreground/40 line-through">{formatPrice(original, undefined)}</span>
+            )}
+          </div>
+          {wishlistView && (
+            <div className="relative shrink-0">
+            <AddToBagPopover
+              isOpen={popoverOpen}
+              product={product as any}
+              selectedSize={selectedSize}
+              selectedColor={selectedColor}
+              onSizeChange={setSelectedSize}
+              onColorChange={setSelectedColor}
+              onConfirm={handleConfirmAddToCart}
+              onCancel={() => setPopoverOpen(false)}
+            />
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              aria-label={isInCart ? 'View cart' : 'Add to cart'}
+              className={`flex h-7 w-7 items-center justify-center rounded-full shadow-sm transition-colors ${
+                isInCart
+                  ? 'bg-green-500 text-white'
+                  : 'bg-foreground text-background active:opacity-80'
+              }`}
+            >
+              {isInCart ? <Check size={12} strokeWidth={2.5} /> : <ShoppingBag size={12} />}
+            </button>
+            </div>
           )}
         </div>
       </div>

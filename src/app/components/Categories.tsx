@@ -124,7 +124,7 @@ export function Categories() {
 
   if (loading) {
     return (
-      <section id="categories" className="py-10 md:py-12 relative overflow-hidden bg-background">
+      <section id="categories" className="relative overflow-hidden bg-background py-6 md:py-8">
         <div className="text-center">Loading categories...</div>
       </section>
     );
@@ -135,7 +135,7 @@ export function Categories() {
   }
 
   return (
-    <section id="categories" className="py-10 md:py-12 relative overflow-hidden bg-background">
+    <section id="categories" className="relative overflow-hidden bg-background py-6 md:py-8">
       {/* Reusable Background Decoration */}
       <BackgroundDecor 
         variant="default"
@@ -153,15 +153,18 @@ export function Categories() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="text-center mb-8 md:mb-10"
+            className="mb-4 text-center md:mb-6"
           >
             <motion.div
               initial={{ width: 0 }}
               whileInView={{ width: '3rem' }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="h-0.5 bg-foreground mx-auto mb-6"
+              className="mx-auto mb-2.5 h-0.5 bg-foreground"
             />
+            <h2 className="text-xl md:text-2xl lg:text-3xl tracking-tight mb-2">
+              Shop by Category
+            </h2>
             <p className="text-foreground/60 text-sm md:text-base max-w-2xl mx-auto">
               Explore our diverse collection of premium fashion categories
             </p>

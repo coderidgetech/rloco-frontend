@@ -142,7 +142,7 @@ export function Testimonials() {
   const visible = getVisible();
 
   return (
-    <section className="bg-white py-20 md:py-32 relative overflow-hidden">
+    <section className="relative overflow-hidden bg-white py-10 md:py-16">
       <div className="absolute inset-0 opacity-[0.015]" style={{
         backgroundImage: `radial-gradient(circle at 1px 1px, black 1px, transparent 0)`,
         backgroundSize: '40px 40px',
@@ -150,7 +150,7 @@ export function Testimonials() {
 
       <div className="page-container relative">
         {/* Header */}
-        <div className="max-w-3xl mb-16 md:mb-20">
+        <div className="mb-8 max-w-3xl md:mb-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -191,7 +191,7 @@ export function Testimonials() {
         </div>
 
         {/* Testimonials Grid */}
-        <div className="grid md:grid-cols-3 gap-6 md:gap-8 mb-12">
+        <div className="mb-8 grid gap-6 md:grid-cols-3 md:gap-8">
           {visible.map((t, index) => (
             <motion.div
               key={`${t.id}-${currentIndex}`}
@@ -250,7 +250,7 @@ export function Testimonials() {
         </div>
 
         {/* Navigation Dots */}
-        <div className="flex justify-center gap-2 mb-20">
+        <div className="mb-12 flex justify-center gap-2">
           {testimonials.map((_, i) => (
             <motion.button
               key={i}
@@ -271,7 +271,7 @@ export function Testimonials() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 pt-16 md:pt-20 border-t border-black/10"
+          className="grid grid-cols-2 gap-8 border-t border-black/10 pt-10 md:grid-cols-4 md:gap-12 md:pt-12"
         >
           {[
             { value: 50, suffix: 'K+', label: 'Happy Customers', delay: 0 },

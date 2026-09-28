@@ -151,10 +151,10 @@ export function InspirationVideos({ videos: propVideos }: InspirationVideosProps
   const visibleVideos = getVisibleVideos();
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center bg-background overflow-hidden py-6 sm:py-8 md:py-12">
+    <section className="relative flex items-center justify-center overflow-hidden bg-background py-4 sm:py-6 md:py-8">
       <div className="w-full px-3 sm:px-4 md:px-6 flex flex-col items-center justify-center min-h-0 flex-1">
         {/* Header */}
-        <ScrollReveal direction="up" className="text-center mb-3 sm:mb-4 md:mb-6 shrink-0">
+        <ScrollReveal direction="up" className="mb-2 shrink-0 text-center sm:mb-3 md:mb-4">
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
