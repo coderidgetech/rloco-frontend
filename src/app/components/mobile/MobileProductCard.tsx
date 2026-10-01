@@ -202,7 +202,7 @@ export function MobileProductCard({
         <h3 className="line-clamp-1 text-sm font-normal leading-tight text-foreground">{product.name}</h3>
         <div className="mt-1 flex items-center justify-between gap-1.5">
           <div className="flex min-w-0 items-center gap-1.5">
-            <span className="text-sm font-normal leading-none text-foreground/60">
+            <span className="text-xs font-normal leading-none text-foreground/75">
               {formatPrice(product.price, product.price_inr ?? product.priceINR)}
             </span>
             {original != null && original > product.price && (
