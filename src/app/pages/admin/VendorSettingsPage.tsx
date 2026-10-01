@@ -129,8 +129,8 @@ export function VendorSettingsPage() {
       toast.error('New passwords do not match');
       return;
     }
-    if (newPassword.length < 8) {
-      toast.error('New password must be at least 8 characters');
+    if (newPassword.length < 10) {
+      toast.error('New password must be at least 10 characters');
       return;
     }
     setSaving(true);

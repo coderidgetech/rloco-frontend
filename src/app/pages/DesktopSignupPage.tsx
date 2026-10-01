@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import { useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Mail, User, ArrowRight, Lock } from 'lucide-react';
+import { Mail, User, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { RlocoLogo } from '@/app/components/RlocoLogo';
 import { authService } from '@/app/services/authService';
@@ -25,15 +25,12 @@ export function DesktopSignupPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    password: '',
-    confirmPassword: '',
   });
   const [phoneLocal, setPhoneLocal] = useState(prefill.prefillPhoneLocal ?? '');
   const [selectedCountry, setSelectedCountry] = useState(prefill.prefillCountry ?? DIAL_COUNTRIES[1]);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -52,15 +49,6 @@ export function DesktopSignupPage() {
       return;
     }
 
-    if (formData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-
     const phone = buildPhoneDigitsForApi(selectedCountry.dialCode, phoneLocal);
     if (phone.length < 11) {
       toast.error('Choose country and enter your full mobile number');
@@ -75,7 +63,6 @@ export function DesktopSignupPage() {
           phone,
           email: formData.email.trim(),
           name: formData.name.trim(),
-          password: formData.password,
         })
       );
       toast.success('OTP sent to your phone');
@@ -250,54 +237,6 @@ export function DesktopSignupPage() {
               <p className="text-xs text-foreground/50 mt-2">
                 Select country first — the server expects full international digits (no default country code).
               </p>
-            </div>
-
-            <div className="relative">
-              <label className="block text-sm font-medium mb-2 text-foreground/70">
-                Password
-              </label>
-              <div className="relative">
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40" />
-                <input
-                  id="signup-password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  placeholder={PH.password}
-                  required
-                  minLength={6}
-                  autoComplete="one-time-code"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  className="w-full pl-12 pr-4 py-4 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                />
-              </div>
-            </div>
-
-            <div className="relative">
-              <label className="block text-sm font-medium mb-2 text-foreground/70">
-                Confirm password
-              </label>
-              <div className="relative">
-                <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40" />
-                <input
-                  id="signup-confirm-password"
-                  name="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  placeholder={PH.confirmPassword}
-                  required
-                  minLength={6}
-                  autoComplete="one-time-code"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  className="w-full pl-12 pr-4 py-4 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                />
-              </div>
             </div>
 
             {/* Submit Button */}

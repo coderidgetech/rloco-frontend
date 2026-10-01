@@ -25,7 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../components/ui/select';
-import { authService } from '../../services/authService';
 import api from '../../lib/api';
 
 export const AddUserPage = () => {
@@ -36,7 +35,7 @@ export const AddUserPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<'customer' | 'admin' | 'vendor'>('customer');
+  const [role, setRole] = useState<'customer' | 'admin'>('customer');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -63,8 +62,8 @@ export const AddUserPage = () => {
 
     if (!password) {
       newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (password.length < 10) {
+      newErrors.password = 'Password must be at least 10 characters';
     }
 
     if (password !== confirmPassword) {
@@ -85,46 +84,8 @@ export const AddUserPage = () => {
     setIsLoading(true);
 
     try {
-      if (role === 'customer') {
-        // Use regular registration for customers
-        await authService.register(email, password, name);
-        toast.success('Customer user created successfully!');
-      } else {
-        // For admin/vendor, we need to create via admin endpoint or update after registration
-        // First register the user
-        const registerResponse = await authService.register(email, password, name);
-        
-        // Then update the role via admin API
-        try {
-          if (registerResponse.user && registerResponse.user.id) {
-            await api.put(`/admin/customers/${registerResponse.user.id}`, {
-              role: role,
-            });
-            toast.success(`${role.charAt(0).toUpperCase() + role.slice(1)} user created successfully!`);
-          } else {
-            // If user ID is not in response, fetch user by email and update
-            const userResponse = await api.get(`/admin/customers?email=${encodeURIComponent(email)}`);
-            const users = userResponse.data.data;
-            if (users.length > 0) {
-              await api.put(`/admin/customers/${users[0].id}`, {
-                role: role,
-              });
-              toast.success(`${role.charAt(0).toUpperCase() + role.slice(1)} user created successfully!`);
-            } else {
-              toast.warning('User created but could not update role. Please update manually.');
-            }
-          }
-        } catch (updateError: unknown) {
-          // If role update fails, user is still created as customer
-          console.error('Failed to update role:', updateError);
-          toast.warning(
-            getApiErrorMessage(
-              updateError,
-              'User created but role update failed. User is set as customer. Please update role manually.'
-            )
-          );
-        }
-      }
+      await api.post('/admin/users', { email, password, name, role });
+      toast.success(`${role === 'admin' ? 'Administrator' : 'Customer'} created successfully!`);
 
       // Reset form
       setName('');
@@ -182,7 +143,7 @@ export const AddUserPage = () => {
               {/* Role Selection */}
               <div className="space-y-2">
                 <Label htmlFor="role">User Role</Label>
-                <Select value={role} onValueChange={(value: 'customer' | 'admin' | 'vendor') => setRole(value)}>
+                <Select value={role} onValueChange={(value: 'customer' | 'admin') => setRole(value)}>
                   <SelectTrigger id="role">
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
@@ -199,17 +160,10 @@ export const AddUserPage = () => {
                         <span>Admin</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="vendor">
-                      <div className="flex items-center gap-2">
-                        <User size={16} />
-                        <span>Vendor</span>
-                      </div>
-                    </SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-gray-500">
                   {role === 'admin' && 'Admin users have full access to all system features'}
-                  {role === 'vendor' && 'Vendors can manage their own products and orders'}
                   {role === 'customer' && 'Customers can browse and purchase products'}
                 </p>
               </div>
@@ -274,7 +228,7 @@ export const AddUserPage = () => {
                   <p className="text-sm text-red-500">{errors.password}</p>
                 )}
                 <p className="text-sm text-gray-500">
-                  Password must be at least 6 characters long
+                  Password must be at least 10 characters long
                 </p>
               </div>
 

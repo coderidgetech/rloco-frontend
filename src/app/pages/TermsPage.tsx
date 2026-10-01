@@ -48,7 +48,7 @@ export function TermsPage() {
               <ul className="space-y-2 text-foreground/70">
                 <li><strong>"We," "Us," "Our"</strong> refers to Rloko</li>
                 <li><strong>"You," "Your"</strong> refers to the user or customer</li>
-                <li><strong>"Website"</strong> refers to rloco.com</li>
+                <li><strong>"Website"</strong> refers to rloko.com</li>
                 <li><strong>"Products"</strong> refers to all items available for purchase</li>
                 <li><strong>"Services"</strong> refers to all services provided by Rloko</li>
               </ul>
@@ -185,7 +185,7 @@ export function TermsPage() {
                 If you have any questions about these Terms, please contact us:
               </p>
               <div className="text-foreground/70 space-y-2">
-                <p><strong>Email:</strong> legal@rloco.com</p>
+                <p><strong>Email:</strong> legal@rloko.com</p>
                 <p><strong>Phone:</strong> +91 123 456 7890</p>
                 <p><strong>Address:</strong> 123 Fashion Street, Bandra West, Mumbai, Maharashtra 400050, India</p>
               </div>

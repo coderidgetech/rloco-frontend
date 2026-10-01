@@ -49,8 +49,6 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
   const [signupData, setSignupData] = useState({
     name: '',
     email: '',
-    password: '',
-    confirmPassword: '',
   });
 
   const startCountdown = () => {
@@ -102,14 +100,6 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
       toast.error('Please fill in all fields');
       return;
     }
-    if (signupData.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
-      return;
-    }
-    if (signupData.password !== signupData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
     const phoneForApi = buildPhoneDigitsForApi(signupSelectedCountry.dialCode, signupPhoneLocal);
     if (phoneForApi.length < 11) {
       toast.error('Choose country and enter your full mobile number');
@@ -124,7 +114,6 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
           phone: phoneForApi,
           email: signupData.email.trim(),
           name: signupData.name.trim(),
-          password: signupData.password,
         } satisfies SignupOtpDraft)
       );
       setPhone(phoneForApi);
@@ -164,7 +153,6 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
           phone: draft.phone,
           code: otpValue,
           email: draft.email,
-          password: draft.password,
           name: draft.name,
         });
         sessionStorage.removeItem(SIGNUP_OTP_DRAFT_KEY);
@@ -256,8 +244,6 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
     setSignupData({
       name: '',
       email: '',
-      password: '',
-      confirmPassword: '',
     });
     setSignupPhoneLocal('');
     setSignupSelectedCountry(DIAL_COUNTRIES[1]);
@@ -435,37 +421,6 @@ export function DesktopAuthModal({ isOpen, onClose, initialView = 'login' }: Des
                           setShowPicker={setSignupShowCountryPicker}
                           countrySearch={signupCountrySearch}
                           setCountrySearch={setSignupCountrySearch}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-1.5 text-foreground/70">
-                          Password
-                        </label>
-                        <input
-                          type="password"
-                          value={signupData.password}
-                          onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
-                          placeholder={PH.password}
-                          required
-                          minLength={6}
-                          autoComplete="new-password"
-                          className="w-full px-4 py-2.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1.5 text-foreground/70">
-                          Confirm password
-                        </label>
-                        <input
-                          type="password"
-                          value={signupData.confirmPassword}
-                          onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
-                          placeholder={PH.confirmPassword}
-                          required
-                          minLength={6}
-                          autoComplete="new-password"
-                          className="w-full px-4 py-2.5 bg-foreground/5 border border-border/30 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
                         />
                       </div>
 

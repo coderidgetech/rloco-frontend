@@ -9,7 +9,7 @@ import { MobileSubPageHeader } from '@/app/components/mobile/MobileSubPageHeader
 import { PH } from '@/app/lib/formPlaceholders';
 
 const COUPON_CODES = {
-  'RLOCO10': 10,
+  'RLOKO10': 10,
   'SAVE20': 20,
   'WELCOME15': 15,
 };

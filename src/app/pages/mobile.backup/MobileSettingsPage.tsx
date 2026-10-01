@@ -65,7 +65,7 @@ export function MobileSettingsPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `rloco-data-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `rloko-data-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success('Download started');

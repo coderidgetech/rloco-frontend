@@ -191,7 +191,7 @@ export const AdminConfigurationPage = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'rloco-config.json';
+    a.download = 'rloko-config.json';
     a.click();
     toast.success('Configuration exported successfully');
   };

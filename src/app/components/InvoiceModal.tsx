@@ -149,7 +149,7 @@ export function InvoiceModal({ order, isOpen, onClose }: InvoiceModalProps) {
                   <p>123 Fashion Avenue</p>
                   <p>New York, NY 10001</p>
                   <p>United States</p>
-                  <p className="mt-2">info@rloco.com</p>
+                  <p className="mt-2">info@rloko.com</p>
                   <p>+1 (555) 123-4567</p>
                 </div>
               </div>

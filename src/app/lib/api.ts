@@ -3,40 +3,18 @@ import { ApiError } from '../types/api';
 
 const AUTH_TOKEN_KEY = 'auth_token';
 
-const getStoredAuthToken = (): string | null => {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(AUTH_TOKEN_KEY);
-};
-
-const setStoredAuthToken = (token: string): void => {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(AUTH_TOKEN_KEY, token);
-};
-
 const clearStoredAuthToken = (): void => {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(AUTH_TOKEN_KEY);
 };
 
-/** Persist JWT from auth responses (cookie may not be sent cross-origin). Idempotent. */
-export function persistAuthToken(token: string | undefined | null): void {
-  if (typeof token === 'string' && token.length > 0) {
-    setStoredAuthToken(token);
-  }
+/** Web sessions use the HttpOnly cookie. Kept as a compatibility no-op for callers. */
+export function persistAuthToken(_token: string | undefined | null): void {
+  clearStoredAuthToken();
 }
 
 export function clearAuthToken(): void {
   clearStoredAuthToken();
-}
-
-function requestHasAuthorizationHeader(config: InternalAxiosRequestConfig): boolean {
-  const h = config.headers;
-  if (!h) return false;
-  const raw =
-    typeof (h as any).get === 'function'
-      ? (h as any).get('Authorization')
-      : (h as any).Authorization;
-  return typeof raw === 'string' && raw.length > 0;
 }
 
 const apiBase =
@@ -48,7 +26,10 @@ const apiBase =
         }
         return u;
       })()
-    : import.meta.env.VITE_API_URL?.trim() || 'http://localhost:8080/api';
+    : import.meta.env.VITE_API_URL?.trim() ||
+      (typeof window !== 'undefined'
+        ? `${window.location.protocol}//${window.location.hostname}:8080/api`
+        : 'http://localhost:8080/api');
 
 // Create axios instance with base configuration
 const api: AxiosInstance = axios.create({
@@ -73,16 +54,6 @@ api.interceptors.request.use(
       }
     }
 
-    // Prefer cookie auth; if cookie is unavailable cross-site, send stored bearer token.
-    const token = getStoredAuthToken();
-    if (token && !requestHasAuthorizationHeader(config)) {
-      const h = config.headers;
-      if (typeof (h as any).set === 'function') {
-        (h as any).set('Authorization', `Bearer ${token}`);
-      } else {
-        (h as any).Authorization = `Bearer ${token}`;
-      }
-    }
     return config;
   },
   (error: AxiosError) => {
@@ -94,10 +65,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response: AxiosResponse) => {
     const url = response.config.url || '';
-    const token = (response.data as any)?.token;
-    if (typeof token === 'string' && token.length > 0) {
-      setStoredAuthToken(token);
-    } else if (url.includes('/auth/logout')) {
+    if (url.includes('/auth/logout')) {
       clearStoredAuthToken();
     }
     return response;
@@ -107,11 +75,7 @@ api.interceptors.response.use(
 
     // Suppress 401 errors for /auth/me endpoint (expected when not logged in)
     if (error.response?.status === 401 && originalRequest.url?.includes('/auth/me')) {
-      // Only clear stored token when the server rejected a sent Bearer (expired/invalid).
-      // Do not clear when a stale in-flight getMe (no auth header) loses a race with login.
-      if (requestHasAuthorizationHeader(originalRequest)) {
-        clearStoredAuthToken();
-      }
+      clearStoredAuthToken();
       // Silently reject - this is expected when user is not authenticated
       // Create a silent error that won't trigger console logs
       const silentError = new Error('Unauthorized');
@@ -127,15 +91,11 @@ api.interceptors.response.use(
       // Try to refresh token if refresh endpoint exists
       try {
         const refreshResponse = await axios.post(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:8080/api'}/auth/refresh`,
+          `${apiBase}/auth/refresh`,
           {},
           { withCredentials: true }
         );
 
-        const data = refreshResponse.data as { token?: string } | undefined;
-        if (data?.token) {
-          persistAuthToken(data.token);
-        }
         if (refreshResponse.data) {
           return api(originalRequest);
         }

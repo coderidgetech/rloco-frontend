@@ -137,7 +137,6 @@ export function DesktopOTPVerificationPage() {
           phone: draft.phone,
           code: otpString,
           email: draft.email,
-          password: draft.password,
           name: draft.name,
         });
         sessionStorage.removeItem(SIGNUP_OTP_DRAFT_KEY);

@@ -163,7 +163,7 @@ export function MobilePrivacyPage() {
               <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
                 <span className="text-xs">📧</span>
               </div>
-              <span className="text-foreground/70">privacy@rloco.com</span>
+              <span className="text-foreground/70">privacy@rloko.com</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">

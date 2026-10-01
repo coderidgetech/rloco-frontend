@@ -442,8 +442,8 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
       toast.error('Fill in all password fields');
       return;
     }
-    if (next.length < 6) {
-      toast.error('New password must be at least 6 characters');
+    if (next.length < 10) {
+      toast.error('New password must be at least 10 characters');
       return;
     }
     if (next !== confirm) {

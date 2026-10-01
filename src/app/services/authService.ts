@@ -27,14 +27,12 @@ export const authService = {
     phone: string;
     code: string;
     email: string;
-    password: string;
     name: string;
   }): Promise<AuthResponse> {
     const response = await api.post<AuthResponse>('/auth/register-otp/complete', {
       phone: payload.phone,
       code: payload.code,
       email: payload.email,
-      password: payload.password,
       name: payload.name,
     });
     return takeAuth(response.data);

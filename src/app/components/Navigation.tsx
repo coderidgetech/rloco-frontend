@@ -11,9 +11,8 @@ import { useSearchOverlay } from '../context/SearchOverlayContext';
 import { RlocoLogo } from './RlocoLogo';
 import { MegaMenu } from './MegaMenu';
 import { MobileNavDrawer } from './MobileNavDrawer';
-import { LoginModal } from './LoginModal';
+import { DesktopAuthModal } from './DesktopAuthModal';
 import { useIsMobile } from '../hooks/useIsMobile';
-import { ACCOUNT_DEFAULT_PATH } from '../lib/accountRoutes';
 
 export function Navigation() {
   const isMobile = useIsMobile();
@@ -109,11 +108,6 @@ export function Navigation() {
       // Scroll to top
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
-
-  const handleLoginSuccess = () => {
-    setAccountOpen(false);
-    navigate(ACCOUNT_DEFAULT_PATH);
   };
 
   const handleLogout = () => {
@@ -392,7 +386,7 @@ export function Navigation() {
       {/* Cart Drawer */}
       {/* Show LoginModal if not logged in (for modal access), AccountPage route handles logged-in state */}
       {!isAuthenticated && (
-        <LoginModal isOpen={accountOpen} onClose={() => setAccountOpen(false)} onLoginSuccess={handleLoginSuccess} />
+        <DesktopAuthModal isOpen={accountOpen} onClose={() => setAccountOpen(false)} />
       )}
     </>
   );

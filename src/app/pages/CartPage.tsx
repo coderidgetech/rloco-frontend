@@ -484,7 +484,7 @@ export function CartPage() {
           .slice(0, 3)
           .map((p) => p.code)
           .join(', ')
-      : 'RLOCO10, SAVE20, WELCOME15';
+      : 'RLOKO10, SAVE20, WELCOME15';
 
   return (
     <div className="min-h-screen w-full min-w-0 bg-muted/20 pt-page-nav pb-mobile-nav dark:bg-background">

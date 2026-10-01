@@ -72,7 +72,6 @@ export function MobileSignupPage() {
           phone,
           email: formData.email.trim(),
           name: formData.name.trim(),
-          password: formData.password,
         })
       );
       setSubmittedIntlPhone(phone);
@@ -115,7 +114,6 @@ export function MobileSignupPage() {
         phone: draft.phone,
         code: otpValue,
         email: draft.email,
-        password: draft.password,
         name: draft.name,
       });
       sessionStorage.removeItem(SIGNUP_OTP_DRAFT_KEY);

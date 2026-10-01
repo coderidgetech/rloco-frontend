@@ -38,9 +38,9 @@ export const AdminSettingsPage = () => {
   const [settings, setSettings] = useState<any>({
     general: {
       storeName: 'Rloko',
-      storeUrl: 'https://rloco.com',
+      storeUrl: 'https://rloko.com',
       storeDescription: 'Modern fashion retailer offering curated collections',
-      contactEmail: 'contact@rloco.com',
+      contactEmail: 'contact@rloko.com',
       supportEmail: 'support@rloko.com',
       phone: '+1 (555) 123-4567',
       timezone: 'america/new_york',

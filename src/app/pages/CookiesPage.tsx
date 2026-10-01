@@ -317,8 +317,8 @@ export function CookiesPage() {
               <h2 className="text-3xl md:text-4xl mb-6">Questions About Cookies?</h2>
               <p className="text-lg text-foreground/60 mb-8">
                 If you have any questions about our use of cookies, please contact us at{' '}
-                <a href="mailto:privacy@rloco.com" className="text-primary hover:underline">
-                  privacy@rloco.com
+                <a href="mailto:privacy@rloko.com" className="text-primary hover:underline">
+                  privacy@rloko.com
                 </a>
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

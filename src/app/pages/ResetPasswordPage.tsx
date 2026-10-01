@@ -23,8 +23,8 @@ export function ResetPasswordPage() {
       toast.error('Invalid or missing reset link. Please request a new password reset.');
       return;
     }
-    if (newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (newPassword.length < 10) {
+      toast.error('Password must be at least 10 characters');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -78,7 +78,7 @@ export function ResetPasswordPage() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             placeholder={PH.newPassword}
-            minLength={6}
+            minLength={10}
             required
             className="w-full"
           />
@@ -90,7 +90,7 @@ export function ResetPasswordPage() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder={PH.confirmPassword}
-            minLength={6}
+            minLength={10}
             required
             className="w-full"
           />

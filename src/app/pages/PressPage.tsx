@@ -292,8 +292,8 @@ export function PressPage() {
                 For all media inquiries, interviews, and press requests:
               </p>
               <p className="text-lg mb-8">
-                <a href="mailto:press@rloco.com" className="text-primary hover:underline">
-                  press@rloco.com
+                <a href="mailto:press@rloko.com" className="text-primary hover:underline">
+                  press@rloko.com
                 </a>
               </p>
               <Button

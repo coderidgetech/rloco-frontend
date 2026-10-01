@@ -22,8 +22,8 @@ export const ForcePasswordReset = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword.length < 8) {
-      toast.error('New password must be at least 8 characters');
+    if (newPassword.length < 10) {
+      toast.error('New password must be at least 10 characters');
       return;
     }
     if (newPassword !== confirmPassword) {

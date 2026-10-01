@@ -36,7 +36,7 @@ export function ConfigurationPanel() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `rloco-config-${Date.now()}.json`;
+    a.download = `rloko-config-${Date.now()}.json`;
     a.click();
     toast.success('Configuration exported successfully!');
   };
