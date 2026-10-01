@@ -53,7 +53,7 @@ export function ProductRecommendationSection({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-2 gap-y-3 px-4 md:grid-cols-3 md:gap-6 md:px-6 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-x-1 gap-y-4 px-4 md:grid-cols-3 md:gap-6 md:px-6 lg:grid-cols-6">
             {(products || []).map((item, index) => (
               <RecommendationCard key={`${item.id}-${index}`} product={item} index={index} isMobile={isMobile} />
             ))}
@@ -90,7 +90,7 @@ export function ProductRecommendationSection({
             <p className="text-background/60 tracking-wide">{subtitle}</p>
           </div>
 
-          <div className="grid grid-cols-3 gap-x-2 gap-y-6 px-4 md:grid-cols-4 md:gap-5 md:px-6 lg:grid-cols-6">
+          <div className="grid grid-cols-3 gap-x-1 gap-y-6 px-4 md:grid-cols-4 md:gap-5 md:px-6 lg:grid-cols-6">
             {(products || []).map((item, index) => (
               <RecommendationCard key={`${item.id}-${index}`} product={item} index={index} isMobile={isMobile} />
             ))}
@@ -116,11 +116,11 @@ export function ProductRecommendationSection({
 
         <div className="relative w-full">
           <div className="mb-3 md:mb-4 px-4 md:px-6">
-            <h2 className="text-xl md:text-3xl tracking-tight">{title}</h2>
+            <h2 className="text-base font-medium uppercase tracking-[0.28em] text-foreground/60 md:text-3xl md:normal-case md:tracking-tight md:text-foreground">{title}</h2>
             {subtitle && <p className="mt-1 text-sm text-foreground/50 tracking-wide">{subtitle}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-x-2 gap-y-3 px-4 md:grid-cols-3 md:gap-6 md:px-6 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-x-1 gap-y-4 px-4 md:grid-cols-3 md:gap-6 md:px-6 lg:grid-cols-6">
             {(products || []).map((item, index) => (
               <RecommendationCard key={`${item.id}-${index}`} product={item} index={index} isMobile={isMobile} />
             ))}
@@ -151,7 +151,7 @@ export function ProductRecommendationSection({
           <p className="text-sm text-foreground/50 tracking-wide">{subtitle}</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-2 gap-y-3 px-2 md:grid-cols-4 md:gap-6 md:px-4 lg:grid-cols-6">
+        <div className="grid grid-cols-2 gap-x-1 gap-y-4 px-2 md:grid-cols-4 md:gap-6 md:px-4 lg:grid-cols-6">
           {(products || []).map((item, index) => (
             <RecommendationCard key={`${item.id}-${index}`} product={item} index={index} isMobile={isMobile} />
           ))}

@@ -11,6 +11,7 @@ import { useFeaturedProducts } from '../hooks/useProducts';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { AddToBagPopover } from './AddToBagPopover';
 import { colorMap } from '../utils/filterConfig';
+import { MobileProductCard, type MobileProductCardData } from './mobile/MobileProductCard';
 
 export function Featured() {
   const { config } = useSiteConfig();
@@ -127,7 +128,17 @@ export function Featured() {
         )}
 
         {!loading && !error && featuredProducts && featuredProducts.length > 0 && (
-          <div className="mb-2 grid grid-cols-2 gap-x-2 gap-y-3 px-2 md:mb-3 md:grid-cols-4 md:gap-4 md:px-4 lg:gap-6">
+          <>
+          <div className="mb-2 grid grid-cols-2 gap-x-1 gap-y-4 px-2 md:hidden">
+            {featuredProducts.slice(0, 8).map((product, index) => (
+              <MobileProductCard
+                key={product.id}
+                product={product as unknown as MobileProductCardData}
+                index={index}
+              />
+            ))}
+          </div>
+          <div className="mb-3 hidden grid-cols-4 gap-4 px-4 md:grid lg:gap-6">
             {featuredProducts.slice(0, 8).map((product, index) => (
             <motion.div
               key={product.id}
@@ -232,6 +243,7 @@ export function Featured() {
             </motion.div>
             ))}
           </div>
+          </>
         )}
 
       </div>

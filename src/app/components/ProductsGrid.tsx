@@ -12,6 +12,7 @@ import { useFeaturedProducts } from '../hooks/useProducts';
 import { useSiteConfig } from '../context/SiteConfigContext';
 import { AddToBagPopover } from './AddToBagPopover';
 import { colorMap } from '../utils/filterConfig';
+import { MobileProductCard, type MobileProductCardData } from './mobile/MobileProductCard';
 
 const TOP_COLLECTION_LIMIT = 4;
 
@@ -143,7 +144,16 @@ export function ProductsGrid() {
             </motion.div>
 
         {/* Products Grid - 4x1 grid */}
-        <div className="grid grid-cols-2 gap-x-2 gap-y-3 px-2 md:grid-cols-4 md:gap-4 md:px-4 lg:gap-6">
+        <div className="grid grid-cols-2 gap-x-1 gap-y-4 px-2 md:hidden">
+          {displayProducts.map((product, index) => (
+            <MobileProductCard
+              key={product.id}
+              product={product as unknown as MobileProductCardData}
+              index={index}
+            />
+          ))}
+        </div>
+        <div className="hidden grid-cols-4 gap-4 px-4 md:grid lg:gap-6">
           <AnimatePresence mode="popLayout">
             {displayProducts.map((product, index) => (
               <motion.div

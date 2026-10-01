@@ -1180,7 +1180,7 @@ export function AccountPage({ isOpen, onClose, onLogout }: AccountPageProps) {
                               </div>
                             ) : (
                               /* Same card used everywhere else products show in a grid */
-                              <div className="grid grid-cols-2 gap-x-2 gap-y-3 md:grid-cols-3 md:gap-6">
+                              <div className="grid grid-cols-2 gap-x-1 gap-y-4 md:grid-cols-3 md:gap-6">
                                 {wishlistItems.map((item, index) =>
                                   isMobile ? (
                                     <MobileProductCard key={item.id} product={item as unknown as MobileProductCardData} index={index} wishlistView />

@@ -417,7 +417,7 @@ export function WishlistPage() {
                   Showing {sortedItems.length} of {items.length} items
                 </p>
                 <AnimatePresence mode="popLayout">
-                  <div className="grid grid-cols-2 gap-x-2 gap-y-3 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
+                  <div className="grid grid-cols-2 gap-x-1 gap-y-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4">
                     {sortedItems.map((item, index) => (
                       <motion.div
                         key={item.id}
