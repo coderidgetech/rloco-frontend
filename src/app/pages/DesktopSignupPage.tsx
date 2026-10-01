@@ -267,7 +267,7 @@ export function DesktopSignupPage() {
                   placeholder={PH.password}
                   required
                   minLength={6}
-                  autoComplete="new-password"
+                  autoComplete="one-time-code"
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
@@ -291,7 +291,7 @@ export function DesktopSignupPage() {
                   placeholder={PH.confirmPassword}
                   required
                   minLength={6}
-                  autoComplete="new-password"
+                  autoComplete="one-time-code"
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
