@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, useMotionValue, animate } from 'motion/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag } from 'lucide-react';
 import { productService } from '../services/productService';
 import type { Product } from '../types/api';
 
@@ -48,211 +48,136 @@ const FALLBACK_PRODUCTS: Product[] = [
   } as Product,
 ];
 
-const CARD_WIDTH = 148;
-const CARD_GAP = 14;
-const SLOT = CARD_WIDTH + CARD_GAP;
-const CLONES = 3;
-
 export function VideoShowcase() {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>(FALLBACK_PRODUCTS);
-  const n = products.length;
-  const clones = Math.min(CLONES, n);
-
-  // displayList: [tail clones] + [real items] + [head clones]
-  const displayList = [
-    ...products.slice(n - clones),
-    ...products,
-    ...products.slice(0, clones),
-  ];
-
-  // pos = index within displayList; real items live at [clones, clones+n-1]
-  const [pos, setPos] = useState(clones);
-  const posRef = useRef(clones);
-  const isAnimating = useRef(false);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const trackWidthRef = useRef(0);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
-  const x = useMotionValue(0);
-
-  const getX = (p: number) => trackWidthRef.current / 2 - p * SLOT - CARD_WIDTH / 2;
-
-  const slideTo = useCallback(
-    (nextPos: number, instant = false) => {
-      if (!instant && isAnimating.current) return;
-      posRef.current = nextPos;
-      setPos(nextPos);
-
-      if (instant) {
-        x.set(getX(nextPos));
-        return;
-      }
-
-      isAnimating.current = true;
-      animate(x, getX(nextPos), {
-        duration: 0.55,
-        ease: [0.32, 0.72, 0, 1],
-        onComplete: () => {
-          isAnimating.current = false;
-          // Snap back from clone to real equivalent — invisible because position is identical
-          if (nextPos >= n + clones) {
-            const r = nextPos - n;
-            posRef.current = r;
-            setPos(r);
-            x.set(getX(r));
-          } else if (nextPos < clones) {
-            const r = nextPos + n;
-            posRef.current = r;
-            setPos(r);
-            x.set(getX(r));
-          }
-        },
-      });
-    },
-    // getX only touches refs so no dep needed; x is stable
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [x, n, clones],
-  );
-
-  // Measure track and re-position on resize
-  useEffect(() => {
-    const update = () => {
-      if (!trackRef.current) return;
-      trackWidthRef.current = trackRef.current.offsetWidth;
-      x.set(getX(posRef.current));
-    };
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [x]);
-
-  // Reset position when product list changes (API load)
-  useEffect(() => {
-    posRef.current = clones;
-    setPos(clones);
-    x.set(getX(clones));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [products, clones, x]);
 
   useEffect(() => {
     let cancelled = false;
-    productService.getNewArrivals(8).then((data) => {
-      if (!cancelled && data.length > 0) setProducts(data);
-    }).catch(() => {});
-    return () => { cancelled = true; };
+    productService
+      .getNewArrivals(8)
+      .then((data) => {
+        const withImages = data.filter((product) => Boolean(product.images?.[0]));
+        if (!cancelled && withImages.length > 0) {
+          setProducts(withImages);
+          setActiveIndex(0);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const realIndex = ((pos - clones) % n + n) % n;
-  const bg = products[realIndex]?.images?.[0] ?? FALLBACK_PRODUCTS[0].images[0];
+  const show = useCallback(
+    (index: number) => {
+      setActiveIndex((index + products.length) % products.length);
+    },
+    [products.length],
+  );
+
+  useEffect(() => {
+    if (paused || products.length < 2) return;
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % products.length);
+    }, 6000);
+    return () => window.clearInterval(timer);
+  }, [paused, products.length]);
+
+  const activeProduct = products[activeIndex] ?? products[0];
+  if (!activeProduct) return null;
 
   return (
-    <section className="relative h-screen w-full snap-start snap-always overflow-hidden bg-neutral-950">
-      {/* Background synced to active product — clickable through to that product */}
-      <button
-        type="button"
-        onClick={() => navigate(`/product/${products[realIndex]?.id}`)}
-        className="absolute inset-0 cursor-pointer"
-        aria-label={`Shop ${products[realIndex]?.name ?? 'this product'}`}
-      >
+    <section
+      aria-label="New arrivals"
+      className="relative h-[78svh] min-h-[560px] w-full overflow-hidden bg-neutral-950 md:h-screen"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onTouchStart={(event) => {
+        touchStartX.current = event.touches[0]?.clientX ?? null;
+      }}
+      onTouchEnd={(event) => {
+        if (touchStartX.current == null) return;
+        const distance = event.changedTouches[0].clientX - touchStartX.current;
+        touchStartX.current = null;
+        if (Math.abs(distance) > 45) show(activeIndex + (distance < 0 ? 1 : -1));
+      }}
+    >
+      <AnimatePresence mode="sync" initial={false}>
         <motion.img
-          key={bg}
-          src={bg}
-          alt=""
-          className="h-full w-full object-cover"
-          initial={{ opacity: 0, scale: 1.05 }}
+          key={activeProduct.id}
+          src={activeProduct.images[0]}
+          alt={activeProduct.name}
+          className="absolute inset-0 h-full w-full object-cover"
+          initial={{ opacity: 0, scale: 1.025 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9, ease: 'easeInOut' }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/10 to-black/70" aria-hidden />
-      </button>
+      </AnimatePresence>
 
-      {/* Label */}
-      <div className="absolute top-8 left-1/2 -translate-x-1/2 z-10">
-        <span className="inline-flex items-center gap-1.5 bg-white/15 backdrop-blur-sm border border-white/25 text-white text-[11px] font-semibold uppercase tracking-[0.22em] px-4 py-1.5 rounded-full">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/5 to-black/45" aria-hidden />
+
+      <div className="absolute inset-x-0 top-8 z-10 flex justify-center md:top-10">
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white drop-shadow-md md:text-xs">
           New Arrivals
-        </span>
+        </h2>
       </div>
 
-      {/* Infinite carousel */}
-      <div className="absolute bottom-10 left-0 right-0 z-10">
-        <div
-          ref={trackRef}
-          className="overflow-hidden w-full"
-          onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
-          onTouchEnd={(e) => {
-            if (touchStartX.current == null) return;
-            const dx = e.changedTouches[0].clientX - touchStartX.current;
-            touchStartX.current = null;
-            if (Math.abs(dx) > 40) slideTo(posRef.current + (dx < 0 ? 1 : -1));
-          }}
+      <div className="absolute inset-0 z-10 flex items-end justify-center pb-20 md:pb-24">
+        <motion.button
+          key={`shop-${activeProduct.id}`}
+          type="button"
+          onClick={() => navigate(`/product/${activeProduct.id}`)}
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.45 }}
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.97 }}
+          className="min-w-36 border border-white bg-white px-8 py-3.5 text-xs font-semibold uppercase tracking-[0.2em] text-neutral-950 shadow-xl transition-colors hover:bg-neutral-950 hover:text-white md:min-w-40 md:px-10 md:py-4"
         >
-          <motion.div className="flex" style={{ x, gap: CARD_GAP }}>
-            {displayList.map((product, index) => {
-              const dist = Math.abs(index - pos);
-              const isActive = dist === 0;
-              return (
-                <motion.div
-                  key={`${product.id}-${index}`}
-                  animate={{
-                    scale: isActive ? 1 : dist === 1 ? 0.88 : 0.78,
-                    opacity: isActive ? 1 : dist === 1 ? 0.65 : dist === 2 ? 0.38 : 0.15,
-                  }}
-                  transition={{ duration: 0.45 }}
-                  className={`relative flex-shrink-0 rounded-2xl overflow-hidden cursor-pointer ${
-                    isActive
-                      ? 'shadow-[0_0_0_2px_white,0_24px_48px_rgba(0,0,0,0.55)]'
-                      : 'shadow-[0_8px_24px_rgba(0,0,0,0.4)]'
-                  }`}
-                  style={{ width: CARD_WIDTH, height: 218 }}
-                  onClick={() =>
-                    isActive ? navigate(`/product/${product.id}`) : slideTo(index)
-                  }
-                >
-                  <img
-                    src={product.images?.[0]}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+          Shop Now
+        </motion.button>
+      </div>
 
-                  {/* Product info — title + Shop Now only, centered */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3 flex flex-col items-center text-center">
-                    <h3 className="text-white text-[11px] font-semibold leading-tight line-clamp-2 mb-1.5">
-                      {product.name}
-                    </h3>
-                    <motion.button
-                      whileTap={{ scale: 0.94 }}
-                      onClick={(e) => { e.stopPropagation(); navigate(`/product/${product.id}`); }}
-                      className="inline-flex items-center gap-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-wider text-white"
-                    >
-                      <ShoppingBag size={10} strokeWidth={1.8} />
-                      Shop Now
-                    </motion.button>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        </div>
+      {products.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={() => show(activeIndex - 1)}
+            aria-label="Previous new arrival"
+            className="absolute left-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/35 bg-black/15 text-white backdrop-blur-sm transition hover:bg-black/35 md:left-7 md:h-12 md:w-12"
+          >
+            <ChevronLeft size={22} strokeWidth={1.5} />
+          </button>
+          <button
+            type="button"
+            onClick={() => show(activeIndex + 1)}
+            aria-label="Next new arrival"
+            className="absolute right-3 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/35 bg-black/15 text-white backdrop-blur-sm transition hover:bg-black/35 md:right-7 md:h-12 md:w-12"
+          >
+            <ChevronRight size={22} strokeWidth={1.5} />
+          </button>
 
-        {/* Dot indicators (map over real products only) */}
-        {n > 1 && (
-          <div className="flex justify-center gap-1.5 mt-5">
-            {products.map((_, index) => (
+          <div className="absolute bottom-7 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2">
+            {products.map((product, index) => (
               <button
-                key={index}
+                key={product.id}
                 type="button"
-                onClick={() => slideTo(clones + index)}
+                onClick={() => show(index)}
+                aria-label={`Show new arrival ${index + 1}`}
+                aria-current={index === activeIndex ? 'true' : undefined}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  index === realIndex ? 'w-5 bg-white' : 'w-1.5 bg-white/35 hover:bg-white/55'
+                  index === activeIndex ? 'w-7 bg-white' : 'w-1.5 bg-white/50 hover:bg-white/80'
                 }`}
               />
             ))}
           </div>
-        )}
-      </div>
+        </>
+      )}
     </section>
   );
 }
