@@ -29,9 +29,6 @@ export function GiftSection() {
             className="h-0.5 bg-foreground mb-2.5"
           />
           <h2 className="text-xl md:text-2xl lg:text-3xl tracking-tight">{gs?.heading || 'Perfect Gifts'}</h2>
-          {gs?.subheading && (
-            <p className="text-sm text-foreground/60 mt-1">{gs.subheading}</p>
-          )}
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 px-2 md:px-4">

@@ -97,7 +97,6 @@ export function Featured() {
               className="h-0.5 bg-foreground mb-2.5"
             />
             <h2 className="text-xl md:text-2xl lg:text-3xl tracking-tight">Featured Collection</h2>
-            <p className="text-sm text-foreground/60 mt-1">Handpicked pieces for the season</p>
           </div>
           <motion.button
             whileTap={{ scale: 0.97 }}

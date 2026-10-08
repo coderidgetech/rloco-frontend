@@ -332,7 +332,7 @@ const defaultConfig: SiteConfig = {
     },
     giftSection: {
       heading: 'Perfect Gifts',
-      subheading: 'Discover handpicked gifts that make every moment special',
+      subheading: '',
       items: [
         {
           title: 'Gift For Her',

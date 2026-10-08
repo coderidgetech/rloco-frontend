@@ -162,12 +162,9 @@ export function Categories() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="mx-auto mb-2.5 h-0.5 bg-foreground"
             />
-            <h2 className="text-xl md:text-2xl lg:text-3xl tracking-tight mb-2">
+            <h2 className="text-xl md:text-2xl lg:text-3xl tracking-tight">
               Shop by Category
             </h2>
-            <p className="text-foreground/60 text-sm md:text-base max-w-2xl mx-auto">
-              Explore our diverse collection of premium fashion categories
-            </p>
           </motion.div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6 px-2 md:px-4">
