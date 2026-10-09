@@ -445,7 +445,7 @@ export function ProductDetailPage() {
                     type="button"
                     onClick={showPrevImage}
                     aria-label="Previous product image"
-                    className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-foreground shadow-md transition hover:bg-white"
+                    className="absolute left-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-foreground shadow-md transition hover:bg-white md:flex"
                   >
                     <ChevronLeft size={22} strokeWidth={1.7} />
                   </button>
@@ -453,44 +453,13 @@ export function ProductDetailPage() {
                     type="button"
                     onClick={showNextImage}
                     aria-label="Next product image"
-                    className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-foreground shadow-md transition hover:bg-white"
+                    className="absolute right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-foreground shadow-md transition hover:bg-white md:flex"
                   >
                     <ChevronRight size={22} strokeWidth={1.7} />
                   </button>
                 </>
               )}
             </div>
-
-            {productImages.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
-                {productImages.map((image, index) => (
-                  <button
-                    key={`${image}-${index}`}
-                    type="button"
-                    onClick={() => {
-                      setImageDirection(index > selectedImage ? 1 : -1);
-                      setSelectedImage(index);
-                    }}
-                    aria-label={`View product image ${index + 1}`}
-                    aria-current={index === selectedImage ? 'true' : undefined}
-                    className={`h-20 w-16 flex-shrink-0 overflow-hidden border-2 transition-colors md:h-24 md:w-20 ${
-                      index === selectedImage
-                        ? 'border-foreground'
-                        : 'border-transparent hover:border-foreground/40'
-                    }`}
-                  >
-                    <img
-                      src={image}
-                      alt={`${product.name} view ${index + 1}`}
-                      className="h-full w-full object-cover"
-                      onError={(event) => {
-                        (event.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
-                      }}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
 
             {/* Size Guide — opens in a modal from the "Size Guide" link (Myntra-style) */}
             <AnimatePresence>
