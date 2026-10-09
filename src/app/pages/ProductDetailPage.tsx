@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Star, Truck, RefreshCw, Check, ShoppingBag, Edit2, Trash2, ThumbsUp, Share2, X, Flag, Ruler } from 'lucide-react';
+import { Heart, Star, Truck, RefreshCw, Check, ShoppingBag, Edit2, Trash2, ThumbsUp, Share2, X, Flag, Ruler, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Product } from '../types/api';
 import { useState, useEffect, useRef } from 'react';
 import { useCart } from '../context/CartContext';
@@ -438,7 +438,59 @@ export function ProductDetailPage() {
                   style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,0.5))' }}
                 />
               </button>
+
+              {productImages.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={showPrevImage}
+                    aria-label="Previous product image"
+                    className="absolute left-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-foreground shadow-md transition hover:bg-white"
+                  >
+                    <ChevronLeft size={22} strokeWidth={1.7} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={showNextImage}
+                    aria-label="Next product image"
+                    className="absolute right-3 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-foreground shadow-md transition hover:bg-white"
+                  >
+                    <ChevronRight size={22} strokeWidth={1.7} />
+                  </button>
+                </>
+              )}
             </div>
+
+            {productImages.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+                {productImages.map((image, index) => (
+                  <button
+                    key={`${image}-${index}`}
+                    type="button"
+                    onClick={() => {
+                      setImageDirection(index > selectedImage ? 1 : -1);
+                      setSelectedImage(index);
+                    }}
+                    aria-label={`View product image ${index + 1}`}
+                    aria-current={index === selectedImage ? 'true' : undefined}
+                    className={`h-20 w-16 flex-shrink-0 overflow-hidden border-2 transition-colors md:h-24 md:w-20 ${
+                      index === selectedImage
+                        ? 'border-foreground'
+                        : 'border-transparent hover:border-foreground/40'
+                    }`}
+                  >
+                    <img
+                      src={image}
+                      alt={`${product.name} view ${index + 1}`}
+                      className="h-full w-full object-cover"
+                      onError={(event) => {
+                        (event.target as HTMLImageElement).src = PLACEHOLDER_IMAGE;
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Size Guide — opens in a modal from the "Size Guide" link (Myntra-style) */}
             <AnimatePresence>

@@ -83,7 +83,7 @@ export function VideoShowcase() {
     if (paused || products.length < 2) return;
     const timer = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % products.length);
-    }, 6000);
+    }, 5500);
     return () => window.clearInterval(timer);
   }, [paused, products.length]);
 
