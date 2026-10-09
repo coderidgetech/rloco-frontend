@@ -13,6 +13,7 @@ import { MegaMenu } from './MegaMenu';
 import { MobileNavDrawer } from './MobileNavDrawer';
 import { DesktopAuthModal } from './DesktopAuthModal';
 import { useIsMobile } from '../hooks/useIsMobile';
+import { ACCOUNT_DEFAULT_PATH } from '../lib/accountRoutes';
 
 export function Navigation() {
   const isMobile = useIsMobile();

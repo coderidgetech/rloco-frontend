@@ -52,7 +52,6 @@ export function VideoShowcase() {
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>(FALLBACK_PRODUCTS);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
@@ -80,12 +79,12 @@ export function VideoShowcase() {
   );
 
   useEffect(() => {
-    if (paused || products.length < 2) return;
+    if (products.length < 2) return;
     const timer = window.setInterval(() => {
       setActiveIndex((current) => (current + 1) % products.length);
     }, 5500);
     return () => window.clearInterval(timer);
-  }, [paused, products.length]);
+  }, [products.length]);
 
   const activeProduct = products[activeIndex] ?? products[0];
   if (!activeProduct) return null;
@@ -94,8 +93,6 @@ export function VideoShowcase() {
     <section
       aria-label="New arrivals"
       className="relative h-[78svh] min-h-[560px] w-full overflow-hidden bg-neutral-950 md:h-screen"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
       onTouchStart={(event) => {
         touchStartX.current = event.touches[0]?.clientX ?? null;
       }}
